@@ -1,0 +1,29 @@
+matrix:
+  include:
+    - compiler: gcc
+      before_script:
+        - export CC=gcc
+      script:
+        - make check
+
+    - compiler: gcc
+      before_script:
+        - export CC=gcc
+      script:
+        - make memcheck
+
+    - compiler: clang
+      before_script:
+        - export CC=clang
+      script:
+        - make check
+
+    - language: objective-c
+      os: osx
+      compiler: clang
+      before_script:
+        - export CC=clang
+      script:
+        - make check
+
+
