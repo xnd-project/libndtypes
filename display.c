@@ -292,7 +292,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx)
             break;
 
         case FixedDim:
-            n = ndt_snprintf(ctx, buf, "%zd", dim[i].FixedDim.shape);
+            n = ndt_snprintf(ctx, buf, "%zu", dim[i].FixedDim.shape);
             if (n < 0) return -1;
             break;
 

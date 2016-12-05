@@ -47,7 +47,7 @@
   typedef _Fcomplex ndt_complex64_t;
   #define alignof __alignof
 #else
-  #ifndef __STDC_IEC_559__
+  #if !defined(__APPLE__) && !defined(__STDC_IEC_559__)
     #error "ndtypes requires IEEE floating point arithmetic"
   #endif
   #include <stdalign.h>

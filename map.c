@@ -39,7 +39,7 @@
 #define ALPHABET_LEN 63
 
 static int code[UCHAR_MAX+1];
-static unsigned char alpha[ALPHABET_LEN] =
+static unsigned char alpha[ALPHABET_LEN+1] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
 
 static void

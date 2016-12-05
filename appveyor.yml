@@ -10,11 +10,13 @@ environment:
     - PYTHON_ARCH: "x86_64"
       platform: x64
     - PYTHON_ARCH: "x86"
-      platform: Win32
+      platform: x86
+
+before_build:
+  "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %platform%"
 
 build_script:
   - move /y Makefile.vc Makefile
-  - nmake
   - nmake memcheck
 
 
