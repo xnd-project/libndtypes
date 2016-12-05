@@ -1,14 +1,27 @@
+sudo: required
+dist: trusty
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.9
+    - valgrind
+
+language: C
+
 matrix:
   include:
     - compiler: gcc
       before_script:
-        - export CC=gcc
+        - export CC=gcc-4.9
       script:
         - make check
 
     - compiler: gcc
       before_script:
-        - export CC=gcc
+        - export CC=gcc-4.9
       script:
         - make memcheck
 
