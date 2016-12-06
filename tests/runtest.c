@@ -145,8 +145,8 @@ main(void)
     for (input = ndt_test_roundtrip; *input != NULL; input++) {
         t = ndt_from_string(*input, ctx);
         if (t == NULL) {
-            fprintf(stderr, "test_strings: parse: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_strings: parse: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_roundtrip: parse: FAIL: expected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_roundtrip: parse: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             goto out;
@@ -154,8 +154,8 @@ main(void)
 
         s = ndt_as_string(t, ctx);
         if (s == NULL) {
-            fprintf(stderr, "test_strings: convert: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_strings: convert: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_roundtrip: convert: FAIL: expected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_roundtrip: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             ndt_del(t);
@@ -163,8 +163,8 @@ main(void)
         }
 
         if (strcmp(s, *input) != 0) {
-            fprintf(stderr, "test_strings: convert: FAIL: input:     \"%s\"\n", *input);
-            fprintf(stderr, "test_strings: convert: FAIL: roundtrip: \"%s\"\n", s);
+            fprintf(stderr, "test_roundtrip: convert: FAIL: input:     \"%s\"\n", *input);
+            fprintf(stderr, "test_roundtrip: convert: FAIL: roundtrip: \"%s\"\n", s);
             ndt_free(s);
             ndt_del(t);
             goto out;
@@ -277,7 +277,7 @@ main(void)
             }
 
             if (ndt_nominal_map_lookup(*input, ctx) != NULL) {
-                fprintf(stderr, "test_map_names: FAIL: key in map after MemoryError\n");
+                fprintf(stderr, "test_error_map_names: FAIL: key in map after MemoryError\n");
                 goto out;
             }
         }

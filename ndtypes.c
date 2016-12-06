@@ -498,10 +498,35 @@ ndt_any_kind(ndt_context_t *ctx)
     return ndt_new(AnyKind, ctx);
 }
 
+static int
+validate_dim(ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx)
+{
+    int ellipsis_count = 0;
+    size_t i;
+
+    for (i = 0; i < ndim; i++) {
+        if (dim[i].tag == EllipsisDim) {
+            if (++ellipsis_count > 1) {
+                ndt_err_format(ctx, NDT_ValueError,
+                               "more than one ellipsis dimension");
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
+
 ndt_t *
 ndt_array(ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
 {
     ndt_t *t;
+
+    if (validate_dim(dim, ndim, ctx) < 0) {
+        ndt_dim_array_del(dim, ndim);
+        ndt_del(dtype);
+        return NULL;
+    }
 
     t = ndt_new(Array, ctx);
     if (t == NULL) {
