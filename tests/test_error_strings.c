@@ -27909,5 +27909,9 @@ const char *ndt_test_error_strings[] = {
   "(a : pointer[{b : defined_t, c : (undefined_t, int16) -> float64}]) -> defined_t",
   "(a : pointer[{b : defined_t, c : (defined_t, int16) -> float64}]) -> undefined_t",
 
+  "10 * ... * 20 * ... * int64",
+  "(a : pointer[{b : defined_t, c : (var * ... * ... * {a : pointer[float64]}, int16) -> float64}]) -> (int64, complex128)",
+  /* END MANUALLY GENERATED */
+
   NULL
 };
