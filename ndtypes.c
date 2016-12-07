@@ -559,7 +559,7 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
 int
 ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx)
 {
-    if (ndt_nominal_map_insert(name, type, ctx) < 0) {
+    if (ndt_nominal_insert(name, type, ctx) < 0) {
         ndt_del(type);
         return -1;
     }
@@ -572,8 +572,7 @@ ndt_nominal(char *name, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    t = (ndt_t *)ndt_nominal_map_lookup(name, ctx);
-    if (t == NULL) {
+    if (ndt_nominal_lookup(name, ctx) == NULL) {
         ndt_free(name);
         return NULL;
     }

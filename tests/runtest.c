@@ -34,23 +34,23 @@
 #include "alloc_fail.h"
 
 
-extern const char *ndt_test_strings[];
-extern const char *ndt_test_roundtrip[];
-extern const char *ndt_test_error_strings[];
-extern const char *ndt_test_map_names[];
-extern const char *ndt_test_error_map_names[];
+extern const char *ndt_test_parse[];
+extern const char *ndt_test_parse_roundtrip[];
+extern const char *ndt_test_parse_error[];
+extern const char *ndt_test_nominal[];
+extern const char *ndt_test_nominal_error[];
 
 int
 main(void)
 {
     ndt_context_t *ctx;
     const char **input;
-    int test_strings = 0;
-    int test_roundtrip = 0;
-    int test_error_strings = 0;
-    int test_map_names = 0;
-    int test_map_duplicates = 0;
-    int test_error_map_names = 0;
+    int test_parse = 0;
+    int test_parse_roundtrip = 0;
+    int test_parse_error = 0;
+    int test_nominal = 0;
+    int test_nominal_duplicates = 0;
+    int test_nominal_error = 0;
     char *s;
     ndt_t *t = NULL;
     int ret = 1;
@@ -87,7 +87,7 @@ main(void)
     }
 
     /* Test valid input */
-    for (input = ndt_test_strings; *input != NULL; input++) {
+    for (input = ndt_test_parse; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
             ndt_set_alloc_fail();
@@ -98,13 +98,13 @@ main(void)
             }
             if (t != NULL) {
                 ndt_del(t);
-                fprintf(stderr, "test_strings: parse: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_parse: parse: FAIL: t != NULL after MemoryError\n");
                 goto out;
             }
         }
         if (t == NULL) {
-            fprintf(stderr, "test_strings: parse: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_strings: parse: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_parse: parse: FAIL: expected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_parse: parse: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             goto out;
@@ -121,13 +121,13 @@ main(void)
             if (s != NULL) {
                 ndt_free(s);
                 ndt_del(t);
-                fprintf(stderr, "test_strings: convert: FAIL: s != NULL after MemoryError\n");
+                fprintf(stderr, "test_parse: convert: FAIL: s != NULL after MemoryError\n");
                 goto out;
             }
         }
         if (s == NULL) {
-            fprintf(stderr, "test_strings: convert: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_strings: convert: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_parse: convert: FAIL: expected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_parse: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             ndt_del(t);
@@ -136,17 +136,17 @@ main(void)
 
         ndt_free(s);
         ndt_del(t);
-        test_strings++;
+        test_parse++;
     }
-    fprintf(stderr, "test_strings: PASS (%d test cases)\n", test_strings);
+    fprintf(stderr, "test_parse: PASS (%d test cases)\n", test_parse);
 
 
     /* Test roundtrip (valid input) */
-    for (input = ndt_test_roundtrip; *input != NULL; input++) {
+    for (input = ndt_test_parse_roundtrip; *input != NULL; input++) {
         t = ndt_from_string(*input, ctx);
         if (t == NULL) {
-            fprintf(stderr, "test_roundtrip: parse: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_roundtrip: parse: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_parse_roundtrip: parse: FAIL: expected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_parse_roundtrip: parse: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             goto out;
@@ -154,8 +154,8 @@ main(void)
 
         s = ndt_as_string(t, ctx);
         if (s == NULL) {
-            fprintf(stderr, "test_roundtrip: convert: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_roundtrip: convert: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: expected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             ndt_del(t);
@@ -163,8 +163,8 @@ main(void)
         }
 
         if (strcmp(s, *input) != 0) {
-            fprintf(stderr, "test_roundtrip: convert: FAIL: input:     \"%s\"\n", *input);
-            fprintf(stderr, "test_roundtrip: convert: FAIL: roundtrip: \"%s\"\n", s);
+            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: input:     \"%s\"\n", *input);
+            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: roundtrip: \"%s\"\n", s);
             ndt_free(s);
             ndt_del(t);
             goto out;
@@ -172,13 +172,13 @@ main(void)
 
         ndt_free(s);
         ndt_del(t);
-        test_roundtrip++;
+        test_parse_roundtrip++;
     }
-    fprintf(stderr, "test_roundtrip: PASS (%d test cases)\n", test_roundtrip);
+    fprintf(stderr, "test_parse_roundtrip: PASS (%d test cases)\n", test_parse_roundtrip);
 
 
     /* Test invalid input */
-    for (input = ndt_test_error_strings; *input != NULL; input++) {
+    for (input = ndt_test_parse_error; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
             ndt_set_alloc_fail();
@@ -189,25 +189,25 @@ main(void)
             }
             if (t != NULL) {
                 ndt_del(t);
-                fprintf(stderr, "test_error_strings: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_parse_error: FAIL: t != NULL after MemoryError\n");
                 goto out;
             }
         }
         if (t != NULL) {
             ndt_del(t);
-            fprintf(stderr, "test_error_strings: FAIL: unexpected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_error_strings: FAIL: t != NULL after %s: %s\n",
+            fprintf(stderr, "test_parse_error: FAIL: unexpected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_parse_error: FAIL: t != NULL after %s: %s\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             goto out;
         }
-        test_error_strings++;
+        test_parse_error++;
     }
-    fprintf(stderr, "test_error_strings: PASS (%d test cases)\n", test_error_strings);
+    fprintf(stderr, "test_parse_error: PASS (%d test cases)\n", test_parse_error);
 
 
     /* Test map: valid strings */
-    for (input = ndt_test_map_names; *input != NULL; input++) {
+    for (input = ndt_test_nominal; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
             t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
@@ -219,25 +219,25 @@ main(void)
                 break;
             }
 
-            if (ndt_nominal_map_lookup(*input, ctx) != NULL) {
-                fprintf(stderr, "test_map_names: FAIL: key in map after MemoryError\n");
+            if (ndt_nominal_lookup(*input, ctx) != NULL) {
+                fprintf(stderr, "test_nominal: FAIL: key in map after MemoryError\n");
                 goto out;
             }
         }
-        if (ndt_nominal_map_lookup(*input, ctx) == NULL) {
-            fprintf(stderr, "test_map_names: FAIL: key not found: \"%s\"\n", *input);
-            fprintf(stderr, "test_map_names: FAIL: lookup failed after %s: %s\n",
+        if (ndt_nominal_lookup(*input, ctx) == NULL) {
+            fprintf(stderr, "test_nominal: FAIL: key not found: \"%s\"\n", *input);
+            fprintf(stderr, "test_nominal: FAIL: lookup failed after %s: %s\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             goto out;
         }
-        test_map_names++;
+        test_nominal++;
     }
-    fprintf(stderr, "test_map_names: PASS (%d test cases)\n", test_map_names);
+    fprintf(stderr, "test_nominal: PASS (%d test cases)\n", test_nominal);
 
 
     /* Test map: duplicate strings */
-    for (input = ndt_test_map_names; *input != NULL; input++) {
+    for (input = ndt_test_nominal; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
             t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
@@ -249,22 +249,22 @@ main(void)
                 break;
             }
 
-            if (ndt_nominal_map_lookup(*input, ctx) == NULL) {
-                fprintf(stderr, "test_map_names: FAIL: key should be in map\n");
+            if (ndt_nominal_lookup(*input, ctx) == NULL) {
+                fprintf(stderr, "test_nominal: FAIL: key should be in map\n");
                 goto out;
             }
         }
         if (ctx->err != NDT_ValueError) {
-            fprintf(stderr, "test_map_names: FAIL: no value error after duplicate key: \"%s\"\n", *input);
+            fprintf(stderr, "test_nominal: FAIL: no value error after duplicate key: \"%s\"\n", *input);
             goto out;
         }
-        test_map_duplicates++;
+        test_nominal_duplicates++;
     }
-    fprintf(stderr, "test_map_duplicates: PASS (%d test cases)\n", test_map_duplicates);
+    fprintf(stderr, "test_nominal_duplicates: PASS (%d test cases)\n", test_nominal_duplicates);
 
 
     /* Test map: invalid strings */
-    for (input = ndt_test_error_map_names; *input != NULL; input++) {
+    for (input = ndt_test_nominal_error; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
             t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
@@ -276,21 +276,21 @@ main(void)
                 break;
             }
 
-            if (ndt_nominal_map_lookup(*input, ctx) != NULL) {
-                fprintf(stderr, "test_error_map_names: FAIL: key in map after MemoryError\n");
+            if (ndt_nominal_lookup(*input, ctx) != NULL) {
+                fprintf(stderr, "test_nominal_error: FAIL: key in map after MemoryError\n");
                 goto out;
             }
         }
-        if (ndt_nominal_map_lookup(*input, ctx) != NULL) {
-            fprintf(stderr, "test_error_map_names: FAIL: unexpected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_error_map_names: FAIL: key in map after %s: %s\n",
+        if (ndt_nominal_lookup(*input, ctx) != NULL) {
+            fprintf(stderr, "test_nominal_error: FAIL: unexpected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_nominal_error: FAIL: key in map after %s: %s\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             goto out;
         }
-        test_error_map_names++;
+        test_nominal_error++;
     }
-    fprintf(stderr, "test_error_map_names: PASS (%d test cases)\n", test_error_map_names);
+    fprintf(stderr, "test_nominal_error: PASS (%d test cases)\n", test_nominal_error);
     ret = 0;
 
 out:

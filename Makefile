@@ -85,8 +85,8 @@ Makefile grammar.y lexer.h
 runtest:\
 Makefile $(LIBSTATIC) FORCE
 	$(CC) -I. $(CFLAGS) -o tests/runtest tests/runtest.c \
-	    tests/alloc_fail.c tests/test_strings.c tests/test_error_strings.c \
-            tests/test_roundtrip.c tests/test_map_names.c $(LIBSTATIC) 
+	    tests/alloc_fail.c tests/test_parse.c tests/test_parse_error.c \
+            tests/test_parse_roundtrip.c tests/test_nominal.c $(LIBSTATIC) 
 
 check:\
 Makefile runtest
@@ -96,8 +96,8 @@ Makefile runtest
 runtest_alloc:\
 Makefile $(LIBSTATIC) FORCE
 	$(CC) -I. $(CFLAGS) -DTEST_ALLOC -o tests/runtest tests/runtest.c \
-	    tests/alloc_fail.c tests/test_strings.c tests/test_error_strings.c \
-            tests/test_roundtrip.c tests/test_map_names.c $(LIBSTATIC)
+	    tests/alloc_fail.c tests/test_parse.c tests/test_parse_error.c \
+            tests/test_parse_roundtrip.c tests/test_nominal.c $(LIBSTATIC)
 
 memcheck:\
 Makefile runtest_alloc

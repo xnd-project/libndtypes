@@ -130,7 +130,7 @@ ndt_finalize(void)
 }
 
 int
-ndt_nominal_map_insert(const char *key, const ndt_t *value, ndt_context_t *ctx)
+ndt_nominal_insert(const char *key, const ndt_t *value, ndt_context_t *ctx)
 {
     trie_t *t = map;
     const unsigned char *cp;
@@ -167,7 +167,7 @@ ndt_nominal_map_insert(const char *key, const ndt_t *value, ndt_context_t *ctx)
 }
 
 const ndt_t *
-ndt_nominal_map_lookup(const char *key, ndt_context_t *ctx)
+ndt_nominal_lookup(const char *key, ndt_context_t *ctx)
 {
     trie_t *t = map;
     const unsigned char *cp;

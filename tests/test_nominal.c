@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 
-const char *ndt_test_map_names[] = {
+const char *ndt_test_nominal[] = {
     "",
     "a",
     "aa",
@@ -43,7 +43,7 @@ const char *ndt_test_map_names[] = {
     NULL
 };
 
-const char *ndt_test_error_map_names[] = {
+const char *ndt_test_nominal_error[] = {
     "$",
     "a$",
     "aa$",

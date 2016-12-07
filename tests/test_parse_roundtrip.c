@@ -29,8 +29,8 @@
 #include <stdio.h>
 
 
-/* Same as test_string, but can only contain the canonical datashape forms. */
-const char *ndt_test_roundtrip[] = {
+/* Same as test_parse, but can only contain the canonical datashape forms. */
+const char *ndt_test_parse_roundtrip[] = {
   "Fixed * Any",
   "?Fixed * Any",
   "10 * Fixed * Any",

@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 
-const char *ndt_test_strings[] = {
+const char *ndt_test_parse[] = {
   "Fixed * Any",
   "?Fixed * Any",
   "option[Fixed * Any]",
