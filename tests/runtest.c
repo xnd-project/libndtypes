@@ -37,8 +37,8 @@
 extern const char *ndt_test_parse[];
 extern const char *ndt_test_parse_roundtrip[];
 extern const char *ndt_test_parse_error[];
-extern const char *ndt_test_nominal[];
-extern const char *ndt_test_nominal_error[];
+extern const char *ndt_test_typedef[];
+extern const char *ndt_test_typedef_error[];
 
 int
 main(void)
@@ -48,9 +48,9 @@ main(void)
     int test_parse = 0;
     int test_parse_roundtrip = 0;
     int test_parse_error = 0;
-    int test_nominal = 0;
-    int test_nominal_duplicates = 0;
-    int test_nominal_error = 0;
+    int test_typedef = 0;
+    int test_typedef_duplicates = 0;
+    int test_typedef_error = 0;
     char *s;
     ndt_t *t = NULL;
     int ret = 1;
@@ -207,7 +207,7 @@ main(void)
 
 
     /* Test map: valid strings */
-    for (input = ndt_test_nominal; *input != NULL; input++) {
+    for (input = ndt_test_typedef; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
             t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
@@ -219,25 +219,25 @@ main(void)
                 break;
             }
 
-            if (ndt_nominal_lookup(*input, ctx) != NULL) {
-                fprintf(stderr, "test_nominal: FAIL: key in map after MemoryError\n");
+            if (ndt_typedef_find(*input, ctx) != NULL) {
+                fprintf(stderr, "test_typedef: FAIL: key in map after MemoryError\n");
                 goto out;
             }
         }
-        if (ndt_nominal_lookup(*input, ctx) == NULL) {
-            fprintf(stderr, "test_nominal: FAIL: key not found: \"%s\"\n", *input);
-            fprintf(stderr, "test_nominal: FAIL: lookup failed after %s: %s\n",
+        if (ndt_typedef_find(*input, ctx) == NULL) {
+            fprintf(stderr, "test_typedef: FAIL: key not found: \"%s\"\n", *input);
+            fprintf(stderr, "test_typedef: FAIL: lookup failed after %s: %s\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             goto out;
         }
-        test_nominal++;
+        test_typedef++;
     }
-    fprintf(stderr, "test_nominal: PASS (%d test cases)\n", test_nominal);
+    fprintf(stderr, "test_typedef: PASS (%d test cases)\n", test_typedef);
 
 
     /* Test map: duplicate strings */
-    for (input = ndt_test_nominal; *input != NULL; input++) {
+    for (input = ndt_test_typedef; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
             t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
@@ -249,22 +249,22 @@ main(void)
                 break;
             }
 
-            if (ndt_nominal_lookup(*input, ctx) == NULL) {
-                fprintf(stderr, "test_nominal: FAIL: key should be in map\n");
+            if (ndt_typedef_find(*input, ctx) == NULL) {
+                fprintf(stderr, "test_typedef: FAIL: key should be in map\n");
                 goto out;
             }
         }
         if (ctx->err != NDT_ValueError) {
-            fprintf(stderr, "test_nominal: FAIL: no value error after duplicate key: \"%s\"\n", *input);
+            fprintf(stderr, "test_typedef: FAIL: no value error after duplicate key: \"%s\"\n", *input);
             goto out;
         }
-        test_nominal_duplicates++;
+        test_typedef_duplicates++;
     }
-    fprintf(stderr, "test_nominal_duplicates: PASS (%d test cases)\n", test_nominal_duplicates);
+    fprintf(stderr, "test_typedef_duplicates: PASS (%d test cases)\n", test_typedef_duplicates);
 
 
     /* Test map: invalid strings */
-    for (input = ndt_test_nominal_error; *input != NULL; input++) {
+    for (input = ndt_test_typedef_error; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
             t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
@@ -276,21 +276,21 @@ main(void)
                 break;
             }
 
-            if (ndt_nominal_lookup(*input, ctx) != NULL) {
-                fprintf(stderr, "test_nominal_error: FAIL: key in map after MemoryError\n");
+            if (ndt_typedef_find(*input, ctx) != NULL) {
+                fprintf(stderr, "test_typedef_error: FAIL: key in map after MemoryError\n");
                 goto out;
             }
         }
-        if (ndt_nominal_lookup(*input, ctx) != NULL) {
-            fprintf(stderr, "test_nominal_error: FAIL: unexpected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_nominal_error: FAIL: key in map after %s: %s\n",
+        if (ndt_typedef_find(*input, ctx) != NULL) {
+            fprintf(stderr, "test_typedef_error: FAIL: unexpected success: \"%s\"\n", *input);
+            fprintf(stderr, "test_typedef_error: FAIL: key in map after %s: %s\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             goto out;
         }
-        test_nominal_error++;
+        test_typedef_error++;
     }
-    fprintf(stderr, "test_nominal_error: PASS (%d test cases)\n", test_nominal_error);
+    fprintf(stderr, "test_typedef_error: PASS (%d test cases)\n", test_typedef_error);
     ret = 0;
 
 out:

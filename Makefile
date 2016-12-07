@@ -86,7 +86,7 @@ runtest:\
 Makefile $(LIBSTATIC) FORCE
 	$(CC) -I. $(CFLAGS) -o tests/runtest tests/runtest.c \
 	    tests/alloc_fail.c tests/test_parse.c tests/test_parse_error.c \
-            tests/test_parse_roundtrip.c tests/test_nominal.c $(LIBSTATIC) 
+            tests/test_parse_roundtrip.c tests/test_typedef.c $(LIBSTATIC) 
 
 check:\
 Makefile runtest
@@ -97,7 +97,7 @@ runtest_alloc:\
 Makefile $(LIBSTATIC) FORCE
 	$(CC) -I. $(CFLAGS) -DTEST_ALLOC -o tests/runtest tests/runtest.c \
 	    tests/alloc_fail.c tests/test_parse.c tests/test_parse_error.c \
-            tests/test_parse_roundtrip.c tests/test_nominal.c $(LIBSTATIC)
+            tests/test_parse_roundtrip.c tests/test_typedef.c $(LIBSTATIC)
 
 memcheck:\
 Makefile runtest_alloc

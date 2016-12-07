@@ -58,24 +58,23 @@ init_charmap(void)
 
 
 /*****************************************************************************/
-/*                                  Trie                                     */
+/*                            Global typedef map                             */
 /*****************************************************************************/
 
-typedef struct trie trie_t;
-struct trie {
+typedef struct typedef_trie {
     const ndt_t *value;
-    trie_t *next[];
-};
+    struct typedef_trie *next[];
+} typedef_trie_t;
 
-static trie_t *map = NULL;
+static typedef_trie_t *typedef_map = NULL;
 
-static trie_t *
-trie_new(ndt_context_t *ctx)
+static typedef_trie_t *
+typedef_trie_new(ndt_context_t *ctx)
 {
-    trie_t *t;
+    typedef_trie_t *t;
     int i;
 
-    t = ndt_alloc(1, offsetof(trie_t, next) + ALPHABET_LEN * (sizeof t));
+    t = ndt_alloc(1, offsetof(typedef_trie_t, next) + ALPHABET_LEN * (sizeof t));
     if (t == NULL) {
         ndt_err_format(ctx, NDT_MemoryError, "out of memory");
         return NULL;
@@ -91,7 +90,7 @@ trie_new(ndt_context_t *ctx)
 }
 
 static void
-trie_del(trie_t *t)
+typedef_trie_del(typedef_trie_t *t)
 {
     int i;
 
@@ -102,20 +101,19 @@ trie_del(trie_t *t)
     ndt_del((ndt_t *)t->value);
 
     for (i = 0; i < ALPHABET_LEN; i++) {
-        trie_del(t->next[i]);
+        typedef_trie_del(t->next[i]);
     }
 
     ndt_free(t);
 }
-
 
 int
 ndt_init(ndt_context_t *ctx)
 {
     init_charmap();
 
-    map = trie_new(ctx);
-    if (map == NULL) {
+    typedef_map = typedef_trie_new(ctx);
+    if (typedef_map == NULL) {
         return -1;
     }
 
@@ -125,14 +123,14 @@ ndt_init(ndt_context_t *ctx)
 void
 ndt_finalize(void)
 {
-    trie_del(map);
-    map = NULL;
+    typedef_trie_del(typedef_map);
+    typedef_map = NULL;
 }
 
 int
-ndt_nominal_insert(const char *key, const ndt_t *value, ndt_context_t *ctx)
+ndt_typedef_add(const char *key, const ndt_t *value, ndt_context_t *ctx)
 {
-    trie_t *t = map;
+    typedef_trie_t *t = typedef_map;
     const unsigned char *cp;
     int i;
 
@@ -145,7 +143,7 @@ ndt_nominal_insert(const char *key, const ndt_t *value, ndt_context_t *ctx)
         }
 
         if (t->next[i] == NULL) {
-            trie_t *u = trie_new(ctx);
+            typedef_trie_t *u = typedef_trie_new(ctx);
             if (u == NULL) {
                 return -1;
             }
@@ -167,9 +165,9 @@ ndt_nominal_insert(const char *key, const ndt_t *value, ndt_context_t *ctx)
 }
 
 const ndt_t *
-ndt_nominal_lookup(const char *key, ndt_context_t *ctx)
+ndt_typedef_find(const char *key, ndt_context_t *ctx)
 {
-    trie_t *t = map;
+    typedef_trie_t *t = typedef_map;
     const unsigned char *cp;
     int i;
 

@@ -447,8 +447,8 @@ ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
 
 int ndt_init(ndt_context_t *ctx);
 void ndt_finalize(void);
-int ndt_nominal_insert(const char *name, const ndt_t *type, ndt_context_t *ctx);
-const ndt_t *ndt_nominal_lookup(const char *name, ndt_context_t *ctx);
+int ndt_typedef_add(const char *name, const ndt_t *type, ndt_context_t *ctx);
+const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 
 
 /******************************************************************************/
