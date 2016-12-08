@@ -311,7 +311,7 @@ comma_variadic_flag:
 | COMMA ELLIPSIS { $$ = Variadic; }
 
 tuple_type:
-  LPAREN variadic_flag RPAREN                       { $$ = ndt_tuple($2, NULL, 0, ctx); if ($$ == NULL) YYABORT; }
+  LPAREN variadic_flag RPAREN                       { $$ = mk_tuple($2, NULL, ctx); if ($$ == NULL) YYABORT; }
 | LPAREN tuple_field_seq comma_variadic_flag RPAREN { $$ = mk_tuple($3, $2, ctx); if ($$ == NULL) YYABORT; }
 
 tuple_field_seq:
@@ -322,7 +322,7 @@ tuple_field:
   datashape { $$ = ndt_tuple_field($1, ctx); if ($$ == NULL) YYABORT; }
 
 record_type:
-  LBRACE variadic_flag RBRACE                        { $$ = ndt_record($2, NULL, 0, ctx); if ($$ == NULL) YYABORT; }
+  LBRACE variadic_flag RBRACE                        { $$ = mk_record($2, NULL, ctx); if ($$ == NULL) YYABORT; }
 | LBRACE record_field_seq comma_variadic_flag RBRACE { $$ = mk_record($3, $2, ctx); if ($$ == NULL) YYABORT; }
 
 record_field_seq:
@@ -339,7 +339,7 @@ record_field_name:
 
 function_type:
   tuple_type RARROW datashape
-    { $$ = ndt_function($3, $1, NULL, ctx); if ($$ == NULL) YYABORT; }
+    { $$ = mk_function_from_tuple($3, $1, ctx); if ($$ == NULL) YYABORT; }
 | LPAREN record_field_seq comma_variadic_flag RPAREN RARROW datashape
     { $$ = mk_function($6, Nonvariadic, NULL, $3, $2, ctx); if ($$ == NULL) YYABORT; }
 | LPAREN ELLIPSIS COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape

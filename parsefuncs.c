@@ -153,6 +153,10 @@ mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *seq, ndt_context_t 
 {
     ndt_t *t;
 
+    if (seq == NULL) {
+        return ndt_tuple(flag, NULL, 0, ctx);
+    }
+
     seq = ndt_tuple_field_seq_finalize(seq);
     t = ndt_tuple(flag, seq->ptr, seq->len, ctx);
 
@@ -164,6 +168,10 @@ ndt_t *
 mk_record(enum ndt_variadic_flag flag, ndt_record_field_seq_t *seq, ndt_context_t *ctx)
 {
     ndt_t *t;
+
+    if (seq == NULL) {
+        return ndt_record(flag, NULL, 0, ctx);
+    }
 
     seq = ndt_record_field_seq_finalize(seq);
     t = ndt_record(flag, seq->ptr, seq->len, ctx);
@@ -181,30 +189,33 @@ mk_function(ndt_t *ret,
     ndt_t *pos = NULL;
     ndt_t *kwds = NULL;
 
-    if (tseq) {
-        pos = mk_tuple(tflag, tseq, ctx);
-        if (pos == NULL) {
-            ndt_del(ret);
-            ndt_record_field_seq_del(rseq);
-            return NULL;
-        }
-    }
-    else if (tflag == Variadic) {
-        pos = ndt_tuple(Variadic, NULL, 0, ctx);
-        if (pos == NULL) {
-            ndt_del(ret);
-            ndt_record_field_seq_del(rseq);
-            return NULL;
-        }
+    pos = mk_tuple(tflag, tseq, ctx);
+    if (pos == NULL) {
+        ndt_del(ret);
+        ndt_record_field_seq_del(rseq);
+        return NULL;
     }
 
-    if (rseq) {
-        kwds = mk_record(rflag, rseq, ctx);
-        if (kwds == NULL) {
-            ndt_del(ret);
-            ndt_del(pos);
-            return NULL;
-        }
+    kwds = mk_record(rflag, rseq, ctx);
+    if (kwds == NULL) {
+        ndt_del(ret);
+        ndt_del(pos);
+        return NULL;
+    }
+
+    return ndt_function(ret, pos, kwds, ctx);
+}
+
+ndt_t *
+mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx)
+{
+    ndt_t *kwds = NULL;
+
+    kwds = ndt_record(Nonvariadic, NULL, 0, ctx);
+    if (kwds == NULL) {
+        ndt_del(ret);
+        ndt_del(pos);
+        return NULL;
     }
 
     return ndt_function(ret, pos, kwds, ctx);

@@ -2388,7 +2388,7 @@ yyreduce:
 
   case 87:
 #line 314 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = ndt_tuple((yyvsp[-1].variadic_flag), NULL, 0, ctx); if ((yyval.ndt) == NULL) YYABORT; }
+    { (yyval.ndt) = mk_tuple((yyvsp[-1].variadic_flag), NULL, ctx); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2393 "grammar.c" /* yacc.c:1646  */
     break;
 
@@ -2418,7 +2418,7 @@ yyreduce:
 
   case 92:
 #line 325 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = ndt_record((yyvsp[-1].variadic_flag), NULL, 0, ctx); if ((yyval.ndt) == NULL) YYABORT; }
+    { (yyval.ndt) = mk_record((yyvsp[-1].variadic_flag), NULL, ctx); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2423 "grammar.c" /* yacc.c:1646  */
     break;
 
@@ -2466,7 +2466,7 @@ yyreduce:
 
   case 100:
 #line 342 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = ndt_function((yyvsp[0].ndt), (yyvsp[-2].ndt), NULL, ctx); if ((yyval.ndt) == NULL) YYABORT; }
+    { (yyval.ndt) = mk_function_from_tuple((yyvsp[0].ndt), (yyvsp[-2].ndt), ctx); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2471 "grammar.c" /* yacc.c:1646  */
     break;
 

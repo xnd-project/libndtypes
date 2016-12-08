@@ -161,43 +161,40 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "}");
             return n;
  
-        case Function:
+        case Function: {
+            ndt_t *pos = t->Function.pos;
+            ndt_t *kwds = t->Function.kwds;
+
             n = ndt_snprintf(ctx, buf, "(");
             if (n < 0) return -1;
 
-            if (t->Function.pos) {
-                ndt_t *u = t->Function.pos;
-                if (u->Tuple.fields) {
-                    n = tuple_fields(buf, u->Tuple.fields, u->Tuple.shape, ctx);
-                    if (n < 0) return -1;
+            if (pos->Tuple.fields) {
+                n = tuple_fields(buf, pos->Tuple.fields, pos->Tuple.shape, ctx);
+                if (n < 0) return -1;
 
-                    n = comma_variadic_flag(buf, u->Tuple.flag, ctx);
-                    if (n < 0) return -1;
-                }
-                else {
-                    n = variadic_flag(buf, u->Tuple.flag, ctx);
-                    if (n < 0) return -1;
-                }
+                n = comma_variadic_flag(buf, pos->Tuple.flag, ctx);
+                if (n < 0) return -1;
+            }
+            else {
+                n = variadic_flag(buf, pos->Tuple.flag, ctx);
+                if (n < 0) return -1;
             }
 
-            if (t->Function.kwds) {
-                ndt_t *u = t->Function.kwds;
-                if (u->Record.fields) {
-                    if (t->Function.pos) {
-                        n = ndt_snprintf(ctx, buf, ", ");
-                        if (n < 0) return -1;
-                    }
-
-                    n = record_fields(buf, u->Record.fields, u->Record.shape, ctx);
-                    if (n < 0) return -1;
-
-                    n = comma_variadic_flag(buf, u->Record.flag, ctx);
+            if (kwds->Record.fields) {
+                if (pos->Tuple.flag == Variadic || pos->Tuple.fields) {
+                    n = ndt_snprintf(ctx, buf, ", ");
                     if (n < 0) return -1;
                 }
-                else {
-                    n = variadic_flag(buf, u->Record.flag, ctx);
-                    if (n < 0) return -1;
-                }
+
+                n = record_fields(buf, kwds->Record.fields, kwds->Record.shape, ctx);
+                if (n < 0) return -1;
+
+                n = comma_variadic_flag(buf, kwds->Record.flag, ctx);
+                if (n < 0) return -1;
+            }
+            else {
+                n = variadic_flag(buf, kwds->Record.flag, ctx);
+                if (n < 0) return -1;
             }
 
             n = ndt_snprintf(ctx, buf, ") -> ");
@@ -205,6 +202,7 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 
             n = datashape(buf, t->Function.ret, ctx);
             return n;
+        }
 
         case Typevar:
             n = ndt_snprintf(ctx, buf, "%s", t->Typevar.name);

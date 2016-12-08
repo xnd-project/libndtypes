@@ -56,6 +56,7 @@ ndt_t *mk_function(ndt_t *ret,
                    enum ndt_variadic_flag tflag, ndt_tuple_field_seq_t *tseq,
                    enum ndt_variadic_flag rflag, ndt_record_field_seq_t *rseq,
                    ndt_context_t *ctx);
+ndt_t *mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx);
 ndt_t *mk_categorical(ndt_memory_seq_t *seq, ndt_context_t *ctx);
 
 
