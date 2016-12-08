@@ -339,6 +339,7 @@ const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 
 int ndt_is_unsigned(ndt_t *t);
 int ndt_is_signed(ndt_t *t);
+int ndt_equal(const ndt_t *p, const ndt_t *c);
 
 
 /*** String conversion ***/

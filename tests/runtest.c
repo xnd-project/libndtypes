@@ -51,8 +51,10 @@ main(void)
     int test_typedef = 0;
     int test_typedef_duplicates = 0;
     int test_typedef_error = 0;
+    int test_equality = 0;
     char *s;
     ndt_t *t = NULL;
+    ndt_t *u = NULL;
     int ret = 1;
 
     ctx = ndt_context_new();
@@ -85,6 +87,10 @@ main(void)
         ndt_err_fprint(stderr, ctx);
         goto out;
     }
+
+    /******************************************************************/
+    /*                             Parser                             */
+    /******************************************************************/
 
     /* Test valid input */
     for (input = ndt_test_parse; *input != NULL; input++) {
@@ -140,7 +146,6 @@ main(void)
     }
     fprintf(stderr, "test_parse: PASS (%d test cases)\n", test_parse);
 
-
     /* Test roundtrip (valid input) */
     for (input = ndt_test_parse_roundtrip; *input != NULL; input++) {
         t = ndt_from_string(*input, ctx);
@@ -176,7 +181,6 @@ main(void)
     }
     fprintf(stderr, "test_parse_roundtrip: PASS (%d test cases)\n", test_parse_roundtrip);
 
-
     /* Test invalid input */
     for (input = ndt_test_parse_error; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
@@ -206,7 +210,11 @@ main(void)
     fprintf(stderr, "test_parse_error: PASS (%d test cases)\n", test_parse_error);
 
 
-    /* Test map: valid strings */
+    /******************************************************************/
+    /*                          Typedef table                         */
+    /******************************************************************/
+
+    /* Test valid names */
     for (input = ndt_test_typedef; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
@@ -235,8 +243,7 @@ main(void)
     }
     fprintf(stderr, "test_typedef: PASS (%d test cases)\n", test_typedef);
 
-
-    /* Test map: duplicate strings */
+    /* Test duplicate names */
     for (input = ndt_test_typedef; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
@@ -262,8 +269,7 @@ main(void)
     }
     fprintf(stderr, "test_typedef_duplicates: PASS (%d test cases)\n", test_typedef_duplicates);
 
-
-    /* Test map: invalid strings */
+    /* Test invalid names */
     for (input = ndt_test_typedef_error; *input != NULL; input++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
@@ -291,6 +297,49 @@ main(void)
         test_typedef_error++;
     }
     fprintf(stderr, "test_typedef_error: PASS (%d test cases)\n", test_typedef_error);
+
+
+    /******************************************************************/
+    /*                          Type equality                         */
+    /******************************************************************/
+
+    /* Test equality */
+    for (input = ndt_test_parse_roundtrip; *input && *(input+1); input++) {
+        ndt_err_clear(ctx);
+        t = ndt_from_string(*input, ctx);
+        if (t == NULL) {
+            fprintf(stderr, "test_equality: FAIL: could not parse \"%s\"\n", *input);
+            goto out;
+        }
+
+        u = ndt_from_string(*(input+1), ctx);
+        if (u == NULL) {
+            ndt_del(t);
+            fprintf(stderr, "test_equality: FAIL: could not parse \"%s\"\n", *(input+1));
+            goto out;
+        }
+
+        if (!ndt_equal(t, t)) {
+            ndt_del(t);
+            ndt_del(u);
+            fprintf(stderr, "test_equality: FAIL: \"%s\" != \"%s\"\n", *input, *input);
+            goto out;
+        }
+
+        if (ndt_equal(t, u)) {
+            ndt_del(t);
+            ndt_del(u);
+            fprintf(stderr, "test_equality: FAIL: \"%s\" == \"%s\"\n", *input, *(input+1));
+            goto out;
+        }
+
+        ndt_del(t);
+        ndt_del(u);
+        test_equality++;
+    }
+    fprintf(stderr, "test_equality: PASS (%d test cases)\n", test_equality);
+
+
     ret = 0;
 
 out:
