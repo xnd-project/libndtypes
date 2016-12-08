@@ -29,7 +29,7 @@
 {
    flex_inadequate_error_handling_dbg2
    Memcheck:Leak
-   match-leak-kinds: definite
+   match-leak-kinds: possible
    fun:malloc
    fun:ndt_alloc_fail
    fun:ndt_alloc
@@ -66,7 +66,7 @@
 {
    flex_inadequate_error_handling_opt2
    Memcheck:Leak
-   match-leak-kinds: definite
+   match-leak-kinds: possible
    fun:malloc
    fun:yyalloc
    fun:yy_scan_buffer
