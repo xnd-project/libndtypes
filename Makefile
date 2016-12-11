@@ -20,8 +20,8 @@ endif
 default: $(LIBSTATIC)
 
 
-OBJS = alloc.o display.o equal.o grammar.o lexer.o map.o match.o ndtypes.o \
-       parsefuncs.o parser.o seq.o
+OBJS = alloc.o display.o equal.o grammar.o lexer.o match.o ndtypes.o \
+       parsefuncs.o parser.o seq.o symtable.o
 
 $(LIBSTATIC):\
 Makefile $(OBJS)
@@ -48,9 +48,9 @@ lexer.o:\
 Makefile lexer.c lexer.h grammar.h
 	$(CC) $(CFLAGS) -c lexer.c
 
-map.o:\
-Makefile map.c ndtypes.h
-	$(CC) $(CFLAGS) -c map.c
+symtable.o:\
+Makefile symtable.c symtable.h ndtypes.h
+	$(CC) $(CFLAGS) -c symtable.c
 
 match.o:\
 Makefile match.c ndtypes.h
