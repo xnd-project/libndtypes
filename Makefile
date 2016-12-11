@@ -20,7 +20,7 @@ endif
 default: $(LIBSTATIC)
 
 
-OBJS = alloc.o display.o equal.o grammar.o lexer.o map.o ndtypes.o \
+OBJS = alloc.o display.o equal.o grammar.o lexer.o map.o match.o ndtypes.o \
        parsefuncs.o parser.o seq.o
 
 $(LIBSTATIC):\
@@ -51,6 +51,10 @@ Makefile lexer.c lexer.h grammar.h
 map.o:\
 Makefile map.c ndtypes.h
 	$(CC) $(CFLAGS) -c map.c
+
+match.o:\
+Makefile match.c ndtypes.h
+	$(CC) $(CFLAGS) -c match.c
 
 ndtypes.o:\
 Makefile ndtypes.c ndtypes.h
@@ -90,10 +94,11 @@ runtest:\
 Makefile $(LIBSTATIC) FORCE
 	$(CC) -I. $(CFLAGS) -o tests/runtest tests/runtest.c \
 	    tests/alloc_fail.c tests/test_parse.c tests/test_parse_error.c \
-            tests/test_parse_roundtrip.c tests/test_typedef.c $(LIBSTATIC) 
+            tests/test_parse_roundtrip.c tests/test_typedef.c tests/test_match.c \
+            $(LIBSTATIC) 
 
 check:\
-Makefile runtest
+Makefile runtest_alloc
 	./tests/runtest
 
 # Tests with injected allocation failures
@@ -101,7 +106,8 @@ runtest_alloc:\
 Makefile $(LIBSTATIC) FORCE
 	$(CC) -I. $(CFLAGS) -DTEST_ALLOC -o tests/runtest tests/runtest.c \
 	    tests/alloc_fail.c tests/test_parse.c tests/test_parse_error.c \
-            tests/test_parse_roundtrip.c tests/test_typedef.c $(LIBSTATIC)
+            tests/test_parse_roundtrip.c tests/test_typedef.c tests/test_match.c \
+            $(LIBSTATIC)
 
 memcheck:\
 Makefile runtest_alloc

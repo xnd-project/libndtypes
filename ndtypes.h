@@ -337,9 +337,13 @@ const char *ndt_tag_as_string(enum ndt tag);
 enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 
-int ndt_is_unsigned(ndt_t *t);
-int ndt_is_signed(ndt_t *t);
+int ndt_is_signed(const ndt_t *t);
+int ndt_is_unsigned(const ndt_t *t);
+int ndt_is_real(const ndt_t *t);
+int ndt_is_complex(const ndt_t *t);
+int ndt_is_scalar(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
+int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 
 
 /*** String conversion ***/
@@ -431,7 +435,8 @@ ndt_t *ndt_pointer(ndt_t *type, ndt_context_t *ctx);
 /* Typed values */
 ndt_memory_t *ndt_memory_from_number(char *v, ndt_t *t, ndt_context_t *ctx);
 ndt_memory_t *ndt_memory_from_string(char *v, ndt_t *t, ndt_context_t *ctx);
-int ndt_memory_equal(ndt_memory_t *x, ndt_memory_t *y);
+int ndt_memory_equal(const ndt_memory_t *x, const ndt_memory_t *y);
+int ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y);
 
 
 /******************************************************************************/

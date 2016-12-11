@@ -19,7 +19,7 @@ CFLAGS_FOR_PARSER = /W4 /wd4201 /wd4090 /nologo /DYY_NO_UNISTD_H=1 $(OPT)
 default: $(LIBSTATIC)
 
 
-OBJS = alloc.obj display.obj equal.obj grammar.obj lexer.obj map.obj \
+OBJS = alloc.obj display.obj equal.obj grammar.obj lexer.obj map.obj match.obj \
        ndtypes.obj parsefuncs.obj parser.obj seq.obj
 
 $(LIBSTATIC):\
@@ -49,6 +49,10 @@ map.obj:\
 Makefile map.c ndtypes.h
         $(CC) $(CFLAGS) -c map.c
 
+match.obj:\
+Makefile match.c ndtypes.h
+       $(CC) $(CFLAGS) -c match.c
+
 ndtypes.obj:\
 Makefile ndtypes.c ndtypes.h
 	$(CC) $(CFLAGS) -c ndtypes.c
@@ -70,10 +74,11 @@ runtest:\
 Makefile $(LIBSTATIC) FORCE
 	$(CC) -I. $(CFLAGS) /Fetests\runtest.exe tests\runtest.c \
             tests\alloc_fail.c tests\test_parse.c tests\test_parse_error.c \
-            tests\test_parse_roundtrip.c tests\test_typedef.c $(LIBSTATIC) 
+            tests\test_parse_roundtrip.c tests\test_typedef.c tests\test_match.c \
+            $(LIBSTATIC) 
 
 check:\
-Makefile runtest
+Makefile runtest_alloc
 	.\tests\runtest.exe
 
 # Tests with injected allocation failures
@@ -81,7 +86,8 @@ runtest_alloc:\
 Makefile $(LIBSTATIC) FORCE
 	$(CC) -I. $(CFLAGS) -DTEST_ALLOC /Fetests\runtest.exe tests\runtest.c \
             tests\alloc_fail.c tests\test_parse.c tests\test_parse_error.c \
-            tests\test_parse_roundtrip.c tests\test_typedef.c $(LIBSTATIC)
+            tests\test_parse_roundtrip.c tests\test_typedef.c tests\test_match.c \
+            $(LIBSTATIC)
 
 memcheck:\
 Makefile runtest_alloc

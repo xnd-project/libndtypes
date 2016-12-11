@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include "ndtypes.h"
+#include "symtable.h"
 
 
 /*****************************************************************************/
@@ -108,26 +109,6 @@ typedef_trie_del(typedef_trie_t *t)
 }
 
 int
-ndt_init(ndt_context_t *ctx)
-{
-    init_charmap();
-
-    typedef_map = typedef_trie_new(ctx);
-    if (typedef_map == NULL) {
-        return -1;
-    }
-
-    return 0;
-}
-
-void
-ndt_finalize(void)
-{
-    typedef_trie_del(typedef_map);
-    typedef_map = NULL;
-}
-
-int
 ndt_typedef_add(const char *key, const ndt_t *value, ndt_context_t *ctx)
 {
     typedef_trie_t *t = typedef_map;
@@ -195,3 +176,130 @@ ndt_typedef_find(const char *key, ndt_context_t *ctx)
 
     return t->value;
 }
+
+
+/*****************************************************************************/
+/*                     Initialize/finalize global values                     */
+/*****************************************************************************/
+
+int
+ndt_init(ndt_context_t *ctx)
+{
+    init_charmap();
+
+    typedef_map = typedef_trie_new(ctx);
+    if (typedef_map == NULL) {
+        return -1;
+    }
+
+    return 0;
+}
+
+void
+ndt_finalize(void)
+{
+    typedef_trie_del(typedef_map);
+    typedef_map = NULL;
+}
+
+
+/*****************************************************************************/
+/*                        Symbol tables for matching                         */
+/*****************************************************************************/
+
+symtable_t *
+symtable_new(ndt_context_t *ctx)
+{
+    symtable_t *t;
+    int i;
+
+    t = ndt_alloc(1, offsetof(symtable_t, next) + ALPHABET_LEN * (sizeof t));
+    if (t == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        return NULL;
+    }
+
+    t->entry.tag = Unbound;
+
+    for (i = 0; i < ALPHABET_LEN; i++) {
+        t->next[i] = NULL;
+    }
+
+    return t;
+}
+
+void
+symtable_del(symtable_t *t)
+{
+    int i;
+
+    if (t == NULL) {
+        return;
+    }
+
+    for (i = 0; i < ALPHABET_LEN; i++) {
+        symtable_del(t->next[i]);
+    }
+
+    ndt_free(t);
+}
+
+int
+symtable_add(symtable_t *t, const char *key, const symtable_entry_t entry,
+                 ndt_context_t *ctx)
+{
+    const unsigned char *cp;
+    int i;
+
+    for (cp = (const unsigned char *)key; *cp != '\0'; cp++) {
+        i = code[*cp];
+        if (i == UCHAR_MAX) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "invalid character in symbol: '%c'", *cp);
+            return -1;
+        }
+
+        if (t->next[i] == NULL) {
+            symtable_t *u = symtable_new(ctx);
+            if (u == NULL) {
+                return -1;
+            }
+            t->next[i] = u;
+            t = u;
+        }
+        else {
+            t = t->next[i];
+        }
+    }
+
+    if (t->entry.tag != Unbound) {
+        ndt_err_format(ctx, NDT_ValueError, "duplicate binding for '%s'", key);
+        return -1;
+    }
+
+    t->entry = entry;
+    return 0;
+}
+
+symtable_entry_t
+symtable_find(const symtable_t *t, const char *key)
+{
+    symtable_entry_t unbound = { .tag=Unbound };
+    const unsigned char *cp;
+    int i;
+
+    for (cp = (const unsigned char *)key; *cp != '\0'; cp++) {
+        i = code[*cp];
+        if (i == UCHAR_MAX) {
+            return unbound; /* NOT REACHED */
+        }
+
+        if (t->next[i] == NULL) {
+            return unbound;
+        }
+        t = t->next[i];
+    }
+
+    return t->entry;
+}
+

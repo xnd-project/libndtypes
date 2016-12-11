@@ -906,16 +906,41 @@ ndt_fixed_bytes(size_t size, uint8_t align, ndt_context_t *ctx)
     return t;
 }
 
+/* Define a sort order for the typed values in the categorical set. */
+static int
+cmp(const void *x, const void *y)
+{
+    const ndt_memory_t *p = (const ndt_memory_t *)x;
+    const ndt_memory_t *q = (const ndt_memory_t *)y;
+
+    if (p->t->tag == q->t->tag) {
+        return ndt_memory_compare(p, q);
+    }
+    return p->t->tag - q->t->tag;
+}
+
 ndt_t *
 ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx)
 {
     ndt_t *t;
+    size_t i;
+
+    qsort(types, ntypes, sizeof *types, cmp);
+
+    for (i = 0; i+1 < ntypes; i++) {
+        if (ndt_memory_equal(&types[i], &types[i+1])) {
+            ndt_memory_array_del(types, ntypes);
+            ndt_err_format(ctx, NDT_ValueError, "duplicate category entries");
+            return NULL;
+        }
+    }
 
     t = ndt_new(Categorical, ctx);
     if (t == NULL) {
         ndt_memory_array_del(types, ntypes);
         return NULL;
     }
+
     t->Categorical.ntypes = ntypes;
     t->Categorical.types = types;
 
@@ -938,7 +963,18 @@ ndt_pointer(ndt_t *type, ndt_context_t *ctx)
 }
 
 int
-ndt_is_unsigned(ndt_t *t)
+ndt_is_signed(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Int8: case Int16: case Int32: case Int64:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_unsigned(const ndt_t *t)
 {
     switch (t->tag) {
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -949,10 +985,41 @@ ndt_is_unsigned(ndt_t *t)
 }
 
 int
-ndt_is_signed(ndt_t *t)
+ndt_is_real(const ndt_t *t)
 {
     switch (t->tag) {
+    case Float16: case Float32: case Float64:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_complex(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Complex64: case Complex128:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* XXX: Semantics are not clear: Anything that is not a compound type?
+        What about pointers? Should it be application specific? */
+int
+ndt_is_scalar(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Void: case Bool:
     case Int8: case Int16: case Int32: case Int64:
+    case Uint8: case Uint16: case Uint32: case Uint64:
+    case Float16: case Float32: case Float64:
+    case Complex64: case Complex128:
+    case String:
+    case FixedString:
+    case FixedBytes:
         return 1;
     default:
         return 0;
@@ -1056,7 +1123,7 @@ ndt_memory_from_string(char *v, ndt_t *t, ndt_context_t *ctx)
 }
 
 int
-ndt_memory_equal(ndt_memory_t *x, ndt_memory_t *y)
+ndt_memory_equal(const ndt_memory_t *x, const ndt_memory_t *y)
 {
     if (x->t->tag != y->t->tag) {
         return 0;
@@ -1089,6 +1156,41 @@ ndt_memory_equal(ndt_memory_t *x, ndt_memory_t *y)
         return strcmp(x->v.String, y->v.String) == 0;
     default:
         return 0;
+    }
+}
+
+int
+ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y)
+{
+    assert(x->t->tag == y->t->tag);
+
+    switch(x->t->tag) {
+    case Bool:
+        return x->v.Bool < y->v.Bool ? -1 : x->v.Bool != y->v.Bool;
+    case Int8:
+        return x->v.Int8 < y->v.Int8 ? -1 : x->v.Int8 != y->v.Int8;
+    case Int16:
+        return x->v.Int16 < y->v.Int16 ? -1 : x->v.Int16 != y->v.Int16;
+    case Int32:
+        return x->v.Int32 < y->v.Int32 ? -1 : x->v.Int32 != y->v.Int32;
+    case Int64:
+        return x->v.Int64 < y->v.Int64 ? -1 : x->v.Int64 != y->v.Int64;
+    case Uint8:
+        return x->v.Uint8 < y->v.Uint8 ? -1 : x->v.Uint8 != y->v.Uint8;
+    case Uint16:
+        return x->v.Uint16 < y->v.Uint16 ? -1 : x->v.Uint16 != y->v.Uint16;
+    case Uint32:
+        return x->v.Uint32 < y->v.Uint32 ? -1 : x->v.Uint32 != y->v.Uint32;
+    case Uint64:
+        return x->v.Uint64 < y->v.Uint64 ? -1 : x->v.Uint64 != y->v.Uint64;
+    case Float32:
+        return x->v.Float32 < y->v.Float32 ? -1 : x->v.Float32 != y->v.Float32;
+    case Float64:
+        return x->v.Float64 < y->v.Float64 ? -1 : x->v.Float64 != y->v.Float64;
+    case String:
+        return strcmp(x->v.String, y->v.String);
+    default:
+        abort(); /* NOT REACHED */
     }
 }
 

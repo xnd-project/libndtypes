@@ -2322,7 +2322,7 @@ yyreduce:
 
   case 76:
 #line 293 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = mk_categorical((yyvsp[-1].typed_value_seq), ctx); }
+    { (yyval.ndt) = mk_categorical((yyvsp[-1].typed_value_seq), ctx); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2327 "grammar.c" /* yacc.c:1646  */
     break;
 

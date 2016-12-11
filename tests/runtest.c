@@ -31,6 +31,7 @@
 #include <string.h>
 #include <assert.h>
 #include "ndtypes.h"
+#include "test.h"
 #include "alloc_fail.h"
 
 
@@ -39,6 +40,79 @@ extern const char *ndt_test_parse_roundtrip[];
 extern const char *ndt_test_parse_error[];
 extern const char *ndt_test_typedef[];
 extern const char *ndt_test_typedef_error[];
+
+
+static int
+test_match(void)
+{
+    const match_testcase_t *t;
+    ndt_context_t *ctx;
+    ndt_t *p;
+    ndt_t *c;
+    int ret, count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (t = match_tests; t->pattern != NULL; t++) {
+        p = ndt_from_string(t->pattern, ctx);
+        if (p == NULL) {
+            fprintf(stderr, "test_match: FAIL: could not parse \"%s\"\n", t->pattern);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        c = ndt_from_string(t->candidate, ctx);
+        if (c == NULL) {
+            ndt_del(p);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_match: FAIL: could not parse \"%s\"\n", t->candidate);
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            ret = ndt_match(p, c, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (ret != -1) {
+                ndt_del(p);
+                ndt_del(c);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_match: FAIL: expect ret == -1 after MemoryError\n");
+                fprintf(stderr, "test_match: FAIL: \"%s\"\n", t->pattern);
+                return -1;
+            }
+        }
+
+        if (ret != t->expected) {
+            ndt_del(p);
+            ndt_del(c);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_match: FAIL: expected %s\n", t->expected ? "true" : "false");
+            fprintf(stderr, "test_match: FAIL: pattern: \"%s\"\n", t->pattern);
+            fprintf(stderr, "test_match: FAIL: candidate: \"%s\"\n", t->candidate);
+            return -1;
+        }
+
+        ndt_del(p);
+        ndt_del(c);
+        count++;
+    }
+    fprintf(stderr, "test_match: PASS (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
 
 int
 main(void)
@@ -51,7 +125,7 @@ main(void)
     int test_typedef = 0;
     int test_typedef_duplicates = 0;
     int test_typedef_error = 0;
-    int test_equality = 0;
+    int test_equal = 0;
     char *s;
     ndt_t *t = NULL;
     ndt_t *u = NULL;
@@ -105,6 +179,7 @@ main(void)
             if (t != NULL) {
                 ndt_del(t);
                 fprintf(stderr, "test_parse: parse: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_parse: parse: FAIL: %s\n", *input);
                 goto out;
             }
         }
@@ -308,36 +383,40 @@ main(void)
         ndt_err_clear(ctx);
         t = ndt_from_string(*input, ctx);
         if (t == NULL) {
-            fprintf(stderr, "test_equality: FAIL: could not parse \"%s\"\n", *input);
+            fprintf(stderr, "test_equal: FAIL: could not parse \"%s\"\n", *input);
             goto out;
         }
 
         u = ndt_from_string(*(input+1), ctx);
         if (u == NULL) {
             ndt_del(t);
-            fprintf(stderr, "test_equality: FAIL: could not parse \"%s\"\n", *(input+1));
+            fprintf(stderr, "test_equal: FAIL: could not parse \"%s\"\n", *(input+1));
             goto out;
         }
 
         if (!ndt_equal(t, t)) {
             ndt_del(t);
             ndt_del(u);
-            fprintf(stderr, "test_equality: FAIL: \"%s\" != \"%s\"\n", *input, *input);
+            fprintf(stderr, "test_equal: FAIL: \"%s\" != \"%s\"\n", *input, *input);
             goto out;
         }
 
         if (ndt_equal(t, u)) {
             ndt_del(t);
             ndt_del(u);
-            fprintf(stderr, "test_equality: FAIL: \"%s\" == \"%s\"\n", *input, *(input+1));
+            fprintf(stderr, "test_equal: FAIL: \"%s\" == \"%s\"\n", *input, *(input+1));
             goto out;
         }
 
         ndt_del(t);
         ndt_del(u);
-        test_equality++;
+        test_equal++;
     }
-    fprintf(stderr, "test_equality: PASS (%d test cases)\n", test_equality);
+    fprintf(stderr, "test_equal: PASS (%d test cases)\n", test_equal);
+
+    if (test_match() < 0) {
+        goto out;
+    }
 
 
     ret = 0;

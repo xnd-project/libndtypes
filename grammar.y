@@ -290,7 +290,7 @@ pointer:
   POINTER LBRACK datashape RBRACK { $$ = ndt_pointer($3, ctx); if ($$ == NULL) YYABORT; }
 
 categorical:
-  CATEGORICAL LBRACK typed_value_seq RBRACK { $$ = mk_categorical($3, ctx); }
+  CATEGORICAL LBRACK typed_value_seq RBRACK { $$ = mk_categorical($3, ctx); if ($$ == NULL) YYABORT; }
 
 typed_value_seq:
   typed_value                       { $$ = ndt_memory_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
