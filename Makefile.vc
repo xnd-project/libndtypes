@@ -11,7 +11,7 @@ OPT = /MDd /Od /Zi
 OPT = /MD /Ox /GS /EHsc
 !endif
 
-CFLAGS = /W4 /wd4200 /wd4201 /nologo $(OPT)
+CFLAGS = /W4 /wd4200 /wd4201 /wd4204 /nologo $(OPT)
 CFLAGS_FOR_GENERATED = /W4 /wd4201 /wd4244 /wd4267 /wd4702 /wd4127 /nologo /DYY_NO_UNISTD_H=1 /D__STDC_VERSION__=199901L $(OPT)
 CFLAGS_FOR_PARSER = /W4 /wd4201 /wd4090 /nologo /DYY_NO_UNISTD_H=1 $(OPT)
 
