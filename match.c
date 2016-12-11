@@ -269,12 +269,12 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     case Typevar:
         if (c->tag == Typevar) {
             symtable_entry_t entry = { .tag = SymbolEntry,
-                                       .SymbolEntry = c->Typevar.name };
+                                       .SymbolEntry = (const char *)c->Typevar.name };
             return resolve_sym(p->Typevar.name, entry, tbl, ctx);
         }
         else {
             symtable_entry_t entry = { .tag = TypeEntry,
-                                       .TypeEntry = c };
+                                       .TypeEntry = (const ndt_t *)c };
             return resolve_sym(p->Typevar.name, entry, tbl, ctx);
         }
     case Option:
