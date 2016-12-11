@@ -17,6 +17,6 @@ before_build:
 
 build_script:
   - move /y Makefile.vc Makefile
-  - nmake memcheck
+  - nmake check
 
 

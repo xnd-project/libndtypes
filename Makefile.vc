@@ -31,26 +31,24 @@ alloc.obj:\
 Makefile alloc.c ndtypes.h
 	$(CC) $(CFLAGS) -c alloc.c
 
-display.obj: Makefile display.c ndtypes.h
+display.obj:\
+Makefile display.c ndtypes.h
         $(CC) $(CFLAGS) -c display.c
 
-equal.obj: Makefile equal.c ndtypes.h
+equal.obj:\
+Makefile equal.c ndtypes.h
         $(CC) $(CFLAGS) -c equal.c
 
 grammar.obj:\
-Makefile grammar.c lexer.h ndtypes.h seq.h grammar.h
+Makefile grammar.c grammar.h lexer.h ndtypes.h parsefuncs.h seq.h
 	$(CC) $(CFLAGS_FOR_GENERATED) -c grammar.c
 
 lexer.obj:\
-Makefile lexer.c lexer.h grammar.h
+Makefile lexer.c grammar.h lexer.h parsefuncs.h
 	$(CC) $(CFLAGS_FOR_GENERATED) -c lexer.c
 
-symtable.obj:\
-Makefile symtable.c ndtypes.h
-        $(CC) $(CFLAGS) -c symtable.c
-
 match.obj:\
-Makefile match.c ndtypes.h
+Makefile match.c ndtypes.h symtable.h
        $(CC) $(CFLAGS) -c match.c
 
 ndtypes.obj:\
@@ -58,49 +56,45 @@ Makefile ndtypes.c ndtypes.h
 	$(CC) $(CFLAGS) -c ndtypes.c
 
 parsefuncs.obj:\
-Makefile parsefuncs.c ndtypes.h seq.h parsefuncs.h
+Makefile parsefuncs.c ndtypes.h parsefuncs.h seq.h
 	$(CC) $(CFLAGS) -c parsefuncs.c
 
-parser.obj: Makefile parser.c ndtypes.h
+parser.obj:\
+Makefile parser.c grammar.h lexer.h ndtypes.h seq.h
 	$(CC) $(CFLAGS_FOR_PARSER) -c parser.c
 
 seq.obj:\
 Makefile seq.c ndtypes.h seq.h
 	$(CC) $(CFLAGS) -c seq.c
 
+symtable.obj:\
+Makefile symtable.c ndtypes.h symtable.h
+        $(CC) $(CFLAGS) -c symtable.c
+
 
 # Tests
 runtest:\
-Makefile $(LIBSTATIC) FORCE
-	$(CC) -I. $(CFLAGS) /Fetests\runtest.exe tests\runtest.c \
-            tests\alloc_fail.c tests\test_parse.c tests\test_parse_error.c \
-            tests\test_parse_roundtrip.c tests\test_typedef.c tests\test_match.c \
-            $(LIBSTATIC) 
-
-check:\
-Makefile runtest_alloc
-	.\tests\runtest.exe
-
-# Tests with injected allocation failures
-runtest_alloc:\
-Makefile $(LIBSTATIC) FORCE
+Makefile tests\runtest.c tests\alloc_fail.c tests\test_parse.c tests\test_parse_error.c \
+tests\test_parse_roundtrip.c tests\test_typedef.c tests\test_match.c \
+ndtypes.h tests\test.h tests\alloc_fail.h $(LIBSTATIC)
 	$(CC) -I. $(CFLAGS) -DTEST_ALLOC /Fetests\runtest.exe tests\runtest.c \
             tests\alloc_fail.c tests\test_parse.c tests\test_parse_error.c \
             tests\test_parse_roundtrip.c tests\test_typedef.c tests\test_match.c \
             $(LIBSTATIC)
 
-memcheck:\
-Makefile runtest_alloc
+check:\
+Makefile runtest
 	.\tests\runtest.exe
+
 
 # Benchmark
 bench:\
-Makefile bench.c $(LIBSTATIC)
+Makefile bench.c ndtypes.h $(LIBSTATIC)
 	$(CC) $(CFLAGS) /Febench.exe bench.c $(LIBSTATIC)
 
 # Parse a file that contains a datashape type
 indent:\
-Makefile indent.c parser.c ndtypes.h $(LIBSTATIC)
+Makefile indent.c ndtypes.h $(LIBSTATIC)
 	$(CC) $(CFLAGS) /Feindent indent.c $(LIBSTATIC)
 
 

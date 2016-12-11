@@ -31,7 +31,6 @@
 #include <assert.h>
 #include <setjmp.h>
 #include "ndtypes.h"
-#include "seq.h"
 
 
 #ifdef YYDEBUG
