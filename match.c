@@ -188,7 +188,6 @@ match_categorical(ndt_memory_t *p, size_t plen,
         return 0;
     }
 
-    /* XXX: needs to be sorted according to a total order */
     for (i = 0; i < plen; i++) {
         if (!ndt_memory_equal(&p[i], &c[i])) {
             return 0;
