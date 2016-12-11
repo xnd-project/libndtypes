@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 
-const char *ndt_test_typedef[] = {
+const char *typedef_tests[] = {
     "",
     "a",
     "aa",
@@ -43,7 +43,7 @@ const char *ndt_test_typedef[] = {
     NULL
 };
 
-const char *ndt_test_typedef_error[] = {
+const char *typedef_error_tests[] = {
     "$",
     "a$",
     "aa$",

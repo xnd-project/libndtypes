@@ -27,9 +27,10 @@
 
 
 #include <stdio.h>
+#include "test.h"
 
 
-const char *ndt_test_parse[] = {
+const char *parse_tests[] = {
   "Fixed * Any",
   "?Fixed * Any",
   "option[Fixed * Any]",
@@ -1584,14 +1585,14 @@ const char *ndt_test_parse[] = {
   "?820208952 * fixed[1636586098] * defined_t",
   "option[... * 2387127713 * 828995637 * 1463003959 * RI[defined_t]]",
 
-  "10 * d",
-  "?10 * d",
-  "option[10 * d]",
-  "d",
-  "?d",
-  "d",
-  "?820208952 * fixed[1636586098] * d",
-  "option[... * 2387127713 * 828995637 * 1463003959 * RI[d]]",
+  "10 * foo_t",
+  "?10 * foo_t",
+  "option[10 * foo_t]",
+  "foo_t",
+  "?foo_t",
+  "foo_t",
+  "?820208952 * fixed[1636586098] * foo_t",
+  "option[... * 2387127713 * 828995637 * 1463003959 * RI[foo_t]]",
   /* END MANUALLY GENERATED */
 
    NULL

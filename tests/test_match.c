@@ -3724,40 +3724,40 @@ const match_testcase_t match_tests[] = {
     1 },
 
 
-  { "10 * d",
-    "10 * d",
+  { "10 * foo_t",
+    "10 * foo_t",
     1 },
 
-  { "?10 * d",
-    "?10 * d",
+  { "?10 * foo_t",
+    "?10 * foo_t",
     1 },
 
-  { "d",
-    "d",
+  { "foo_t",
+    "foo_t",
     1 },
 
-  { "?d",
-    "?d",
+  { "?foo_t",
+    "?foo_t",
     1 },
 
-  { "d",
-    "d",
+  { "foo_t",
+    "foo_t",
     1 },
 
-  { "?820208952 * 1636586098 * d",
-    "?820208952 * 1636586098 * d",
+  { "?820208952 * 1636586098 * foo_t",
+    "?820208952 * 1636586098 * foo_t",
     1 },
 
-  { "?... * 2387127713 * 828995637 * 1463003959 * RI[d]",
-    "?... * 2387127713 * 828995637 * 1463003959 * RI[d]",
+  { "?... * 2387127713 * 828995637 * 1463003959 * RI[foo_t]",
+    "?... * 2387127713 * 828995637 * 1463003959 * RI[foo_t]",
     1 },
 
-  { "(int32, float32, ..., scale : defined_t, color : float64, ...) -> d",
-    "(int32, float32, ..., scale : defined_t, color : float64, ...) -> d",
+  { "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
+    "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
     1 },
 
-  { "(a : pointer[{b : defined_t, c : (d, int16) -> float64}]) -> d",
-    "(a : pointer[{b : defined_t, c : (d, int16) -> float64}]) -> d",
+  { "(a : pointer[{b : defined_t, c : (foo_t, int16) -> float64}]) -> foo_t",
+    "(a : pointer[{b : defined_t, c : (foo_t, int16) -> float64}]) -> foo_t",
     1 },
   /* END MANUALLY GENERATED */
 

@@ -27,10 +27,11 @@
 
 
 #include <stdio.h>
+#include "test.h"
 
 
 /* Same as test_parse, but can only contain the canonical datashape forms. */
-const char *ndt_test_parse_roundtrip[] = {
+const char *parse_roundtrip_tests[] = {
   "Fixed * Any",
   "?Fixed * Any",
   "10 * Fixed * Any",
@@ -913,15 +914,15 @@ const char *ndt_test_parse_roundtrip[] = {
   "(int32, float32, ..., scale : defined_t, color : float64, ...) -> defined_t",
   "(a : pointer[{b : defined_t, c : (defined_t, int16) -> float64}]) -> defined_t",
 
-  "10 * d",
-  "?10 * d",
-  "d",
-  "?d",
-  "d",
-  "?820208952 * 1636586098 * d",
-  "?... * 2387127713 * 828995637 * 1463003959 * RI[d]",
-  "(int32, float32, ..., scale : defined_t, color : float64, ...) -> d",
-  "(a : pointer[{b : defined_t, c : (d, int16) -> float64}]) -> d",
+  "10 * foo_t",
+  "?10 * foo_t",
+  "foo_t",
+  "?foo_t",
+  "foo_t",
+  "?820208952 * 1636586098 * foo_t",
+  "?... * 2387127713 * 828995637 * 1463003959 * RI[foo_t]",
+  "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
+  "(a : pointer[{b : defined_t, c : (foo_t, int16) -> float64}]) -> foo_t",
   /* END MANUALLY GENERATED */
 
   NULL

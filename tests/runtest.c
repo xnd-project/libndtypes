@@ -35,12 +35,460 @@
 #include "alloc_fail.h"
 
 
-extern const char *ndt_test_parse[];
-extern const char *ndt_test_parse_roundtrip[];
-extern const char *ndt_test_parse_error[];
-extern const char *ndt_test_typedef[];
-extern const char *ndt_test_typedef_error[];
+static int
+init_tests(void)
+{
+    ndt_context_t *ctx;
+    ndt_t *t = NULL;
 
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    if (ndt_init(ctx) < 0) {
+        ndt_err_fprint(stderr, ctx);
+        ndt_context_del(ctx);
+        return -1;
+    }
+
+    t = ndt_from_string("(10 * 2 * int64) -> {a: size, b: pointer[string]}", ctx);
+    if (t == NULL) {
+        ndt_err_fprint(stderr, ctx);
+        ndt_context_del(ctx);
+        return -1;
+    }
+    if (ndt_typedef("defined_t", t, ctx) < 0) {
+        ndt_err_fprint(stderr, ctx);
+        ndt_context_del(ctx);
+        return -1;
+    }
+
+    t = ndt_from_string("(10 * 2 * defined_t) -> defined_t", ctx);
+    if (t == NULL) {
+        ndt_err_fprint(stderr, ctx);
+        ndt_context_del(ctx);
+        return -1;
+    }
+    if (ndt_typedef("foo_t", t, ctx) < 0) {
+        ndt_err_fprint(stderr, ctx);
+        ndt_context_del(ctx);
+        return -1;
+    }
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_parse(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    char *s;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = parse_tests; *c != NULL; c++) {
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            t = ndt_from_string(*c, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (t != NULL) {
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_parse: parse: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_parse: parse: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+        if (t == NULL) {
+            fprintf(stderr, "test_parse: parse: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_parse: parse: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            s = ndt_as_string(t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (s != NULL) {
+                ndt_free(s);
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_parse: convert: FAIL: s != NULL after MemoryError\n");
+                fprintf(stderr, "test_parse: parse: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+        if (s == NULL) {
+            fprintf(stderr, "test_parse: convert: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_parse: convert: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_free(s);
+        ndt_del(t);
+        count++;
+    }
+    fprintf(stderr, "test_parse (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_parse_roundtrip(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    char *s;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = parse_roundtrip_tests; *c != NULL; c++) {
+        t = ndt_from_string(*c, ctx);
+        if (t == NULL) {
+            fprintf(stderr, "test_parse_roundtrip: parse: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_parse_roundtrip: parse: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        s = ndt_as_string(t, ctx);
+        if (s == NULL) {
+            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        if (strcmp(s, *c) != 0) {
+            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: input:     \"%s\"\n", *c);
+            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: roundtrip: \"%s\"\n", s);
+            ndt_free(s);
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_free(s);
+        ndt_del(t);
+        count++;
+    }
+    fprintf(stderr, "test_parse_roundtrip (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_parse_error(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = parse_error_tests; *c != NULL; c++) {
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            t = ndt_from_string(*c, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (t != NULL) {
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_parse_error: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_parse_error: FAIL: input: %s\n", *c);
+                return -1;
+            }
+        }
+        if (t != NULL) {
+            fprintf(stderr, "test_parse_error: FAIL: unexpected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_parse_error: FAIL: t != NULL after %s: %s\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+        count++;
+    }
+    fprintf(stderr, "test_parse_error (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_typedef(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = typedef_tests; *c != NULL; c++) {
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
+
+            ndt_set_alloc_fail();
+            (void)ndt_typedef(*c, t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (ndt_typedef_find(*c, ctx) != NULL) {
+                fprintf(stderr, "test_typedef: FAIL: key in map after MemoryError\n");
+                fprintf(stderr, "test_typedef: FAIL: input: %s\n", *c);
+                ndt_context_del(ctx);
+                return -1;
+            }
+        }
+
+        if (ndt_typedef_find(*c, ctx) == NULL) {
+            fprintf(stderr, "test_typedef: FAIL: key not found: \"%s\"\n", *c);
+            fprintf(stderr, "test_typedef: FAIL: lookup failed after %s: %s\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        count++;
+    }
+
+    fprintf(stderr, "test_typedef (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_typedef_duplicates(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = typedef_tests; *c != NULL; c++) {
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
+
+            ndt_set_alloc_fail();
+            (void)ndt_typedef(*c, t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (ndt_typedef_find(*c, ctx) == NULL) {
+                fprintf(stderr, "test_typedef: FAIL: key should be in map\n");
+                fprintf(stderr, "test_typedef: FAIL: input: %s\n", *c);
+                ndt_context_del(ctx);
+                return -1;
+            }
+        }
+
+        if (ctx->err != NDT_ValueError) {
+            fprintf(stderr, "test_typedef: FAIL: no value error after duplicate key\n");
+            fprintf(stderr, "test_typedef: FAIL: input: %s\n", *c);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        count++;
+    }
+
+    fprintf(stderr, "test_typedef_duplicates (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_typedef_error(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = typedef_error_tests; *c != NULL; c++) {
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
+
+            ndt_set_alloc_fail();
+            (void)ndt_typedef(*c, t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (ndt_typedef_find(*c, ctx) != NULL) {
+                fprintf(stderr, "test_typedef_error: FAIL: key in map after MemoryError\n");
+                fprintf(stderr, "test_typedef: FAIL: input: %s\n", *c);
+                ndt_context_del(ctx);
+                return -1;
+            }
+        }
+
+        if (ndt_typedef_find(*c, ctx) != NULL) {
+            fprintf(stderr, "test_typedef_error: FAIL: unexpected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_typedef_error: FAIL: key in map after %s: %s\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        count++;
+    }
+
+    fprintf(stderr, "test_typedef_error (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_equal(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t, *u;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = parse_roundtrip_tests; *c && *(c+1); c++) {
+        ndt_err_clear(ctx);
+
+        t = ndt_from_string(*c, ctx);
+        if (t == NULL) {
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_equal: FAIL: could not parse \"%s\"\n", *c);
+            return -1;
+        }
+
+        u = ndt_from_string(*(c+1), ctx);
+        if (u == NULL) {
+            ndt_del(t);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_equal: FAIL: could not parse \"%s\"\n", *(c+1));
+            return -1;
+        }
+
+        if (!ndt_equal(t, t)) {
+            ndt_del(t);
+            ndt_del(u);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_equal: FAIL: \"%s\" != \"%s\"\n", *c, *c);
+            return -1;
+        }
+
+        if (ndt_equal(t, u)) {
+            ndt_del(t);
+            ndt_del(u);
+            fprintf(stderr, "test_equal: FAIL: \"%s\" == \"%s\"\n", *c, *(c+1));
+            return -1;
+        }
+
+        ndt_del(t);
+        ndt_del(u);
+        count++;
+    }
+
+    fprintf(stderr, "test_equal (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
 
 static int
 test_match(void)
@@ -108,322 +556,49 @@ test_match(void)
         ndt_del(c);
         count++;
     }
-    fprintf(stderr, "test_match: PASS (%d test cases)\n", count);
+    fprintf(stderr, "test_match (%d test cases)\n", count);
 
     ndt_context_del(ctx);
     return 0;
 }
 
+static int (*tests[])(void) = {
+  test_parse,
+  test_parse_error,
+  test_parse_roundtrip,
+  test_typedef,
+  test_typedef_duplicates,
+  test_typedef_error,
+  test_equal,
+  test_match,
+  NULL
+};
+
 int
 main(void)
 {
-    ndt_context_t *ctx;
-    const char **input;
-    int test_parse = 0;
-    int test_parse_roundtrip = 0;
-    int test_parse_error = 0;
-    int test_typedef = 0;
-    int test_typedef_duplicates = 0;
-    int test_typedef_error = 0;
-    int test_equal = 0;
-    char *s;
-    ndt_t *t = NULL;
-    ndt_t *u = NULL;
-    int ret = 1;
+    int (**f)(void);
+    int success = 0;
+    int fail = 0;
 
-    ctx = ndt_context_new();
-    if (ctx == NULL) {
-        fprintf(stderr, "error: out of memory");
-        exit(1);
+    if (init_tests() < 0) {
+        return 1;
     }
 
-    if (ndt_init(ctx) < 0) {
-        ndt_err_fprint(stderr, ctx);
-        goto out;
+    for (f = tests; *f != NULL; f++) {
+        if ((*f)() < 0)
+            fail++;
+        else
+            success++;
     }
 
-    t = ndt_from_string("(10 * 2 * int64) -> {a: size, b: pointer[string]}", ctx);
-    if (t == NULL) {
-        ndt_err_fprint(stderr, ctx);
-        goto out;
+    if (fail) {
+        fprintf(stderr, "\nFAIL (failures=%d)\n", fail);
     }
-    if (ndt_typedef("defined_t", t, ctx) < 0) {
-        ndt_err_fprint(stderr, ctx);
-        goto out;
+    else {
+        fprintf(stderr, "\n%d tests OK.\n", success);
     }
 
-    t = ndt_from_string("(10 * 2 * defined_t) -> defined_t", ctx);
-    if (t == NULL) {
-        ndt_err_fprint(stderr, ctx);
-        goto out;
-    }
-    if (ndt_typedef("d", t, ctx) < 0) {
-        ndt_err_fprint(stderr, ctx);
-        goto out;
-    }
-
-    /******************************************************************/
-    /*                             Parser                             */
-    /******************************************************************/
-
-    /* Test valid input */
-    for (input = ndt_test_parse; *input != NULL; input++) {
-        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
-            ndt_err_clear(ctx);
-            ndt_set_alloc_fail();
-            t = ndt_from_string(*input, ctx);
-            ndt_set_alloc();
-            if (ctx->err != NDT_MemoryError) {
-                break;
-            }
-            if (t != NULL) {
-                ndt_del(t);
-                fprintf(stderr, "test_parse: parse: FAIL: t != NULL after MemoryError\n");
-                fprintf(stderr, "test_parse: parse: FAIL: %s\n", *input);
-                goto out;
-            }
-        }
-        if (t == NULL) {
-            fprintf(stderr, "test_parse: parse: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_parse: parse: FAIL: got: %s: %s\n\n",
-                    ndt_err_as_string(ctx->err),
-                    ndt_context_msg(ctx));
-            goto out;
-        }
-
-        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
-            ndt_err_clear(ctx);
-            ndt_set_alloc_fail();
-            s = ndt_as_string(t, ctx);
-            ndt_set_alloc();
-            if (ctx->err != NDT_MemoryError) {
-                break;
-            }
-            if (s != NULL) {
-                ndt_free(s);
-                ndt_del(t);
-                fprintf(stderr, "test_parse: convert: FAIL: s != NULL after MemoryError\n");
-                goto out;
-            }
-        }
-        if (s == NULL) {
-            fprintf(stderr, "test_parse: convert: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_parse: convert: FAIL: got: %s: %s\n\n",
-                    ndt_err_as_string(ctx->err),
-                    ndt_context_msg(ctx));
-            ndt_del(t);
-            goto out;
-        }
-
-        ndt_free(s);
-        ndt_del(t);
-        test_parse++;
-    }
-    fprintf(stderr, "test_parse: PASS (%d test cases)\n", test_parse);
-
-    /* Test roundtrip (valid input) */
-    for (input = ndt_test_parse_roundtrip; *input != NULL; input++) {
-        t = ndt_from_string(*input, ctx);
-        if (t == NULL) {
-            fprintf(stderr, "test_parse_roundtrip: parse: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_parse_roundtrip: parse: FAIL: got: %s: %s\n\n",
-                    ndt_err_as_string(ctx->err),
-                    ndt_context_msg(ctx));
-            goto out;
-        }
-
-        s = ndt_as_string(t, ctx);
-        if (s == NULL) {
-            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: expected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: got: %s: %s\n\n",
-                    ndt_err_as_string(ctx->err),
-                    ndt_context_msg(ctx));
-            ndt_del(t);
-            goto out;
-        }
-
-        if (strcmp(s, *input) != 0) {
-            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: input:     \"%s\"\n", *input);
-            fprintf(stderr, "test_parse_roundtrip: convert: FAIL: roundtrip: \"%s\"\n", s);
-            ndt_free(s);
-            ndt_del(t);
-            goto out;
-        }
-
-        ndt_free(s);
-        ndt_del(t);
-        test_parse_roundtrip++;
-    }
-    fprintf(stderr, "test_parse_roundtrip: PASS (%d test cases)\n", test_parse_roundtrip);
-
-    /* Test invalid input */
-    for (input = ndt_test_parse_error; *input != NULL; input++) {
-        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
-            ndt_err_clear(ctx);
-            ndt_set_alloc_fail();
-            t = ndt_from_string(*input, ctx);
-            ndt_set_alloc();
-            if (ctx->err != NDT_MemoryError) {
-                break;
-            }
-            if (t != NULL) {
-                ndt_del(t);
-                fprintf(stderr, "test_parse_error: FAIL: t != NULL after MemoryError\n");
-                goto out;
-            }
-        }
-        if (t != NULL) {
-            ndt_del(t);
-            fprintf(stderr, "test_parse_error: FAIL: unexpected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_parse_error: FAIL: t != NULL after %s: %s\n",
-                    ndt_err_as_string(ctx->err),
-                    ndt_context_msg(ctx));
-            goto out;
-        }
-        test_parse_error++;
-    }
-    fprintf(stderr, "test_parse_error: PASS (%d test cases)\n", test_parse_error);
-
-
-    /******************************************************************/
-    /*                          Typedef table                         */
-    /******************************************************************/
-
-    /* Test valid names */
-    for (input = ndt_test_typedef; *input != NULL; input++) {
-        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
-            ndt_err_clear(ctx);
-            t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
-
-            ndt_set_alloc_fail();
-            (void)ndt_typedef(*input, t, ctx);
-            ndt_set_alloc();
-            if (ctx->err != NDT_MemoryError) {
-                break;
-            }
-
-            if (ndt_typedef_find(*input, ctx) != NULL) {
-                fprintf(stderr, "test_typedef: FAIL: key in map after MemoryError\n");
-                goto out;
-            }
-        }
-        if (ndt_typedef_find(*input, ctx) == NULL) {
-            fprintf(stderr, "test_typedef: FAIL: key not found: \"%s\"\n", *input);
-            fprintf(stderr, "test_typedef: FAIL: lookup failed after %s: %s\n",
-                    ndt_err_as_string(ctx->err),
-                    ndt_context_msg(ctx));
-            goto out;
-        }
-        test_typedef++;
-    }
-    fprintf(stderr, "test_typedef: PASS (%d test cases)\n", test_typedef);
-
-    /* Test duplicate names */
-    for (input = ndt_test_typedef; *input != NULL; input++) {
-        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
-            ndt_err_clear(ctx);
-            t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
-
-            ndt_set_alloc_fail();
-            (void)ndt_typedef(*input, t, ctx);
-            ndt_set_alloc();
-            if (ctx->err != NDT_MemoryError) {
-                break;
-            }
-
-            if (ndt_typedef_find(*input, ctx) == NULL) {
-                fprintf(stderr, "test_typedef: FAIL: key should be in map\n");
-                goto out;
-            }
-        }
-        if (ctx->err != NDT_ValueError) {
-            fprintf(stderr, "test_typedef: FAIL: no value error after duplicate key: \"%s\"\n", *input);
-            goto out;
-        }
-        test_typedef_duplicates++;
-    }
-    fprintf(stderr, "test_typedef_duplicates: PASS (%d test cases)\n", test_typedef_duplicates);
-
-    /* Test invalid names */
-    for (input = ndt_test_typedef_error; *input != NULL; input++) {
-        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
-            ndt_err_clear(ctx);
-            t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
-
-            ndt_set_alloc_fail();
-            (void)ndt_typedef(*input, t, ctx);
-            ndt_set_alloc();
-            if (ctx->err != NDT_MemoryError) {
-                break;
-            }
-
-            if (ndt_typedef_find(*input, ctx) != NULL) {
-                fprintf(stderr, "test_typedef_error: FAIL: key in map after MemoryError\n");
-                goto out;
-            }
-        }
-        if (ndt_typedef_find(*input, ctx) != NULL) {
-            fprintf(stderr, "test_typedef_error: FAIL: unexpected success: \"%s\"\n", *input);
-            fprintf(stderr, "test_typedef_error: FAIL: key in map after %s: %s\n",
-                    ndt_err_as_string(ctx->err),
-                    ndt_context_msg(ctx));
-            goto out;
-        }
-        test_typedef_error++;
-    }
-    fprintf(stderr, "test_typedef_error: PASS (%d test cases)\n", test_typedef_error);
-
-
-    /******************************************************************/
-    /*                          Type equality                         */
-    /******************************************************************/
-
-    /* Test equality */
-    for (input = ndt_test_parse_roundtrip; *input && *(input+1); input++) {
-        ndt_err_clear(ctx);
-        t = ndt_from_string(*input, ctx);
-        if (t == NULL) {
-            fprintf(stderr, "test_equal: FAIL: could not parse \"%s\"\n", *input);
-            goto out;
-        }
-
-        u = ndt_from_string(*(input+1), ctx);
-        if (u == NULL) {
-            ndt_del(t);
-            fprintf(stderr, "test_equal: FAIL: could not parse \"%s\"\n", *(input+1));
-            goto out;
-        }
-
-        if (!ndt_equal(t, t)) {
-            ndt_del(t);
-            ndt_del(u);
-            fprintf(stderr, "test_equal: FAIL: \"%s\" != \"%s\"\n", *input, *input);
-            goto out;
-        }
-
-        if (ndt_equal(t, u)) {
-            ndt_del(t);
-            ndt_del(u);
-            fprintf(stderr, "test_equal: FAIL: \"%s\" == \"%s\"\n", *input, *(input+1));
-            goto out;
-        }
-
-        ndt_del(t);
-        ndt_del(u);
-        test_equal++;
-    }
-    fprintf(stderr, "test_equal: PASS (%d test cases)\n", test_equal);
-
-    if (test_match() < 0) {
-        goto out;
-    }
-
-
-    ret = 0;
-
-out:
-    ndt_context_del(ctx);
     ndt_finalize();
-
-    return ret;
+    return fail ? 1 : 0;
 }

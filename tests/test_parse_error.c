@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 
-const char *ndt_test_parse_error[] = {
+const char *parse_error_tests[] = {
   "$Fixed * Any",
   "=Fixed * Any",
   "$[Fixed * Any]",
