@@ -734,7 +734,7 @@ ndt_primitive(enum ndt tag, ndt_context_t *ctx)
     switch(tag) {
     case Void:
         t->size = 0;
-        t->align = 0;
+        t->align = 1;
         break;
     case Bool:
         t->size = sizeof(bool);
@@ -852,13 +852,33 @@ ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
     }
     t->Char.encoding = encoding;
 
+    switch (encoding) {
+    case Ascii: case Utf8:
+        t->size = t->align = 1; break;
+    case Utf16: case Ucs2:
+        t->size = t->align = 2; break;
+    case Utf32:
+        t->size = t->align = 4; break;
+    default:
+        abort(); /* NOT_REACHED */
+    }
+
     return t;
 }
 
 ndt_t *
 ndt_string(ndt_context_t *ctx)
 {
-    return ndt_new(String, ctx);
+    ndt_t *t;
+
+    t = ndt_new(String, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->size = sizeof(dynd_string_t);
+    t->align = alignof(dynd_string_t);
+
+    return t;
 }
 
 

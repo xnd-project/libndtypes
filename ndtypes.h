@@ -475,4 +475,18 @@ extern void (* ndt_free)(void *ptr);
 void *ndt_alloc(size_t nmemb, size_t size);
 void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
 
+
+/******************************************************************************/
+/*                            Low level details                               */
+/******************************************************************************/
+
+/* Example of two possible low-level alternatives for the String type */
+typedef struct {
+    int64_t ptr;
+    int64_t size;
+} dynd_string_t;
+
+typedef char * c_string_t;
+
+
 #endif /* NDTYPES_H */
