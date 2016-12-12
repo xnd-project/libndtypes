@@ -27911,6 +27911,8 @@ const char *parse_error_tests[] = {
 
   "10 * ... * 20 * ... * int64",
   "(a : pointer[{b : defined_t, c : (var * ... * ... * {a : pointer[float64]}, int16) -> float64}]) -> (int64, complex128)",
+
+  "categorical[-507014936.36 : float64, -25910 : int8, 'xM3Mys0XqH' : string, 4265882500 : uint64, -507014936.36 : float64]",
   /* END MANUALLY GENERATED */
 
   NULL
