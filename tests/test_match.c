@@ -3759,6 +3759,72 @@ const match_testcase_t match_tests[] = {
   { "(a : pointer[{b : defined_t, c : (foo_t, int16) -> float64}]) -> foo_t",
     "(a : pointer[{b : defined_t, c : (foo_t, int16) -> float64}]) -> foo_t",
     1 },
+
+  { "10 * foo_t",
+    "10 * foo_t", 1 },
+
+  { "10 * foo_t",
+    "11 * foo_t", 0 },
+
+  { "N * foo_t",
+    "10 * foo_t", 1 },
+
+  { "N * foo_t",
+    "10 * int64", 0 },
+
+  { "... * foo_t",
+    "10 * foo_t", 1 },
+
+  { "... * foo_t",
+    "... * foo_t", 1 },
+
+  { "... * foo_t",
+    "... * 10 * foo_t", 1 },
+
+  { "... * 10 * foo_t",
+    "... * foo_t", 0 },
+
+  { "... * 10 * var * foo_t",
+    "... * foo_t", 0 },
+
+  { "... * foo_t",
+    "... * 10 * var * foo_t", 1 },
+
+  { "N * N * foo_t",
+    "10 * 10 * foo_t", 1 },
+
+  { "N * N * foo_t",
+    "10 * 20 * var * foo_t", 0 },
+
+  { "N * Z * foo_t",
+    "10 * 20 * foo_t", 1 },
+
+  { "N * Z * ... * foo_t",
+    "10 * 20 * var * foo_t", 1 },
+
+  { "N * Z * ... * foo_t",
+    "10 * 20 * var * 10 * ... * foo_t", 1 },
+
+  { "N * Z * ... * foo_t",
+    "10 * 20 * var * 10 * ... * foo_t", 1 },
+
+  { "N * Z * ... * N * foo_t",
+    "10 * 20 * var * 10 * ... * 10 * foo_t", 1 },
+
+  { "N * Z * ... * N * foo_t",
+    "10 * 20 * var * 10 * ... * 10 * foo_t", 1 },
+
+  { "N * Z * ... * N * foo_t",
+    "10 * 20 * var * 10 * ... * 20 * foo_t", 0 },
+
+  { "N * Z * ... * N * foo_t",
+    "A * 20 * var * 10 * ... * A * foo_t", 1 },
+
+  { "N * Z * ... * N * Z * foo_t",
+    "10 * 20 * var * 10 * ... * 10 * 20 * foo_t", 1 },
+
+  { "N * Z * ... * 10 * N * Z * foo_t",
+    "10 * 20 * var * 10 * ... * 10 * 20 * foo_t", 0 },
   /* END MANUALLY GENERATED */
 
   { NULL, NULL, 0 }

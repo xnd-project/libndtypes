@@ -88,8 +88,8 @@ match_dimensions(ndt_dim_t *p, size_t pshape,
             if (i == pshape-stride) {
                 return 1;
             }
-            tmp = pshape; pshape = i; i = tmp-1;
-            tmp = cshape; cshape = k; k = tmp-1;
+            tmp = pshape; pshape = i-1; i = tmp;
+            tmp = cshape; cshape = k-1; k = tmp;
             stride = -1;
             break;
         case FixedDimKind:
