@@ -153,15 +153,15 @@ enum ndt {
           Complex64,
           Complex128,
 
-        Char,
-
-        String,
         FixedStringKind,
-        FixedString,
+          FixedString,
 
-        Bytes,
         FixedBytesKind,
-        FixedBytes,
+          FixedBytes,
+
+        Char,
+        String,
+        Bytes,
 
         Categorical,
         Pointer,
