@@ -70,7 +70,7 @@ main(int argc, char **argv)
     }
     assert(ctx->err == NDT_Success);
 
-    s = ndt_as_string(t, ctx);
+    s = ndt_as_string_with_meta(t, ctx);
     ndt_del(t);
     if (s == NULL) {
         assert(ctx->err != NDT_Success);

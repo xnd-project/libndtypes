@@ -20,7 +20,7 @@ endif
 default: $(LIBSTATIC)
 
 
-OBJS = alloc.o display.o equal.o grammar.o lexer.o match.o ndtypes.o \
+OBJS = alloc.o display.o display_meta.o equal.o grammar.o lexer.o match.o ndtypes.o \
        parsefuncs.o parser.o seq.o symtable.o
 
 $(LIBSTATIC):\
@@ -35,6 +35,10 @@ Makefile alloc.c ndtypes.h
 display.o:\
 Makefile display.c ndtypes.h
 	$(CC) $(CFLAGS) -c display.c
+
+display_meta.o:\
+Makefile display_meta.c ndtypes.h
+	$(CC) $(CFLAGS) -c display_meta.c
 
 equal.o:\
 Makefile equal.c ndtypes.h
