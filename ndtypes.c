@@ -680,6 +680,7 @@ ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
+#undef max
 static size_t
 max(size_t x, size_t y)
 {
