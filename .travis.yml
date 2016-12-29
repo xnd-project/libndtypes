@@ -39,4 +39,8 @@ matrix:
       script:
         - make check
 
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bison; brew link bison --force; fi
+
 
