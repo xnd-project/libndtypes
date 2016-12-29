@@ -11,13 +11,6 @@ AR ?= ar
 RANLIB ?= ranlib
 CFLAGS ?= -Wall -Wextra -std=c11 -pedantic -O2 -g
 
-# Xcode ships with an outdated Bison.
-ifeq ($(shell uname), Darwin)
-  BISON_WARN=
-else
-  BISON_WARN=-Wall
-endif
-
 ifeq ($(MAKECMDGOALS), coverage)
   CFLAGS = -O0 -g -fno-inline -fprofile-arcs -ftest-coverage -fpic
   LDFLAGS = -fprofile-arcs
@@ -94,7 +87,7 @@ Makefile grammar.c
 
 grammar.c:\
 Makefile grammar.y ndtypes.h parsefuncs.h ndtypes.h
-	bison $(BISON_WARN) -o grammar.c --defines=grammar.h grammar.y
+	bison -Wall -o grammar.c --defines=grammar.h grammar.y
 
 
 # Tests
