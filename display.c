@@ -43,11 +43,11 @@ typedef struct {
 } buf_t;
 
 static int dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx);
-static int tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, ndt_context_t *ctx);
-static int record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, ndt_context_t *ctx);
+static int tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d, ndt_context_t *ctx);
+static int record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d, ndt_context_t *ctx);
 static int variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *context);
-static int comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *context);
-static int categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, ndt_context_t *ctx);
+static int comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *context);
+static int categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *ctx);
 
 
 static int
@@ -87,7 +87,25 @@ ndt_snprintf(ndt_context_t *ctx, buf_t *buf, const char *fmt, ...)
 }
 
 static int
-datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+indent(ndt_context_t *ctx, buf_t *buf, int n)
+{
+    int i;
+
+    if (n < 0) {
+        return 0;
+    }
+
+    for (i = 0; i < n; i++) {
+        if (ndt_snprintf(ctx, buf, " ") < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int
+datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
     int n;
 
@@ -99,14 +117,14 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, " * ");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Array.dtype, ctx);
+            n = datashape(buf, t->Array.dtype, d, ctx);
             return n;
 
         case Option:
             n = ndt_snprintf(ctx, buf, "?");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Option.type, ctx);
+            n = datashape(buf, t->Option.type, d, ctx);
             return n;
 
         case Nominal:
@@ -117,7 +135,7 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "%s[", t->Constr.name);
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Constr.type, ctx);
+            n = datashape(buf, t->Constr.type, d, ctx);
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, "]");
@@ -128,10 +146,10 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             if (t->Tuple.fields) {
-                n = tuple_fields(buf, t->Tuple.fields, t->Tuple.shape, ctx);
+                n = tuple_fields(buf, t->Tuple.fields, t->Tuple.shape, d, ctx);
                 if (n < 0) return -1;
 
-                n = comma_variadic_flag(buf, t->Tuple.flag, ctx);
+                n = comma_variadic_flag(buf, t->Tuple.flag, INT_MIN, ctx);
                 if (n < 0) return -1;
             }
             else {
@@ -146,15 +164,30 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "{");
             if (n < 0) return -1;
 
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, "\n");
+                if (n < 0) return -1;
+                n = indent(ctx, buf, d+2);
+                if (n < 0) return -1;
+            }
+
             if (t->Record.fields) {
-                n = record_fields(buf, t->Record.fields, t->Record.shape, ctx);
+                n = record_fields(buf, t->Record.fields, t->Record.shape, d+2, ctx);
                 if (n < 0) return -1;
 
-                n = comma_variadic_flag(buf, t->Record.flag, ctx);
+                n = comma_variadic_flag(buf, t->Record.flag, d+2, ctx);
                 if (n < 0) return -1;
             }
             else {
                 n = variadic_flag(buf, t->Record.flag, ctx);
+                if (n < 0) return -1;
+
+            }
+
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, "\n");
+                if (n < 0) return -1;
+                n = indent(ctx, buf, d);
                 if (n < 0) return -1;
             }
 
@@ -169,10 +202,10 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             if (pos->Tuple.fields) {
-                n = tuple_fields(buf, pos->Tuple.fields, pos->Tuple.shape, ctx);
+                n = tuple_fields(buf, pos->Tuple.fields, pos->Tuple.shape, d, ctx);
                 if (n < 0) return -1;
 
-                n = comma_variadic_flag(buf, pos->Tuple.flag, ctx);
+                n = comma_variadic_flag(buf, pos->Tuple.flag, INT_MIN, ctx);
                 if (n < 0) return -1;
             }
             else {
@@ -186,10 +219,10 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
                     if (n < 0) return -1;
                 }
 
-                n = record_fields(buf, kwds->Record.fields, kwds->Record.shape, ctx);
+                n = record_fields(buf, kwds->Record.fields, kwds->Record.shape, INT_MIN, ctx);
                 if (n < 0) return -1;
 
-                n = comma_variadic_flag(buf, kwds->Record.flag, ctx);
+                n = comma_variadic_flag(buf, kwds->Record.flag, INT_MIN, ctx);
                 if (n < 0) return -1;
             }
             else {
@@ -200,7 +233,7 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ") -> ");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Function.ret, ctx);
+            n = datashape(buf, t->Function.ret, d, ctx);
             return n;
         }
 
@@ -249,7 +282,7 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "categorical[");
             if (n < 0) return -1;
 
-            n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, ctx);
+            n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, d, ctx);
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, "]");
@@ -259,7 +292,7 @@ datashape(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "pointer[");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Pointer.type, ctx);
+            n = datashape(buf, t->Pointer.type, d, ctx);
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, "]");
@@ -319,7 +352,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx)
 }
 
 static int
-tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields,
+tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
              ndt_context_t *ctx)
 {
     size_t i;
@@ -331,7 +364,7 @@ tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields,
             if (n < 0) return -1;
         }
   
-        n = datashape(buf, fields[i].type, ctx);
+        n = datashape(buf, fields[i].type, d, ctx);
         if (n < 0) return -1;
     }
 
@@ -339,7 +372,7 @@ tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields,
 }
 
 static int
-record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields,
+record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
               ndt_context_t *ctx)
 {
     size_t i;
@@ -347,14 +380,23 @@ record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields,
 
     for (i = 0; i < nfields; i++) {
         if (i >= 1) {
-            n = ndt_snprintf(ctx, buf, ", ");
-            if (n < 0) return -1;
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, ",\n");
+                if (n < 0) return -1;
+
+                n = indent(ctx, buf, d);
+                if (n < 0) return -1;
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, ", ");
+                if (n < 0) return -1;
+            }
         }
   
         n = ndt_snprintf(ctx, buf, "%s : ", fields[i].name);
         if (n < 0) return -1;
 
-        n = datashape(buf, fields[i].type, ctx);
+        n = datashape(buf, fields[i].type, d, ctx);
         if (n < 0) return -1;
     }
 
@@ -372,10 +414,23 @@ variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *ctx)
 }
 
 static int
-comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *ctx)
+comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *ctx)
 {
+    int n;
+
     if (flag == Variadic) {
-        return ndt_snprintf(ctx, buf, ", ...");
+        if (d >= 0) {
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+
+            n = indent(ctx, buf, d);
+            if (n < 0) return -1;
+
+            return ndt_snprintf(ctx, buf, "...");
+        }
+        else {
+            return ndt_snprintf(ctx, buf, ", ...");
+        }
     }
 
     return 0;
@@ -417,7 +472,7 @@ value(buf_t *buf, const ndt_memory_t *mem, ndt_context_t *ctx)
 }
 
 static int
-categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, ndt_context_t *ctx)
+categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *ctx)
 {
     size_t i;
     int n;
@@ -434,7 +489,7 @@ categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, ndt_context_t *ctx)
         n = ndt_snprintf(ctx, buf, " : ");
         if (n < 0) return -1;
 
-        n = datashape(buf, mem[i].t, ctx);
+        n = datashape(buf, mem[i].t, d, ctx);
         if (n < 0) return -1;
     }
 
@@ -448,7 +503,7 @@ ndt_as_string(ndt_t *t, ndt_context_t *ctx)
     char *s;
     size_t count;
 
-    if (datashape(&buf, t, ctx) < 0) {
+    if (datashape(&buf, t, INT_MIN, ctx) < 0) {
         return NULL;
     }
 
@@ -462,7 +517,37 @@ ndt_as_string(ndt_t *t, ndt_context_t *ctx)
         return NULL;
     }
 
-    if (datashape(&buf, t, ctx) < 0) {
+    if (datashape(&buf, t, INT_MIN, ctx) < 0) {
+        ndt_free(s);
+        return NULL;
+    }
+    s[count] = '\0';
+
+    return s;
+}
+
+char *
+ndt_indent(ndt_t *t, ndt_context_t *ctx)
+{
+    buf_t buf = {0, 0, NULL};
+    char *s;
+    size_t count;
+
+    if (datashape(&buf, t, 0, ctx) < 0) {
+        return NULL;
+    }
+
+    count = buf.count;
+    buf.count = 0;
+    buf.size = count+1;
+
+    buf.cur = s = ndt_alloc(1, count+1);
+    if (buf.cur == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        return NULL;
+    }
+
+    if (datashape(&buf, t, 0, ctx) < 0) {
         ndt_free(s);
         return NULL;
     }

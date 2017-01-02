@@ -273,6 +273,130 @@ test_parse_error(void)
 }
 
 static int
+test_indent(void)
+{
+    const indent_testcase_t *tc;
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    char *s;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = parse_tests; *c != NULL; c++) {
+        t = ndt_from_string(*c, ctx);
+        if (t == NULL) {
+            fprintf(stderr, "test_indent: parse: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_indent: parse: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            s = ndt_indent(t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (s != NULL) {
+                ndt_free(s);
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_indent: convert: FAIL: s != NULL after MemoryError\n");
+                fprintf(stderr, "test_indent: convert: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+        if (s == NULL) {
+            fprintf(stderr, "test_indent: convert: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_indent: convert: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_free(s);
+        ndt_del(t);
+        count++;
+    }
+
+    for (tc = indent_tests; tc->input != NULL; tc++) {
+        t = ndt_from_string(tc->input, ctx);
+        if (t == NULL) {
+            fprintf(stderr, "test_indent: parse: FAIL: expected success: \"%s\"\n", tc->input);
+            fprintf(stderr, "test_indent: parse: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            s = ndt_indent(t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (s != NULL) {
+                ndt_free(s);
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_indent: convert: FAIL: s != NULL after MemoryError\n");
+                fprintf(stderr, "test_indent: convert: FAIL: %s\n", tc->input);
+                return -1;
+            }
+        }
+        if (s == NULL) {
+            fprintf(stderr, "test_indent: convert: FAIL: expected success: \"%s\"\n", tc->input);
+            fprintf(stderr, "test_indent: convert: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        if (strcmp(s, tc->indented) != 0) {
+            fprintf(stderr, "test_indent: convert: FAIL: expected success: \"%s\"\n", tc->input);
+            fprintf(stderr, "test_indent: convert: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_free(s);
+        ndt_del(t);
+        count++;
+    }
+
+    fprintf(stderr, "test_indent (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
 test_typedef(void)
 {
     const char **c;
@@ -566,6 +690,7 @@ static int (*tests[])(void) = {
   test_parse,
   test_parse_error,
   test_parse_roundtrip,
+  test_indent,
   test_typedef,
   test_typedef_duplicates,
   test_typedef_error,
