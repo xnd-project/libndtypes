@@ -6,6 +6,11 @@
 
 
 typedef struct {
+    const char *input;
+    const char *indented;
+} indent_testcase_t;
+
+typedef struct {
     const char *pattern;
     const char *candidate;
     int expected;
@@ -14,6 +19,7 @@ typedef struct {
 extern const char *parse_tests[];
 extern const char *parse_roundtrip_tests[];
 extern const char *parse_error_tests[];
+extern const indent_testcase_t indent_tests[];
 extern const char *typedef_tests[];
 extern const char *typedef_error_tests[];
 extern const match_testcase_t match_tests[];

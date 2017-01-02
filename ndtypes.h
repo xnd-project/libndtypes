@@ -462,6 +462,7 @@ const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 /******************************************************************************/
 
 char *ndt_as_string(ndt_t *t, ndt_context_t *ctx);
+char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
 
 
 /******************************************************************************/
