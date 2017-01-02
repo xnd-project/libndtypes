@@ -42,12 +42,8 @@ typedef struct {
     char *cur;    /* buffer data (NULL for the count phase) */
 } buf_t;
 
-static int dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx);
-static int tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d, ndt_context_t *ctx);
-static int record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d, ndt_context_t *ctx);
-static int variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *context);
-static int comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *context);
-static int categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *ctx);
+
+static int datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx);
 
 
 static int
@@ -99,6 +95,198 @@ indent(ndt_context_t *ctx, buf_t *buf, int n)
         if (ndt_snprintf(ctx, buf, " ") < 0) {
             return -1;
         }
+    }
+
+    return 0;
+}
+
+static int
+dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx)
+{
+    size_t i;
+    int n;
+
+    for (i = 0; i < ndim; i++) {
+        if (i >= 1) {
+            n = ndt_snprintf(ctx, buf, " * ");
+            if (n < 0) return -1;
+        }
+
+        switch (dim[i].tag) {
+        case FixedDimKind:
+            n = ndt_snprintf(ctx, buf, "Fixed");
+            if (n < 0) return -1;
+            break;
+
+        case FixedDim:
+            n = ndt_snprintf(ctx, buf, "%zu", dim[i].FixedDim.shape);
+            if (n < 0) return -1;
+            break;
+
+        case VarDim:
+            n = ndt_snprintf(ctx, buf, "var");
+            if (n < 0) return -1;
+            break;
+
+        case SymbolicDim:
+            n = ndt_snprintf(ctx, buf, "%s", dim[i].SymbolicDim.name);
+            if (n < 0) return -1;
+            break;
+
+        case EllipsisDim:
+            n = ndt_snprintf(ctx, buf, "...", dim[i].SymbolicDim.name);
+            if (n < 0) return -1;
+            break;
+
+        default:
+            ndt_err_format(ctx, NDT_InvalidArgumentError, "not a dimension");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int
+tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
+             ndt_context_t *ctx)
+{
+    size_t i;
+    int n;
+
+    for (i = 0; i < nfields; i++) {
+        if (i >= 1) {
+            n = ndt_snprintf(ctx, buf, ", ");
+            if (n < 0) return -1;
+        }
+  
+        n = datashape(buf, fields[i].type, d, ctx);
+        if (n < 0) return -1;
+    }
+
+    return 0;
+}
+
+static int
+record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
+              ndt_context_t *ctx)
+{
+    size_t i;
+    int n;
+
+    for (i = 0; i < nfields; i++) {
+        if (i >= 1) {
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, ",\n");
+                if (n < 0) return -1;
+
+                n = indent(ctx, buf, d);
+                if (n < 0) return -1;
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, ", ");
+                if (n < 0) return -1;
+            }
+        }
+  
+        n = ndt_snprintf(ctx, buf, "%s : ", fields[i].name);
+        if (n < 0) return -1;
+
+        n = datashape(buf, fields[i].type, d, ctx);
+        if (n < 0) return -1;
+    }
+
+    return 0;
+}
+
+static int
+variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *ctx)
+{
+    if (flag == Variadic) {
+        return ndt_snprintf(ctx, buf, "...");
+    }
+
+    return 0;
+}
+
+static int
+comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *ctx)
+{
+    int n;
+
+    if (flag == Variadic) {
+        if (d >= 0) {
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+
+            n = indent(ctx, buf, d);
+            if (n < 0) return -1;
+
+            return ndt_snprintf(ctx, buf, "...");
+        }
+        else {
+            return ndt_snprintf(ctx, buf, ", ...");
+        }
+    }
+
+    return 0;
+}
+
+static int
+value(buf_t *buf, const ndt_memory_t *mem, ndt_context_t *ctx)
+{
+    switch (mem->t->tag) {
+    case Bool:
+        return ndt_snprintf(ctx, buf, mem->v.Bool ? "true" : "false");
+    case Int8:
+        return ndt_snprintf(ctx, buf, "%" PRIi8, mem->v.Int8);
+    case Int16:
+        return ndt_snprintf(ctx, buf, "%" PRIi16, mem->v.Int16);
+    case Int32:
+        return ndt_snprintf(ctx, buf, "%" PRIi32, mem->v.Int32);
+    case Int64:
+        return ndt_snprintf(ctx, buf, "%" PRIi64, mem->v.Int64);
+    case Uint8:
+        return ndt_snprintf(ctx, buf, "%" PRIu8, mem->v.Uint8);
+    case Uint16:
+        return ndt_snprintf(ctx, buf, "%" PRIu16, mem->v.Uint16);
+    case Uint32:
+        return ndt_snprintf(ctx, buf, "%" PRIu32, mem->v.Uint32);
+    case Uint64:
+        return ndt_snprintf(ctx, buf, "%" PRIu64, mem->v.Uint64);
+    case Float32:
+        return ndt_snprintf(ctx, buf, "%g", mem->v.Float32);
+    case Float64:
+        return ndt_snprintf(ctx, buf, "%g", mem->v.Float64);
+    case String:
+        return ndt_snprintf(ctx, buf, "'%s'", mem->v.String);
+    default:
+        ndt_err_format(ctx, NDT_NotImplementedError,
+                       "unsupported type: '%s'", ndt_tag_as_string(mem->t->tag));
+        return 0;
+    }
+}
+
+static int
+categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *ctx)
+{
+    size_t i;
+    int n;
+
+    for (i = 0; i < ntypes; i++) {
+        if (i >= 1) {
+            n = ndt_snprintf(ctx, buf, ", ");
+            if (n < 0) return -1;
+        }
+
+        n = value(buf, &mem[i], ctx);
+        if (n < 0) return -1;
+
+        n = ndt_snprintf(ctx, buf, " : ");
+        if (n < 0) return -1;
+
+        n = datashape(buf, mem[i].t, d, ctx);
+        if (n < 0) return -1;
     }
 
     return 0;
@@ -302,198 +490,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             ndt_err_format(ctx, NDT_ValueError, "invalid tag");
             return -1;
     }
-}
-
-static int
-dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx)
-{
-    size_t i;
-    int n;
-
-    for (i = 0; i < ndim; i++) {
-        if (i >= 1) {
-            n = ndt_snprintf(ctx, buf, " * ");
-            if (n < 0) return -1;
-        }
-
-        switch (dim[i].tag) {
-        case FixedDimKind:
-            n = ndt_snprintf(ctx, buf, "Fixed");
-            if (n < 0) return -1;
-            break;
-
-        case FixedDim:
-            n = ndt_snprintf(ctx, buf, "%zu", dim[i].FixedDim.shape);
-            if (n < 0) return -1;
-            break;
-
-        case VarDim:
-            n = ndt_snprintf(ctx, buf, "var");
-            if (n < 0) return -1;
-            break;
-
-        case SymbolicDim:
-            n = ndt_snprintf(ctx, buf, "%s", dim[i].SymbolicDim.name);
-            if (n < 0) return -1;
-            break;
-
-        case EllipsisDim:
-            n = ndt_snprintf(ctx, buf, "...", dim[i].SymbolicDim.name);
-            if (n < 0) return -1;
-            break;
-
-        default:
-            ndt_err_format(ctx, NDT_InvalidArgumentError, "not a dimension");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static int
-tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
-             ndt_context_t *ctx)
-{
-    size_t i;
-    int n;
-
-    for (i = 0; i < nfields; i++) {
-        if (i >= 1) {
-            n = ndt_snprintf(ctx, buf, ", ");
-            if (n < 0) return -1;
-        }
-  
-        n = datashape(buf, fields[i].type, d, ctx);
-        if (n < 0) return -1;
-    }
-
-    return 0;
-}
-
-static int
-record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
-              ndt_context_t *ctx)
-{
-    size_t i;
-    int n;
-
-    for (i = 0; i < nfields; i++) {
-        if (i >= 1) {
-            if (d >= 0) {
-                n = ndt_snprintf(ctx, buf, ",\n");
-                if (n < 0) return -1;
-
-                n = indent(ctx, buf, d);
-                if (n < 0) return -1;
-            }
-            else {
-                n = ndt_snprintf(ctx, buf, ", ");
-                if (n < 0) return -1;
-            }
-        }
-  
-        n = ndt_snprintf(ctx, buf, "%s : ", fields[i].name);
-        if (n < 0) return -1;
-
-        n = datashape(buf, fields[i].type, d, ctx);
-        if (n < 0) return -1;
-    }
-
-    return 0;
-}
-
-static int
-variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *ctx)
-{
-    if (flag == Variadic) {
-        return ndt_snprintf(ctx, buf, "...");
-    }
-
-    return 0;
-}
-
-static int
-comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *ctx)
-{
-    int n;
-
-    if (flag == Variadic) {
-        if (d >= 0) {
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = indent(ctx, buf, d);
-            if (n < 0) return -1;
-
-            return ndt_snprintf(ctx, buf, "...");
-        }
-        else {
-            return ndt_snprintf(ctx, buf, ", ...");
-        }
-    }
-
-    return 0;
-}
-
-static int
-value(buf_t *buf, const ndt_memory_t *mem, ndt_context_t *ctx)
-{
-    switch (mem->t->tag) {
-    case Bool:
-        return ndt_snprintf(ctx, buf, mem->v.Bool ? "true" : "false");
-    case Int8:
-        return ndt_snprintf(ctx, buf, "%" PRIi8, mem->v.Int8);
-    case Int16:
-        return ndt_snprintf(ctx, buf, "%" PRIi16, mem->v.Int16);
-    case Int32:
-        return ndt_snprintf(ctx, buf, "%" PRIi32, mem->v.Int32);
-    case Int64:
-        return ndt_snprintf(ctx, buf, "%" PRIi64, mem->v.Int64);
-    case Uint8:
-        return ndt_snprintf(ctx, buf, "%" PRIu8, mem->v.Uint8);
-    case Uint16:
-        return ndt_snprintf(ctx, buf, "%" PRIu16, mem->v.Uint16);
-    case Uint32:
-        return ndt_snprintf(ctx, buf, "%" PRIu32, mem->v.Uint32);
-    case Uint64:
-        return ndt_snprintf(ctx, buf, "%" PRIu64, mem->v.Uint64);
-    case Float32:
-        return ndt_snprintf(ctx, buf, "%g", mem->v.Float32);
-    case Float64:
-        return ndt_snprintf(ctx, buf, "%g", mem->v.Float64);
-    case String:
-        return ndt_snprintf(ctx, buf, "'%s'", mem->v.String);
-    default:
-        ndt_err_format(ctx, NDT_NotImplementedError,
-                       "unsupported type: '%s'", ndt_tag_as_string(mem->t->tag));
-        return 0;
-    }
-}
-
-static int
-categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *ctx)
-{
-    size_t i;
-    int n;
-
-    for (i = 0; i < ntypes; i++) {
-        if (i >= 1) {
-            n = ndt_snprintf(ctx, buf, ", ");
-            if (n < 0) return -1;
-        }
-
-        n = value(buf, &mem[i], ctx);
-        if (n < 0) return -1;
-
-        n = ndt_snprintf(ctx, buf, " : ");
-        if (n < 0) return -1;
-
-        n = datashape(buf, mem[i].t, d, ctx);
-        if (n < 0) return -1;
-    }
-
-    return 0;
 }
 
 char *
