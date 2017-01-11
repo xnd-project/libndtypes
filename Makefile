@@ -20,7 +20,7 @@ endif
 default: $(LIBSTATIC)
 
 
-OBJS = alloc.o display.o equal.o grammar.o lexer.o match.o ndtypes.o \
+OBJS = alloc.o display.o display_meta.o equal.o grammar.o lexer.o match.o ndtypes.o \
        parsefuncs.o parser.o seq.o symtable.o
 
 $(LIBSTATIC):\
@@ -35,6 +35,10 @@ Makefile alloc.c ndtypes.h
 display.o:\
 Makefile display.c ndtypes.h
 	$(CC) $(CFLAGS) -c display.c
+
+display_meta.o:\
+Makefile display_meta.c ndtypes.h
+	$(CC) $(CFLAGS) -c display_meta.c
 
 equal.o:\
 Makefile equal.c ndtypes.h
@@ -118,13 +122,20 @@ Makefile clean runtest
 
 # Benchmark
 bench:\
-Makefile bench.c ndtypes.h $(LIBSTATIC)
-	$(CC) $(CFLAGS) -o bench bench.c $(LIBSTATIC)
+Makefile tools/bench.c ndtypes.h $(LIBSTATIC)
+	$(CC) -I. $(CFLAGS) -o bench tools/bench.c $(LIBSTATIC)
 
-# Parse a file that contains a datashape type
+
+# Print the AST
+print_ast:\
+Makefile tools/print_ast.c ndtypes.h $(LIBSTATIC)
+	$(CC) -I. $(CFLAGS) -o print_ast tools/print_ast.c $(LIBSTATIC)
+
+
+# Indent a file that contains a datashape type
 indent:\
-Makefile indent.c ndtypes.h $(LIBSTATIC)
-	$(CC) $(CFLAGS) -o indent indent.c $(LIBSTATIC)
+Makefile tools/indent.c ndtypes.h $(LIBSTATIC)
+	$(CC) -I. $(CFLAGS) -o indent tools/indent.c $(LIBSTATIC)
 
 
 clean: FORCE

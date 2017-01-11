@@ -197,12 +197,21 @@ typedef struct {
     union {
         struct {
             size_t shape;
+            size_t stride;
         } FixedDim;
+
+        struct {
+            size_t stride;
+        } VarDim;
 
         struct {
             char *name;
         } SymbolicDim;
     };
+
+    size_t itemsize;
+    uint8_t itemalign;
+    bool abstract;
 } ndt_dim_t;
 
 /* Datashape type */
@@ -281,6 +290,7 @@ struct _ndt {
 
     size_t size;
     uint8_t align;
+    bool abstract;
 };
 
 
@@ -462,6 +472,7 @@ const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 /******************************************************************************/
 
 char *ndt_as_string(ndt_t *t, ndt_context_t *ctx);
+char *ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx);
 char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
 
 
@@ -475,5 +486,29 @@ extern void (* ndt_free)(void *ptr);
 
 void *ndt_alloc(size_t nmemb, size_t size);
 void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
+
+
+/******************************************************************************/
+/*                            Low level details                               */
+/******************************************************************************/
+
+/* Example of two possible low-level alternatives for the String type */
+typedef struct {
+    char *ptr;
+    size_t size;
+} ndt_sized_string_t;
+
+typedef char * ndt_string_t;
+
+typedef struct {
+    char *ptr;
+    size_t size;
+} ndt_bytes_t;
+
+typedef struct {
+    char *ptr;
+    size_t size;
+} ndt_var_dim_t;
+
 
 #endif /* NDTYPES_H */

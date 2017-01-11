@@ -96,10 +96,12 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %start input
 %type <ndt> input
 %type <ndt> datashape
-%type <ndt> datashape_nooption
+%type <ndt> array
+%type <ndt> array_nooption
 %type <dim> dimension
 %type <dim_seq> dimension_seq
 %type <ndt> dtype
+%type <ndt> dtype_nooption
 %type <ndt> scalar
 %type <ndt> signed
 %type <ndt> unsigned
@@ -179,13 +181,16 @@ input:
 
 /* types */
 datashape:
-  datashape_nooption                      { $$ = $1; }
-| QUESTIONMARK datashape_nooption         { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
-| OPTION LBRACK datashape_nooption RBRACK { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
+  array { $$ = $1; }
+| dtype { $$ = $1; }
 
-datashape_nooption:
+array:
+  array_nooption                      { $$ = $1; }
+| QUESTIONMARK array_nooption         { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
+| OPTION LBRACK array_nooption RBRACK { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
+
+array_nooption:
   dimension_seq STAR dtype { $$ = mk_array($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| dtype                    { $$ = $1; }
 
 dimension_seq:
   dimension                    { $$ = ndt_dim_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
@@ -200,6 +205,11 @@ dimension:
 | ELLIPSIS                    { $$ = ndt_ellipsis_dim(ctx); if ($$ == NULL) YYABORT; }
 
 dtype:
+  dtype_nooption                      { $$ = $1; }
+| QUESTIONMARK dtype_nooption         { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
+| OPTION LBRACK dtype_nooption RBRACK { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
+
+dtype_nooption:
   ANY_KIND                         { $$ = ndt_any_kind(ctx); if ($$ == NULL) YYABORT; }
 | SCALAR_KIND                      { $$ = ndt_scalar_kind(ctx); if ($$ == NULL) YYABORT; }
 | scalar                           { $$ = $1; }

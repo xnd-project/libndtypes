@@ -73,6 +73,7 @@ main(int argc, char **argv)
     s = ndt_indent(t, ctx);
     ndt_del(t);
     if (s == NULL) {
+        ndt_err_fprint(stderr, ctx);
         assert(ctx->err != NDT_Success);
         ndt_context_del(ctx);
         return 1;
