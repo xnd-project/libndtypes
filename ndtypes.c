@@ -114,7 +114,7 @@ ndt_tuple_field(ndt_t *type, ndt_context_t *ctx)
 
     field->type = type;
     field->offset = 0;
-    field->align = 0;
+    field->align = 1;
     field->pad = 0;
 
     return field;
@@ -161,7 +161,7 @@ ndt_record_field(char *name, ndt_t *type, ndt_context_t *ctx)
     field->name = name;
     field->type = type;
     field->offset = 0;
-    field->align = 0;
+    field->align = type->align;
     field->pad = 0;
 
     return field;
@@ -206,6 +206,9 @@ ndt_dim_new(enum ndt_dim tag, ndt_context_t *ctx)
     }
 
     d->tag = tag;
+    d->itemsize = 0;
+    d->itemalign = 1;
+    d->abstract = 1;
 
     return d;
 }
@@ -368,6 +371,27 @@ ndt_encoding_as_string(enum ndt_encoding encoding)
     }
 }
 
+size_t
+ndt_sizeof_encoding(enum ndt_encoding encoding)
+{
+    switch (encoding) {
+    case Ascii: case Utf8:
+        return 1;
+    case Utf16: case Ucs2:
+        return 2;
+    case Utf32:
+        return 4;
+    default: /* NOT REACHED */
+        abort();
+    }
+}
+
+uint8_t
+ndt_alignof_encoding(enum ndt_encoding encoding)
+{
+    return (uint8_t)ndt_sizeof_encoding(encoding);
+}
+
 
 /******************************************************************************/
 /*                                 Dimensions                                 */
@@ -389,6 +413,9 @@ ndt_fixed_dim(size_t shape, ndt_context_t *ctx)
         return NULL;
     }
     d->FixedDim.shape = shape;
+    d->FixedDim.stride = 0;
+    d->itemsize = 0;
+    d->itemalign = 1;
 
     return d;
 }
@@ -396,7 +423,14 @@ ndt_fixed_dim(size_t shape, ndt_context_t *ctx)
 ndt_dim_t *
 ndt_var_dim(ndt_context_t *ctx)
 {
-    return ndt_dim_new(VarDim, ctx);
+    ndt_dim_t *d;
+
+    d = ndt_dim_new(VarDim, ctx);
+    if (d == NULL) {
+        return NULL;
+    }
+
+    return d;
 }
 
 ndt_dim_t *
@@ -438,7 +472,8 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
 
     t->tag = tag;
     t->size = 0;
-    t->align = 0;
+    t->align = 1;
+    t->abstract = 1;
 
     return t;
 }
@@ -499,18 +534,43 @@ ndt_any_kind(ndt_context_t *ctx)
 }
 
 static int
-validate_dim(ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx)
+init_dimensions(size_t *size, uint8_t *itemalign, bool *abstract,
+                ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
 {
     int ellipsis_count = 0;
-    size_t i;
+    size_t shape, i;
 
-    for (i = 0; i < ndim; i++) {
-        if (dim[i].tag == EllipsisDim) {
+    *size = dtype->size;
+    *itemalign = dtype->align;
+    *abstract = dtype->abstract;
+
+    for (i = ndim-1; i != SIZE_MAX; i--) {
+        switch (dim[i].tag) {
+        case FixedDim:
+            shape = dim[i].FixedDim.shape;
+            dim[i].FixedDim.stride = shape <= 1 ? 0 : *size;
+            dim[i].itemsize = *size;
+            *size *= shape;
+            dim[i].itemalign = *itemalign;
+            dim[i].abstract = 0;
+            break;
+        case VarDim:
+            dim[i].VarDim.stride = *size;
+            dim[i].itemsize = *size;
+            *itemalign = dim[i].itemalign;
+            dim[i].abstract = 0;
+            break;
+        case FixedDimKind: case SymbolicDim:
+            *abstract = 1;
+            break;
+        case EllipsisDim:
+            *abstract = 1;
             if (++ellipsis_count > 1) {
                 ndt_err_format(ctx, NDT_ValueError,
                                "more than one ellipsis dimension");
                 return -1;
             }
+            break;
         }
     }
 
@@ -521,8 +581,11 @@ ndt_t *
 ndt_array(ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
 {
     ndt_t *t;
+    size_t size;
+    uint8_t align;
+    bool abstract;
 
-    if (validate_dim(dim, ndim, ctx) < 0) {
+    if (init_dimensions(&size, &align, &abstract, dim, ndim, dtype, ctx) < 0) {
         ndt_dim_array_del(dim, ndim);
         ndt_del(dtype);
         return NULL;
@@ -537,6 +600,9 @@ ndt_array(ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
     t->Array.ndim = ndim;
     t->Array.dim = dim;
     t->Array.dtype = dtype;
+    t->size = size;
+    t->align = align;
+    t->abstract = abstract;
 
     return t;
 }
@@ -552,6 +618,9 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
     t->Option.type = type;
+    t->size = type->size;
+    t->align = type->align;
+    t->abstract = type->abstract;
 
     return t;
 }
@@ -570,9 +639,11 @@ ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx)
 ndt_t *
 ndt_nominal(char *name, ndt_context_t *ctx)
 {
+    const ndt_t *type;
     ndt_t *t;
 
-    if (ndt_typedef_find(name, ctx) == NULL) {
+    type = ndt_typedef_find(name, ctx);
+    if (type == NULL) {
         ndt_free(name);
         return NULL;
     }
@@ -583,6 +654,9 @@ ndt_nominal(char *name, ndt_context_t *ctx)
         return NULL;
     }
     t->Nominal.name = name;
+    t->size = type->size;
+    t->align = type->align;
+    t->abstract = type->abstract;
 
     return t;
 }
@@ -600,8 +674,64 @@ ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
     }
     t->Constr.name = name;
     t->Constr.type = type;
+    t->size = type->size;
+    t->align = type->align;
+    t->abstract = type->abstract;
 
     return t;
+}
+
+#undef max
+static uint8_t
+max(uint8_t x, uint8_t y)
+{
+    return x >= y ? x : y;
+}
+
+static size_t
+round_up(size_t offset, uint8_t align)
+{
+    return ((offset + align - 1) / align) * align;
+}
+
+static void
+init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
+           size_t shape)
+{
+    size_t offset = 0;
+    uint8_t maxalign = 1;
+    size_t size;
+    size_t i;
+    bool abstract = 0;
+
+    for (i = 0; i < shape; i++) {
+        offset = round_up(offset, fields[i].type->align);
+        maxalign = max(fields[i].type->align, maxalign);
+        fields[i].offset = offset;
+        offset += fields[i].type->size;
+        if (fields[i].type->abstract) {
+            abstract = 1;
+        }
+    }
+
+    size = round_up(offset, maxalign);
+
+    for (i = 0; i+1 < shape; i++) {
+        size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
+        fields[i].pad = (uint8_t)pad;
+    }
+
+    if (shape) {
+        size_t pad = (size - fields[i].offset) - fields[i].type->size;
+        fields[i].pad = pad;
+    }
+
+    t->Tuple.flag = flag;
+    t->Tuple.fields = fields;
+    t->Tuple.shape = shape;
+    t->size = size;
+    t->align = maxalign;
+    t->abstract = abstract || flag == Variadic;
 }
 
 ndt_t *
@@ -617,11 +747,49 @@ ndt_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_t *fields, size_t shape,
         ndt_tuple_field_array_del(fields, shape);
         return NULL;
     }
-    t->Tuple.flag = flag;
-    t->Tuple.shape = shape;
-    t->Tuple.fields = fields;
+    init_tuple(t, flag, fields, shape);
 
     return t;
+}
+
+static void
+init_record(ndt_t *t, enum ndt_variadic_flag flag, ndt_record_field_t *fields,
+            size_t shape)
+{
+    size_t offset = 0;
+    uint8_t maxalign = 1;
+    size_t size = 0;
+    size_t i;
+    bool abstract = 0;
+
+    for (i = 0; i < shape; i++) {
+        offset = round_up(offset, fields[i].type->align);
+        maxalign = max(fields[i].type->align, maxalign);
+        fields[i].offset = offset;
+        offset += fields[i].type->size;
+        if (fields[i].type->abstract) {
+            abstract = 1;
+        }
+    }
+
+    size = round_up(offset, maxalign);
+
+    for (i = 0; i+1 < shape; i++) {
+        size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
+        fields[i].pad = (uint8_t)pad;
+    }
+
+    if (shape) {
+        size_t pad = (size - fields[i].offset) - fields[i].type->size;
+        fields[i].pad = (uint8_t)pad;
+    }
+
+    t->Record.flag = flag;
+    t->Record.fields = fields;
+    t->Record.shape = shape;
+    t->size = size;
+    t->align = maxalign;
+    t->abstract = abstract || flag == Variadic;
 }
 
 ndt_t *
@@ -635,9 +803,7 @@ ndt_record(enum ndt_variadic_flag flag, ndt_record_field_t *fields, size_t shape
         ndt_record_field_array_del(fields, shape);
         return NULL;
     }
-    t->Record.flag = flag;
-    t->Record.shape = shape;
-    t->Record.fields = fields;
+    init_record(t, flag, fields, shape);
 
     return t;
 }
@@ -657,6 +823,9 @@ ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx)
     t->Function.ret = ret;
     t->Function.pos = pos;
     t->Function.kwds = kwds;
+    t->size = sizeof(void *);
+    t->align = alignof(void *);
+    t->abstract = ret->abstract || pos->abstract || kwds->abstract;
 
     return t;
 }
@@ -672,6 +841,9 @@ ndt_typevar(char *name, ndt_context_t *ctx)
         return NULL;
     }
     t->Typevar.name = name;
+    t->size = 0;
+    t->align = 1;
+    t->abstract = 1;
 
     return t;
 }
@@ -734,7 +906,7 @@ ndt_primitive(enum ndt tag, ndt_context_t *ctx)
     switch(tag) {
     case Void:
         t->size = 0;
-        t->align = 0;
+        t->align = 1;
         break;
     case Bool:
         t->size = sizeof(bool);
@@ -795,6 +967,8 @@ ndt_primitive(enum ndt tag, ndt_context_t *ctx)
         return NULL;
     }
 
+    t->abstract = 0;
+
     return t;
 }
 
@@ -851,6 +1025,9 @@ ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
         return NULL;
     }
     t->Char.encoding = encoding;
+    t->size = ndt_sizeof_encoding(encoding);
+    t->align = ndt_alignof_encoding(encoding);
+    t->abstract = 0;
 
     return t;
 }
@@ -858,9 +1035,18 @@ ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
 ndt_t *
 ndt_string(ndt_context_t *ctx)
 {
-    return ndt_new(String, ctx);
-}
+    ndt_t *t;
 
+    t = ndt_new(String, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->size = sizeof(ndt_sized_string_t);
+    t->align = alignof(ndt_sized_string_t);
+    t->abstract = 0;
+
+    return t;
+}
 
 ndt_t *
 ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
@@ -873,6 +1059,9 @@ ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
     }
     t->FixedString.size = size;
     t->FixedString.encoding = encoding;
+    t->size = ndt_sizeof_encoding(encoding) * size;
+    t->align = ndt_alignof_encoding(encoding);
+    t->abstract = 0;
 
     return t;
 }
@@ -887,6 +1076,9 @@ ndt_bytes(uint8_t target_align, ndt_context_t *ctx)
         return NULL;
     }
     t->Bytes.target_align = target_align;
+    t->size = sizeof(ndt_bytes_t);
+    t->align = alignof(ndt_bytes_t);
+    t->abstract = 0;
 
     return t;
 }
@@ -902,6 +1094,9 @@ ndt_fixed_bytes(size_t size, uint8_t align, ndt_context_t *ctx)
     }
     t->FixedBytes.size = size;
     t->FixedBytes.align = align;
+    t->size = size;
+    t->align = align;
+    t->abstract = 0;
 
     return t;
 }
@@ -943,6 +1138,9 @@ ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx)
 
     t->Categorical.ntypes = ntypes;
     t->Categorical.types = types;
+    t->size = sizeof(ndt_memory_t);
+    t->align = alignof(ndt_memory_t);
+    t->abstract = 0;
 
     return t;
 }
@@ -958,6 +1156,9 @@ ndt_pointer(ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
     t->Pointer.type = type;
+    t->size = sizeof(void *);
+    t->align = alignof(void *);
+    t->abstract = type->abstract;
 
     return t;
 }

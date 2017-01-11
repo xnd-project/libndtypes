@@ -90,13 +90,20 @@ Makefile runtest
 
 # Benchmark
 bench:\
-Makefile bench.c ndtypes.h $(LIBSTATIC)
-	$(CC) $(CFLAGS) /Febench.exe bench.c $(LIBSTATIC)
+Makefile tools\bench.c ndtypes.h $(LIBSTATIC)
+	$(CC) $(CFLAGS) /Febench.exe tools\bench.c $(LIBSTATIC)
+
+
+# Print the AST
+print_ast:\
+Makefile tools\print_ast.c ndtypes.h $(LIBSTATIC)
+	$(CC) $(CFLAGS) -o print_ast tools\print_ast.c $(LIBSTATIC)
+
 
 # Parse a file that contains a datashape type
 indent:\
 Makefile indent.c ndtypes.h $(LIBSTATIC)
-	$(CC) $(CFLAGS) /Feindent indent.c $(LIBSTATIC)
+	$(CC) $(CFLAGS) /Feindent tools\indent.c $(LIBSTATIC)
 
 
 clean: FORCE
