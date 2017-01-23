@@ -148,20 +148,17 @@ yycolumn = 1;
 "int16"        { return INT16; }
 "int32"        { return INT32; }
 "int64"        { return INT64; }
-"int128"       { return INT128; }
 
 "Unsigned"     { return UNSIGNED_KIND; }
 "uint8"        { return UINT8; }
 "uint16"       { return UINT16; }
 "uint32"       { return UINT32; }
 "uint64"       { return UINT64; }
-"uint128"      { return UINT128; }
 
 "Real"         { return REAL_KIND; }
 "float16"      { return FLOAT16; }
 "float32"      { return FLOAT32; }
 "float64"      { return FLOAT64; }
-"float128"     { return FLOAT128; }
 
 "Complex"      { return COMPLEX_KIND; }
 "complex64"    { return COMPLEX64; }
@@ -185,8 +182,6 @@ yycolumn = 1;
 
 "categorical"  { return CATEGORICAL; }
 
-"nominal"      { return NOMINAL; }
-
 "pointer"      { return POINTER; }
 
 "option"       { return OPTION; }
@@ -198,7 +193,6 @@ yycolumn = 1;
 "align"        { return ALIGN; }
 
 "..."          { return ELLIPSIS; }
-"**"           { return DOUBLESTAR; }
 "->"           { return RARROW; }
 ","            { return COMMA; }
 ":"            { return COLON; }
