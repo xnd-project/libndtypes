@@ -1,0 +1,17 @@
+Re-imagine array math in Python 3:
+
+The idea is simple and actually goes beyond Python and would allow multiple languages to cooperate seamlessly with their calculations on large-scale data sets.   It is more general than Arrow and would help Arrow long term.  I see it as a continuation of the work I did on PEP 3118 but finishing the data-declaration syntax that was missing from that work and extending the protocol to multiple languages. 
+
+At the heart is splitting NumPy into component modules that can each be maintained and improved separately. 
+
+First, we define an extended and generic NumPy dtype system on top of data-shape (adding low-level details to data-shape syntax).  An extensible C-library named ndt would contain the attributes necessary to explain "type".   A python interface, ndtypes, which is compatible with (but ultimately lower level and more bit-specific than) mypy would be built and interfaces to other languages would be encouraged so they could have "clients" to the general system. 
+
+The idea of datashape is that as long as you have a datashape syntax and a handle to the data (pointer put could be URL + process + pointer or URL + shared-mem pointer) you know the type of the data-structure in a language independent way and can just call functions that need that pointer.   
+
+The second module is code-named "gmath" which is a stand-alone Python extension module that provides generalized ufuncs that are a step-up from NumPy's in that they incorporate all the learning we have for that multiple-dispatch system and use datashape instead of NumPy dtypes.    Ideally we use Numba or Cython to produce this extension module --- with perhaps a small underlying C-library if needed.   Numba would be able to generate these g-ufuncs as it does for NumPy now.   These functions could be specialized to run on a GPU if specified and available (like we do now for Numba with guvectorize and vectorize with target='cuda').  
+
+Together, datashape, ndtypes, and gmath produce the pieces necessary to couple with a memory-provider (could be memoryview in Python or some other thing) to produce NumPy-like functionality on any memory segment. 
+
+Once those pieces are in place, we can build a tight ndarray library (xnd) that is meant to be a developer library that uses the modules.  Then, pandas, xarray, dask, tensorflow, theano, minerva, and every other container or tensor library can use and benefit from the same foundations and the world benefits. 
+
+I know what to do here, I just need the funds and the people to do it.   Continuum can only put about 1 person on it right now.  I'd love to get help getting the team together to do this.   We will build this in Python 3 as a reference and then show how other languages can do the same basic thing and finally break the "object-oriented" serialization-required, let-me-copy-your-data-for-you-into-my-silo strangehold on big-data
