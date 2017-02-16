@@ -320,13 +320,13 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
  
         case Constr:
-            n = ndt_snprintf(ctx, buf, "%s[", t->Constr.name);
+            n = ndt_snprintf(ctx, buf, "%s(", t->Constr.name);
             if (n < 0) return -1;
 
             n = datashape(buf, t->Constr.type, d, ctx);
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, "]");
+            n = ndt_snprintf(ctx, buf, ")");
             return n;
  
         case Tuple:
@@ -447,43 +447,43 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case FixedString:
-            n = ndt_snprintf(ctx, buf, "fixed_string[%zu, %s]",
+            n = ndt_snprintf(ctx, buf, "fixed_string(%zu, %s)",
                           t->FixedString.size,
                           ndt_encoding_as_string(t->FixedString.encoding));
             return n;
 
         case Char:
-            n = ndt_snprintf(ctx, buf, "char[%s]",
+            n = ndt_snprintf(ctx, buf, "char(%s)",
                           ndt_encoding_as_string(t->Char.encoding));
             return n;
 
         case Bytes:
-            n = ndt_snprintf(ctx, buf, "bytes[align=%" PRIu8 "]", t->Bytes.target_align);
+            n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
             return n;
 
         case FixedBytes:
-            n = ndt_snprintf(ctx, buf, "fixed_bytes[%zu, align=%" PRIu8 "]",
+            n = ndt_snprintf(ctx, buf, "fixed_bytes(%zu, align=%" PRIu8 ")",
                           t->FixedBytes.size, t->FixedBytes.align);
             return n;
 
         case Categorical:
-            n = ndt_snprintf(ctx, buf, "categorical[");
+            n = ndt_snprintf(ctx, buf, "categorical(");
             if (n < 0) return -1;
 
             n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, d, ctx);
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, "]");
+            n = ndt_snprintf(ctx, buf, ")");
             return n;
 
         case Pointer:
-            n = ndt_snprintf(ctx, buf, "pointer[");
+            n = ndt_snprintf(ctx, buf, "pointer(");
             if (n < 0) return -1;
 
             n = datashape(buf, t->Pointer.type, d, ctx);
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, "]");
+            n = ndt_snprintf(ctx, buf, ")");
             return n;
 
         default:

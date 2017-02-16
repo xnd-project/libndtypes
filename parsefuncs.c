@@ -67,20 +67,60 @@ mk_stringlit(const char *lexeme, ndt_context_t *ctx)
 /*****************************************************************************/
 
 ndt_dim_t *
-mk_fixed_dim(char *v, ndt_context_t *ctx)
+mk_fixed_dim(char *v, ndt_attr_seq_t *seq, ndt_context_t *ctx)
 {
     size_t shape;
+    int64_t stride = INT64_MAX;
+
+    if (seq) {
+        seq = ndt_attr_seq_finalize(seq);
+        ndt_attr_array_del(seq->ptr, seq->len);
+        ndt_free(seq);
+    }
 
     shape = (size_t)ndt_strtoull(v, SIZE_MAX, ctx);
+    ndt_free(v);
     if (ctx->err != NDT_Success) {
-        ndt_free(v);
         return NULL;
     }
 
-    ndt_free(v);
-    return ndt_fixed_dim(shape, ctx);
+    if (seq) {
+        if (seq->len != 1 || strcmp(seq->ptr[0].name, "stride") != 0) {
+            ndt_err_format(ctx, NDT_InvalidArgumentError, "invalid keyword");
+            ndt_attr_array_del(seq->ptr, seq->len);
+            ndt_free(seq);
+            return NULL;
+        }
+        stride = seq->ptr[0].AttrInt64;
+        ndt_attr_array_del(seq->ptr, seq->len);
+        ndt_free(seq);
+    }
+
+    return ndt_fixed_dim(shape, stride, ctx);
 }
  
+ndt_dim_t *
+mk_var_dim(ndt_attr_seq_t *seq, ndt_context_t *ctx)
+{
+    int64_t stride = INT64_MAX;
+
+    if (seq) {
+        seq = ndt_attr_seq_finalize(seq);
+
+        if (seq->len != 1 || strcmp(seq->ptr[0].name, "stride") != 0) {
+            ndt_err_format(ctx, NDT_InvalidArgumentError, "invalid keyword");
+            ndt_attr_array_del(seq->ptr, seq->len);
+            ndt_free(seq);
+            return NULL;
+        }
+        stride = seq->ptr[0].AttrInt64;
+        ndt_attr_array_del(seq->ptr, seq->len);
+        ndt_free(seq);
+    }
+
+    return ndt_var_dim(stride, ctx);
+}
+
 ndt_t *
 mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
 {
@@ -137,12 +177,31 @@ mk_fixed_bytes(char *size, char *target_align, ndt_context_t *ctx)
 }
 
 ndt_t *
-mk_array(ndt_dim_seq_t *seq, ndt_t *dtype, ndt_context_t *ctx)
+mk_array(char *order, ndt_dim_seq_t *seq, ndt_t *dtype, ndt_context_t *ctx)
 {
     ndt_t *t;
+    char ord = 'C';
 
     seq = ndt_dim_seq_finalize(seq);
-    t = ndt_array(seq->ptr, seq->len, dtype, ctx);
+
+    if (order) {
+        if (strcmp(order, "C") == 0) {
+            ;
+        }
+        else if (strcmp(order, "F") == 0) {
+            ord = 'F';
+        }
+        else {
+            ndt_err_format(ctx, NDT_RuntimeError, "invalid order: '%s'", order);
+            ndt_free(order);
+            ndt_dim_array_del(seq->ptr, seq->len);
+            ndt_free(seq);
+            return NULL;
+        }
+        ndt_free(order);
+    }
+
+    t = ndt_array(ord, seq->ptr, seq->len, dtype, ctx);
 
     ndt_free(seq);
     return t;

@@ -96,6 +96,60 @@ ndt_memory_array_del(ndt_memory_t *mem, size_t ntypes)
     ndt_free(mem);
 }
 
+void
+ndt_attr_del(ndt_attr_t *attr)
+{
+    if (attr == NULL) {
+        return;
+    }
+
+    ndt_free(attr->name);
+
+    switch (attr->tag) {
+    case AttrInt64:
+        break;
+    case AttrString:
+        ndt_free(attr->AttrString);
+        break;
+    case AttrType:
+        ndt_del(attr->AttrType);
+        break;
+    default:
+        abort(); /* NOT REACHED */
+    }
+
+    ndt_free(attr);
+}
+
+void
+ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
+{
+    size_t i;
+
+    if (attr == NULL) {
+        return;
+    }
+
+    for (i = 0; i < nattr; i++) {
+        ndt_free(attr[i].name);
+
+        switch (attr[i].tag) {
+        case AttrInt64:
+            break;
+        case AttrString:
+            ndt_free(attr[i].AttrString);
+            break;
+        case AttrType:
+            ndt_del(attr[i].AttrType);
+            break;
+        default:
+            abort(); /* NOT REACHED */
+        }
+    }
+
+    ndt_free(attr);
+}
+
 ndt_tuple_field_t *
 ndt_tuple_field(ndt_t *type, ndt_context_t *ctx)
 {
@@ -404,7 +458,7 @@ ndt_fixed_dim_kind(ndt_context_t *ctx)
 }
 
 ndt_dim_t *
-ndt_fixed_dim(size_t shape, ndt_context_t *ctx)
+ndt_fixed_dim(size_t shape, int64_t stride, ndt_context_t *ctx)
 {
     ndt_dim_t *d;
 
@@ -413,7 +467,7 @@ ndt_fixed_dim(size_t shape, ndt_context_t *ctx)
         return NULL;
     }
     d->FixedDim.shape = shape;
-    d->FixedDim.stride = 0;
+    d->FixedDim.stride = stride;
     d->itemsize = 0;
     d->itemalign = 1;
 
@@ -421,7 +475,7 @@ ndt_fixed_dim(size_t shape, ndt_context_t *ctx)
 }
 
 ndt_dim_t *
-ndt_var_dim(ndt_context_t *ctx)
+ndt_var_dim(int64_t stride, ndt_context_t *ctx)
 {
     ndt_dim_t *d;
 
@@ -429,6 +483,7 @@ ndt_var_dim(ndt_context_t *ctx)
     if (d == NULL) {
         return NULL;
     }
+    d->VarDim.stride = stride;
 
     return d;
 }
@@ -548,14 +603,18 @@ init_dimensions(size_t *size, uint8_t *itemalign, bool *abstract,
         switch (dim[i].tag) {
         case FixedDim:
             shape = dim[i].FixedDim.shape;
-            dim[i].FixedDim.stride = shape <= 1 ? 0 : *size;
+            if (dim[i].FixedDim.stride == INT64_MAX) {
+                dim[i].FixedDim.stride = shape <= 1 ? 0 : *size;
+            }
             dim[i].itemsize = *size;
             *size *= shape;
             dim[i].itemalign = *itemalign;
             dim[i].abstract = 0;
             break;
         case VarDim:
-            dim[i].VarDim.stride = *size;
+            if (dim[i].VarDim.stride == INT64_MAX) {
+                dim[i].VarDim.stride = *size;
+            }
             dim[i].itemsize = *size;
             *itemalign = dim[i].itemalign;
             dim[i].abstract = 0;
@@ -578,12 +637,14 @@ init_dimensions(size_t *size, uint8_t *itemalign, bool *abstract,
 }
 
 ndt_t *
-ndt_array(ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
+ndt_array(char order, ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
 {
     ndt_t *t;
     size_t size;
     uint8_t align;
     bool abstract;
+
+    assert(order == 'C' || order == 'F');
 
     if (init_dimensions(&size, &align, &abstract, dim, ndim, dtype, ctx) < 0) {
         ndt_dim_array_del(dim, ndim);
@@ -600,6 +661,7 @@ ndt_array(ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
     t->Array.ndim = ndim;
     t->Array.dim = dim;
     t->Array.dtype = dtype;
+    t->Array.order = order;
     t->size = size;
     t->align = align;
     t->abstract = abstract;
@@ -1393,6 +1455,81 @@ ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y)
     default:
         abort(); /* NOT REACHED */
     }
+}
+
+
+/**********************************************************************/
+/*                            memory type                             */
+/**********************************************************************/
+
+/* Return a new ndt attribute with type 'int64'. */
+ndt_attr_t *
+ndt_attr_from_number(char *name, char *v, ndt_context_t *ctx)
+{
+    ndt_attr_t *attr;
+
+    attr = ndt_alloc(1, sizeof *attr);
+    if (attr == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        ndt_free(name);
+        ndt_free(v);
+        return NULL;
+    }
+
+    attr->AttrInt64 = (int64_t)ndt_strtoll(v, INT64_MIN, INT64_MAX, ctx);
+
+    ndt_free(v);
+    if (ctx->err != NDT_Success) {
+        ndt_free(attr);
+        ndt_free(name);
+        return NULL;
+    }
+    attr->tag = AttrInt64;
+    attr->name = name;
+
+    return attr;
+}
+
+/* Return a new ndt attribute with type 'string'. */
+ndt_attr_t *
+ndt_attr_from_string(char *name, char *v, ndt_context_t *ctx)
+{
+    ndt_attr_t *attr;
+
+    attr = ndt_alloc(1, sizeof *attr);
+    if (attr == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        ndt_free(name);
+        ndt_free(v);
+        return NULL;
+    }
+
+    attr->tag = AttrString;
+    attr->name = name;
+    attr->AttrString = v;
+
+    return attr;
+}
+
+/* Return a new ndt attribute with type 'ndt_t'. */
+ndt_attr_t *
+ndt_attr_from_type(char *name, ndt_t *t, ndt_context_t *ctx)
+{
+    ndt_attr_t *attr;
+
+    attr = ndt_alloc(1, sizeof *attr);
+    if (attr == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        ndt_free(name);
+        ndt_del(t);
+        return NULL;
+    }
+
+    attr->tag = AttrString;
+    attr->name = name;
+    attr->AttrType = t;
+
+    return attr;
 }
 
 

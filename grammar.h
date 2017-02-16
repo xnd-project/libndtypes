@@ -136,11 +136,13 @@ union YYSTYPE
     ndt_record_field_seq_t *record_field_seq;
     ndt_memory_t *typed_value;
     ndt_memory_seq_t *typed_value_seq;
+    ndt_attr_t *attribute;
+    ndt_attr_seq_t *attribute_seq;
     enum ndt_variadic_flag variadic_flag;
     enum ndt_encoding encoding;
     char *string;
 
-#line 144 "grammar.h" /* yacc.c:1909  */
+#line 146 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -170,6 +172,6 @@ int yyparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 174 "grammar.h" /* yacc.c:1909  */
+#line 176 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */

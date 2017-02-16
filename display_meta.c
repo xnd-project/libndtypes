@@ -146,7 +146,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, int d, ndt_context_t *ctx)
 
         case FixedDim:
             n = ndt_snprintf_d(ctx, buf, d+2,
-                               "FixedDim[shape=%zu, stride=%zu, itemsize=%zu, itemalign=%" PRIu8 ", abstract=%s]",
+                               "FixedDim(shape=%zu, stride=%zu, itemsize=%zu, itemalign=%" PRIu8 ", abstract=%s)",
                                dim[i].FixedDim.shape, dim[i].FixedDim.stride, dim[i].itemsize,
                                dim[i].itemalign, dim[i].abstract ? "true" : "false");
             if (n < 0) return -1;
@@ -154,7 +154,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, int d, ndt_context_t *ctx)
 
         case VarDim:
             n = ndt_snprintf_d(ctx, buf, d+2,
-                               "VarDim[stride=%zu, itemsize=%zu, itemalign=%" PRIu8 ", abstract=%s]",
+                               "VarDim(stride=%zu, itemsize=%zu, itemalign=%" PRIu8 ", abstract=%s)",
                                dim[i].VarDim.stride, dim[i].itemsize, dim[i].itemalign,
                                dim[i].abstract ? "true" : "false");
             if (n < 0) return -1;
@@ -162,7 +162,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, int d, ndt_context_t *ctx)
 
         case SymbolicDim:
             n = ndt_snprintf_d(ctx, buf, d+2,
-                               "SymbolicDim[name='%s', abstract=%s]",
+                               "SymbolicDim(name='%s', abstract=%s)",
                                dim[i].SymbolicDim.name,
                                dim[i].abstract ? "true" : "false");
             if (n < 0) return -1;
@@ -170,7 +170,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, int d, ndt_context_t *ctx)
 
         case EllipsisDim:
             n = ndt_snprintf_d(ctx, buf, d+2,
-                               "Ellipsis[abstract=%s]",
+                               "Ellipsis(abstract=%s)",
                                dim[i].abstract ? "true" : "false");
             if (n < 0) return -1;
             break;
@@ -184,7 +184,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, int d, ndt_context_t *ctx)
     n = ndt_snprintf(ctx, buf, "\n");
     if (n < 0) return -1;
 
-    n = ndt_snprintf_d(ctx, buf, d, "]");
+    n = ndt_snprintf_d(ctx, buf, d, ")");
     if (n < 0) return -1;
 
     return 0;
@@ -203,7 +203,7 @@ tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
             if (n < 0) return -1;
         }
   
-        n = ndt_snprintf_d(ctx, buf, d, "TupleField[\n");
+        n = ndt_snprintf_d(ctx, buf, d, "TupleField(\n");
         if (n < 0) return -1;
 
         n = ndt_snprintf_d(ctx, buf, d+2, "type=");
@@ -218,7 +218,7 @@ tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
         n = ndt_snprintf_d(ctx, buf, d+2, "offset=%zu, align=%" PRIu8 ", pad=%" PRIu8 "\n",
                            fields[i].offset, fields[i].align, fields[i].pad);
 
-        n = ndt_snprintf_d(ctx, buf, d, "]");
+        n = ndt_snprintf_d(ctx, buf, d, ")");
         if (n < 0) return -1;
     }
 
@@ -238,7 +238,7 @@ record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
             if (n < 0) return -1;
         }
   
-        n = ndt_snprintf_d(ctx, buf, d, "RecordField[\n", fields[i].name);
+        n = ndt_snprintf_d(ctx, buf, d, "RecordField(\n", fields[i].name);
         if (n < 0) return -1;
 
         n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", fields[i].name);
@@ -256,7 +256,7 @@ record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
         n = ndt_snprintf_d(ctx, buf, d+2, "offset=%zu, align=%" PRIu8 ", pad=%" PRIu8 "\n",
                            fields[i].offset, fields[i].align, fields[i].pad);
 
-        n = ndt_snprintf_d(ctx, buf, d, "]");
+        n = ndt_snprintf_d(ctx, buf, d, ")");
         if (n < 0) return -1;
     }
 
@@ -353,10 +353,10 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
 
     switch (t->tag) {
         case Array:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Array[\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Array(\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "Dimensions[\n");
+            n = ndt_snprintf_d(ctx, buf, d+2, "Dimensions(\n");
             if (n < 0) return -1;
 
             n = dimensions(buf, t->Array.dim, t->Array.ndim, d+2, ctx);
@@ -365,7 +365,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "Dtype[\n");
+            n = ndt_snprintf_d(ctx, buf, d+2, "Dtype(\n");
             if (n < 0) return -1;
 
             n = datashape(buf, t->Array.dtype, d+4, 0, ctx);
@@ -374,17 +374,17 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "],\n");
+            n = ndt_snprintf_d(ctx, buf, d+2, "),\n");
             if (n < 0) return -1;
 
             n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, align=%" PRIu8 ", abstract=%s\n",
                                t->size, t->align, t->abstract ? "true" : "false");
             if (n < 0) return -1;
 
-            return ndt_snprintf_d(ctx, buf, d, "]");
+            return ndt_snprintf_d(ctx, buf, d, ")");
 
         case Option:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Option[\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Option(\n");
             if (n < 0) return -1;
 
             n = datashape(buf, t->Option.type, d+2, 0, ctx);
@@ -393,14 +393,14 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "\n");
             if (n < 0) return -1;
 
-            return ndt_snprintf_d(ctx, buf, d, "]");
+            return ndt_snprintf_d(ctx, buf, d, ")");
 
         case Nominal:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Nominal[%s]", t->Nominal.name);
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Nominal(%s)", t->Nominal.name);
             return n;
  
         case Constr:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Constr[\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Constr(\n");
             if (n < 0) return -1;
 
             n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Constr.name);
@@ -419,11 +419,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                                t->size, t->align, t->abstract ? "true" : "false");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d, "]");
+            n = ndt_snprintf_d(ctx, buf, d, ")");
             return n;
  
         case Tuple:
-            n = ndt_snprintf(ctx, buf, "Tuple[\n");
+            n = ndt_snprintf(ctx, buf, "Tuple(\n");
             if (n < 0) return -1;
 
             if (t->Tuple.fields) {
@@ -445,10 +445,10 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                                t->size, t->align, t->abstract ? "true" : "false");
             if (n < 0) return -1;
 
-            return ndt_snprintf_d(ctx, buf, d, "]");
+            return ndt_snprintf_d(ctx, buf, d, ")");
  
         case Record:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Record[\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Record(\n");
             if (n < 0) return -1;
 
             if (t->Record.fields) {
@@ -471,10 +471,10 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                                t->size, t->align, t->abstract ? "true" : "false");
             if (n < 0) return -1;
 
-            return ndt_snprintf_d(ctx, buf, d, "]");
+            return ndt_snprintf_d(ctx, buf, d, ")");
  
         case Function:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Function[\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Function(\n");
             if (n < 0) return -1;
 
             n = ndt_snprintf_d(ctx, buf, d+2, "pos=");
@@ -506,10 +506,10 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                                t->size, t->align, t->abstract ? "true" : "false");
             if (n < 0) return -1;
 
-            return ndt_snprintf_d(ctx, buf, d, "]");
+            return ndt_snprintf_d(ctx, buf, d, ")");
 
         case Typevar:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Typevar[\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Typevar(\n");
             if (n < 0) return -1;
 
             n = ndt_snprintf_d(ctx, buf, d+2, "name=%s,\n", t->Typevar.name);
@@ -519,99 +519,99 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                                t->size, t->align, t->abstract ? "true" : "false");
             if (n < 0) return -1;
 
-            return ndt_snprintf_d(ctx, buf, d, "]");
+            return ndt_snprintf_d(ctx, buf, d, ")");
 
         case AnyKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Any[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Any(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case ScalarKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "ScalarKind[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "ScalarKind(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Void:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Void[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Void(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Bool:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Bool[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Bool(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case SignedKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Signed[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Signed(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Int8:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int8[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int8(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Int16:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int16[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int16(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Int32:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int32[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int32(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Int64:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int64[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int64(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case UnsignedKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Unsigned[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Unsigned(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Uint8:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint8[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint8(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Uint16:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint16[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint16(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Uint32:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint32[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint32(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Uint64:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint64[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint64(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case RealKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Real[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Real(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Float32:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Float32[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Float32(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Float64:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Float64[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Float64(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case ComplexKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "ComplexKind[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "ComplexKind(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Complex64:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Complex64[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Complex64(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case Complex128:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Complex128[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Complex128(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case FixedStringKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedStringKind[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedStringKind(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case FixedBytesKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedBytesKind[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedBytesKind(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case String:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "String[size=%zu, align=%" PRIu8 ", abstract=%s]",
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "String(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case FixedString:
-            n = ndt_snprintf(ctx, buf, "fixed_string[%zu, %s]",
+            n = ndt_snprintf(ctx, buf, "fixed_string(%zu, %s)",
                              t->FixedString.size,
                              ndt_encoding_as_string(t->FixedString.encoding));
             return n;
 
         case Char:
-            n = ndt_snprintf(ctx, buf, "char[%s]",
+            n = ndt_snprintf(ctx, buf, "char(%s)",
                           ndt_encoding_as_string(t->Char.encoding));
             return n;
 
         case Bytes:
-            n = ndt_snprintf(ctx, buf, "bytes[align=%" PRIu8 "]", t->Bytes.target_align);
+            n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
             return n;
 
         case FixedBytes:
-            n = ndt_snprintf(ctx, buf, "fixed_bytes[%zu, align=%" PRIu8 "]",
+            n = ndt_snprintf(ctx, buf, "fixed_bytes(%zu, align=%" PRIu8 ")",
                           t->FixedBytes.size, t->FixedBytes.align);
             return n;
 
         case Categorical:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Categorical[");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Categorical(");
             if (n < 0) return -1;
 
             n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, d, ctx);
@@ -621,11 +621,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                              t->size, t->align, t->abstract ? "true" : "false");
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, "]");
+            n = ndt_snprintf(ctx, buf, ")");
             return n;
 
         case Pointer:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Pointer[\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Pointer(\n");
             if (n < 0) return -1;
 
             n = datashape(buf, t->Pointer.type, d+2, 0, ctx);
@@ -634,7 +634,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d, "]");
+            n = ndt_snprintf_d(ctx, buf, d, ")");
             return n;
 
         default:

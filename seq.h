@@ -58,6 +58,12 @@ typedef struct {
     ndt_memory_t *ptr;
 } ndt_memory_seq_t;
 
+typedef struct {
+    size_t len;
+    size_t reserved;
+    ndt_attr_t *ptr;
+} ndt_attr_seq_t;
+
 
 ndt_dim_seq_t *ndt_dim_seq_new(ndt_dim_t *, ndt_context_t *ctx);
 void ndt_dim_seq_del(ndt_dim_seq_t *);
@@ -78,6 +84,11 @@ ndt_memory_seq_t *ndt_memory_seq_new(ndt_memory_t *, ndt_context_t *ctx);
 void ndt_memory_seq_del(ndt_memory_seq_t *);
 ndt_memory_seq_t *ndt_memory_seq_append(ndt_memory_seq_t *, ndt_memory_t *, ndt_context_t *ctx);
 ndt_memory_seq_t *ndt_memory_seq_finalize(ndt_memory_seq_t *);
+
+ndt_attr_seq_t *ndt_attr_seq_new(ndt_attr_t *, ndt_context_t *ctx);
+void ndt_attr_seq_del(ndt_attr_seq_t *);
+ndt_attr_seq_t *ndt_attr_seq_append(ndt_attr_seq_t *, ndt_attr_t *, ndt_context_t *ctx);
+ndt_attr_seq_t *ndt_attr_seq_finalize(ndt_attr_seq_t *);
 
 
 #endif /* SEQ_H */
