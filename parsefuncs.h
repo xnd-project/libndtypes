@@ -45,11 +45,12 @@ char *mk_stringlit(const char *src, ndt_context_t *ctx);
 /*                        Functions used in the parser                       */
 /*****************************************************************************/
 
-ndt_dim_t *mk_fixed_dim(const char *v, ndt_context_t *ctx);
+ndt_dim_t *mk_fixed_dim(const char *v, ndt_attr_seq_t *seq, ndt_context_t *ctx);
+ndt_dim_t *mk_var_dim(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_string(const char *v, enum ndt_encoding encoding, ndt_context_t *ctx);
 ndt_t *mk_bytes(const char *v, ndt_context_t *ctx);
 ndt_t *mk_fixed_bytes(const char *size, const char *target_align, ndt_context_t *ctx);
-ndt_t *mk_array(ndt_dim_seq_t *seq, ndt_t *dtype, ndt_context_t *ctx);
+ndt_t *mk_array(char *order, ndt_dim_seq_t *seq, ndt_t *dtype, ndt_context_t *ctx);
 ndt_t *mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_record(enum ndt_variadic_flag flag, ndt_record_field_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_function(ndt_t *ret,

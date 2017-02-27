@@ -170,4 +170,10 @@ NDT_SEQ_GROW(ndt_memory)
 NDT_SEQ_APPEND(ndt_memory)
 NDT_SEQ_FINALIZE(ndt_memory)
 
+NDT_SEQ_NEW(ndt_attr)
+NDT_SEQ_DEL(ndt_attr)
+NDT_SEQ_GROW(ndt_attr)
+NDT_SEQ_APPEND(ndt_attr)
+NDT_SEQ_FINALIZE(ndt_attr)
+
 
