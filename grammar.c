@@ -2550,7 +2550,7 @@ yyreduce:
 
   case 102:
 #line 352 "grammar.y" /* yacc.c:1646  */
-    { (yyval.record_field) = ndt_record_field((yyvsp[-3].string), (yyvsp[-1].ndt), ctx); if ((yyval.record_field) == NULL) YYABORT; /* XXX: use attributes */ }
+    { (yyval.record_field) = mk_record_field((yyvsp[-3].string), (yyvsp[-1].ndt), (yyvsp[0].attribute_seq), ctx); if ((yyval.record_field) == NULL) YYABORT; }
 #line 2555 "grammar.c" /* yacc.c:1646  */
     break;
 

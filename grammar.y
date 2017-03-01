@@ -349,7 +349,7 @@ record_field_seq:
 | record_field_seq COMMA record_field  { $$ = ndt_record_field_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 record_field:
-  record_field_name COLON datashape attribute_seq_opt { $$ = ndt_record_field($1, $3, ctx); if ($$ == NULL) YYABORT; /* XXX: use attributes */ }
+  record_field_name COLON datashape attribute_seq_opt { $$ = mk_record_field($1, $3, $4, ctx); if ($$ == NULL) YYABORT; }
 
 record_field_name:
   NAME_LOWER { $$ = $1; if ($$ == NULL) YYABORT; }

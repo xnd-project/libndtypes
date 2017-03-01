@@ -200,7 +200,7 @@ ndt_tuple_field_array_del(ndt_tuple_field_t *fields, size_t shape)
 }
 
 ndt_record_field_t *
-ndt_record_field(char *name, ndt_t *type, ndt_context_t *ctx)
+ndt_record_field(char *name, ndt_t *type, uint8_t align, uint8_t pad, ndt_context_t *ctx)
 {
     ndt_record_field_t *field;
 
@@ -215,8 +215,8 @@ ndt_record_field(char *name, ndt_t *type, ndt_context_t *ctx)
     field->name = name;
     field->type = type;
     field->offset = 0;
-    field->align = type->align;
-    field->pad = 0;
+    field->align = align == 0 ? type->align : align;
+    field->pad = pad;
 
     return field;
 }
@@ -779,14 +779,14 @@ init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
     size = round_up(offset, maxalign);
 
     for (i = 0; i+1 < shape; i++) {
-        if (fields[i].pad == UINT8_MAX) {
+        if (fields[i].pad == 0) {
             size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
             fields[i].pad = (uint8_t)pad;
         }
     }
 
     if (shape) {
-        if (fields[i].pad == UINT8_MAX) {
+        if (fields[i].pad == 0) {
             size_t pad = (size - fields[i].offset) - fields[i].type->size;
             fields[i].pad = pad;
         }
@@ -841,13 +841,17 @@ init_record(ndt_t *t, enum ndt_variadic_flag flag, ndt_record_field_t *fields,
     size = round_up(offset, maxalign);
 
     for (i = 0; i+1 < shape; i++) {
-        size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
-        fields[i].pad = (uint8_t)pad;
+        if (fields[i].pad == 0) {
+            size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
+            fields[i].pad = (uint8_t)pad;
+        }
     }
 
     if (shape) {
-        size_t pad = (size - fields[i].offset) - fields[i].type->size;
-        fields[i].pad = (uint8_t)pad;
+        if (fields[i].pad == 0) {
+            size_t pad = (size - fields[i].offset) - fields[i].type->size;
+            fields[i].pad = (uint8_t)pad;
+        }
     }
 
     t->Record.flag = flag;
