@@ -41,6 +41,19 @@
 #include "ndtypes.h"
 
 
+#undef max
+static uint8_t
+max(uint8_t x, uint8_t y)
+{
+    return x >= y ? x : y;
+}
+
+static size_t
+round_up(size_t offset, uint8_t align)
+{
+    return ((offset + align - 1) / align) * align;
+}
+
 char *
 ndt_strdup(const char *s, ndt_context_t *ctx)
 {
@@ -168,7 +181,7 @@ ndt_tuple_field(ndt_t *type, uint8_t align, uint8_t pad, ndt_context_t *ctx)
 
     field->type = type;
     field->offset = 0;
-    field->align = align;
+    field->align = max(type->align, align);
     field->pad = pad;
 
     return field;
@@ -215,7 +228,7 @@ ndt_record_field(char *name, ndt_t *type, uint8_t align, uint8_t pad, ndt_contex
     field->name = name;
     field->type = type;
     field->offset = 0;
-    field->align = align == 0 ? type->align : align;
+    field->align = max(type->align, align);
     field->pad = pad;
 
     return field;
@@ -743,34 +756,22 @@ ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
-#undef max
-static uint8_t
-max(uint8_t x, uint8_t y)
-{
-    return x >= y ? x : y;
-}
-
-static size_t
-round_up(size_t offset, uint8_t align)
-{
-    return ((offset + align - 1) / align) * align;
-}
-
-static void
+static int
 init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
-           size_t shape)
+           size_t shape, ndt_context_t *ctx)
 {
     size_t offset = 0;
     uint8_t maxalign = 1;
     size_t size;
     size_t i;
+    int ret = 0;
     bool abstract = 0;
 
     for (i = 0; i < shape; i++) {
         offset = round_up(offset, fields[i].type->align);
         maxalign = max(fields[i].type->align, maxalign);
         fields[i].offset = offset;
-        offset += fields[i].type->size;
+        offset += (fields[i].type->size + fields[i].pad);
         if (fields[i].type->abstract) {
             abstract = 1;
         }
@@ -779,17 +780,27 @@ init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
     size = round_up(offset, maxalign);
 
     for (i = 0; i+1 < shape; i++) {
-        if (fields[i].pad == 0) {
-            size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
-            fields[i].pad = (uint8_t)pad;
+        size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
+        /* pad > 0: 'pad' attribute was given, check consistency */
+        if (pad > 0 && fields[i].pad != (uint8_t)pad) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "field %zu: invalid padding: expected %" PRIu8 ", got %" PRIu8,
+                           i, pad, fields[i].pad);
+            ret = -1;
         }
+        fields[i].pad = (uint8_t)pad;
     }
 
     if (shape) {
-        if (fields[i].pad == 0) {
-            size_t pad = (size - fields[i].offset) - fields[i].type->size;
-            fields[i].pad = pad;
+        size_t pad = (size - fields[i].offset) - fields[i].type->size;
+        /* pad > 0: 'pad' attribute was given, check consistency */
+        if (pad > 0 && fields[i].pad != (uint8_t)pad) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "field %zu: invalid padding: expected %" PRIu8 ", got %" PRIu8,
+                           i, pad, fields[i].pad);
+            ret = -1;
         }
+        fields[i].pad = (uint8_t)pad;
     }
 
     t->Tuple.flag = flag;
@@ -798,6 +809,8 @@ init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
     t->size = size;
     t->align = maxalign;
     t->abstract = abstract || flag == Variadic;
+
+    return ret;
 }
 
 ndt_t *
@@ -813,7 +826,11 @@ ndt_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_t *fields, size_t shape,
         ndt_tuple_field_array_del(fields, shape);
         return NULL;
     }
-    init_tuple(t, flag, fields, shape);
+
+    if (init_tuple(t, flag, fields, shape, ctx) < 0) {
+        ndt_del(t);
+        return NULL;
+    }
 
     return t;
 }
