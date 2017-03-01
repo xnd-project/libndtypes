@@ -423,7 +423,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             return n;
  
         case Tuple:
-            n = ndt_snprintf(ctx, buf, "Tuple(\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Tuple(\n");
             if (n < 0) return -1;
 
             if (t->Tuple.fields) {
