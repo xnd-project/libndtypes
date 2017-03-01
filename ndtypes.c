@@ -781,8 +781,8 @@ init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
 
     for (i = 0; i+1 < shape; i++) {
         size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
-        /* pad > 0: 'pad' attribute was given, check consistency */
-        if (pad > 0 && fields[i].pad != (uint8_t)pad) {
+        /* fields[i].pad > 0: 'pad' attribute was given, check consistency */
+        if (fields[i].pad > 0 && fields[i].pad != (uint8_t)pad) {
             ndt_err_format(ctx, NDT_ValueError,
                            "field %zu: invalid padding: expected %" PRIu8 ", got %" PRIu8,
                            i, pad, fields[i].pad);
@@ -793,8 +793,8 @@ init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
 
     if (shape) {
         size_t pad = (size - fields[i].offset) - fields[i].type->size;
-        /* pad > 0: 'pad' attribute was given, check consistency */
-        if (pad > 0 && fields[i].pad != (uint8_t)pad) {
+        /* fields[i].pad > 0: 'pad' attribute was given, check consistency */
+        if (fields[i].pad > 0 && fields[i].pad != (uint8_t)pad) {
             ndt_err_format(ctx, NDT_ValueError,
                            "field %zu: invalid padding: expected %" PRIu8 ", got %" PRIu8,
                            i, pad, fields[i].pad);
@@ -860,7 +860,8 @@ init_record(ndt_t *t, enum ndt_variadic_flag flag, ndt_record_field_t *fields,
 
     for (i = 0; i+1 < shape; i++) {
         size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
-        if (pad > 0 && fields[i].pad != (uint8_t)pad) {
+        /* fields[i].pad > 0: 'pad' attribute was given, check consistency */
+        if (fields[i].pad > 0 && fields[i].pad != (uint8_t)pad) {
             ndt_err_format(ctx, NDT_ValueError,
                            "field %s: invalid padding: expected %" PRIu8 ", got %" PRIu8,
                            fields[i].name, pad, fields[i].pad);
@@ -871,8 +872,8 @@ init_record(ndt_t *t, enum ndt_variadic_flag flag, ndt_record_field_t *fields,
 
     if (shape) {
         size_t pad = (size - fields[i].offset) - fields[i].type->size;
-        /* pad > 0: 'pad' attribute was given, check consistency */
-        if (pad > 0 && fields[i].pad != (uint8_t)pad) {
+        /* fields[i].pad > 0: 'pad' attribute was given, check consistency */
+        if (fields[i].pad > 0 && fields[i].pad != (uint8_t)pad) {
             ndt_err_format(ctx, NDT_ValueError,
                            "field %s: invalid padding: expected %" PRIu8 ", got %" PRIu8,
                            fields[i].name, pad, fields[i].pad);
