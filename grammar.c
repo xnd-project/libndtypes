@@ -2520,7 +2520,7 @@ yyreduce:
 
   case 97:
 #line 341 "grammar.y" /* yacc.c:1646  */
-    { (yyval.tuple_field) = ndt_tuple_field((yyvsp[-1].ndt), ctx); if ((yyval.tuple_field) == NULL) YYABORT; /* XXX: use attributes */ }
+    { (yyval.tuple_field) = mk_tuple_field((yyvsp[-1].ndt), (yyvsp[0].attribute_seq), ctx); if ((yyval.tuple_field) == NULL) YYABORT; }
 #line 2525 "grammar.c" /* yacc.c:1646  */
     break;
 

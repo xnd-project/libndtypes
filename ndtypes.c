@@ -151,7 +151,7 @@ ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
 }
 
 ndt_tuple_field_t *
-ndt_tuple_field(ndt_t *type, ndt_context_t *ctx)
+ndt_tuple_field(ndt_t *type, uint8_t align, uint8_t pad, ndt_context_t *ctx)
 {
     ndt_tuple_field_t *field;
 
@@ -168,8 +168,8 @@ ndt_tuple_field(ndt_t *type, ndt_context_t *ctx)
 
     field->type = type;
     field->offset = 0;
-    field->align = 1;
-    field->pad = 0;
+    field->align = align;
+    field->pad = pad;
 
     return field;
 }
@@ -779,13 +779,17 @@ init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
     size = round_up(offset, maxalign);
 
     for (i = 0; i+1 < shape; i++) {
-        size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
-        fields[i].pad = (uint8_t)pad;
+        if (fields[i].pad == UINT8_MAX) {
+            size_t pad = (fields[i+1].offset-fields[i].offset)-fields[i].type->size;
+            fields[i].pad = (uint8_t)pad;
+        }
     }
 
     if (shape) {
-        size_t pad = (size - fields[i].offset) - fields[i].type->size;
-        fields[i].pad = pad;
+        if (fields[i].pad == UINT8_MAX) {
+            size_t pad = (size - fields[i].offset) - fields[i].type->size;
+            fields[i].pad = pad;
+        }
     }
 
     t->Tuple.flag = flag;

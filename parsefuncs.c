@@ -74,8 +74,6 @@ mk_fixed_dim(char *v, ndt_attr_seq_t *seq, ndt_context_t *ctx)
 
     if (seq) {
         seq = ndt_attr_seq_finalize(seq);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
     }
 
     shape = (size_t)ndt_strtoull(v, SIZE_MAX, ctx);
@@ -205,6 +203,58 @@ mk_array(char *order, ndt_dim_seq_t *seq, ndt_t *dtype, ndt_context_t *ctx)
 
     ndt_free(seq);
     return t;
+}
+ 
+ndt_tuple_field_t *
+mk_tuple_field(ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx)
+{
+    uint8_t pad = 0;
+    uint8_t align = UINT8_MAX;
+    int have_pad = 0;
+    int have_align = 0;
+    size_t i;
+
+    if (seq) {
+        seq = ndt_attr_seq_finalize(seq);
+
+        if (seq->len > 2) {
+            goto error;
+        }
+
+        for (i = 0; i < seq->len; i++) {
+            if (strcmp(seq->ptr[0].name, "pad") == 0) {
+                if (have_pad) {
+                    goto error;
+                }
+                pad = seq->ptr[0].AttrInt64; /* XXX: overflow */
+                have_pad = 1;
+            }
+            else if (strcmp(seq->ptr[0].name, "align") == 0) {
+                if (have_align) {
+                    goto error;
+                }
+                align = seq->ptr[0].AttrInt64; /* XXX: overflow */
+                have_align = 1;
+            }
+            else {
+                goto error;
+            }
+        }
+
+        ndt_attr_array_del(seq->ptr, seq->len);
+        ndt_free(seq);
+        goto out;
+
+    error:
+        ndt_err_format(ctx, NDT_InvalidArgumentError, "invalid or repeated keyword");
+        ndt_del(type);
+        ndt_attr_array_del(seq->ptr, seq->len);
+        ndt_free(seq);
+        return NULL;
+    }
+
+out:
+    return ndt_tuple_field(type, align, pad, ctx);
 }
 
 ndt_t *

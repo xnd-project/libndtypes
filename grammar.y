@@ -338,7 +338,7 @@ tuple_field_seq:
 | tuple_field_seq COMMA tuple_field { $$ = ndt_tuple_field_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 tuple_field:
-  datashape attribute_seq_opt { $$ = ndt_tuple_field($1, ctx); if ($$ == NULL) YYABORT; /* XXX: use attributes */ }
+  datashape attribute_seq_opt { $$ = mk_tuple_field($1, $2, ctx); if ($$ == NULL) YYABORT; }
 
 record_type:
   LBRACE variadic_flag RBRACE                        { $$ = mk_record($2, NULL, ctx); if ($$ == NULL) YYABORT; }
