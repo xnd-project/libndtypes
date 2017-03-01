@@ -171,12 +171,16 @@ ERRTOKEN
 %token ENDMARKER 0 "end of file"
 
 %destructor { ndt_del($$); } <ndt>
+%destructor { ndt_dim_del($$); } <dim>
 %destructor { ndt_dim_seq_del($$); } <dim_seq>
+%destructor { ndt_tuple_field_del($$); } <tuple_field>
 %destructor { ndt_tuple_field_seq_del($$); } <tuple_field_seq>
-%destructor { ndt_record_field_seq_del($$); } <record_field_seq>
 %destructor { ndt_record_field_del($$); } <record_field>
-%destructor { ndt_memory_seq_del($$); } <typed_value_seq>
+%destructor { ndt_record_field_seq_del($$); } <record_field_seq>
 %destructor { ndt_memory_del($$); } <typed_value>
+%destructor { ndt_memory_seq_del($$); } <typed_value_seq>
+%destructor { ndt_attr_del($$); } <attribute>
+%destructor { ndt_attr_seq_del($$); } <attribute_seq>
 %destructor { ndt_free($$); } <string>
 
 %%
@@ -224,7 +228,7 @@ dtype_nooption:
 | function_type                          { $$ = $1; }
 | NAME_LOWER                             { $$ = ndt_nominal($1, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LPAREN dtype RPAREN         { $$ = ndt_constr($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER LPAREN attribute_seq RPAREN { (void)$1; (void)$3; $$ = NULL;
+| NAME_UPPER LPAREN attribute_seq RPAREN { (void)$1; (void)$3; ndt_free($1); ndt_attr_seq_del($3); $$ = NULL;
                                             ndt_err_format(ctx, NDT_NotImplementedError, "general attributes are not implemented");
                                             YYABORT; }
 | NAME_UPPER                             { $$ = ndt_typevar($1, ctx); if ($$ == NULL) YYABORT; }

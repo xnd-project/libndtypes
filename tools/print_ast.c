@@ -66,6 +66,7 @@ main(int argc, char **argv)
         ndt_err_fprint(stderr, ctx);
         assert(ctx->err != NDT_Success);
         ndt_context_del(ctx);
+        ndt_finalize();
         return 1;
     }
     assert(ctx->err == NDT_Success);
@@ -76,6 +77,7 @@ main(int argc, char **argv)
         ndt_err_fprint(stderr, ctx);
         assert(ctx->err != NDT_Success);
         ndt_context_del(ctx);
+        ndt_finalize();
         return 1;
     }
     assert(ctx->err == NDT_Success);
