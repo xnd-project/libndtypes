@@ -53,7 +53,7 @@ init_tests(void)
         return -1;
     }
 
-    t = ndt_from_string("(10 * 2 * int64) -> {a: size, b: pointer(string)}", ctx);
+    t = ndt_from_string("(10 * 2 * int64) -> {a: size_t, b: pointer(string)}", ctx);
     if (t == NULL) {
         ndt_err_fprint(stderr, ctx);
         ndt_context_del(ctx);

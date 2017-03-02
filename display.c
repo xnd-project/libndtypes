@@ -462,7 +462,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case FixedBytes:
-            n = ndt_snprintf(ctx, buf, "fixed_bytes(%zu, align=%" PRIu8 ")",
+            n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu, align=%" PRIu8 ")",
                           t->FixedBytes.size, t->FixedBytes.align);
             return n;
 

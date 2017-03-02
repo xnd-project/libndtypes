@@ -749,7 +749,7 @@ const match_testcase_t match_tests[] = {
     1 },
 
   { "FixedString",
-    "fixed_bytes(200, align=2)",
+    "fixed_bytes(size=200, align=2)",
     0 },
 
   { "?FixedString",
@@ -773,7 +773,7 @@ const match_testcase_t match_tests[] = {
     1 },
 
   { "10 * fixed_string(3952068488, 'utf8')",
-    "10 * fixed_bytes(3952068488, align=2)",
+    "10 * fixed_bytes(size=3952068488, align=2)",
     0 },
 
   { "?10 * fixed_string(3952068488, 'utf8')",
@@ -865,23 +865,23 @@ const match_testcase_t match_tests[] = {
     0 },
 
   { "?FixedBytes",
-    "?fixed_bytes(100, align=2)",
+    "?fixed_bytes(size=100, align=2)",
     1 },
 
-  { "10 * fixed_bytes(1904128733, align=97)",
-    "10 * fixed_bytes(1904128733, align=97)",
+  { "10 * fixed_bytes(size=1904128733, align=97)",
+    "10 * fixed_bytes(size=1904128733, align=97)",
     1 },
 
-  { "?10 * fixed_bytes(1904128733, align=97)",
-    "?10 * fixed_bytes(1904128733, align=97)",
+  { "?10 * fixed_bytes(size=1904128733, align=97)",
+    "?10 * fixed_bytes(size=1904128733, align=97)",
     1 },
 
-  { "fixed_bytes(1904128733, align=97)",
-    "fixed_bytes(1904128733, align=90)",
+  { "fixed_bytes(size=1904128733, align=97)",
+    "fixed_bytes(size=1904128733, align=90)",
     0 },
 
-  { "?fixed_bytes(1904128733, align=97)",
-    "?fixed_bytes(1904128732, align=97)",
+  { "?fixed_bytes(size=1904128733, align=97)",
+    "?fixed_bytes(size=1904128732, align=97)",
     0 },
 
   { "10 * categorical(63 : int8)",
@@ -3238,8 +3238,8 @@ const match_testcase_t match_tests[] = {
     "3374755922 * Fixed * ... * NG * var * 1594671069 * var * float32",
     1 },
 
-  { "fixed_bytes(1342281638, align=36)",
-    "fixed_bytes(1342281638, align=36)",
+  { "fixed_bytes(size=1342281638, align=36)",
+    "fixed_bytes(size=1342281638, align=36)",
     1 },
 
   { "?pointer(fixed_string(3865363101, 'ucs2'))",
@@ -3322,16 +3322,16 @@ const match_testcase_t match_tests[] = {
     "(?2577013537 * var * var * Pgm5k15 * 1405833912 * Fixed * Metyh9 * var * 746032032 * ... * MfxxM9)",
     1 },
 
-  { "S * 3750021327 * 66749723 * var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(2816010943, align=16)",
-    "S * 3750021327 * 66749723 * var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(2816010943, align=16)",
+  { "S * 3750021327 * 66749723 * var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(size=2816010943, align=16)",
+    "S * 3750021327 * 66749723 * var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(size=2816010943, align=16)",
     1 },
 
   { "?1502444436 * 1532076056 * Fixed * Fixed * 4267776219 * var * char('ascii')",
     "?1502444436 * 1532076056 * Fixed * Fixed * 4267776219 * var * char('ascii')",
     1 },
 
-  { "3663546803 * 1650974226 * fixed_bytes(912328236, align=2)",
-    "3663546803 * 1650974226 * fixed_bytes(912328236, align=2)",
+  { "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
+    "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
     1 },
 
   { "... * 921609927 * Fixed * Fixed * int8",
@@ -3406,8 +3406,8 @@ const match_testcase_t match_tests[] = {
     "D7QIpw1ct * KeHiUmpeTX * ... * 842261059 * Fixed * 1002030516 * PaBYxWzcV * Fixed * 2930895061 * Signed",
     1 },
 
-  { "fixed_bytes(280180385, align=95)",
-    "fixed_bytes(280180385, align=95)",
+  { "fixed_bytes(size=280180385, align=95)",
+    "fixed_bytes(size=280180385, align=95)",
     1 },
 
   { "117964276 * Fixed * uint8",
@@ -3462,8 +3462,8 @@ const match_testcase_t match_tests[] = {
     "2948091211 * ... * categorical(-1869840431 : int64, 2052908559 : uint32)",
     1 },
 
-  { "fixed_bytes(1882259764, align=16)",
-    "fixed_bytes(1882259764, align=16)",
+  { "fixed_bytes(size=1882259764, align=16)",
+    "fixed_bytes(size=1882259764, align=16)",
     1 },
 
   { "categorical(1.2e-32 : float32, -58 : int8, -83 : int8)",
@@ -3494,8 +3494,8 @@ const match_testcase_t match_tests[] = {
     "var * 3432474393 * ... * 1514376178 * R8KFFEabJ",
     1 },
 
-  { "?fixed_bytes(3129686755, align=8)",
-    "?fixed_bytes(3129686755, align=8)",
+  { "?fixed_bytes(size=3129686755, align=8)",
+    "?fixed_bytes(size=3129686755, align=8)",
     1 },
 
   { "var * 2253137925 * VUx39mzbW * QoFb",
@@ -3518,20 +3518,20 @@ const match_testcase_t match_tests[] = {
     "?1747845342 * Fixed * 179581001 * Fixed * HTl * I43ZTJ * {...}",
     1 },
 
-  { "fixed_bytes(2882797968, align=32)",
-    "fixed_bytes(2882797968, align=32)",
+  { "fixed_bytes(size=2882797968, align=32)",
+    "fixed_bytes(size=2882797968, align=32)",
     1 },
 
-  { "fixed_bytes(1233209957, align=8)",
-    "fixed_bytes(1233209957, align=8)",
+  { "fixed_bytes(size=1233209957, align=8)",
+    "fixed_bytes(size=1233209957, align=8)",
     1 },
 
   { "WhRsMHHXYp(categorical(145 : uint8))",
     "WhRsMHHXYp(categorical(145 : uint8))",
     1 },
 
-  { "Fixed * var * Ia * fixed_bytes(2424790913, align=237)",
-    "Fixed * var * Ia * fixed_bytes(2424790913, align=237)",
+  { "Fixed * var * Ia * fixed_bytes(size=2424790913, align=237)",
+    "Fixed * var * Ia * fixed_bytes(size=2424790913, align=237)",
     1 },
 
   { "?categorical(4079164787 : uint64, 23814 : int16)",

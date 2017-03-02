@@ -135,43 +135,83 @@ mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
 }
  
 ndt_t *
-mk_bytes(char *v, ndt_context_t *ctx)
+mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx)
 {
     uint8_t align;
 
-    align = (uint8_t)ndt_strtoull(v, UINT8_MAX, ctx);
-    if (ctx->err != NDT_Success) {
-        ndt_free(v);
-        return NULL;
+    seq = ndt_attr_seq_finalize(seq);
+
+    if (seq->len != 1) {
+        goto error;
     }
 
-    ndt_free(v);
+    if (strcmp(seq->ptr[0].name, "align") != 0) {
+        goto error;
+    }
+
+    if (seq->ptr[0].AttrInt64 < 0 || UINT8_MAX < seq->ptr[0].AttrInt64) {
+        goto error;
+    }
+
+    align = seq->ptr[0].AttrInt64; /* XXX: overflow */
+
+    ndt_attr_array_del(seq->ptr, seq->len);
+    ndt_free(seq);
+
     return ndt_bytes(align, ctx);
+
+error:
+    ndt_err_format(ctx, NDT_InvalidArgumentError, "invalid or repeated keyword");
+    ndt_attr_array_del(seq->ptr, seq->len);
+    ndt_free(seq);
+    return NULL;
 }
  
 ndt_t *
-mk_fixed_bytes(char *size, char *target_align, ndt_context_t *ctx)
+mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx)
 {
     size_t sz;
-    uint8_t align;
+    uint8_t target_align = 1;
+    int have_size = 0;
+    int have_target_align = 0;
+    size_t i;
 
-    sz = (size_t)ndt_strtoull(size, SIZE_MAX, ctx);
-    if (ctx->err != NDT_Success) {
-        ndt_free(size);
-        ndt_free(target_align);
-        return NULL;
+    seq = ndt_attr_seq_finalize(seq);
+
+    for (i = 0; i < seq->len; i++) {
+        if (strcmp(seq->ptr[i].name, "size") == 0) {
+            if (have_size) {
+                goto error;
+            }
+            sz = seq->ptr[i].AttrInt64; /* XXX: overflow */
+            have_size = 1;
+        }
+        else if (strcmp(seq->ptr[i].name, "align") == 0) {
+            if (have_target_align || seq->ptr[i].AttrInt64 < 0 || UINT8_MAX < seq->ptr[i].AttrInt64) {
+                goto error;
+            }
+            target_align = seq->ptr[i].AttrInt64;
+            have_target_align = 1;
+        }
+        else {
+            goto error;
+        }
     }
 
-    align = (uint8_t)ndt_strtoull(target_align, UINT8_MAX, ctx);
-    if (ctx->err != NDT_Success) {
-        ndt_free(size);
-        ndt_free(target_align);
-        return NULL;
+    if (!have_size) {
+        goto error;
     }
 
-    ndt_free(size);
-    ndt_free(target_align);
-    return ndt_fixed_bytes(sz, align, ctx);
+    ndt_attr_array_del(seq->ptr, seq->len);
+    ndt_free(seq);
+
+    return ndt_fixed_bytes(sz, target_align, ctx);
+
+error:
+    ndt_err_format(ctx, NDT_InvalidArgumentError, "invalid or repeated keyword");
+    ndt_attr_array_del(seq->ptr, seq->len);
+    ndt_free(seq);
+    return NULL;
 }
 
 ndt_t *

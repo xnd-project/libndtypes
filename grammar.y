@@ -161,7 +161,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 FIXED_DIM_KIND FIXED VAR
 
 COMMA COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
-RARROW EQUAL QUESTIONMARK ALIGN
+RARROW EQUAL QUESTIONMARK
 ERRTOKEN
 
 %token <string>
@@ -304,10 +304,10 @@ encoding:
   STRINGLIT { $$ = ndt_encoding_from_string($1, ctx); if ($$ == ErrorEncoding) YYABORT; }
 
 bytes:
-  BYTES LPAREN ALIGN EQUAL INTEGER RPAREN { $$ = mk_bytes($5, ctx); if ($$ == NULL) YYABORT; }
+  BYTES LPAREN attribute_seq RPAREN { $$ = mk_bytes($3, ctx); if ($$ == NULL) YYABORT; }
 
 fixed_bytes:
-  FIXED_BYTES LPAREN INTEGER COMMA ALIGN EQUAL INTEGER RPAREN { $$ = mk_fixed_bytes($3, $7, ctx); if ($$ == NULL) YYABORT; }
+  FIXED_BYTES LPAREN attribute_seq RPAREN { $$ = mk_fixed_bytes($3, ctx); if ($$ == NULL) YYABORT; }
 
 pointer:
   POINTER LPAREN datashape RPAREN { $$ = ndt_pointer($3, ctx); if ($$ == NULL) YYABORT; }

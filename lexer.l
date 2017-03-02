@@ -166,7 +166,7 @@ yycolumn = 1;
 
 "intptr"       { return INTPTR; }
 "uintptr"      { return UINTPTR; }
-"size"         { return SIZE; }
+"size_t"       { return SIZE; }
 "real"         { return REAL; }
 "complex"      { return COMPLEX; }
 "int"          { return INT; }
@@ -189,8 +189,6 @@ yycolumn = 1;
 "Fixed"        { return FIXED_DIM_KIND; }
 "fixed"        { return FIXED; }
 "var"          { return VAR; }
-
-"align"        { return ALIGN; }
 
 "..."          { return ELLIPSIS; }
 "->"           { return RARROW; }
