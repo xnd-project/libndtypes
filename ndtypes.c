@@ -464,6 +464,15 @@ ndt_alignof_encoding(enum ndt_encoding encoding)
 /*                                 Dimensions                                 */
 /******************************************************************************/
 
+/*
+ * NOTE: ndt_dim_new() initializes:
+ *
+ *     d->tag = tag;
+ *     d->itemsize = 0;
+ *     d->itemalign = 1;
+ *     d->abstract = 1;
+ */
+
 ndt_dim_t *
 ndt_fixed_dim_kind(ndt_context_t *ctx)
 {
@@ -481,8 +490,7 @@ ndt_fixed_dim(size_t shape, int64_t stride, ndt_context_t *ctx)
     }
     d->FixedDim.shape = shape;
     d->FixedDim.stride = stride;
-    d->itemsize = 0;
-    d->itemalign = 1;
+    d->abstract = 0;
 
     return d;
 }
