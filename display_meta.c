@@ -377,8 +377,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, d+2, "),\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, align=%" PRIu8 ", abstract=%s\n",
-                               t->size, t->align, t->abstract ? "true" : "false");
+            n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, align=%" PRIu8 ", abstract=%s, order=%c\n",
+                               t->size, t->align, t->abstract ? "true" : "false", t->Array.order);
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");

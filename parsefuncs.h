@@ -50,7 +50,7 @@ ndt_dim_t *mk_var_dim(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_string(const char *v, enum ndt_encoding encoding, ndt_context_t *ctx);
 ndt_t *mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_array(char *order, ndt_dim_seq_t *seq, ndt_t *dtype, ndt_context_t *ctx);
+ndt_t *mk_array(ndt_dim_seq_t *dims, ndt_t *dtype, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
 ndt_tuple_field_t *mk_tuple_field(ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *seq, ndt_context_t *ctx);
 ndt_record_field_t * mk_record_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
