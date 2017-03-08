@@ -31,13 +31,13 @@ matrix:
       script:
         - make check
 
-    - language: objective-c
-      os: osx
-      compiler: clang
-      before_script:
-        - export CC=clang
-      script:
-        - make check
+    # - language: objective-c
+    #  os: osx
+    #  compiler: clang
+    #  before_script:
+    #    - export CC=clang
+    #  script:
+    #    - make check
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
