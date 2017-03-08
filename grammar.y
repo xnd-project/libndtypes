@@ -161,7 +161,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 FIXED_DIM_KIND FIXED VAR
 
 COMMA COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
-RARROW EQUAL QUESTIONMARK
+RARROW EQUAL QUESTIONMARK BAR
 ERRTOKEN
 
 %token <string>
@@ -169,6 +169,9 @@ ERRTOKEN
   NAME_LOWER NAME_UPPER NAME_OTHER
 
 %token ENDMARKER 0 "end of file"
+
+%precedence STAR
+%precedence BAR
 
 %destructor { ndt_del($$); } <ndt>
 %destructor { ndt_dim_del($$); } <dim>
@@ -199,8 +202,8 @@ array:
 | OPTION LPAREN array_nooption RPAREN { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
 
 array_nooption:
-  NAME_UPPER dimension_seq STAR dtype { $$ = mk_array($1, $2, $4, ctx); if ($$ == NULL) YYABORT; }
-| dimension_seq STAR dtype            { $$ = mk_array(NULL, $1, $3, ctx); if ($$ == NULL) YYABORT; }
+  dimension_seq STAR dtype                                 { $$ = mk_array($1, $3, NULL, ctx); if ($$ == NULL) YYABORT; }
+| dimension_seq STAR dtype BAR LBRACK attribute_seq RBRACK { $$ = mk_array($1, $3, $6, ctx); if ($$ == NULL) YYABORT; }
 
 dimension_seq:
   dimension                    { $$ = ndt_dim_seq_new($1, ctx); if ($$ == NULL) YYABORT; }

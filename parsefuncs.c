@@ -215,33 +215,47 @@ error:
 }
 
 ndt_t *
-mk_array(char *order, ndt_dim_seq_t *seq, ndt_t *dtype, ndt_context_t *ctx)
+mk_array(ndt_dim_seq_t *dims, ndt_t *dtype, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     ndt_t *t;
     char ord = 'C';
 
-    seq = ndt_dim_seq_finalize(seq);
+    dims = ndt_dim_seq_finalize(dims);
 
-    if (order) {
-        if (strcmp(order, "C") == 0) {
+    if (attrs) {
+        attrs = ndt_attr_seq_finalize(attrs);
+
+        if (attrs->len != 1 || strcmp(attrs->ptr[0].name, "order") != 0) {
+            goto error;
+        }
+
+        if (strcmp(attrs->ptr[0].AttrString, "C") == 0) {
             ;
         }
-        else if (strcmp(order, "F") == 0) {
+        else if (strcmp(attrs->ptr[0].AttrString, "F") == 0) {
             ord = 'F';
         }
         else {
-            ndt_err_format(ctx, NDT_RuntimeError, "invalid order: '%s'", order);
-            ndt_free(order);
-            ndt_dim_array_del(seq->ptr, seq->len);
-            ndt_free(seq);
-            return NULL;
+            goto error;
         }
-        ndt_free(order);
+
+        ndt_attr_array_del(attrs->ptr, attrs->len);
+        ndt_free(attrs);
+        goto out;
+
+    error:
+        ndt_err_format(ctx, NDT_InvalidArgumentError, "invalid keyword");
+        ndt_dim_array_del(dims->ptr, dims->len);
+        ndt_free(dims);
+        ndt_del(dtype);
+        ndt_attr_array_del(attrs->ptr, attrs->len);
+        ndt_free(attrs);
+        return NULL;
     }
 
-    t = ndt_array(ord, seq->ptr, seq->len, dtype, ctx);
-
-    ndt_free(seq);
+out:
+    t = ndt_array(ord, dims->ptr, dims->len, dtype, ctx);
+    ndt_free(dims);
     return t;
 }
  
