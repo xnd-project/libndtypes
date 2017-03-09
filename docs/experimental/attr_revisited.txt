@@ -1,0 +1,124 @@
+
+
+##############################################
+Extend meta information for the regular syntax
+##############################################
+
+We have three places to insert meta information. This is an example
+how to print the abstract syntax tree and see the effect:
+
+   git clone https://github.com/blaze/libndtypes2.git
+   cd libndtypes2
+   make print_ast
+   echo "10 [stride=8] * int32" | ./print_ast -
+
+
+1) Dimensions
+=============
+
+  10 [stride=8] * int32
+
+
+2) Fields
+=========
+
+  (int32 [pad=4], int64)
+
+
+3) Arrays
+=========
+
+There is a reduce/reduce conflict between field attributes and array
+attributes, so another syntax is needed for arrays:
+
+  (10 * int32 [pad=4], int64)
+              ^^^^^^^
+
+--------------------------------
+Syntax 1 (currently implemented)
+--------------------------------
+
+  (9 * int32 | [order='F'] [pad=4], int64)
+
+That is to say, array attributes have an extra bar separator, field
+attributes don't.  This already requires precedence directives in the
+grammar.
+
+ 
+--------
+Syntax 2
+--------
+
+  (9 * int32 [|order='F'|] [pad=4], int64)
+
+Introduce "[|" as a new grouping mechanism.  Array attributes use that,
+field and dimension attributes "[". Could also be the other way around.
+
+
+
+=================
+Too syntax heavy?
+=================
+
+General datashape attributes would be specified with parentheses
+(not implemented yet):
+
+  int32(endian='B')
+
+
+Is this syntax still tolerable?
+
+  (9 * int32(endian='B') | [order='F'] [pad=4], int64)
+
+
+This is a relatively simple two field tuple: The first field is a
+Fortran array containing 9 big endian int32_t; the field is padded
+with four bytes.
+
+
+
+====================================================================
+Different approach:  Every datashape is a field (useful or harmful)? 
+====================================================================
+
+Ultimately, a type describes a memory block, containers describe repeated
+memory blocks (arrays) or memory blocks of different types with padding
+(tuples and records).
+
+
+Every datashape already has the 'align' and 'size' attribute, so it
+would be easy to add a 'pad' attribute for trailing padding.
+
+
+The above example would be simplified:
+
+   (9 * int32(endian='B') [order='F', pad=4], int64)
+
+
+Now, padding is part of the array and the tuple fields would just
+carry offset information.
+
+
+Advantages
+----------
+
+   - Simpler syntax.
+
+   - Simpler mental model: we only have memory blocks with alignment and
+     trailing padding that can be used to build larger structures.
+
+
+Disadvantages
+-------------
+
+   - Not purist: Breaks the "field boxes a type" model.
+
+   - Would need careful consideration when to ignore the padding during
+     type matching. Probably always except when matching fields.
+
+     Or are there circumstances where it would be useful to be able to
+     specify something like int32(align=8, pad=4)?
+
+
+
+
