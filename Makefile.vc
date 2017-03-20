@@ -19,7 +19,7 @@ CFLAGS_FOR_PARSER = /W4 /wd4201 /wd4090 /nologo /DYY_NO_UNISTD_H=1 $(OPT)
 default: $(LIBSTATIC)
 
 
-OBJS = alloc.obj display.obj equal.obj grammar.obj lexer.obj match.obj \
+OBJS = alloc.obj attr.obj display.obj equal.obj grammar.obj lexer.obj match.obj \
        ndtypes.obj parsefuncs.obj parser.obj seq.obj symtable.obj
 
 $(LIBSTATIC):\
@@ -30,6 +30,10 @@ Makefile $(OBJS)
 alloc.obj:\
 Makefile alloc.c ndtypes.h
 	$(CC) $(CFLAGS) -c alloc.c
+
+attr.obj:\
+Makefile attr.c attr.h ndtypes.h
+	$(CC) $(CFLAGS) -c attr.c
 
 display.obj:\
 Makefile display.c ndtypes.h

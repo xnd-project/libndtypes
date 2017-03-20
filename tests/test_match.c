@@ -836,20 +836,20 @@ const match_testcase_t match_tests[] = {
     "?fixed_string(969064578, 'ucs2')",
     1 },
 
-  { "10 * bytes(align=235)",
-    "10 * bytes(align=235)",
+  { "10 * bytes(align=16)",
+    "10 * bytes(align=16)",
     1 },
 
-  { "?10 * bytes(align=236)",
-    "?10 * bytes(align=235)",
+  { "?10 * bytes(align=2)",
+    "?10 * bytes(align=16)",
     0 },
 
-  { "bytes(align=235)",
-    "bytes(align=235)",
+  { "bytes(align=16)",
+    "bytes(align=16)",
     1 },
 
-  { "?bytes(align=235)",
-    "?bytes(align=235)",
+  { "?bytes(align=16)",
+    "?bytes(align=16)",
     1 },
 
   { "10 * FixedBytes",
@@ -868,20 +868,20 @@ const match_testcase_t match_tests[] = {
     "?fixed_bytes(size=100, align=2)",
     1 },
 
-  { "10 * fixed_bytes(size=1904128733, align=97)",
-    "10 * fixed_bytes(size=1904128733, align=97)",
+  { "10 * fixed_bytes(size=1904128733, align=4)",
+    "10 * fixed_bytes(size=1904128733, align=4)",
     1 },
 
-  { "?10 * fixed_bytes(size=1904128733, align=97)",
-    "?10 * fixed_bytes(size=1904128733, align=97)",
+  { "?10 * fixed_bytes(size=1904128733, align=4)",
+    "?10 * fixed_bytes(size=1904128733, align=4)",
     1 },
 
-  { "fixed_bytes(size=1904128733, align=97)",
-    "fixed_bytes(size=1904128733, align=90)",
+  { "fixed_bytes(size=1904128733, align=4)",
+    "fixed_bytes(size=1904128733, align=2)",
     0 },
 
-  { "?fixed_bytes(size=1904128733, align=97)",
-    "?fixed_bytes(size=1904128732, align=97)",
+  { "?fixed_bytes(size=1904128733, align=4)",
+    "?fixed_bytes(size=1904128732, align=4)",
     0 },
 
   { "10 * categorical(63 : int8)",
@@ -3238,8 +3238,8 @@ const match_testcase_t match_tests[] = {
     "3374755922 * Fixed * ... * NG * var * 1594671069 * var * float32",
     1 },
 
-  { "fixed_bytes(size=1342281638, align=36)",
-    "fixed_bytes(size=1342281638, align=36)",
+  { "fixed_bytes(size=1342281638, align=8)",
+    "fixed_bytes(size=1342281638, align=8)",
     1 },
 
   { "?pointer(fixed_string(3865363101, 'ucs2'))",
@@ -3262,8 +3262,8 @@ const match_testcase_t match_tests[] = {
     "?categorical(30987 : int16, -16536 : int16, 1.2e-32 : float32, 189 : uint8, -823800099 : int32)",
     1 },
 
-  { "?Fixed * 1998811088 * var * var * var * var * bytes(align=58)",
-    "?Fixed * 1998811088 * var * var * var * var * bytes(align=58)",
+  { "?Fixed * 1998811088 * var * var * var * var * bytes(align=2)",
+    "?Fixed * 1998811088 * var * var * var * var * bytes(align=2)",
     1 },
 
   { "categorical(1.2e-32 : float64, 2840608325 : uint32, 44038 : uint16, 1763886348 : uint32, 'jOt' : string, 24 : uint8)",
@@ -3350,8 +3350,8 @@ const match_testcase_t match_tests[] = {
     "?categorical(31275 : uint16, 69 : uint8, 1.2e-32 : float64)",
     1 },
 
-  { "Fixed * ... * B * Hj3_ * BAqevpznHb(Fc64CBW(SNVRw(YY9(bytes(align=96)))))",
-    "Fixed * ... * B * Hj3_ * BAqevpznHb(Fc64CBW(SNVRw(YY9(bytes(align=96)))))",
+  { "Fixed * ... * B * Hj3_ * BAqevpznHb(Fc64CBW(SNVRw(YY9(bytes(align=16)))))",
+    "Fixed * ... * B * Hj3_ * BAqevpznHb(Fc64CBW(SNVRw(YY9(bytes(align=16)))))",
     1 },
 
   { "1260250204 * Fixed * XfHO * float32",
@@ -3366,8 +3366,8 @@ const match_testcase_t match_tests[] = {
     "?PtMPbgIsh1 * 3916753468 * Fixed * ZbWyc5 * ... * VQECx9DM * 128822188 * int32",
     1 },
 
-  { "?3782944746 * Fixed * K6 * var * var * {_9f4IW8Ka : bytes(align=72)}",
-    "?3782944746 * Fixed * K6 * var * var * {_9f4IW8Ka : bytes(align=72)}",
+  { "?3782944746 * Fixed * K6 * var * var * {_9f4IW8Ka : bytes(align=2)}",
+    "?3782944746 * Fixed * K6 * var * var * {_9f4IW8Ka : bytes(align=2)}",
     1 },
 
   { "categorical('omhwkoWVWw' : string, 43 : uint8, 946986991 : int64)",
@@ -3406,8 +3406,8 @@ const match_testcase_t match_tests[] = {
     "D7QIpw1ct * KeHiUmpeTX * ... * 842261059 * Fixed * 1002030516 * PaBYxWzcV * Fixed * 2930895061 * Signed",
     1 },
 
-  { "fixed_bytes(size=280180385, align=95)",
-    "fixed_bytes(size=280180385, align=95)",
+  { "fixed_bytes(size=280180385, align=8)",
+    "fixed_bytes(size=280180385, align=8)",
     1 },
 
   { "117964276 * Fixed * uint8",
@@ -3446,8 +3446,8 @@ const match_testcase_t match_tests[] = {
     "var * 3976601884 * Fixed * D1x_FrNQm * var * Fixed * var * J6 * 968590204 * var * uint32",
     1 },
 
-  { "3546970538 * var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=79)",
-    "3546970538 * var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=79)",
+  { "3546970538 * var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=2)",
+    "3546970538 * var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=2)",
     1 },
 
   { "3608776903 * MYlGTj * 1980216455 * Hce1_dqKx * var * Jfl * ... * E",
@@ -3518,8 +3518,8 @@ const match_testcase_t match_tests[] = {
     "?1747845342 * Fixed * 179581001 * Fixed * HTl * I43ZTJ * {...}",
     1 },
 
-  { "fixed_bytes(size=2882797968, align=32)",
-    "fixed_bytes(size=2882797968, align=32)",
+  { "fixed_bytes(size=2882797968, align=16)",
+    "fixed_bytes(size=2882797968, align=16)",
     1 },
 
   { "fixed_bytes(size=1233209957, align=8)",
@@ -3530,8 +3530,8 @@ const match_testcase_t match_tests[] = {
     "WhRsMHHXYp(categorical(145 : uint8))",
     1 },
 
-  { "Fixed * var * Ia * fixed_bytes(size=2424790913, align=237)",
-    "Fixed * var * Ia * fixed_bytes(size=2424790913, align=237)",
+  { "Fixed * var * Ia * fixed_bytes(size=2424790913, align=2)",
+    "Fixed * var * Ia * fixed_bytes(size=2424790913, align=2)",
     1 },
 
   { "?categorical(4079164787 : uint64, 23814 : int16)",
@@ -3542,8 +3542,8 @@ const match_testcase_t match_tests[] = {
     "?categorical(123 : uint8, 1.2e-32 : float64, 'piLDeH2' : string, 214836863 : uint32)",
     1 },
 
-  { "var * var * Z * LWfWfV6Gp6 * O8 * GWLJMYrf * 756518781 * PDVa3IbLt * bytes(align=32)",
-    "var * var * Z * LWfWfV6Gp6 * O8 * GWLJMYrf * 756518781 * PDVa3IbLt * bytes(align=32)",
+  { "var * var * Z * LWfWfV6Gp6 * O8 * GWLJMYrf * 756518781 * PDVa3IbLt * bytes(align=16)",
+    "var * var * Z * LWfWfV6Gp6 * O8 * GWLJMYrf * 756518781 * PDVa3IbLt * bytes(align=16)",
     1 },
 
   { "?var * Fixed * Fixed * var * 4959179 * int64",

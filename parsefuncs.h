@@ -47,6 +47,8 @@ char *mk_stringlit(const char *src, ndt_context_t *ctx);
 
 ndt_dim_t *mk_fixed_dim(const char *v, ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_dim_t *mk_var_dim(ndt_attr_seq_t *seq, ndt_context_t *ctx);
+ndt_t *mk_primitive(enum ndt tag, ndt_attr_seq_t *seq, ndt_context_t *ctx);
+ndt_t *mk_alias(enum ndt tag, ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_string(const char *v, enum ndt_encoding encoding, ndt_context_t *ctx);
 ndt_t *mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);

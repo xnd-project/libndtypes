@@ -117,20 +117,7 @@ ndt_attr_del(ndt_attr_t *attr)
     }
 
     ndt_free(attr->name);
-
-    switch (attr->tag) {
-    case AttrInt64:
-        break;
-    case AttrString:
-        ndt_free(attr->AttrString);
-        break;
-    case AttrType:
-        ndt_del(attr->AttrType);
-        break;
-    default:
-        abort(); /* NOT REACHED */
-    }
-
+    ndt_free(attr->value);
     ndt_free(attr);
 }
 
@@ -145,19 +132,7 @@ ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
 
     for (i = 0; i < nattr; i++) {
         ndt_free(attr[i].name);
-
-        switch (attr[i].tag) {
-        case AttrInt64:
-            break;
-        case AttrString:
-            ndt_free(attr[i].AttrString);
-            break;
-        case AttrType:
-            ndt_del(attr[i].AttrType);
-            break;
-        default:
-            abort(); /* NOT REACHED */
-        }
+        ndt_free(attr[i].value);
     }
 
     ndt_free(attr);
@@ -549,6 +524,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
     t->tag = tag;
     t->size = 0;
     t->align = 1;
+    t->endian = 'L';
     t->abstract = 1;
 
     return t;
@@ -665,7 +641,12 @@ ndt_array(char order, ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *
     uint8_t align;
     bool abstract;
 
-    assert(order == 'C' || order == 'F');
+    if (order != 'C' && order != 'F') {
+        ndt_err_format(ctx, NDT_ValueError, "order must be 'C' or 'F'");
+        ndt_dim_array_del(dim, ndim);
+        ndt_del(dtype);
+        return NULL;
+    }
 
     if (init_dimensions(&size, &align, &abstract, dim, ndim, dtype, ctx) < 0) {
         ndt_dim_array_del(dim, ndim);
@@ -1008,9 +989,16 @@ ndt_fixed_string_kind(ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_primitive(enum ndt tag, ndt_context_t *ctx)
+ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
 {
-    ndt_t *t = ndt_new(tag, ctx);
+    ndt_t *t;
+
+    if (endian != 'L' && endian != 'B') {
+        ndt_err_format(ctx, NDT_ValueError, "endian must be 'L' or 'B'");
+        return NULL;
+    }
+
+    t = ndt_new(tag, ctx);
     if (t == NULL) {
         return NULL;
     }
@@ -1079,19 +1067,20 @@ ndt_primitive(enum ndt tag, ndt_context_t *ctx)
         return NULL;
     }
 
+    t->endian = endian;
     t->abstract = 0;
 
     return t;
 }
 
 ndt_t *
-ndt_signed(int size, ndt_context_t *ctx)
+ndt_signed(int size, char endian, ndt_context_t *ctx)
 {
     switch (size) {
-    case  1: return ndt_primitive(Int8, ctx);
-    case  2: return ndt_primitive(Int16, ctx);
-    case  4: return ndt_primitive(Int32, ctx);
-    case  8: return ndt_primitive(Int64, ctx);
+    case  1: return ndt_primitive(Int8, endian, ctx);
+    case  2: return ndt_primitive(Int16, endian, ctx);
+    case  4: return ndt_primitive(Int32, endian, ctx);
+    case  8: return ndt_primitive(Int64, endian, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError,
                        "invalid size for signed integer: '%d'", size);
@@ -1100,13 +1089,13 @@ ndt_signed(int size, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_unsigned(int size, ndt_context_t *ctx)
+ndt_unsigned(int size, char endian, ndt_context_t *ctx)
 {
     switch (size) {
-    case  1: return ndt_primitive(Uint8, ctx);
-    case  2: return ndt_primitive(Uint16, ctx);
-    case  4: return ndt_primitive(Uint32, ctx);
-    case  8: return ndt_primitive(Uint64, ctx);
+    case  1: return ndt_primitive(Uint8, endian, ctx);
+    case  2: return ndt_primitive(Uint16, endian, ctx);
+    case  4: return ndt_primitive(Uint32, endian, ctx);
+    case  8: return ndt_primitive(Uint64, endian, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError,
                        "invalid size for unsigned integer: '%d'", size);
@@ -1115,12 +1104,12 @@ ndt_unsigned(int size, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_from_alias(enum ndt_alias tag, ndt_context_t *ctx)
+ndt_from_alias(enum ndt_alias tag, char endian, ndt_context_t *ctx)
 {
     switch (tag) {
-    case Size: return ndt_unsigned(sizeof(size_t), ctx);
-    case Intptr: return ndt_signed(sizeof(intptr_t), ctx);
-    case Uintptr: return ndt_unsigned(sizeof(uintptr_t), ctx);
+    case Size: return ndt_unsigned(sizeof(size_t), endian, ctx);
+    case Intptr: return ndt_signed(sizeof(intptr_t), endian, ctx);
+    case Uintptr: return ndt_unsigned(sizeof(uintptr_t), endian, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError, "invalid alias tag");
         return NULL;
@@ -1183,6 +1172,11 @@ ndt_bytes(uint8_t target_align, ndt_context_t *ctx)
 {
     ndt_t *t;
 
+    if (target_align < 1 || target_align > 16) { 
+        ndt_err_format(ctx, NDT_ValueError, "target_align must be in [1, 16]");
+        return NULL;
+    }
+
     t = ndt_new(Bytes, ctx);
     if (t == NULL) {
         return NULL;
@@ -1199,6 +1193,11 @@ ndt_t *
 ndt_fixed_bytes(size_t size, uint8_t align, ndt_context_t *ctx)
 {
     ndt_t *t;
+
+    if (align < 1 || align > 16) { 
+        ndt_err_format(ctx, NDT_ValueError, "align must be in [1, 16]");
+        return NULL;
+    }
 
     t = ndt_new(FixedBytes, ctx);
     if (t == NULL) {
@@ -1509,12 +1508,11 @@ ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y)
 
 
 /**********************************************************************/
-/*                            memory type                             */
+/*                             Attributes                             */
 /**********************************************************************/
 
-/* Return a new ndt attribute with type 'int64'. */
 ndt_attr_t *
-ndt_attr_from_number(char *name, char *v, ndt_context_t *ctx)
+ndt_attr(char *name, char *value, ndt_context_t *ctx)
 {
     ndt_attr_t *attr;
 
@@ -1522,62 +1520,12 @@ ndt_attr_from_number(char *name, char *v, ndt_context_t *ctx)
     if (attr == NULL) {
         ndt_err_format(ctx, NDT_MemoryError, "out of memory");
         ndt_free(name);
-        ndt_free(v);
+        ndt_free(value);
         return NULL;
     }
 
-    attr->AttrInt64 = (int64_t)ndt_strtoll(v, INT64_MIN, INT64_MAX, ctx);
-
-    ndt_free(v);
-    if (ctx->err != NDT_Success) {
-        ndt_free(attr);
-        ndt_free(name);
-        return NULL;
-    }
-    attr->tag = AttrInt64;
     attr->name = name;
-
-    return attr;
-}
-
-/* Return a new ndt attribute with type 'string'. */
-ndt_attr_t *
-ndt_attr_from_string(char *name, char *v, ndt_context_t *ctx)
-{
-    ndt_attr_t *attr;
-
-    attr = ndt_alloc(1, sizeof *attr);
-    if (attr == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        ndt_free(name);
-        ndt_free(v);
-        return NULL;
-    }
-
-    attr->tag = AttrString;
-    attr->name = name;
-    attr->AttrString = v;
-
-    return attr;
-}
-
-/* Return a new ndt attribute with type 'ndt_t'. */
-ndt_attr_t *
-ndt_attr_from_type(char *name, ndt_t *t, ndt_context_t *ctx)
-{
-    ndt_attr_t *attr;
-
-    attr = ndt_alloc(1, sizeof *attr);
-    if (attr == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        ndt_free(name);
-        ndt_del(t);
-        return NULL;
-    }
-
-    attr->tag = AttrString;
-    attr->name = name;
-    attr->AttrType = t;
+    attr->value = value;
 
     return attr;
 }
@@ -1599,6 +1547,18 @@ ndt_strtobool(const char *v, ndt_context_t *ctx)
     else {
         ndt_err_format(ctx, NDT_InvalidArgumentError,
                        "valid values for bool are 'true' or 'false'");
+        return 0;
+    }
+}
+
+char
+ndt_strtochar(const char *v, ndt_context_t *ctx)
+{
+    if (strlen(v) == 1) {
+        return v[0];
+    }
+    else {
+        ndt_err_format(ctx, NDT_InvalidArgumentError, "invalid char");
         return 0;
     }
 }
