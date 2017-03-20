@@ -66,6 +66,7 @@ typedef struct _ndt ndt_t;
 /* Values: ndt_value_t */
 typedef union {
   bool Bool;
+  char Char;
   int8_t Int8;
   int16_t Int16;
   int32_t Int32;
@@ -87,24 +88,11 @@ typedef struct {
 } ndt_memory_t;
 
 
-/* Supported attribute types */
-enum ndt_attr {
-  AttrInt64,
-  AttrString,
-  AttrType
-};
-
 /* Attribute (name=value) */
 typedef struct {
     char *name;
-    enum ndt_attr tag;
-    union {
-      int64_t AttrInt64;
-      char *AttrString;
-      ndt_t *AttrType;
-    };
+    char *value;
 } ndt_attr_t;
-
 
 /* Flag for variadic tuples and records */
 enum ndt_variadic_flag {
@@ -185,6 +173,8 @@ enum ndt {
 
         Categorical,
         Pointer,
+
+        Field /* used internally */
 };
 
 enum ndt_alias {
@@ -311,6 +301,7 @@ struct _ndt {
 
     size_t size;
     uint8_t align;
+    char endian;
     bool abstract;
 };
 
@@ -381,6 +372,7 @@ int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 
 /*** String conversion ***/
 bool ndt_strtobool(const char *v, ndt_context_t *ctx);
+char ndt_strtochar(const char *v, ndt_context_t *ctx);
 long ndt_strtol(const char *v, long min, long max, ndt_context_t *ctx);
 long long ndt_strtoll(const char *v, long long min, long long max, ndt_context_t *ctx);
 unsigned long ndt_strtoul(const char *v, unsigned long max, ndt_context_t *ctx);
@@ -452,10 +444,10 @@ ndt_t *ndt_fixed_bytes_kind(ndt_context_t *ctx);
 
 
 /* Primitive Scalars */
-ndt_t *ndt_primitive(enum ndt tag, ndt_context_t *ctx);
-ndt_t *ndt_signed(int size, ndt_context_t *ctx);
-ndt_t *ndt_unsigned(int size, ndt_context_t *ctx);
-ndt_t *ndt_from_alias(enum ndt_alias tag, ndt_context_t *ctx);
+ndt_t *ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx);
+ndt_t *ndt_signed(int size, char endian, ndt_context_t *ctx);
+ndt_t *ndt_unsigned(int size, char endian, ndt_context_t *ctx);
+ndt_t *ndt_from_alias(enum ndt_alias tag, char endian, ndt_context_t *ctx);
 ndt_t *ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx);
 
 
@@ -476,9 +468,7 @@ int ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y);
 
 
 /* Attributes */
-ndt_attr_t *ndt_attr_from_number(char *name, char *v, ndt_context_t *ctx);
-ndt_attr_t *ndt_attr_from_string(char *name, char *v, ndt_context_t *ctx);
-ndt_attr_t *ndt_attr_from_type(char *name, ndt_t *t, ndt_context_t *ctx);
+ndt_attr_t *ndt_attr(char *name, char *value, ndt_context_t *ctx);
 
 
 /******************************************************************************/

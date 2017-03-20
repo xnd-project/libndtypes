@@ -346,6 +346,64 @@ categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *
     return 0;
 }
 
+static const char *
+tag_as_constr(enum ndt tag)
+{
+    switch (tag) {
+    case AnyKind: return "Any";
+    case Array: return "Array";
+    case Option: return "Option";
+    case Nominal: return "Nominal";
+    case Constr: return "Constr";
+
+    case Tuple: return "Tuple";
+    case Record: return "Record";
+    case Function: return "Function";
+    case Typevar: return "Typevar";
+
+    case ScalarKind: return "ScalarKind";
+    case Void: return "Void";
+    case Bool: return "Bool";
+
+    case SignedKind: return "SignedKind";
+    case Int8: return "Int8";
+    case Int16: return "Int16";
+    case Int32: return "Int32";
+    case Int64: return "Int64";
+
+    case UnsignedKind: return "UnsignedKind";
+    case Uint8: return "Uint8";
+    case Uint16: return "Uint16";
+    case Uint32: return "Uint32";
+    case Uint64: return "Uint64";
+
+    case RealKind: return "RealKind";
+    case Float16: return "Float16";
+    case Float32: return "Float32";
+    case Float64: return "Float64";
+
+    case ComplexKind: return "ComplexKind";
+    case Complex64: return "Complex64";
+    case Complex128: return "Complex128";
+
+    case Char: return "Char";
+
+    case String: return "String";
+    case FixedStringKind: return "FixedStringKind";
+    case FixedString: return "FixedString";
+
+    case Bytes: return "Bytes";
+    case FixedBytesKind: return "FixedBytesKind";
+    case FixedBytes: return "FixedBytes";
+
+    case Categorical: return "Categorical";
+    case Pointer: return "Pointer";
+
+    default: return "unknown tag";
+    }
+}
+
+
 static int
 datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
 {
@@ -377,7 +435,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, d+2, "),\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, align=%" PRIu8 ", abstract=%s, order=%c\n",
+            n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, align=%" PRIu8 ", abstract=%s, order='%c'\n",
                                t->size, t->align, t->abstract ? "true" : "false", t->Array.order);
             if (n < 0) return -1;
 
@@ -521,66 +579,21 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
 
             return ndt_snprintf_d(ctx, buf, d, ")");
 
-        case AnyKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Any(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case ScalarKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "ScalarKind(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Void:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Void(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Bool:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Bool(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
+        case AnyKind: case ScalarKind:
+        case Void: case Bool:
         case SignedKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Signed(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Int8:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int8(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Int16:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int16(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Int32:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int32(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Int64:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Int64(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
+        case Int8: case Int16: case Int32: case Int64:
         case UnsignedKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Unsigned(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Uint8:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint8(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Uint16:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint16(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Uint32:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint32(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Uint64:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Uint64(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
+        case Uint8: case Uint16: case Uint32: case Uint64:
         case RealKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Real(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Float32:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Float32(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Float64:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Float64(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
+        case Float16: case Float32: case Float64:
         case ComplexKind:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "ComplexKind(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Complex64:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Complex64(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
-        case Complex128:
-            return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Complex128(size=%zu, align=%" PRIu8 ", abstract=%s)",
-                                  t->size, t->align, t->abstract ? "true" : "false");
+        case Complex64: case Complex128:
+            return ndt_snprintf_d(ctx, buf, cont ? 0 : d,
+                                  "%s(size=%zu, align=%" PRIu8 ", endian='%c', abstract=%s)",
+                                  tag_as_constr(t->tag), t->size, t->align, t->endian,
+                                  t->abstract ? "true" : "false");
+
         case FixedStringKind:
             return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedStringKind(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
@@ -591,23 +604,23 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             return ndt_snprintf_d(ctx, buf, cont ? 0 : d, "String(size=%zu, align=%" PRIu8 ", abstract=%s)",
                                   t->size, t->align, t->abstract ? "true" : "false");
         case FixedString:
-            n = ndt_snprintf(ctx, buf, "fixed_string(%zu, %s)",
-                             t->FixedString.size,
-                             ndt_encoding_as_string(t->FixedString.encoding));
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "fixed_string(%zu, %s)",
+                               t->FixedString.size,
+                               ndt_encoding_as_string(t->FixedString.encoding));
             return n;
 
         case Char:
-            n = ndt_snprintf(ctx, buf, "char(%s)",
-                          ndt_encoding_as_string(t->Char.encoding));
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "char(%s)",
+                               ndt_encoding_as_string(t->Char.encoding));
             return n;
 
         case Bytes:
-            n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
             return n;
 
         case FixedBytes:
-            n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu, align=%" PRIu8 ")",
-                          t->FixedBytes.size, t->FixedBytes.align);
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "fixed_bytes(size=%zu, align=%" PRIu8 ")",
+                               t->FixedBytes.size, t->FixedBytes.align);
             return n;
 
         case Categorical:
