@@ -16,7 +16,7 @@ typedef struct {
 
 /* Container attributes */
 static const attr_spec array_attr = {0, 1, {Char}, {"order"}};
-static const attr_spec field_attr = {0, 2, {Uint8, Uint8}, {"align", "pad"}};
+static const attr_spec field_attr = {0, 2, {Bool, Uint8}, {"pack", "align"}};
 
 /* Type constructor attributes */
 static const attr_spec prim_attr = {0, 1, {Char}, {"endian"}};

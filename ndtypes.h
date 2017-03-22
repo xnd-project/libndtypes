@@ -187,6 +187,7 @@ enum ndt_alias {
 typedef struct {
   ndt_t *type;
   size_t offset;
+  bool pack;
   uint8_t align;
   uint8_t pad;
 } ndt_tuple_field_t;
@@ -196,6 +197,7 @@ typedef struct {
   char *name;
   ndt_t *type;
   size_t offset;
+  bool pack;
   uint8_t align;
   uint8_t pad;
 } ndt_record_field_t;
@@ -388,11 +390,11 @@ void ndt_memory_array_del(ndt_memory_t *types, size_t ntypes);
 void ndt_attr_del(ndt_attr_t *attr);
 void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
 
-ndt_tuple_field_t *ndt_tuple_field(ndt_t *type, uint8_t align, uint8_t pad, ndt_context_t *ctx);
+ndt_tuple_field_t *ndt_tuple_field(ndt_t *type, bool packed, uint8_t min_align, ndt_context_t *ctx);
 void ndt_tuple_field_del(ndt_tuple_field_t *field);
 void ndt_tuple_field_array_del(ndt_tuple_field_t *fields, size_t shape);
 
-ndt_record_field_t *ndt_record_field(char *name, ndt_t *type, uint8_t align, uint8_t pad, ndt_context_t *ctx);
+ndt_record_field_t *ndt_record_field(char *name, ndt_t *type, bool packed, uint8_t min_align, ndt_context_t *ctx);
 void ndt_record_field_del(ndt_record_field_t *field);
 void ndt_record_field_array_del(ndt_record_field_t *fields, size_t shape);
 

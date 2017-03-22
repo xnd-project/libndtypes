@@ -374,7 +374,8 @@ attribute_seq:
 | attribute_seq COMMA attribute { $$ = ndt_attr_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 attribute:
-  NAME_LOWER EQUAL INTEGER     { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  NAME_LOWER EQUAL NAME_LOWER  { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_LOWER EQUAL INTEGER     { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_LOWER EQUAL FLOATNUMBER { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_LOWER EQUAL STRINGLIT   { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
 

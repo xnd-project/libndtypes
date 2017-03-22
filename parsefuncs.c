@@ -220,8 +220,8 @@ mk_array(ndt_dim_seq_t *dims, ndt_t *dtype, ndt_attr_seq_t *attrs, ndt_context_t
 ndt_tuple_field_t *
 mk_tuple_field(ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx)
 {
-    uint8_t align = 0;
-    uint8_t pad = 0;
+    uint8_t align = UINT8_MAX;
+    uint8_t pad = UINT8_MAX;
     int ret;
 
     if (seq) {
@@ -235,7 +235,6 @@ mk_tuple_field(ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx)
             return NULL;
         }
     }
-
 
     return ndt_tuple_field(type, align, pad, ctx);
 }
@@ -259,8 +258,8 @@ mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *seq, ndt_context_t 
 ndt_record_field_t *
 mk_record_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx)
 {
-    uint8_t align = 0;
-    uint8_t pad = 0;
+    uint8_t align = UINT8_MAX;
+    uint8_t pad = UINT8_MAX;
     int ret;
 
     if (seq) {
