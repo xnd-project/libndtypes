@@ -143,7 +143,10 @@ Makefile tools/indent.c ndtypes.h $(LIBSTATIC)
 
 
 clean: FORCE
-	rm -f *.o *.gcov *.gcda *.gcno bench indent tests/runtest $(LIBSTATIC)
+	rm -f *.o *.gcov *.gcda *.gcno bench indent print_ast tests/runtest $(LIBSTATIC)
+
+distclean: clean
+	rm -f grammar.c grammar.h lexer.c lexer.h
 
 
 FORCE:

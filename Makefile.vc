@@ -111,7 +111,7 @@ Makefile indent.c ndtypes.h $(LIBSTATIC)
 
 
 clean: FORCE
-	del /Q /F *.obj bench.exe indent.exe tests\runtest.exe $(LIBSTATIC)
+	del /Q /F *.obj bench.exe indent.exe print_ast.exe tests\runtest.exe $(LIBSTATIC)
 
 
 FORCE:
