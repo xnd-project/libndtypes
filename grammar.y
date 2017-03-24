@@ -341,8 +341,8 @@ tuple_field_seq:
 | tuple_field_seq COMMA tuple_field { $$ = ndt_tuple_field_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 tuple_field:
-  datashape                             { $$ = mk_tuple_field($1, NULL, ctx); if ($$ == NULL) YYABORT; }
-| BAR datashape COMMA attribute_seq BAR { $$ = mk_tuple_field($2, $4, ctx); if ($$ == NULL) YYABORT; }
+  datashape                       { $$ = mk_tuple_field($1, NULL, ctx); if ($$ == NULL) YYABORT; }
+| datashape BAR attribute_seq BAR { $$ = mk_tuple_field($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 record_type:
   LBRACE variadic_flag RBRACE                        { $$ = mk_record($2, NULL, ctx); if ($$ == NULL) YYABORT; }
@@ -353,8 +353,8 @@ record_field_seq:
 | record_field_seq COMMA record_field  { $$ = ndt_record_field_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 record_field:
-  record_field_name COLON datashape                             { $$ = mk_record_field($1, $3, NULL, ctx); if ($$ == NULL) YYABORT; }
-| BAR record_field_name COLON datashape COMMA attribute_seq BAR { $$ = mk_record_field($2, $4, $6, ctx); if ($$ == NULL) YYABORT; }
+  record_field_name COLON datashape                       { $$ = mk_record_field($1, $3, NULL, ctx); if ($$ == NULL) YYABORT; }
+| record_field_name COLON datashape BAR attribute_seq BAR { $$ = mk_record_field($1, $3, $5, ctx); if ($$ == NULL) YYABORT; }
 
 record_field_name:
   NAME_LOWER { $$ = $1; if ($$ == NULL) YYABORT; }
