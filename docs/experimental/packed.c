@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 
-typedef struct {
+typedef struct __attribute__((aligned(1))) {
     char c1;
     int64_t i1 __attribute__((packed, aligned(1))); // align >= 1
     char c2;

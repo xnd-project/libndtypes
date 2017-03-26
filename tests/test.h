@@ -24,5 +24,7 @@ extern const char *typedef_tests[];
 extern const char *typedef_error_tests[];
 extern const match_testcase_t match_tests[];
 
+int test_struct_align_pack(void);
+
 
 #endif /* TEST_H */
