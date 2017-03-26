@@ -16,7 +16,8 @@ typedef struct {
 
 /* Container attributes */
 static const attr_spec array_attr = {0, 1, {Char}, {"order"}};
-static const attr_spec field_attr = {0, 2, {Bool, Uint8}, {"pack", "align"}};
+static const attr_spec tuple_record_attr = {0, 2, {Uint8, Uint8}, {"align", "pack"}};
+static const attr_spec field_attr = {0, 2, {Uint8, Uint8}, {"align", "pack"}};
 
 /* Type constructor attributes */
 static const attr_spec prim_attr = {0, 1, {Char}, {"endian"}};
@@ -31,6 +32,8 @@ ndt_get_attr_spec(enum ndt tag, ndt_context_t *ctx)
     switch(tag) {
     case Array:
         return &array_attr;
+    case Tuple: case Record:
+        return &tuple_record_attr;
     case Field:
         return &field_attr;
     case Int8: case Int16: case Int32: case Int64:

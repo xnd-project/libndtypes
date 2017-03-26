@@ -1571,8 +1571,9 @@ const char *parse_tests[] = {
   "[10 * int32, order='C']",
   "[10 * int32, order='F']",
   "([10 * int32, order='F'], float32)",
-  "([10 * int32, order='F'] |pack=true, align=2|, float32)",
-  "{x : float32 |pack=true|, y : float64}",
+  "([10 * int32, order='F'], float32 |pack=2|, uint8)",
+  "([10 * int32, order='F'], float32, uint8, pack=2)",
+  "{x : float32 |align=16|, y : float64}",
 
   /* END MANUALLY GENERATED */
 

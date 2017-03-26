@@ -54,23 +54,6 @@ ispower2(uint8_t n)
     return n != 0 && (n & (n-1)) == 0;
 }
 
-static inline uint8_t
-min_field_align(ndt_t *t, bool pack, uint8_t align, ndt_context_t *ctx)
-{
-    if (align == UINT8_MAX) {
-        return pack ? 1 : t->align;
-    }
-
-    if (align < 1 || align > 16 || !ispower2(align)) {
-        ndt_err_format(ctx, NDT_ValueError,
-                       "'align' must be a power of two <= 16, got %" PRIu8,
-                       align);
-        return UINT8_MAX;
-    }
-
-    return align;
-}
-
 static inline bool
 check_align(uint8_t align, ndt_context_t *ctx)
 {
@@ -82,6 +65,49 @@ check_align(uint8_t align, ndt_context_t *ctx)
     }
 
     return 1;
+}
+
+static inline uint8_t
+min_field_align(const ndt_t *t, uint8_t align, uint8_t pack, bool *given,
+                ndt_context_t *ctx)
+{
+     uint8_t min_align;
+
+    if (align != UINT8_MAX) {
+        if (pack != UINT8_MAX) {
+            ndt_err_format(ctx, NDT_InvalidArgumentError,
+                           "field has both 'align' and 'pack' attributes");
+            return UINT8_MAX;
+        }
+        min_align = max(align, t->align);
+        *given = true;
+    }
+    else if (pack != UINT8_MAX) {
+        min_align = pack;
+        *given = true;
+    }
+    else {
+        min_align = t->align;
+        *given = false;
+    }
+
+    if (!check_align(min_align, ctx)) {
+        return UINT8_MAX;
+    }
+
+    return min_align;
+}
+
+static inline uint8_t
+get_align(uint8_t align, ndt_context_t *ctx)
+{
+    align = align == UINT8_MAX ? 1 : align;
+
+    if (!check_align(align, ctx)) {
+        return UINT8_MAX;
+    }
+
+    return align;
 }
 
 static size_t
@@ -181,15 +207,17 @@ ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
  * the natural alignment for the field content).
  */
 ndt_tuple_field_t *
-ndt_tuple_field(ndt_t *type, bool pack, uint8_t min_align, ndt_context_t *ctx)
+ndt_tuple_field(ndt_t *type, uint8_t align, uint8_t pack, ndt_context_t *ctx)
 {
     ndt_tuple_field_t *field;
+    uint8_t min_align;
+    bool given;
 
     if (type == NULL) {
         return NULL;
     }
 
-    min_align = min_field_align(type, pack, min_align, ctx);
+    min_align = min_field_align(type, align, pack, &given, ctx);
     if (min_align == UINT8_MAX) {
         ndt_del(type);
         return NULL;
@@ -203,8 +231,7 @@ ndt_tuple_field(ndt_t *type, bool pack, uint8_t min_align, ndt_context_t *ctx)
     }
 
     field->type = type;
-    field->offset = 0;
-    field->pack = pack;
+    field->offset = given;
     field->align = min_align;
     field->pad = 0;
 
@@ -237,11 +264,13 @@ ndt_tuple_field_array_del(ndt_tuple_field_t *fields, size_t shape)
 }
 
 ndt_record_field_t *
-ndt_record_field(char *name, ndt_t *type, bool pack, uint8_t min_align, ndt_context_t *ctx)
+ndt_record_field(char *name, ndt_t *type, uint8_t align, uint8_t pack, ndt_context_t *ctx)
 {
     ndt_record_field_t *field;
+    uint8_t min_align;
+    bool given;
 
-    min_align = min_field_align(type, pack, min_align, ctx);
+    min_align = min_field_align(type, align, pack, &given, ctx);
     if (min_align == UINT8_MAX) {
         ndt_free(name);
         ndt_del(type);
@@ -258,8 +287,7 @@ ndt_record_field(char *name, ndt_t *type, bool pack, uint8_t min_align, ndt_cont
 
     field->name = name;
     field->type = type;
-    field->offset = 0;
-    field->pack = pack;
+    field->offset = given;
     field->align = min_align;
     field->pad = 0;
 
@@ -804,23 +832,41 @@ ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
 
 static int
 init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
-           size_t shape)
+           size_t shape, uint8_t align, uint8_t pack, ndt_context_t *ctx)
 {
     size_t offset = 0;
-    uint8_t maxalign = 1;
+    uint8_t maxalign;
     size_t size = 0;
     int ret = 0;
     bool abstract = 0;
     size_t i;
 
+    maxalign = get_align(align, ctx);
+    if (maxalign == UINT8_MAX) {
+        return -1;
+    }
+
+    if (pack != UINT8_MAX && !check_align(pack, ctx)) {
+        return -1;
+    }
+
     for (i = 0; i < shape; i++) {
+        if (pack != UINT8_MAX) {
+            if (fields[i].offset) {
+                ndt_err_format(ctx, NDT_InvalidArgumentError,
+                    "cannot have 'pack' tuple attribute and field attributes");
+                return -1;
+            }
+            fields[i].align = pack;
+        }
+
         if (fields[i].type->abstract) {
             abstract = 1;
         }
 
         maxalign = max(fields[i].align, maxalign);
 
-        if (i > 0 && fields[i].pack) {
+        if (i > 0) {
             size_t n = offset;
             offset = round_up(offset, fields[i].align);
             fields[i-1].pad = offset - n;
@@ -848,9 +894,9 @@ init_tuple(ndt_t *t, enum ndt_variadic_flag flag, ndt_tuple_field_t *fields,
 
 ndt_t *
 ndt_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_t *fields, size_t shape,
-          ndt_context_t *ctx)
+          uint8_t align, uint8_t pack, ndt_context_t *ctx)
 {
-    ndt_t *t;
+    ndt_t *t = NULL;
 
     assert((fields == NULL) == (shape == 0));
 
@@ -860,30 +906,52 @@ ndt_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_t *fields, size_t shape,
         return NULL;
     }
 
-    init_tuple(t, flag, fields, shape);
+    if (init_tuple(t, flag, fields, shape, align, pack, ctx) < 0) {
+        ndt_tuple_field_array_del(fields, shape);
+        return NULL;
+    }
 
     return t;
 }
 
 static int
 init_record(ndt_t *t, enum ndt_variadic_flag flag, ndt_record_field_t *fields,
-            size_t shape)
+            size_t shape, uint8_t align, uint8_t pack, ndt_context_t *ctx)
 {
     size_t offset = 0;
-    uint8_t maxalign = 1;
+    uint8_t maxalign = align == UINT8_MAX ? 1 : align;
     size_t size = 0;
     size_t i;
     int ret = 0;
     bool abstract = 0;
 
+    maxalign = get_align(align, ctx);
+    if (maxalign == UINT8_MAX) {
+        return -1;
+    }
+
+    if (pack != UINT8_MAX && !check_align(pack, ctx)) {
+        return -1;
+    }
+
     for (i = 0; i < shape; i++) {
+        if (pack != UINT8_MAX) {
+            if (fields[i].offset) {
+                ndt_err_format(ctx, NDT_InvalidArgumentError,
+                    "cannot have 'pack' record attribute and field attributes");
+                return -1;
+            }
+            fields[i].align = pack;
+        }
+
         if (fields[i].type->abstract) {
             abstract = 1;
         }
 
         maxalign = max(fields[i].align, maxalign);
 
-        if (i > 0 && fields[i].pack) {
+
+        if (i > 0) {
             size_t n = offset;
             offset = round_up(offset, fields[i].align);
             fields[i-1].pad = offset - n;
@@ -911,7 +979,7 @@ init_record(ndt_t *t, enum ndt_variadic_flag flag, ndt_record_field_t *fields,
 
 ndt_t *
 ndt_record(enum ndt_variadic_flag flag, ndt_record_field_t *fields, size_t shape,
-           ndt_context_t *ctx)
+           uint8_t align, uint8_t pack, ndt_context_t *ctx)
 {
     ndt_t *t;
 
@@ -921,7 +989,10 @@ ndt_record(enum ndt_variadic_flag flag, ndt_record_field_t *fields, size_t shape
         return NULL;
     }
 
-    init_record(t, flag, fields, shape);
+    if (init_record(t, flag, fields, shape, align, pack, ctx) < 0) {
+        ndt_record_field_array_del(fields, shape);
+        return NULL;
+    }
 
     return t;
 }
@@ -1197,7 +1268,8 @@ ndt_bytes(uint8_t target_align, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    if (!check_align(target_align, ctx)) {
+    target_align = get_align(target_align, ctx);
+    if (target_align == UINT8_MAX) {
         return NULL;
     }
 
@@ -1218,7 +1290,8 @@ ndt_fixed_bytes(size_t size, uint8_t align, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    if (!check_align(align, ctx)) {
+    align = get_align(align, ctx);
+    if (align == UINT8_MAX) {
         return NULL;
     }
 

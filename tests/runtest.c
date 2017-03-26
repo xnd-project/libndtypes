@@ -696,6 +696,9 @@ static int (*tests[])(void) = {
   test_typedef_error,
   test_equal,
   test_match,
+#ifdef __GNUC__
+  test_struct_align_pack,
+#endif
   NULL
 };
 

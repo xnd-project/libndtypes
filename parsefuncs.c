@@ -240,18 +240,33 @@ mk_tuple_field(ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx)
 }
 
 ndt_t *
-mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *seq, ndt_context_t *ctx)
+mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *fields,
+         ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     ndt_t *t;
+    uint8_t align = UINT8_MAX;
+    uint8_t pack = UINT8_MAX;
 
-    if (seq == NULL) {
-        return ndt_tuple(flag, NULL, 0, ctx);
+    if (attrs) {
+        int ret = ndt_parse_attr(Tuple, ctx, attrs, &align, &pack);
+        ndt_attr_array_del(attrs->ptr, attrs->len);
+        ndt_free(attrs);
+
+        if (ret < 0) {
+            ndt_tuple_field_array_del(fields->ptr, fields->len);
+            ndt_free(fields);
+            return NULL;
+        }
     }
 
-    seq = ndt_tuple_field_seq_finalize(seq);
-    t = ndt_tuple(flag, seq->ptr, seq->len, ctx);
+    if (fields == NULL) {
+        return ndt_tuple(flag, NULL, 0, 1, UINT8_MAX, ctx);
+    }
 
-    ndt_free(seq);
+    fields = ndt_tuple_field_seq_finalize(fields);
+    t = ndt_tuple(flag, fields->ptr, fields->len, align, pack, ctx);
+
+    ndt_free(fields);
     return t;
 }
 
@@ -260,11 +275,9 @@ mk_record_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx
 {
     uint8_t align = UINT8_MAX;
     uint8_t pad = UINT8_MAX;
-    int ret;
 
     if (seq) {
-        seq = ndt_attr_seq_finalize(seq);
-        ret = ndt_parse_attr(Field, ctx, seq, &align, &pad);
+        int ret = ndt_parse_attr(Field, ctx, seq, &align, &pad);
         ndt_attr_array_del(seq->ptr, seq->len);
         ndt_free(seq);
 
@@ -279,18 +292,33 @@ mk_record_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx
 }
 
 ndt_t *
-mk_record(enum ndt_variadic_flag flag, ndt_record_field_seq_t *seq, ndt_context_t *ctx)
+mk_record(enum ndt_variadic_flag flag, ndt_record_field_seq_t *fields,
+          ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     ndt_t *t;
+    uint8_t align = UINT8_MAX;
+    uint8_t pack = UINT8_MAX;
 
-    if (seq == NULL) {
-        return ndt_record(flag, NULL, 0, ctx);
+    if (attrs) {
+        int ret = ndt_parse_attr(Record, ctx, attrs, &align, &pack);
+        ndt_attr_array_del(attrs->ptr, attrs->len);
+        ndt_free(attrs);
+
+        if (ret < 0) {
+            ndt_record_field_array_del(fields->ptr, fields->len);
+            ndt_free(fields);
+            return NULL;
+        }
     }
 
-    seq = ndt_record_field_seq_finalize(seq);
-    t = ndt_record(flag, seq->ptr, seq->len, ctx);
+    if (fields == NULL) {
+        return ndt_record(flag, NULL, 0, 1, UINT8_MAX, ctx);
+    }
 
-    ndt_free(seq);
+    fields = ndt_record_field_seq_finalize(fields);
+    t = ndt_record(flag, fields->ptr, fields->len, align, pack, ctx);
+
+    ndt_free(fields);
     return t;
 }
  
@@ -303,14 +331,14 @@ mk_function(ndt_t *ret,
     ndt_t *pos = NULL;
     ndt_t *kwds = NULL;
 
-    pos = mk_tuple(tflag, tseq, ctx);
+    pos = mk_tuple(tflag, tseq, NULL, ctx);
     if (pos == NULL) {
         ndt_del(ret);
         ndt_record_field_seq_del(rseq);
         return NULL;
     }
 
-    kwds = mk_record(rflag, rseq, ctx);
+    kwds = mk_record(rflag, rseq, NULL, ctx);
     if (kwds == NULL) {
         ndt_del(ret);
         ndt_del(pos);
@@ -325,7 +353,7 @@ mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx)
 {
     ndt_t *kwds = NULL;
 
-    kwds = ndt_record(Nonvariadic, NULL, 0, ctx);
+    kwds = ndt_record(Nonvariadic, NULL, 0, UINT8_MAX, UINT8_MAX, ctx);
     if (kwds == NULL) {
         ndt_del(ret);
         ndt_del(pos);

@@ -333,8 +333,9 @@ comma_variadic_flag:
 | COMMA ELLIPSIS { $$ = Variadic; }
 
 tuple_type:
-  LPAREN variadic_flag RPAREN                       { $$ = mk_tuple($2, NULL, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN tuple_field_seq comma_variadic_flag RPAREN { $$ = mk_tuple($3, $2, ctx); if ($$ == NULL) YYABORT; }
+  LPAREN variadic_flag RPAREN                       { $$ = mk_tuple($2, NULL, NULL, ctx); if ($$ == NULL) YYABORT; }
+| LPAREN tuple_field_seq comma_variadic_flag RPAREN { $$ = mk_tuple($3, $2, NULL, ctx); if ($$ == NULL) YYABORT; }
+| LPAREN tuple_field_seq COMMA attribute_seq RPAREN { $$ = mk_tuple(Nonvariadic, $2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 tuple_field_seq:
   tuple_field                       { $$ = ndt_tuple_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
@@ -345,8 +346,9 @@ tuple_field:
 | datashape BAR attribute_seq BAR { $$ = mk_tuple_field($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 record_type:
-  LBRACE variadic_flag RBRACE                        { $$ = mk_record($2, NULL, ctx); if ($$ == NULL) YYABORT; }
-| LBRACE record_field_seq comma_variadic_flag RBRACE { $$ = mk_record($3, $2, ctx); if ($$ == NULL) YYABORT; }
+  LBRACE variadic_flag RBRACE                        { $$ = mk_record($2, NULL, NULL, ctx); if ($$ == NULL) YYABORT; }
+| LBRACE record_field_seq comma_variadic_flag RBRACE { $$ = mk_record($3, $2, NULL, ctx); if ($$ == NULL) YYABORT; }
+| LBRACE record_field_seq COMMA attribute_seq RBRACE { $$ = mk_record(Nonvariadic, $2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 record_field_seq:
   record_field                         { $$ = ndt_record_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
