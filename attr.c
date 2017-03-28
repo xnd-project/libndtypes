@@ -10,20 +10,20 @@
 typedef struct {
    const size_t min;
    const size_t max;
-   const enum ndt tags[MAX_ATTR];
    const char *names[MAX_ATTR];
+   const enum ndt_attr tags[MAX_ATTR];
 } attr_spec;
 
 /* Container attributes */
-static const attr_spec array_attr = {0, 1, {Char}, {"order"}};
-static const attr_spec tuple_record_attr = {0, 2, {Uint8, Uint8}, {"align", "pack"}};
-static const attr_spec field_attr = {0, 2, {Uint8, Uint8}, {"align", "pack"}};
+static const attr_spec array_attr = {0, 3, {"strides", "_strides_len", "order"}, {AttrInt64List, AttrSize, AttrChar}};
+static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
+static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
 
 /* Type constructor attributes */
-static const attr_spec prim_attr = {0, 1, {Char}, {"endian"}};
-static const attr_spec char_attr = {0, 1, {String}, {"encoding"}};
-static const attr_spec bytes_attr = {0, 1, {Uint8}, {"align"}};
-static const attr_spec fixed_bytes_attr = {1, 2, {Size, Uint8}, {"size", "align"}};
+static const attr_spec prim_attr = {0, 1, {"endian"}, {AttrChar}};
+static const attr_spec char_attr = {0, 1, {"encoding"}, {AttrString}};
+static const attr_spec bytes_attr = {0, 1, {"align"}, {AttrUint8}};
+static const attr_spec fixed_bytes_attr = {1, 2, {"size", "align"}, {AttrSize, AttrUint8}};
 
 
 const attr_spec *
@@ -54,11 +54,11 @@ ndt_get_attr_spec(enum ndt tag, ndt_context_t *ctx)
 }
 
 int
-ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, ndt_attr_seq_t *seq, ...)
+ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
 {
     va_list ap;
     const attr_spec *spec;
-    char *v[MAX_ATTR] = {NULL};
+    ndt_attr_t const *v[MAX_ATTR] = {NULL};
     int found;
     size_t i, k;
 
@@ -84,7 +84,7 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, ndt_attr_seq_t *seq, ...)
                     return -1;
                 }
                 found = 1;
-                v[k] = seq->ptr[i].value;
+                v[k] = &seq->ptr[i];
             }
         }
         if (!found) {
@@ -110,27 +110,64 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, ndt_attr_seq_t *seq, ...)
         }
 
         switch(spec->tags[i]) {
-        case Bool: *(bool *)ptr = ndt_strtobool(v[i], ctx); break;
-        case Char: *(char *)ptr = ndt_strtochar(v[i], ctx); break; /* Char here means C-char */
-        case Int8: *(int8_t *)ptr = (int8_t)ndt_strtol(v[i], INT8_MIN, INT8_MAX, ctx); break;
-        case Int16: *(int16_t *)ptr = (int16_t)ndt_strtol(v[i], INT16_MIN, INT16_MAX, ctx); break;
-        case Int32: *(int32_t *)ptr = (int32_t)ndt_strtol(v[i], INT32_MIN, INT32_MAX, ctx); break;
-        case Int64: *(int64_t *)ptr = (int64_t)ndt_strtoll(v[i], INT64_MIN, INT64_MAX, ctx); break;
-        case Uint8: *(uint8_t *)ptr = (uint8_t)ndt_strtoul(v[i], UINT8_MAX, ctx); break;
-        case Uint16: *(uint16_t *)ptr = (uint16_t)ndt_strtoul(v[i], UINT16_MAX, ctx); break;
-        case Uint32: *(uint32_t *)ptr = (uint32_t)ndt_strtoul(v[i], UINT32_MAX, ctx); break;
-        case Uint64: *(uint64_t *)ptr = (uint64_t)ndt_strtoull(v[i], UINT64_MAX, ctx); break;
-        case Size: *(size_t *)ptr = (size_t)ndt_strtoull(v[i], SIZE_MAX, ctx); break;
-        case Float32: *(float *)ptr = ndt_strtof(v[i], ctx); break;
-        case Float64: *(double *)ptr = ndt_strtod(v[i], ctx); break;
-        case String: *(char **)ptr = v[i]; break;
+        case AttrBool: *(bool *)ptr = ndt_strtobool(v[i]->AttrValue, ctx); break;
+        case AttrChar: *(char *)ptr = ndt_strtochar(v[i]->AttrValue, ctx); break;
+        case AttrInt8: *(int8_t *)ptr = (int8_t)ndt_strtol(v[i]->AttrValue, INT8_MIN, INT8_MAX, ctx); break;
+        case AttrInt16: *(int16_t *)ptr = (int16_t)ndt_strtol(v[i]->AttrValue, INT16_MIN, INT16_MAX, ctx); break;
+        case AttrInt32: *(int32_t *)ptr = (int32_t)ndt_strtol(v[i]->AttrValue, INT32_MIN, INT32_MAX, ctx); break;
+        case AttrInt64: *(int64_t *)ptr = (int64_t)ndt_strtoll(v[i]->AttrValue, INT64_MIN, INT64_MAX, ctx); break;
+        case AttrUint8: *(uint8_t *)ptr = (uint8_t)ndt_strtoul(v[i]->AttrValue, UINT8_MAX, ctx); break;
+        case AttrUint16: *(uint16_t *)ptr = (uint16_t)ndt_strtoul(v[i]->AttrValue, UINT16_MAX, ctx); break;
+        case AttrUint32: *(uint32_t *)ptr = (uint32_t)ndt_strtoul(v[i]->AttrValue, UINT32_MAX, ctx); break;
+        case AttrUint64: *(uint64_t *)ptr = (uint64_t)ndt_strtoull(v[i]->AttrValue, UINT64_MAX, ctx); break;
+        case AttrSize: *(size_t *)ptr = (size_t)ndt_strtoull(v[i]->AttrValue, SIZE_MAX, ctx); break;
+        case AttrFloat32: *(float *)ptr = ndt_strtof(v[i]->AttrValue, ctx); break;
+        case AttrFloat64: *(double *)ptr = ndt_strtod(v[i]->AttrValue, ctx); break;
+
+        case AttrString: {
+            char *value = ndt_strdup(v[i]->AttrValue, ctx);
+            if (value == NULL) {
+                return -1;
+            }
+            *(char **)ptr = value;
+            break;
+        }
+
+        case AttrInt64List: {
+            int64_t *values = ndt_alloc(v[i]->AttrList.len, sizeof(int64_t));
+
+            if (values == NULL) {
+                ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+                return -1;
+            }
+
+            for (k = 0; k < v[i]->AttrList.len; k++) {
+                values[k] = (int64_t)ndt_strtoll(v[i]->AttrList.items[k], INT64_MIN, INT64_MAX, ctx);
+                if (ctx->err != NDT_Success) {
+                    ndt_free(values);
+                    return -1;
+                }
+            }
+
+            *(int64_t **)ptr = values;
+
+            ptr = va_arg(ap, void *);
+            *(size_t *)ptr = v[i]->AttrList.len;
+            i++;
+            break;
+        }
+
         default:
             ndt_err_format(ctx, NDT_RuntimeError,
                            "invalid attribute type", v[i]);
             break;
         }
+
+        if (ctx->err != NDT_Success) {
+            return -1;
+        }
     }
     va_end(ap);
 
-    return ctx->err == NDT_Success ? 0 : -1;
+    return 0;
 }

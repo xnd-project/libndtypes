@@ -132,6 +132,10 @@ elem##_seq_finalize(elem##_seq_t *seq)                  \
 {                                                       \
     elem##_t *ptr;                                      \
                                                         \
+    if (seq == NULL) {                                  \
+        return NULL;                                    \
+    }                                                   \
+                                                        \
     assert(seq->len <= seq->reserved);                  \
                                                         \
     ptr = ndt_realloc(seq->ptr, seq->len, sizeof *ptr); \
@@ -144,7 +148,6 @@ elem##_seq_finalize(elem##_seq_t *seq)                  \
                                                         \
     return seq;                                         \
 }
-
 
 NDT_SEQ_NEW(ndt_dim)
 NDT_SEQ_DEL(ndt_dim)
@@ -177,3 +180,109 @@ NDT_SEQ_APPEND(ndt_attr)
 NDT_SEQ_FINALIZE(ndt_attr)
 
 
+/* String sequences */
+ndt_string_seq_t *
+ndt_string_seq_new(char *elt, ndt_context_t *ctx)
+{
+    ndt_string_seq_t *seq;
+    char **ptr;
+
+    seq = ndt_alloc(1, sizeof *seq);
+    if (seq == NULL) {
+        ndt_free(elt);
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        return NULL;
+    }
+
+    ptr = ndt_alloc(2, sizeof *ptr);
+    if (ptr == NULL) {
+        ndt_free(seq);
+        ndt_free(elt);
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        return NULL;
+    }
+
+    ptr[0] = elt;
+    seq->len = 1;
+    seq->reserved = 2;
+    seq->ptr = ptr;
+
+    return seq;
+}
+
+void
+ndt_string_seq_del(ndt_string_seq_t *seq)
+{
+    size_t i;
+
+    if (seq != NULL) {
+        for (i = 0; i < seq->len; i++) {
+            ndt_free(seq->ptr[i]);
+        }
+        ndt_free(seq->ptr);
+        ndt_free(seq);
+    }
+}
+
+static int
+ndt_string_seq_grow(ndt_string_seq_t *seq, ndt_context_t *ctx)
+{
+    char **ptr;
+
+    if (seq->reserved > SIZE_MAX / 2) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        return -1;
+    }
+
+    ptr = ndt_realloc(seq->ptr, 2 * seq->reserved, sizeof *ptr);
+    if (ptr == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        return -1;
+    }
+
+    seq->ptr = ptr;
+    seq->reserved = 2 * seq->reserved;
+
+    return 0;
+}
+
+ndt_string_seq_t *
+ndt_string_seq_append(ndt_string_seq_t *seq, char *elt, ndt_context_t *ctx)
+{
+    assert(seq->len <= seq->reserved);
+
+    if (seq->len == seq->reserved) {
+        if (ndt_string_seq_grow(seq, ctx) < 0) {
+            ndt_string_seq_del(seq);
+            ndt_free(elt);
+            return NULL;
+        }
+    }
+
+    seq->ptr[seq->len] = elt;
+    seq->len++;
+
+    return seq;
+}
+
+ndt_string_seq_t *
+ndt_string_seq_finalize(ndt_string_seq_t *seq)
+{
+    char **ptr;
+
+    if (seq == NULL) {
+        return NULL;
+    }
+
+    assert(seq->len <= seq->reserved);
+
+    ptr = ndt_realloc(seq->ptr, seq->len, sizeof *ptr);
+    if (ptr == NULL) {
+        return seq; /* seq is still valid */
+    }
+
+    seq->ptr = ptr;
+    seq->reserved = seq->len;
+
+    return seq;
+}

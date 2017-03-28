@@ -68,78 +68,50 @@ mk_stringlit(const char *lexeme, ndt_context_t *ctx)
 /*****************************************************************************/
 
 ndt_dim_t *
-mk_fixed_dim(char *v, ndt_attr_seq_t *seq, ndt_context_t *ctx)
+mk_fixed_dim(char *v, ndt_context_t *ctx)
 {
-    int64_t stride = INT64_MAX;
     size_t shape;
-    int ret = 0;
-
-    if (seq) {
-        seq = ndt_attr_seq_finalize(seq);
-        ret = ndt_parse_attr(FixedDim, ctx, seq, &stride);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
-    }
 
     shape = (size_t)ndt_strtoull(v, SIZE_MAX, ctx);
     ndt_free(v);
 
-    if (ret < 0 || ctx->err != NDT_Success) {
+    if (ctx->err != NDT_Success) {
         return NULL;
     }
 
-    return ndt_fixed_dim(shape, stride, ctx);
+    return ndt_fixed_dim(shape, ctx);
 }
  
-ndt_dim_t *
-mk_var_dim(ndt_attr_seq_t *seq, ndt_context_t *ctx)
+ndt_t *
+mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
-    int64_t stride = INT64_MAX;
-    int ret = 0;
+    char endian = 'L';
 
-    if (seq) {
-        seq = ndt_attr_seq_finalize(seq);
-        ret = ndt_parse_attr(VarDim, ctx, seq, &stride);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
+    if (attrs) {
+        int ret = ndt_parse_attr(tag, ctx, attrs, &endian);
+        ndt_attr_seq_del(attrs);
         if (ret < 0) {
             return NULL;
         }
     }
 
-    return ndt_var_dim(stride, ctx);
+    return ndt_primitive(tag, endian, ctx);
 }
  
 ndt_t *
-mk_primitive(enum ndt tag, ndt_attr_seq_t *seq, ndt_context_t *ctx)
+mk_alias(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     char endian = 'L';
-    int ret = 0;
 
-    if (seq) {
-        seq = ndt_attr_seq_finalize(seq);
-        ret = ndt_parse_attr(tag, ctx, seq, &endian);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
+    if (attrs) {
+        int ret = ndt_parse_attr(tag, ctx, attrs, &endian);
+        ndt_attr_seq_del(attrs);
+        if (ret < 0) {
+            return NULL;
+        }
     }
 
-    return ret < 0 ? NULL : ndt_primitive(tag, endian, ctx);
-}
- 
-ndt_t *
-mk_alias(enum ndt tag, ndt_attr_seq_t *seq, ndt_context_t *ctx)
-{
-    char endian = 'L';
-    int ret = 0;
-
-    if (seq) {
-        seq = ndt_attr_seq_finalize(seq);
-        ret = ndt_parse_attr(tag, ctx, seq, &endian);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
-    }
-
-    return ret < 0 ? NULL : ndt_from_alias(tag, endian, ctx);
+    return ndt_from_alias(tag, endian, ctx);
 }
 
 ndt_t *
@@ -148,87 +120,92 @@ mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
     size_t size;
 
     size = (size_t)ndt_strtoull(v, SIZE_MAX, ctx);
+    ndt_free(v);
+
     if (ctx->err != NDT_Success) {
-        ndt_free(v);
         return NULL;
     }
 
-    ndt_free(v);
     return ndt_fixed_string(size, encoding, ctx);
 }
  
 ndt_t *
-mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx)
+mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     uint8_t target_align = 1;
-    int ret = 0;
 
-    if (seq) {
-        seq = ndt_attr_seq_finalize(seq);
-        ret = ndt_parse_attr(Bytes, ctx, seq, &target_align);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
+    if (attrs) {
+        int ret = ndt_parse_attr(Bytes, ctx, attrs, &target_align);
+        ndt_attr_seq_del(attrs);
+        if (ret < 0) {
+            return NULL;
+        }
     }
 
-    return ret < 0 ? NULL : ndt_bytes(target_align, ctx);
+    return ndt_bytes(target_align, ctx);
 }
  
 ndt_t *
-mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx)
+mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     uint8_t data_align = 1;
     size_t data_size;
-    int ret = 0;
 
-    if (seq) {
-        seq = ndt_attr_seq_finalize(seq);
-        ret = ndt_parse_attr(FixedBytes, ctx, seq, &data_size, &data_align);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
+    if (attrs) {
+        int ret = ndt_parse_attr(FixedBytes, ctx, attrs, &data_size, &data_align);
+        ndt_attr_seq_del(attrs);
+        if (ret < 0) {
+            return NULL;
+        }
     }
 
-    return ret < 0 ? NULL : ndt_fixed_bytes(data_size, data_align, ctx);
+    return ndt_fixed_bytes(data_size, data_align, ctx);
 }
 
 ndt_t *
 mk_array(ndt_dim_seq_t *dims, ndt_t *dtype, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
-    ndt_t *t;
+    int64_t *strides = NULL;
+    size_t strides_len = 0;
     char order = 'C';
-    int ret;
+    ndt_t *t;
 
     dims = ndt_dim_seq_finalize(dims);
 
     if (attrs) {
-        attrs = ndt_attr_seq_finalize(attrs);
-        ret = ndt_parse_attr(Array, ctx, attrs, &order);
-        ndt_attr_array_del(attrs->ptr, attrs->len);
-        ndt_free(attrs);
+        int ret = ndt_parse_attr(Array, ctx, attrs, &strides, &strides_len, &order);
+        ndt_attr_seq_del(attrs);
+
+        if (ret >= 0 && strides && strides_len != dims->len) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "len(strides) != number of dimensions");
+            ret = -1;
+        }
 
         if (ret < 0) {
-            ndt_dim_array_del(dims->ptr, dims->len);
-            ndt_free(attrs);
+            ndt_dim_seq_del(dims);
+            ndt_del(dtype);
+            if (strides) {
+                ndt_free(strides);
+            }
             return NULL;
         }
     }
 
-    t = ndt_array(order, dims->ptr, dims->len, dtype, ctx);
+    t = ndt_array(dims->ptr, dims->len, dtype, strides, order, ctx);
     ndt_free(dims);
     return t;
 }
  
 ndt_tuple_field_t *
-mk_tuple_field(ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx)
+mk_tuple_field(ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     uint8_t align = UINT8_MAX;
-    uint8_t pad = UINT8_MAX;
-    int ret;
+    uint8_t pack = UINT8_MAX;
 
-    if (seq) {
-        seq = ndt_attr_seq_finalize(seq);
-        ret = ndt_parse_attr(Field, ctx, seq, &align, &pad);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
+    if (attrs) {
+        int ret = ndt_parse_attr(Field, ctx, attrs, &align, &pack);
+        ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
             ndt_del(type);
@@ -236,25 +213,25 @@ mk_tuple_field(ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx)
         }
     }
 
-    return ndt_tuple_field(type, align, pad, ctx);
+    return ndt_tuple_field(type, align, pack, ctx);
 }
 
 ndt_t *
 mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *fields,
          ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
-    ndt_t *t;
     uint8_t align = UINT8_MAX;
     uint8_t pack = UINT8_MAX;
+    ndt_t *t;
+
+    fields = ndt_tuple_field_seq_finalize(fields);
 
     if (attrs) {
         int ret = ndt_parse_attr(Tuple, ctx, attrs, &align, &pack);
-        ndt_attr_array_del(attrs->ptr, attrs->len);
-        ndt_free(attrs);
+        ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
-            ndt_tuple_field_array_del(fields->ptr, fields->len);
-            ndt_free(fields);
+            ndt_tuple_field_seq_del(fields);
             return NULL;
         }
     }
@@ -263,23 +240,20 @@ mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *fields,
         return ndt_tuple(flag, NULL, 0, 1, UINT8_MAX, ctx);
     }
 
-    fields = ndt_tuple_field_seq_finalize(fields);
     t = ndt_tuple(flag, fields->ptr, fields->len, align, pack, ctx);
-
     ndt_free(fields);
     return t;
 }
 
 ndt_record_field_t *
-mk_record_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx)
+mk_record_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     uint8_t align = UINT8_MAX;
-    uint8_t pad = UINT8_MAX;
+    uint8_t pack = UINT8_MAX;
 
-    if (seq) {
-        int ret = ndt_parse_attr(Field, ctx, seq, &align, &pad);
-        ndt_attr_array_del(seq->ptr, seq->len);
-        ndt_free(seq);
+    if (attrs) {
+        int ret = ndt_parse_attr(Field, ctx, attrs, &align, &pack);
+        ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
             ndt_free(name);
@@ -288,25 +262,25 @@ mk_record_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx
         }
     }
 
-    return ndt_record_field(name, type, align, pad, ctx);
+    return ndt_record_field(name, type, align, pack, ctx);
 }
 
 ndt_t *
 mk_record(enum ndt_variadic_flag flag, ndt_record_field_seq_t *fields,
           ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
-    ndt_t *t;
     uint8_t align = UINT8_MAX;
     uint8_t pack = UINT8_MAX;
+    ndt_t *t;
+
+    fields = ndt_record_field_seq_finalize(fields);
 
     if (attrs) {
         int ret = ndt_parse_attr(Record, ctx, attrs, &align, &pack);
-        ndt_attr_array_del(attrs->ptr, attrs->len);
-        ndt_free(attrs);
+        ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
-            ndt_record_field_array_del(fields->ptr, fields->len);
-            ndt_free(fields);
+            ndt_record_field_seq_del(fields);
             return NULL;
         }
     }
@@ -315,9 +289,7 @@ mk_record(enum ndt_variadic_flag flag, ndt_record_field_seq_t *fields,
         return ndt_record(flag, NULL, 0, 1, UINT8_MAX, ctx);
     }
 
-    fields = ndt_record_field_seq_finalize(fields);
     t = ndt_record(flag, fields->ptr, fields->len, align, pack, ctx);
-
     ndt_free(fields);
     return t;
 }
@@ -373,4 +345,47 @@ mk_categorical(ndt_memory_seq_t *seq, ndt_context_t *ctx)
 
     ndt_free(seq);
     return t;
+}
+
+ndt_attr_t *
+mk_attr(char *name, char *value, ndt_context_t *ctx)
+{
+    ndt_attr_t *attr;
+
+    attr = ndt_alloc(1, sizeof *attr);
+    if (attr == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        ndt_free(name);
+        ndt_free(value);
+        return NULL;
+    }
+
+    attr->tag = AttrValue;
+    attr->name = name;
+    attr->AttrValue = value;
+
+    return attr;
+}
+
+ndt_attr_t *
+mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
+{
+    ndt_attr_t *attr;
+
+    attr = ndt_alloc(1, sizeof *attr);
+    if (attr == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        ndt_free(name);
+        ndt_string_seq_del(seq);
+        return NULL;
+    }
+
+    attr->tag = AttrList;
+    attr->name = name;
+    attr->AttrList.len = seq->len;
+    attr->AttrList.items = seq->ptr;
+
+    ndt_free(seq);
+
+    return attr;
 }

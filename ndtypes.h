@@ -87,12 +87,43 @@ typedef struct {
     ndt_value_t v;
 } ndt_memory_t;
 
+enum ndt_attr {
+  AttrBool,
+  AttrChar,
+  AttrInt8,
+  AttrInt16,
+  AttrInt32,
+  AttrInt64,
+  AttrUint8,
+  AttrUint16,
+  AttrUint32,
+  AttrUint64,
+  AttrSize,
+  AttrFloat32,
+  AttrFloat64,
+  AttrString,
+  AttrInt64List
+};
 
-/* Attribute (name=value) */
+/* Flag for variadic tuples and records */
+enum ndt_attr_tag {
+  AttrValue,
+  AttrList
+};
+
+/* Attribute: name=value or name=[value, value, ...]. */
 typedef struct {
+    enum ndt_attr_tag tag;
     char *name;
-    char *value;
+    union {
+        char *AttrValue;
+        struct {
+            size_t len;
+            char **items;
+        } AttrList;
+    };
 } ndt_attr_t;
+
 
 /* Flag for variadic tuples and records */
 enum ndt_variadic_flag {
@@ -207,11 +238,11 @@ typedef struct {
     union {
         struct {
             size_t shape;
-            size_t stride;
+            int64_t stride;
         } FixedDim;
 
         struct {
-            size_t stride;
+            int64_t stride;
         } VarDim;
 
         struct {
@@ -403,8 +434,8 @@ void ndt_dim_array_del(ndt_dim_t *d, size_t shape);
 
 /*** Dimensions ***/
 ndt_dim_t *ndt_fixed_dim_kind(ndt_context_t *ctx);
-ndt_dim_t *ndt_fixed_dim(size_t shape, int64_t stride, ndt_context_t *ctx);
-ndt_dim_t *ndt_var_dim(int64_t stride, ndt_context_t *ctx);
+ndt_dim_t *ndt_fixed_dim(size_t shape, ndt_context_t *ctx);
+ndt_dim_t *ndt_var_dim(ndt_context_t *ctx);
 ndt_dim_t *ndt_symbolic_dim(char *name, ndt_context_t *ctx);
 ndt_dim_t *ndt_ellipsis_dim(ndt_context_t *ctx);
 
@@ -418,7 +449,7 @@ int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Any */
 ndt_t *ndt_any_kind(ndt_context_t *ctx);
-ndt_t *ndt_array(char order, ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx);
+ndt_t *ndt_array(ndt_dim_t *dim, size_t ndim, ndt_t *dtype, int64_t *strides, char order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
@@ -465,10 +496,6 @@ ndt_memory_t *ndt_memory_from_number(char *v, ndt_t *t, ndt_context_t *ctx);
 ndt_memory_t *ndt_memory_from_string(char *v, ndt_t *t, ndt_context_t *ctx);
 int ndt_memory_equal(const ndt_memory_t *x, const ndt_memory_t *y);
 int ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y);
-
-
-/* Attributes */
-ndt_attr_t *ndt_attr(char *name, char *value, ndt_context_t *ctx);
 
 
 /******************************************************************************/
