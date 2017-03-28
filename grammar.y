@@ -93,6 +93,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
     enum ndt_variadic_flag variadic_flag;
     enum ndt_encoding encoding;
     char *string;
+    ndt_string_seq_t *string_seq;
 }
 
 %start input
@@ -130,9 +131,11 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <typed_value> typed_value
 %type <typed_value_seq> typed_value_seq
 
+%type <string> untyped_value
+%type <string_seq> untyped_value_seq
+
 %type <attribute> attribute
 %type <attribute_seq> attribute_seq
-%type <attribute_seq> attribute_seq_opt
 
 %type <attribute_seq> arguments_opt
 
@@ -184,6 +187,7 @@ ERRTOKEN
 %destructor { ndt_attr_del($$); } <attribute>
 %destructor { ndt_attr_seq_del($$); } <attribute_seq>
 %destructor { ndt_free($$); } <string>
+%destructor { ndt_string_seq_del($$); } <string_seq>
 
 %%
 
@@ -210,10 +214,10 @@ dimension_seq:
 
 dimension:
   FIXED_DIM_KIND              { $$ = ndt_fixed_dim_kind(ctx); if ($$ == NULL) YYABORT; }
-| INTEGER attribute_seq_opt   { $$ = mk_fixed_dim($1, $2, ctx); if ($$ == NULL) YYABORT; }
-| FIXED LPAREN INTEGER RPAREN { $$ = mk_fixed_dim($3, NULL, ctx); if ($$ == NULL) YYABORT; }
+| INTEGER                     { $$ = mk_fixed_dim($1, ctx); if ($$ == NULL) YYABORT; }
+| FIXED LPAREN INTEGER RPAREN { $$ = mk_fixed_dim($3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER                  { $$ = ndt_symbolic_dim($1, ctx); if ($$ == NULL) YYABORT; }
-| VAR attribute_seq_opt       { $$ = mk_var_dim($2, ctx); if ($$ == NULL) YYABORT; }
+| VAR                         { $$ = ndt_var_dim(ctx); if ($$ == NULL) YYABORT; }
 | ELLIPSIS                    { $$ = ndt_ellipsis_dim(ctx); if ($$ == NULL) YYABORT; }
 
 dtype:
@@ -367,19 +371,23 @@ arguments_opt:
   %empty                      { $$ = NULL; }
 | LPAREN attribute_seq RPAREN { $$ = $2; if ($$ == NULL) YYABORT; }
 
-attribute_seq_opt:
-  %empty                      { $$ = NULL; }
-| LBRACK attribute_seq RBRACK { $$ = $2; if ($$ == NULL) YYABORT; }
-
 attribute_seq:
   attribute                     { $$ = ndt_attr_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
 | attribute_seq COMMA attribute { $$ = ndt_attr_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 attribute:
-  NAME_LOWER EQUAL NAME_LOWER  { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_LOWER EQUAL INTEGER     { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_LOWER EQUAL FLOATNUMBER { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_LOWER EQUAL STRINGLIT   { $$ = ndt_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  NAME_LOWER EQUAL untyped_value                   { $$ = mk_attr($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_LOWER EQUAL LBRACK untyped_value_seq RBRACK { $$ = mk_attr_from_seq($1, $4, ctx); if ($$ == NULL) YYABORT; }
+
+untyped_value_seq:
+  untyped_value                         { $$ = ndt_string_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
+| untyped_value_seq COMMA untyped_value { $$ = ndt_string_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
+
+untyped_value:
+  NAME_LOWER  { $$ = $1; if ($$ == NULL) YYABORT; }
+| INTEGER     { $$ = $1; if ($$ == NULL) YYABORT; }
+| FLOATNUMBER { $$ = $1; if ($$ == NULL) YYABORT; }
+| STRINGLIT   { $$ = $1; if ($$ == NULL) YYABORT; }
 
 function_type:
   tuple_type RARROW datashape

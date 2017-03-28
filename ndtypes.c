@@ -174,19 +174,35 @@ ndt_memory_array_del(ndt_memory_t *mem, size_t ntypes)
 void
 ndt_attr_del(ndt_attr_t *attr)
 {
+    size_t i;
+
     if (attr == NULL) {
         return;
     }
 
     ndt_free(attr->name);
-    ndt_free(attr->value);
+
+    switch (attr->tag) {
+    case AttrValue:
+        ndt_free(attr->AttrValue);
+        break;
+    case AttrList:
+        for (i = 0; i < attr->AttrList.len; i++) {
+            ndt_free(attr->AttrList.items[i]);
+        }
+        ndt_free(attr->AttrList.items);
+        break;
+    default:
+        abort(); /* NOT REACHED */
+    }
+
     ndt_free(attr);
 }
 
 void
 ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
 {
-    size_t i;
+    size_t i, k;
 
     if (attr == NULL) {
         return;
@@ -194,12 +210,24 @@ ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
 
     for (i = 0; i < nattr; i++) {
         ndt_free(attr[i].name);
-        ndt_free(attr[i].value);
+
+        switch (attr[i].tag) {
+        case AttrValue:
+            ndt_free(attr[i].AttrValue);
+            break;
+        case AttrList:
+            for (k = 0; k < attr[i].AttrList.len; k++) {
+                ndt_free(attr[i].AttrList.items[k]);
+            }
+            ndt_free(attr[i].AttrList.items);
+            break;
+        default:
+            abort(); /* NOT REACHED */
+        }
     }
 
     ndt_free(attr);
 }
-
 
 /*
  * pack==true: no padding in the previous field (if present).
@@ -540,7 +568,7 @@ ndt_fixed_dim_kind(ndt_context_t *ctx)
 }
 
 ndt_dim_t *
-ndt_fixed_dim(size_t shape, int64_t stride, ndt_context_t *ctx)
+ndt_fixed_dim(size_t shape, ndt_context_t *ctx)
 {
     ndt_dim_t *d;
 
@@ -549,14 +577,14 @@ ndt_fixed_dim(size_t shape, int64_t stride, ndt_context_t *ctx)
         return NULL;
     }
     d->FixedDim.shape = shape;
-    d->FixedDim.stride = stride;
+    d->FixedDim.stride = INT64_MAX;
     d->abstract = 0;
 
     return d;
 }
 
 ndt_dim_t *
-ndt_var_dim(int64_t stride, ndt_context_t *ctx)
+ndt_var_dim(ndt_context_t *ctx)
 {
     ndt_dim_t *d;
 
@@ -564,7 +592,7 @@ ndt_var_dim(int64_t stride, ndt_context_t *ctx)
     if (d == NULL) {
         return NULL;
     }
-    d->VarDim.stride = stride;
+    d->VarDim.stride = INT64_MAX;
 
     return d;
 }
@@ -672,7 +700,8 @@ ndt_any_kind(ndt_context_t *ctx)
 
 static int
 init_dimensions(size_t *size, uint8_t *itemalign, bool *abstract,
-                ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
+                ndt_dim_t *dim, size_t ndim, ndt_t *dtype,
+                int64_t *strides, ndt_context_t *ctx)
 {
     int ellipsis_count = 0;
     size_t shape, i;
@@ -685,6 +714,7 @@ init_dimensions(size_t *size, uint8_t *itemalign, bool *abstract,
         switch (dim[i].tag) {
         case FixedDim:
             shape = dim[i].FixedDim.shape;
+            if (strides) dim[i].FixedDim.stride = strides[i];
             if (dim[i].FixedDim.stride == INT64_MAX) {
                 dim[i].FixedDim.stride = shape <= 1 ? 0 : *size;
             }
@@ -694,6 +724,7 @@ init_dimensions(size_t *size, uint8_t *itemalign, bool *abstract,
             dim[i].abstract = 0;
             break;
         case VarDim:
+            if (strides) dim[i].VarDim.stride = strides[i];
             if (dim[i].VarDim.stride == INT64_MAX) {
                 dim[i].VarDim.stride = *size;
             }
@@ -715,11 +746,18 @@ init_dimensions(size_t *size, uint8_t *itemalign, bool *abstract,
         }
     }
 
+    if (strides && *abstract) {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "strides given for abstract array");
+        return -1;
+    }
+
     return 0;
 }
 
 ndt_t *
-ndt_array(char order, ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *ctx)
+ndt_array(ndt_dim_t *dim, size_t ndim, ndt_t *dtype, int64_t *strides, char order,
+          ndt_context_t *ctx)
 {
     ndt_t *t;
     size_t size;
@@ -730,13 +768,19 @@ ndt_array(char order, ndt_dim_t *dim, size_t ndim, ndt_t *dtype, ndt_context_t *
         ndt_err_format(ctx, NDT_ValueError, "'order' must be 'C' or 'F'");
         ndt_dim_array_del(dim, ndim);
         ndt_del(dtype);
+        if (strides) ndt_free(strides);
         return NULL;
     }
 
-    if (init_dimensions(&size, &align, &abstract, dim, ndim, dtype, ctx) < 0) {
+    if (init_dimensions(&size, &align, &abstract, dim, ndim, dtype, strides, ctx) < 0) {
         ndt_dim_array_del(dim, ndim);
         ndt_del(dtype);
+        if (strides) ndt_free(strides);
         return NULL;
+    }
+
+    if (strides) {
+        ndt_free(strides);
     }
 
     t = ndt_new(Array, ctx);
@@ -1600,30 +1644,6 @@ ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y)
     default:
         abort(); /* NOT REACHED */
     }
-}
-
-
-/**********************************************************************/
-/*                             Attributes                             */
-/**********************************************************************/
-
-ndt_attr_t *
-ndt_attr(char *name, char *value, ndt_context_t *ctx)
-{
-    ndt_attr_t *attr;
-
-    attr = ndt_alloc(1, sizeof *attr);
-    if (attr == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        ndt_free(name);
-        ndt_free(value);
-        return NULL;
-    }
-
-    attr->name = name;
-    attr->value = value;
-
-    return attr;
 }
 
 

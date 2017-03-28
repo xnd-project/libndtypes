@@ -141,8 +141,9 @@ union YYSTYPE
     enum ndt_variadic_flag variadic_flag;
     enum ndt_encoding encoding;
     char *string;
+    ndt_string_seq_t *string_seq;
 
-#line 146 "grammar.h" /* yacc.c:1909  */
+#line 147 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -172,6 +173,6 @@ int yyparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 176 "grammar.h" /* yacc.c:1909  */
+#line 177 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */

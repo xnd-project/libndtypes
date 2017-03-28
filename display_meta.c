@@ -146,7 +146,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, int d, ndt_context_t *ctx)
 
         case FixedDim:
             n = ndt_snprintf_d(ctx, buf, d+2,
-                               "FixedDim(shape=%zu, stride=%zu, itemsize=%zu, itemalign=%" PRIu8 ", abstract=%s)",
+                               "FixedDim(shape=%zu, stride=%" PRIi64 ", itemsize=%zu, itemalign=%" PRIu8 ", abstract=%s)",
                                dim[i].FixedDim.shape, dim[i].FixedDim.stride, dim[i].itemsize,
                                dim[i].itemalign, dim[i].abstract ? "true" : "false");
             if (n < 0) return -1;
@@ -154,7 +154,7 @@ dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, int d, ndt_context_t *ctx)
 
         case VarDim:
             n = ndt_snprintf_d(ctx, buf, d+2,
-                               "VarDim(stride=%zu, itemsize=%zu, itemalign=%" PRIu8 ", abstract=%s)",
+                               "VarDim(stride=%" PRIi64 ", itemsize=%zu, itemalign=%" PRIu8 ", abstract=%s)",
                                dim[i].VarDim.stride, dim[i].itemsize, dim[i].itemalign,
                                dim[i].abstract ? "true" : "false");
             if (n < 0) return -1;

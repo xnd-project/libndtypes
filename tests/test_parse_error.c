@@ -27803,9 +27803,14 @@ const char *parse_error_tests[] = {
   "[10 * int3, ordr='C']",
   "[10 * int3, order='X']",
   "[10 * int32, order='F')",
-  "(|[10 * int32, order='F'], pack=true, align=2||, float32)",
-  "{|x : float32, pack+true|, y : float64}",
-  "{|x : float32, pack=true|, y :: float64}",
+  "([10 * int32, order='F'], |pack+3|, float32)",
+  "{x : float32, |pack=x|, y : float64}",
+  "{x : float32, |pack=4|, y :: float64}",
+  "[2 * 3 * int64, strides=[-8, x], order='F']",
+  "[2 * 3 * int64, strides=[-8, -16], order+'F']",
+  "[2 * 3 * int64, strides=[-8, -16], order='F')",
+  "[2 * 3 * 10 * int64, strides=[-8, -16, x], order='F')",
+  "[2 * 3 * 10 * int64, strides=[-8, -16, -32), order='F')",
 
   /* END MANUALLY GENERATED */
 
