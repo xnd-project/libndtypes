@@ -1,0 +1,83 @@
+
+
+=================================
+Two primary array representations
+=================================
+
+Since datashape is supposed to be able to represent diverse low-level
+types, we need at least two primary array types.
+
+~~~~~~~~~~~~~
+Numpy ndarray
+~~~~~~~~~~~~~
+
+"[10 * 2 * int64, style='np']"
+
+This would be like the regular NumPy ndarray: A single allocated memory block
+with shape and strides.
+
+
+Proposed AST
+------------
+
+Ndarray(
+  shape=[10, 2],
+  strides=[16, 8],
+  dtype=Int64(size=8, align=8, endian='L', abstract=false)))
+  size=160, align=8, abstract=false, order='C'
+)
+
+This does not (and cannot) have 'var' dimensions.
+
+Symbolic dimensions: Only allow single letters and encode them as negative
+shapes.
+
+Question: Is INT64_MAX sufficient for shapes (as opposed to SIZE_MAX)?
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Flexible arrays (enables DyND 'var')
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"[10 * 2 * int64, style='flex']" == "10 * 2 * int64"
+
+In this representation the first dimensions are arrays of pointers to
+the next dimensions, which naturally enables variable size dimensions.
+
+This should be the *default*, otherwise the high-level datashape would
+not have 'var' arrays.
+
+
+Proposed Ast (much the same as DyND):
+-------------------------------------
+
+FixedDim(shape=10, stride=16, itemsize=16, itemalign=8, abstract=false, dtype=
+ FixedDim(shape=2, stride=8, itemsize=8, itemalign=8, abstract=false, dtype=
+   Int64(size=8, align=8, endian='L', abstract=false)))
+
+
+OR
+
+Array(tag=FixedDim, shape=10, itemsize=16, itemalign=8, abstract=false, dtype=
+  Array(tag=FixedDim, shape=2, stride=8, itemsize=8, itemalign=8, abstract=false, dtype=
+    Int64(size=8, align=8, endian='L', abstract=false)))
+
+
+Need to settle on a single representation for 'var' arrays
+----------------------------------------------------------
+
+"3 * var * int64"
+
+DyND
+~~~~
+
+  --------------
+  | size_t size |
+  | char *data  | => |int64, int64|
+  --------------
+  | size_t size |
+  | char *data  | => |int64, int64, int64, int64|
+  --------------
+  | size_t size |
+  | char *data  | => |int64|
+  --------------
