@@ -588,8 +588,8 @@ ndt_fixed_dim_kind(ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    if (type->ndim >= 128) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > 128");
+    if (type->ndim > NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
         ndt_del(type);
         return NULL;
     }
@@ -615,8 +615,8 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
     size_t itemsize;
     uint8_t itemalign;
 
-    if (type->ndim >= 128) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > 128");
+    if (type->ndim > NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
         ndt_del(type);
         return NULL;
     }
@@ -655,8 +655,8 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     size_t itemsize;
     uint8_t itemalign;
 
-    if (type->ndim >= 128) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > 128");
+    if (type->ndim > NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
         ndt_del(type);
         return NULL;
     }
@@ -696,8 +696,8 @@ ndt_var_dim(ndt_t *type, ndt_context_t *ctx)
     size_t itemsize;
     uint8_t itemalign;
 
-    if (type->ndim >= 128) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > 128");
+    if (type->ndim > NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
         ndt_del(type);
         return NULL;
     }
@@ -739,8 +739,8 @@ ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    if (type->ndim >= 128) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > 128");
+    if (type->ndim > NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
         ndt_del(type);
         return NULL;
     }
@@ -1447,12 +1447,12 @@ ndt_next_dim(const ndt_t *a)
 }
 
 size_t
-ndt_get_dims_dtype(const ndt_t *dims[128], const ndt_t **dtype, const ndt_t *array)
+ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
 {
     const ndt_t *a = array;
     size_t n = 0;
 
-    assert(array->ndim < 128);
+    assert(array->ndim <= NDT_MAX_DIM);
 
     while (a->ndim > 0) {
         dims[n++] = a;
@@ -1463,6 +1463,11 @@ ndt_get_dims_dtype(const ndt_t *dims[128], const ndt_t **dtype, const ndt_t *arr
 
     return n;
 }
+
+
+
+
+
 
 
 /* XXX: Semantics are not clear: Anything that is not a compound type?

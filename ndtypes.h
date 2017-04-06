@@ -75,6 +75,10 @@
                      | NDT_Ellipsis_dimension \
                      | NDT_Variadic)
 
+
+#define NDT_MAX_DIM 128U
+
+
 /* Types: ndt_t */
 typedef struct _ndt ndt_t;
 
@@ -420,7 +424,7 @@ int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 
 const ndt_t *ndt_next_dim(const ndt_t *a);
-size_t ndt_get_dims_dtype(const ndt_t *dims[128], const ndt_t **dtype, const ndt_t *array);
+size_t ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
 
 /*** String conversion ***/
 bool ndt_strtobool(const char *v, ndt_context_t *ctx);

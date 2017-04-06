@@ -202,8 +202,8 @@ match_datashape(const ndt_t *p, const ndt_t *c,
                 symtable_t *tbl,
                 ndt_context_t *ctx)
 {
-    const ndt_t *pdims[128];
-    const ndt_t *cdims[128];
+    const ndt_t *pdims[NDT_MAX_DIM];
+    const ndt_t *cdims[NDT_MAX_DIM];
     const ndt_t *pdtype;
     const ndt_t *cdtype;
     size_t pn, cn;
