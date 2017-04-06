@@ -612,8 +612,8 @@ ndt_t *
 ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
-    size_t itemsize;
-    uint8_t itemalign;
+    size_t itemsize = type->size;
+    uint8_t itemalign = type->align;
 
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
@@ -627,21 +627,13 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    if (type->ndim == 0) {
-        itemsize = type->size;
-        itemalign = type->align;
-    }
-    else {
-        itemsize = sizeof(ndt_fixed_dim_t);
-        itemalign = alignof(ndt_fixed_dim_t);
-    }
-
     t->FixedDim.shape = shape;
     t->FixedDim.stride = itemsize;
+    t->FixedDim.offset = 0;
     t->FixedDim.itemsize = itemsize;
     t->FixedDim.type = type;
     t->ndim = type->ndim + 1;
-    t->size = shape * itemsize;
+    t->size = sizeof(ndt_t *);
     t->align = itemalign;
     t->flags = type->flags;
 
@@ -652,8 +644,8 @@ ndt_t *
 ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
-    size_t itemsize;
-    uint8_t itemalign;
+    size_t itemsize = type->size;
+    uint8_t itemalign = type->align;
 
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
@@ -668,21 +660,13 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    if (type->ndim == 0) {
-        itemsize = type->size;
-        itemalign = type->align;
-    }
-    else {
-        itemsize = sizeof(ndt_fixed_dim_t);
-        itemalign = alignof(ndt_fixed_dim_t);
-    }
-
     t->SymbolicDim.name = name;
     t->SymbolicDim.stride = itemsize;
+    t->SymbolicDim.offset = 0;
     t->SymbolicDim.itemsize = itemsize;
     t->SymbolicDim.type = type;
     t->ndim = type->ndim + 1;
-    t->size = 0;
+    t->size = sizeof(ndt_t *);
     t->align = itemalign;
     t->flags |= NDT_Dimension_variable;
 
@@ -693,8 +677,8 @@ ndt_t *
 ndt_var_dim(ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
-    size_t itemsize;
-    uint8_t itemalign;
+    size_t itemsize = type->size;
+    uint8_t itemalign = type->align;
 
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
@@ -708,20 +692,12 @@ ndt_var_dim(ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    if (type->ndim == 0) {
-        itemsize = type->size;
-        itemalign = type->align;
-    }
-    else {
-        itemsize = sizeof(ndt_var_dim_t);
-        itemalign = alignof(ndt_var_dim_t);
-    }
-
     t->VarDim.stride = itemsize;
+    t->VarDim.offset = 0;
     t->VarDim.itemsize = itemsize;
     t->VarDim.type = type;
     t->ndim = type->ndim + 1;
-    t->size = 0;
+    t->size = sizeof(ndt_var_dim_t);
     t->align = itemalign;
     t->flags = type->flags;
 
@@ -1463,11 +1439,6 @@ ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const nd
 
     return n;
 }
-
-
-
-
-
 
 
 /* XXX: Semantics are not clear: Anything that is not a compound type?

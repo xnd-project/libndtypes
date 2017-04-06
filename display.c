@@ -289,12 +289,12 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         case Ndarray: {
             int i;
 
-            for (i = 0; i < t->Array.ndim; i++) {
-                n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->Array.shape[i]);
+            for (i = 0; i < t->Ndarray.ndim; i++) {
+                n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->Ndarray.shape[i]);
                 if (n < 0) return -1;
             }
 
-            n = datashape(buf, t->Array.dtype, d, ctx);
+            n = datashape(buf, t->Ndarray.dtype, d, ctx);
             return n;
         }
 
