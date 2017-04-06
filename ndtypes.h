@@ -66,7 +66,7 @@
 #define NDT_Dimension_variable 0x00000004U
 #define NDT_Dimension_kind     0x00000008U
 #define NDT_Ellipsis_dimension 0x00000010U
-#define NDT_Variadic           0x00000010U
+#define NDT_Variadic           0x00000020U
 
 #define NDT_Abstract ( NDT_Type_variable      \
                      | NDT_Type_kind          \
