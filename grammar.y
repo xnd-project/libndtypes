@@ -192,8 +192,8 @@ input:
 
 /* types */
 datashape:
-  array                                       { $$ = $1; }
-| dtype                                       { $$ = $1; }
+  array { $$ = $1; }
+| dtype { $$ = $1; }
 
 array:
   array_nooption                      { $$ = $1; }
@@ -257,13 +257,13 @@ scalar:
 | pointer            { $$ = $1; }
 
 signed:
-  INT8 arguments_opt { $$ = mk_primitive(Int8, $2, ctx); if ($$ == NULL) YYABORT; }
+  INT8 arguments_opt  { $$ = mk_primitive(Int8, $2, ctx); if ($$ == NULL) YYABORT; }
 | INT16 arguments_opt { $$ = mk_primitive(Int16, $2, ctx); if ($$ == NULL) YYABORT; }
 | INT32 arguments_opt { $$ = mk_primitive(Int32, $2, ctx); if ($$ == NULL) YYABORT; }
 | INT64 arguments_opt { $$ = mk_primitive(Int64, $2, ctx); if ($$ == NULL) YYABORT; }
 
 unsigned:
-  UINT8 arguments_opt { $$ = mk_primitive(Uint8, $2, ctx); if ($$ == NULL) YYABORT; }
+  UINT8 arguments_opt  { $$ = mk_primitive(Uint8, $2, ctx); if ($$ == NULL) YYABORT; }
 | UINT16 arguments_opt { $$ = mk_primitive(Uint16, $2, ctx); if ($$ == NULL) YYABORT; }
 | UINT32 arguments_opt { $$ = mk_primitive(Uint32, $2, ctx); if ($$ == NULL) YYABORT; }
 | UINT64 arguments_opt { $$ = mk_primitive(Uint64, $2, ctx); if ($$ == NULL) YYABORT; }
@@ -274,18 +274,18 @@ ieee_float:
 | FLOAT64 arguments_opt { $$ = mk_primitive(Float64, $2, ctx); if ($$ == NULL) YYABORT; }
 
 ieee_complex:
-  COMPLEX64 arguments_opt { $$ = mk_primitive(Complex64, $2, ctx); if ($$ == NULL) YYABORT; }
+  COMPLEX64 arguments_opt  { $$ = mk_primitive(Complex64, $2, ctx); if ($$ == NULL) YYABORT; }
 | COMPLEX128 arguments_opt { $$ = mk_primitive(Complex128, $2, ctx); if ($$ == NULL) YYABORT; }
 
 alias:
   /* machine independent */
-  INT arguments_opt { $$ = mk_primitive(Int32, $2, ctx); if ($$ == NULL) YYABORT; }
-| REAL arguments_opt { $$ = mk_primitive(Float64, $2, ctx); if ($$ == NULL) YYABORT; }
+  INT arguments_opt     { $$ = mk_primitive(Int32, $2, ctx); if ($$ == NULL) YYABORT; }
+| REAL arguments_opt    { $$ = mk_primitive(Float64, $2, ctx); if ($$ == NULL) YYABORT; }
 | COMPLEX arguments_opt { $$ = mk_primitive(Complex128, $2, ctx); if ($$ == NULL) YYABORT; }
   /* machine dependent */
-| INTPTR arguments_opt { $$ = mk_alias(Intptr, $2, ctx); if ($$ == NULL) YYABORT; }
+| INTPTR arguments_opt  { $$ = mk_alias(Intptr, $2, ctx); if ($$ == NULL) YYABORT; }
 | UINTPTR arguments_opt { $$ = mk_alias(Uintptr, $2, ctx); if ($$ == NULL) YYABORT; }
-| SIZE arguments_opt { $$ = mk_alias(Size, $2, ctx); if ($$ == NULL) YYABORT; }
+| SIZE arguments_opt    { $$ = mk_alias(Size, $2, ctx); if ($$ == NULL) YYABORT; }
 
 character:
   CHAR                        { $$ = ndt_char(Utf32, ctx); if ($$ == NULL) YYABORT; }
@@ -323,8 +323,8 @@ typed_value:
 | STRINGLIT COLON datashape   { $$ = ndt_memory_from_string($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 variadic_flag:
-  %empty      { $$ = Nonvariadic; }
-| ELLIPSIS    { $$ = Variadic; }
+  %empty   { $$ = Nonvariadic; }
+| ELLIPSIS { $$ = Variadic; }
 
 comma_variadic_flag:
   %empty         { $$ = Nonvariadic; }
