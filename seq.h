@@ -37,12 +37,6 @@
 typedef struct {
     size_t len;
     size_t reserved;
-    ndt_dim_t *ptr;
-} ndt_dim_seq_t;
-
-typedef struct {
-    size_t len;
-    size_t reserved;
     ndt_tuple_field_t *ptr;
 } ndt_tuple_field_seq_t;
 
@@ -70,11 +64,6 @@ typedef struct {
     char **ptr;
 } ndt_string_seq_t;
 
-
-ndt_dim_seq_t *ndt_dim_seq_new(ndt_dim_t *, ndt_context_t *ctx);
-void ndt_dim_seq_del(ndt_dim_seq_t *);
-ndt_dim_seq_t *ndt_dim_seq_append(ndt_dim_seq_t *, ndt_dim_t *, ndt_context_t *ctx);
-ndt_dim_seq_t *ndt_dim_seq_finalize(ndt_dim_seq_t *);
 
 ndt_tuple_field_seq_t *ndt_tuple_field_seq_new(ndt_tuple_field_t *, ndt_context_t *ctx);
 void ndt_tuple_field_seq_del(ndt_tuple_field_seq_t *);

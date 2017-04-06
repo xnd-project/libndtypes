@@ -80,8 +80,6 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %union {
     ndt_t *ndt;
-    ndt_dim_t *dim;
-    ndt_dim_seq_t *dim_seq;
     ndt_tuple_field_t *tuple_field;
     ndt_tuple_field_seq_t *tuple_field_seq;
     ndt_record_field_t *record_field;
@@ -101,8 +99,8 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> datashape
 %type <ndt> array
 %type <ndt> array_nooption
-%type <dim> dimension
-%type <dim_seq> dimension_seq
+%type <ndt> flexarray
+%type <ndt> flexarray_tail
 %type <ndt> dtype
 %type <ndt> dtype_nooption
 %type <ndt> scalar
@@ -163,7 +161,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    BYTES FIXED_BYTES_KIND FIXED_BYTES
    POINTER
 
-FIXED_DIM_KIND FIXED VAR
+FIXED_DIM_KIND VAR
 
 COMMA COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
 RARROW EQUAL QUESTIONMARK BAR
@@ -176,8 +174,6 @@ ERRTOKEN
 %token ENDMARKER 0 "end of file"
 
 %destructor { ndt_del($$); } <ndt>
-%destructor { ndt_dim_del($$); } <dim>
-%destructor { ndt_dim_seq_del($$); } <dim_seq>
 %destructor { ndt_tuple_field_del($$); } <tuple_field>
 %destructor { ndt_tuple_field_seq_del($$); } <tuple_field_seq>
 %destructor { ndt_record_field_del($$); } <record_field>
@@ -205,20 +201,19 @@ array:
 | OPTION LPAREN array_nooption RPAREN { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
 
 array_nooption:
-  dimension_seq STAR dtype                                   { $$ = mk_array($1, $3, NULL, ctx); if ($$ == NULL) YYABORT; }
-| LBRACK dimension_seq STAR dtype COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, $6, ctx); if ($$ == NULL) YYABORT; }
+  flexarray                                   { $$ = $1; }
+| LBRACK flexarray COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
-dimension_seq:
-  dimension                    { $$ = ndt_dim_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
-| dimension_seq STAR dimension { $$ = ndt_dim_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
+flexarray:
+  FIXED_DIM_KIND STAR flexarray_tail { $$ = ndt_fixed_dim_kind($3, ctx); if ($$ == NULL) YYABORT; }
+| INTEGER STAR flexarray_tail        { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER STAR flexarray_tail     { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| VAR STAR flexarray_tail            { $$ = ndt_var_dim($3, ctx); if ($$ == NULL) YYABORT; }
+| ELLIPSIS STAR flexarray_tail       { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
 
-dimension:
-  FIXED_DIM_KIND              { $$ = ndt_fixed_dim_kind(ctx); if ($$ == NULL) YYABORT; }
-| INTEGER                     { $$ = mk_fixed_dim($1, ctx); if ($$ == NULL) YYABORT; }
-| FIXED LPAREN INTEGER RPAREN { $$ = mk_fixed_dim($3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER                  { $$ = ndt_symbolic_dim($1, ctx); if ($$ == NULL) YYABORT; }
-| VAR                         { $$ = ndt_var_dim(ctx); if ($$ == NULL) YYABORT; }
-| ELLIPSIS                    { $$ = ndt_ellipsis_dim(ctx); if ($$ == NULL) YYABORT; }
+flexarray_tail:
+  dtype     { $$ = $1; }
+| flexarray { $$ = $1; }
 
 dtype:
   dtype_nooption                      { $$ = $1; }

@@ -40,46 +40,6 @@
 /*****************************************************************************/
 
 static int
-dimensions_equal(ndt_dim_t *p, size_t pshape, ndt_dim_t *c, size_t cshape)
-{
-    size_t i;
-
-    if (cshape != pshape) {
-        return 0;
-    }
-
-    for (i = 0; i < pshape; i++) {
-        switch (p[i].tag) {
-        case EllipsisDim:
-            if (c[i].tag == EllipsisDim)
-                break;
-            return 0;
-        case FixedDimKind:
-            if (c[i].tag == FixedDimKind)
-                break;
-            return 0;
-        case FixedDim:
-            if (c[i].tag == FixedDim && c[i].FixedDim.shape == p[i].FixedDim.shape)
-                break;
-            return 0;
-        case SymbolicDim:
-            if (c[i].tag == SymbolicDim &&
-                strcmp(c[i].SymbolicDim.name, p[i].SymbolicDim.name) == 0)
-                break;
-            return 0;
-        case VarDim:
-            if (c[i].tag == VarDim)
-                break;
-            return 0;
-        default: /* NOT REACHED */
-            abort();
-        }
-    }
-
-    return 1;
-}
-
-static int
 tuple_fields_equal(ndt_tuple_field_t *p, size_t pshape,
                    ndt_tuple_field_t *c, size_t cshape)
 {
@@ -177,6 +137,24 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case Pointer:
         if (c->tag != Pointer) return 0;
         return ndt_equal(p->Pointer.type, c->Pointer.type);
+    case FixedDimKind:
+        return c->tag == FixedDimKind &&
+               ndt_equal(c->FixedDimKind.type, p->FixedDimKind.type);
+    case FixedDim:
+        return c->tag == FixedDim && c->FixedDim.shape == p->FixedDim.shape &&
+               ndt_equal(c->FixedDim.type, p->FixedDim.type);
+    case SymbolicDim:
+        return c->tag == SymbolicDim &&
+               strcmp(c->SymbolicDim.name, p->SymbolicDim.name) == 0 &&
+               ndt_equal(c->SymbolicDim.type, p->SymbolicDim.type);
+    case VarDim:
+        return c->tag == VarDim &&
+               ndt_equal(c->VarDim.type, p->VarDim.type);
+    case EllipsisDim:
+        return c->tag == EllipsisDim &&
+               ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
+    case Ndarray:
+        abort();
     case Tuple:
         if (c->tag != Tuple || c->Tuple.flag != p->Tuple.flag) return 0;
         return tuple_fields_equal(p->Tuple.fields, p->Tuple.shape,
@@ -202,10 +180,6 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case Constr:
         return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
                ndt_equal(p->Constr.type, c->Constr.type);
-    case Array:
-        return c->tag == Array &&
-               dimensions_equal(p->Array.dim, p->Array.ndim, c->Array.dim, c->Array.ndim) &&
-               ndt_equal(p->Array.dtype, c->Array.dtype);
     default: /* NOT REACHED */
         abort();
     }

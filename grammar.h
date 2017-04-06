@@ -94,29 +94,28 @@ extern int yydebug;
     FIXED_BYTES = 293,
     POINTER = 294,
     FIXED_DIM_KIND = 295,
-    FIXED = 296,
-    VAR = 297,
-    COMMA = 298,
-    COLON = 299,
-    LPAREN = 300,
-    RPAREN = 301,
-    LBRACE = 302,
-    RBRACE = 303,
-    LBRACK = 304,
-    RBRACK = 305,
-    STAR = 306,
-    ELLIPSIS = 307,
-    RARROW = 308,
-    EQUAL = 309,
-    QUESTIONMARK = 310,
-    BAR = 311,
-    ERRTOKEN = 312,
-    INTEGER = 313,
-    FLOATNUMBER = 314,
-    STRINGLIT = 315,
-    NAME_LOWER = 316,
-    NAME_UPPER = 317,
-    NAME_OTHER = 318
+    VAR = 296,
+    COMMA = 297,
+    COLON = 298,
+    LPAREN = 299,
+    RPAREN = 300,
+    LBRACE = 301,
+    RBRACE = 302,
+    LBRACK = 303,
+    RBRACK = 304,
+    STAR = 305,
+    ELLIPSIS = 306,
+    RARROW = 307,
+    EQUAL = 308,
+    QUESTIONMARK = 309,
+    BAR = 310,
+    ERRTOKEN = 311,
+    INTEGER = 312,
+    FLOATNUMBER = 313,
+    STRINGLIT = 314,
+    NAME_LOWER = 315,
+    NAME_UPPER = 316,
+    NAME_OTHER = 317
   };
 #endif
 
@@ -128,8 +127,6 @@ union YYSTYPE
 #line 81 "grammar.y" /* yacc.c:1909  */
 
     ndt_t *ndt;
-    ndt_dim_t *dim;
-    ndt_dim_seq_t *dim_seq;
     ndt_tuple_field_t *tuple_field;
     ndt_tuple_field_seq_t *tuple_field_seq;
     ndt_record_field_t *record_field;
@@ -143,7 +140,7 @@ union YYSTYPE
     char *string;
     ndt_string_seq_t *string_seq;
 
-#line 147 "grammar.h" /* yacc.c:1909  */
+#line 144 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -173,6 +170,6 @@ int yyparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 177 "grammar.h" /* yacc.c:1909  */
+#line 174 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */
