@@ -521,9 +521,6 @@ ndt_del(ndt_t *t)
     }
 
     switch (t->tag) {
-    case FixedDimKind:
-        ndt_del(t->FixedDimKind.type);
-        break;
     case FixedDim:
         ndt_del(t->FixedDim.type);
         break;
@@ -584,31 +581,6 @@ ndt_any_kind(ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_fixed_dim_kind(ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    if (type->ndim > NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
-        ndt_del(type);
-        return NULL;
-    }
-
-    t = ndt_new(FixedDimKind, ctx);
-    if (t == NULL) {
-        ndt_del(type);
-        return NULL;
-    }
-    t->FixedDimKind.type = type;
-    t->ndim = type->ndim + 1;
-    t->size = 0;
-    t->align = 1;
-    t->flags |= NDT_Dimension_kind;
-
-    return t;
-}
-
-ndt_t *
 ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -633,7 +605,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
     t->FixedDim.itemsize = itemsize;
     t->FixedDim.type = type;
     t->ndim = type->ndim + 1;
-    t->size = sizeof(ndt_t *);
+    t->size = sizeof(ndt_fixed_dim_t);
     t->align = itemalign;
     t->flags = type->flags;
 
@@ -666,7 +638,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     t->SymbolicDim.itemsize = itemsize;
     t->SymbolicDim.type = type;
     t->ndim = type->ndim + 1;
-    t->size = sizeof(ndt_t *);
+    t->size = sizeof(ndt_fixed_dim_t);
     t->align = itemalign;
     t->flags |= NDT_Dimension_variable;
 
@@ -1399,8 +1371,7 @@ int
 ndt_is_array(const ndt_t *t)
 {
     switch (t->tag) {
-    case FixedDimKind: case FixedDim: case SymbolicDim:
-    case VarDim: case EllipsisDim:
+    case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
         return 1;
     default:
         return 0;
@@ -1413,7 +1384,6 @@ ndt_next_dim(const ndt_t *a)
     assert(a->ndim > 0);
 
     switch (a->tag) {
-    case FixedDimKind: return a->FixedDimKind.type;
     case FixedDim: return a->FixedDim.type;
     case VarDim: return a->VarDim.type;
     case SymbolicDim: return a->SymbolicDim.type;

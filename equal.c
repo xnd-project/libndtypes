@@ -137,9 +137,6 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case Pointer:
         if (c->tag != Pointer) return 0;
         return ndt_equal(p->Pointer.type, c->Pointer.type);
-    case FixedDimKind:
-        return c->tag == FixedDimKind &&
-               ndt_equal(c->FixedDimKind.type, p->FixedDimKind.type);
     case FixedDim:
         return c->tag == FixedDim && c->FixedDim.shape == p->FixedDim.shape &&
                ndt_equal(c->FixedDim.type, p->FixedDim.type);

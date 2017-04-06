@@ -161,7 +161,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    BYTES FIXED_BYTES_KIND FIXED_BYTES
    POINTER
 
-FIXED_DIM_KIND VAR
+VAR
 
 COMMA COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
 RARROW EQUAL QUESTIONMARK BAR
@@ -205,8 +205,7 @@ array_nooption:
 | LBRACK flexarray COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 flexarray:
-  FIXED_DIM_KIND STAR flexarray_tail { $$ = ndt_fixed_dim_kind($3, ctx); if ($$ == NULL) YYABORT; }
-| INTEGER STAR flexarray_tail        { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  INTEGER STAR flexarray_tail        { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER STAR flexarray_tail     { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | VAR STAR flexarray_tail            { $$ = ndt_var_dim($3, ctx); if ($$ == NULL) YYABORT; }
 | ELLIPSIS STAR flexarray_tail       { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }

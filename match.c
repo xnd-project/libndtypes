@@ -92,10 +92,6 @@ match_dimensions(const ndt_t *p[], size_t pshape,
             tmp = cshape; cshape = k-1; k = tmp;
             stride = -1;
             break;
-        case FixedDimKind:
-            if (c[k]->tag == FixedDimKind || c[k]->tag == FixedDim)
-                break;
-            return 0;
         case FixedDim:
             if (c[k]->tag == FixedDim && p[i]->FixedDim.shape == c[k]->FixedDim.shape)
                 break;
@@ -212,8 +208,7 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     switch (p->tag) {
     case AnyKind:
         return 1;
-    case FixedDimKind: case FixedDim: case SymbolicDim:
-    case VarDim: case EllipsisDim:
+    case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
         if (!ndt_is_array(c)) return 0;
 
         pn = ndt_get_dims_dtype(pdims, &pdtype, p);

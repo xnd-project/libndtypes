@@ -251,13 +251,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
     int n;
 
     switch (t->tag) {
-        case FixedDimKind:
-            n = ndt_snprintf(ctx, buf, "Fixed * ");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->FixedDimKind.type, d, ctx);
-            return n;
-
         case FixedDim:
             n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
             if (n < 0) return -1;
@@ -265,18 +258,18 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = datashape(buf, t->FixedDim.type, d, ctx);
             return n;
 
-        case VarDim:
-            n = ndt_snprintf(ctx, buf, "var * ");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->VarDim.type, d, ctx);
-            return n;
-
         case SymbolicDim:
             n = ndt_snprintf(ctx, buf, "%s * ", t->SymbolicDim.name);
             if (n < 0) return -1;
 
             n = datashape(buf, t->SymbolicDim.type, d, ctx);
+            return n;
+
+        case VarDim:
+            n = ndt_snprintf(ctx, buf, "var * ");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->VarDim.type, d, ctx);
             return n;
 
         case EllipsisDim:

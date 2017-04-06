@@ -91,12 +91,9 @@ form, here we use a very similar OCaml data type:
    
      (* array types *)
      | FixedDim of size * datashape      (* equivalent to "array[size] of type" *)
-     | VarDim of datashape               (* equivalent to "array of type" *)
      | SymbolicDim of string * datashape (* equivalent to "array[N] of type" *)
+     | VarDim of datashape               (* equivalent to "array of type" *)
      | EllipsisDim of string * datashape (* any number of dimensions (... or Dim...) *)
-
-     (* dimension kinds *)
-     | FixedDimKind of datashape         (* set of all array[N] of type *)
 
      (* type kinds *)
      | AnyKind                           (* set of all types *)

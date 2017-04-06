@@ -288,7 +288,6 @@ tag_as_constr(enum ndt tag)
     switch (tag) {
     case AnyKind: return "Any";
 
-    case FixedDimKind: return "FixedDimKind";
     case FixedDim: return "FixedDim";
     case SymbolicDim: return "SymbolicDim";
     case VarDim: return "VarDim";
@@ -353,24 +352,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
     int n;
 
     switch (t->tag) {
-        case FixedDimKind:
-            n = ndt_snprintf_d(ctx, buf, d, "FixedDimKind(\n");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->FixedDimKind.type, d+2, 0, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(
-                    ctx, buf, d+2,
-                    "ndim=%" PRIu8 ", size=%zu, align=%" PRIu8 ", abstract=%s\n",
-                    t->ndim, t->size, t->align, ndt_is_abstract(t) ? "true" : "false");
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-
         case FixedDim:
             n = ndt_snprintf_d(ctx, buf, d, "FixedDim(\n");
             if (n < 0) return -1;

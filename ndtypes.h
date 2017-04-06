@@ -164,11 +164,9 @@ enum ndt_encoding {
 enum ndt {
   /* Any */
   AnyKind,
-    FixedDimKind,
-      FixedDim,
-
-    VarDim,
+    FixedDim,
     SymbolicDim,
+    VarDim,
     EllipsisDim,
 
     Ndarray,
@@ -253,10 +251,6 @@ struct _ndt {
     enum ndt tag;
 
     union {
-        struct {
-            ndt_t *type;
-        } FixedDimKind;
-
         struct {
             int64_t shape;
             int64_t stride;
@@ -464,10 +458,9 @@ int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Any */
 ndt_t *ndt_any_kind(ndt_context_t *ctx);
-ndt_t *ndt_fixed_dim_kind(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_var_dim(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_var_dim(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
 ndt_t *ndt_array(ndt_t **dim, size_t ndim, ndt_t *dtype, int64_t *strides, char order, ndt_context_t *ctx);

@@ -31,59 +31,6 @@
 
 
 const match_testcase_t match_tests[] = {
-  { "Fixed * Any",
-    "Fixed * Any",
-    1 },
-
-  { "Fixed * Any",
-    "10 * Any",
-    1 },
-
-  { "10 * Any",
-    "Fixed * Any",
-    0 },
-
-  { "?Fixed * Any",
-    "?Fixed * Any",
-    1 },
-
-  { "?Fixed * Any",
-    "Fixed * Any",
-    0 },
-
-  { "Fixed * Any",
-    "?Fixed * Any",
-    0 },
-
-  { "Fixed * Any",
-    "?Fixed * Any",
-    0 },
-
-
-  { "10 * Fixed * Any",
-    "10 * Fixed * Any",
-    1 },
-
-  { "?10 * Fixed * Any",
-    "?10 * Fixed * Any",
-    1 },
-
-  { "10 * 10 * Fixed * Any",
-    "10 * 10 * Fixed * Any",
-    1 },
-
-  { "10 * 10 * Fixed * Any",
-    "10 * 20 * Fixed * Any",
-    0 },
-
-  { "?10 * 10 * Fixed * Any",
-    "?10 * 10 * Fixed * Any",
-    1 },
-
-  { "?10 * 20 * Fixed * Any",
-    "?10 * 10 * Fixed * Any",
-    0 },
-
   { "2395344366 * Any",
     "2395344366 * Any",
     1 },
@@ -176,10 +123,6 @@ const match_testcase_t match_tests[] = {
     "10 * var * Any",
     1 },
 
-  { "10 * Fixed * Any",
-    "10 * var * Any",
-    0 },
-
   { "10 * N * Any",
     "10 * var * Any",
     0 },
@@ -247,18 +190,6 @@ const match_testcase_t match_tests[] = {
   { "N * N * ... * Any",
     "10 * 10 * ... * 20 * Z * Any",
     1 },
-
-  { "N * N * ... * Any",
-    "10 * 10 * ... * 20 * Fixed * FIxed * Any",
-    1 },
-
-  { "Fixed * Fixed * ... * Any",
-    "10 * 20 * ... * 20 * Fixed * FIxed * Any",
-    1 },
-
-  { "Fixed * Fixed * ... * Any",
-    "10 * var * ... * 20 * Fixed * FIxed * Any",
-    0 },
 
   { "?10 * 10 * ... * Any",
     "?10 * 10 * ... * Any",
@@ -3226,18 +3157,6 @@ const match_testcase_t match_tests[] = {
     1 },
 
   /* BEGIN RANDOM */
-  { "var * var * 332404638 * Fixed * complex64",
-    "var * var * 332404638 * Fixed * complex64",
-    1 },
-
-  { "var * 3957054619 * var * Fixed * Ti * 1957830719 * var * var * Exo8uJrHV * U * float64",
-    "var * 3957054619 * var * Fixed * Ti * 1957830719 * var * var * Exo8uJrHV * U * float64",
-    1 },
-
-  { "3374755922 * Fixed * ... * NG * var * 1594671069 * var * float32",
-    "3374755922 * Fixed * ... * NG * var * 1594671069 * var * float32",
-    1 },
-
   { "fixed_bytes(size=1342281638, align=8)",
     "fixed_bytes(size=1342281638, align=8)",
     1 },
@@ -3262,20 +3181,12 @@ const match_testcase_t match_tests[] = {
     "?categorical(30987 : int16, -16536 : int16, 1.2e-32 : float32, 189 : uint8, -823800099 : int32)",
     1 },
 
-  { "?Fixed * 1998811088 * var * var * var * var * bytes(align=2)",
-    "?Fixed * 1998811088 * var * var * var * var * bytes(align=2)",
-    1 },
-
   { "categorical(1.2e-32 : float64, 2840608325 : uint32, 44038 : uint16, 1763886348 : uint32, 'jOt' : string, 24 : uint8)",
     "categorical(1.2e-32 : float64, 2840608325 : uint32, 44038 : uint16, 1763886348 : uint32, 'jOt' : string, 24 : uint8)",
     1 },
 
   { "categorical(-2049848438 : int32, 94 : uint8, 3599739756 : uint64, 3577056037 : uint32, 1.2e-32 : float32)",
     "categorical(-2049848438 : int32, 94 : uint8, 3599739756 : uint64, 3577056037 : uint32, 1.2e-32 : float32)",
-    1 },
-
-  { "?3733890560 * var * 4255463617 * var * Fixed * 1331110955 * var * 3898445876 * ... * V840",
-    "?3733890560 * var * 4255463617 * var * Fixed * 1331110955 * var * 3898445876 * ... * V840",
     1 },
 
   { "categorical(2753441703 : uint32, 1.2e-32 : float32)",
@@ -3288,14 +3199,6 @@ const match_testcase_t match_tests[] = {
 
   { "1293035889 * SQc2jI * 508611408 * var * ... * var * FYqqwF * VKte * string",
     "1293035889 * SQc2jI * 508611408 * var * ... * var * FYqqwF * VKte * string",
-    1 },
-
-  { "L_ * var * var * Fixed * var * float64",
-    "L_ * var * var * Fixed * var * float64",
-    1 },
-
-  { "3746097770 * N * Jlz * var * 1100249655 * Fixed * Fixed * Scalar",
-    "3746097770 * N * Jlz * var * 1100249655 * Fixed * Fixed * Scalar",
     1 },
 
   { "1286044356 * LbR6JPFI * 2096958782 * uint8",
@@ -3314,60 +3217,24 @@ const match_testcase_t match_tests[] = {
     "SJBOs2xZm * var * ... * 4142176455 * BeL * 584505763 * Nf",
     1 },
 
-  { "Fixed * Fixed * 755034982 * var * 1354562102 * var * ... * OEpA(uint8)",
-    "Fixed * Fixed * 755034982 * var * 1354562102 * var * ... * OEpA(uint8)",
-    1 },
-
-  { "(?2577013537 * var * var * Pgm5k15 * 1405833912 * Fixed * Metyh9 * var * 746032032 * ... * MfxxM9)",
-    "(?2577013537 * var * var * Pgm5k15 * 1405833912 * Fixed * Metyh9 * var * 746032032 * ... * MfxxM9)",
-    1 },
-
   { "S * 3750021327 * 66749723 * var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(size=2816010943, align=16)",
     "S * 3750021327 * 66749723 * var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(size=2816010943, align=16)",
-    1 },
-
-  { "?1502444436 * 1532076056 * Fixed * Fixed * 4267776219 * var * char('ascii')",
-    "?1502444436 * 1532076056 * Fixed * Fixed * 4267776219 * var * char('ascii')",
     1 },
 
   { "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
     "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
     1 },
 
-  { "... * 921609927 * Fixed * Fixed * int8",
-    "... * 921609927 * Fixed * Fixed * int8",
-    1 },
-
   { "BfM2hS6zey * var * 163901665 * var * 747688899 * FbU2mb * var * ZcTmBXnKPi",
     "BfM2hS6zey * var * 163901665 * var * 747688899 * FbU2mb * var * ZcTmBXnKPi",
-    1 },
-
-  { "Fixed * var * QtcwFMY * ... * Srkn1Gdu * var * {_tNCwrX11 : Hh}",
-    "Fixed * var * QtcwFMY * ... * Srkn1Gdu * var * {_tNCwrX11 : Hh}",
     1 },
 
   { "?categorical(31275 : uint16, 69 : uint8, 1.2e-32 : float64)",
     "?categorical(31275 : uint16, 69 : uint8, 1.2e-32 : float64)",
     1 },
 
-  { "Fixed * ... * B * Hj3_ * BAqevpznHb(Fc64CBW(SNVRw(YY9(bytes(align=16)))))",
-    "Fixed * ... * B * Hj3_ * BAqevpznHb(Fc64CBW(SNVRw(YY9(bytes(align=16)))))",
-    1 },
-
-  { "1260250204 * Fixed * XfHO * float32",
-    "1260250204 * Fixed * XfHO * float32",
-    1 },
-
   { "3334650506 * var * var * ... * void",
     "3334650506 * var * var * ... * void",
-    1 },
-
-  { "?PtMPbgIsh1 * 3916753468 * Fixed * ZbWyc5 * ... * VQECx9DM * 128822188 * int32",
-    "?PtMPbgIsh1 * 3916753468 * Fixed * ZbWyc5 * ... * VQECx9DM * 128822188 * int32",
-    1 },
-
-  { "?3782944746 * Fixed * K6 * var * var * {_9f4IW8Ka : bytes(align=2)}",
-    "?3782944746 * Fixed * K6 * var * var * {_9f4IW8Ka : bytes(align=2)}",
     1 },
 
   { "categorical('omhwkoWVWw' : string, 43 : uint8, 946986991 : int64)",
@@ -3390,44 +3257,16 @@ const match_testcase_t match_tests[] = {
     "var * var * var * 3340205417 * 2074830512 * Scalar",
     1 },
 
-  { "?Fixed * 2289306192 * 102214485 * var * 691087150 * 1584397642 * 2328596856 * 3392258332 * int32",
-    "?Fixed * 2289306192 * 102214485 * var * 691087150 * 1584397642 * 2328596856 * 3392258332 * int32",
-    1 },
-
   { "?var * 199384207 * 3794803015 * LPLE0XH * EInCii3 * ... * 1462089522 * 531802952 * 1242541165 * int16",
     "?var * 199384207 * 3794803015 * LPLE0XH * EInCii3 * ... * 1462089522 * 531802952 * 1242541165 * int16",
-    1 },
-
-  { "var * var * var * var * Fixed * var * P * No * ... * NCPD8z5vr",
-    "var * var * var * var * Fixed * var * P * No * ... * NCPD8z5vr",
-    1 },
-
-  { "D7QIpw1ct * KeHiUmpeTX * ... * 842261059 * Fixed * 1002030516 * PaBYxWzcV * Fixed * 2930895061 * Signed",
-    "D7QIpw1ct * KeHiUmpeTX * ... * 842261059 * Fixed * 1002030516 * PaBYxWzcV * Fixed * 2930895061 * Signed",
     1 },
 
   { "fixed_bytes(size=280180385, align=8)",
     "fixed_bytes(size=280180385, align=8)",
     1 },
 
-  { "117964276 * Fixed * uint8",
-    "117964276 * Fixed * uint8",
-    1 },
-
   { "fixed_string(1901614748, 'utf32')",
     "fixed_string(1901614748, 'utf32')",
-    1 },
-
-  { "(...) -> ... * C0gq6cmqd * Fixed * 2302272430 * 2941212282 * 193382289 * 2955944452 * float32",
-    "(...) -> ... * C0gq6cmqd * Fixed * 2302272430 * 2941212282 * 193382289 * 2955944452 * float32",
-    1 },
-
-  { "Q21rN * ... * var * 2946874613 * var * 3748237259 * var * Fixed * 217324625 * CkTMl",
-    "Q21rN * ... * var * 2946874613 * var * 3748237259 * var * Fixed * 217324625 * CkTMl",
-    1 },
-
-  { "T6n52 * Fixed * 1290216226 * ... * 2729539619 * var * 3501458376 * RCvVT",
-    "T6n52 * Fixed * 1290216226 * ... * 2729539619 * var * 3501458376 * RCvVT",
     1 },
 
   { "A8w8pNJ * 3945513946 * 3057917060 * var * IFB * 1919373335 * M7",
@@ -3438,24 +3277,12 @@ const match_testcase_t match_tests[] = {
     "?categorical(1.2e-32 : float64, 3715192786 : uint32, 1.2e-32 : float32, 'oJgBt_WUse' : string, -67 : int8)",
     1 },
 
-  { "?... * 3457797755 * var * SQ8lH7kdhN * 361844838 * var * 4148090923 * Fixed * NZGsXn(OdfFxuM)",
-    "?... * 3457797755 * var * SQ8lH7kdhN * 361844838 * var * 4148090923 * Fixed * NZGsXn(OdfFxuM)",
-    1 },
-
-  { "var * 3976601884 * Fixed * D1x_FrNQm * var * Fixed * var * J6 * 968590204 * var * uint32",
-    "var * 3976601884 * Fixed * D1x_FrNQm * var * Fixed * var * J6 * 968590204 * var * uint32",
-    1 },
-
   { "3546970538 * var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=2)",
     "3546970538 * var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=2)",
     1 },
 
   { "3608776903 * MYlGTj * 1980216455 * Hce1_dqKx * var * Jfl * ... * E",
     "3608776903 * MYlGTj * 1980216455 * Hce1_dqKx * var * Jfl * ... * E",
-    1 },
-
-  { "?3447085033 * Yz8 * ... * var * pointer(?3072133845 * M * var * Fixed * categorical(206 : uint8))",
-    "?3447085033 * Yz8 * ... * var * pointer(?3072133845 * M * var * Fixed * categorical(206 : uint8))",
     1 },
 
   { "2948091211 * ... * categorical(-1869840431 : int64, 2052908559 : uint32)",
@@ -3482,10 +3309,6 @@ const match_testcase_t match_tests[] = {
     "R79_AhZau0 * 950069447 * 2112203142 * 3298306739 * var * ... * complex128",
     1 },
 
-  { "496423421 * Fixed * Odi * FeQQ(categorical(-1.2e-32 : float32))",
-    "496423421 * Fixed * Odi * FeQQ(categorical(-1.2e-32 : float32))",
-    1 },
-
   { "?fixed_string(2371793992, 'ucs2')",
     "?fixed_string(2371793992, 'ucs2')",
     1 },
@@ -3502,20 +3325,12 @@ const match_testcase_t match_tests[] = {
     "var * 2253137925 * VUx39mzbW * QoFb",
     1 },
 
-  { "2781200758 * Fixed * char('utf16')",
-    "2781200758 * Fixed * char('utf16')",
-    1 },
-
   { "57676169 * var * ... * fixed_string(1464831555, 'ucs2')",
     "57676169 * var * ... * fixed_string(1464831555, 'ucs2')",
     1 },
 
   { "var * 2859160145 * fixed_string(1233383142, 'utf32')",
     "var * 2859160145 * fixed_string(1233383142, 'utf32')",
-    1 },
-
-  { "?1747845342 * Fixed * 179581001 * Fixed * HTl * I43ZTJ * {...}",
-    "?1747845342 * Fixed * 179581001 * Fixed * HTl * I43ZTJ * {...}",
     1 },
 
   { "fixed_bytes(size=2882797968, align=16)",
@@ -3530,10 +3345,6 @@ const match_testcase_t match_tests[] = {
     "WhRsMHHXYp(categorical(145 : uint8))",
     1 },
 
-  { "Fixed * var * Ia * fixed_bytes(size=2424790913, align=2)",
-    "Fixed * var * Ia * fixed_bytes(size=2424790913, align=2)",
-    1 },
-
   { "?categorical(4079164787 : uint64, 23814 : int16)",
     "?categorical(4079164787 : uint64, 23814 : int16)",
     1 },
@@ -3544,14 +3355,6 @@ const match_testcase_t match_tests[] = {
 
   { "var * var * Z * LWfWfV6Gp6 * O8 * GWLJMYrf * 756518781 * PDVa3IbLt * bytes(align=16)",
     "var * var * Z * LWfWfV6Gp6 * O8 * GWLJMYrf * 756518781 * PDVa3IbLt * bytes(align=16)",
-    1 },
-
-  { "?var * Fixed * Fixed * var * 4959179 * int64",
-    "?var * Fixed * Fixed * var * 4959179 * int64",
-    1 },
-
-  { "?Fixed * 1850668616 * U5Rc * 2430465648 * 1498978360 * 3219895482 * BN6PFj * 4200344025 * KaY",
-    "?Fixed * 1850668616 * U5Rc * 2430465648 * 1498978360 * 3219895482 * BN6PFj * 4200344025 * KaY",
     1 },
 
   { "categorical(-49 : int8, -26791 : int16, 1780 : uint16, -85 : int8, 'pX' : string, 8094 : int16, 1.2e-32 : float64)",
