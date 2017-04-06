@@ -386,7 +386,6 @@ enum ndt_msg {
 };
 
 typedef struct {
-    // ndt_t *ast;
     enum ndt_error err;
     enum ndt_msg msg;
     union {
