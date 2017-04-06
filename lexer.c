@@ -371,8 +371,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 66
-#define YY_END_OF_BUFFER 67
+#define YY_NUM_RULES 65
+#define YY_END_OF_BUFFER 66
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -382,31 +382,31 @@ struct yy_trans_info
 	};
 static yyconst flex_int16_t yy_accept[233] =
     {   0,
-        0,    0,   67,   65,   63,   62,   62,   65,   64,   65,
-       65,   46,   47,   52,   44,   65,   65,   60,   60,   45,
-       53,   54,   57,   57,   57,   57,   57,   57,   57,   50,
-       51,   58,   56,   56,   56,   56,   56,   56,   56,   56,
-       56,   56,   56,   48,   55,   49,    0,   59,    0,   64,
-        0,    0,    0,    0,   60,   60,   43,    0,   61,   61,
-       60,    0,    0,    0,    0,   60,   57,   57,   57,   57,
-       57,   57,   57,   57,   58,   56,   56,   56,   56,   56,
-       56,   56,   56,   56,   56,   56,   56,   56,   56,   56,
-       56,   56,    0,   42,    0,   61,   60,   60,    2,   57,
+        0,    0,   66,   64,   62,   61,   61,   64,   63,   64,
+       64,   45,   46,   51,   43,   64,   64,   59,   59,   44,
+       52,   53,   56,   56,   56,   56,   56,   56,   56,   49,
+       50,   57,   55,   55,   55,   55,   55,   55,   55,   55,
+       55,   55,   55,   47,   54,   48,    0,   58,    0,   63,
+        0,    0,    0,    0,   59,   59,   42,    0,   60,   60,
+       59,    0,    0,    0,    0,   59,   56,   56,   56,   56,
+       56,   56,   56,   56,   57,   55,   55,   55,   55,   55,
+       55,   55,   55,   55,   55,   55,   55,   55,   55,   55,
+       55,   55,    0,   41,    0,   60,   59,   59,    2,   56,
 
-       57,   57,   57,   57,   57,   56,   56,   56,   56,   56,
-       56,   56,   28,   56,   56,   56,   56,   56,   56,   41,
-       56,    0,   57,   57,   16,   57,   57,   57,    5,   56,
-       56,   29,   56,   56,   56,   56,   56,   56,    7,   56,
-       56,   56,   26,   56,   56,   56,    4,    1,   57,   39,
-       57,   57,   57,   31,   56,   56,   40,   56,    8,    9,
-       10,   56,   56,   56,   56,   56,   56,   56,   56,   12,
-       56,   57,   57,   57,    3,    6,   57,   56,   56,   56,
-       56,   56,   56,   23,   38,   56,   25,   30,   13,   14,
-       15,   56,   20,   57,   57,   57,   56,   27,   56,   56,
+       56,   56,   56,   56,   56,   55,   55,   55,   55,   55,
+       55,   55,   28,   55,   55,   55,   55,   55,   55,   40,
+       55,    0,   56,   56,   16,   56,   56,   56,    5,   55,
+       55,   29,   55,   55,   55,   55,   55,   55,    7,   55,
+       55,   55,   26,   55,   55,   55,    4,    1,   56,   39,
+       56,   56,   56,   31,   55,   55,   55,   55,    8,    9,
+       10,   55,   55,   55,   55,   55,   55,   55,   55,   12,
+       55,   56,   56,   56,    3,    6,   56,   55,   55,   55,
+       55,   55,   55,   23,   38,   55,   25,   30,   13,   14,
+       15,   55,   20,   56,   56,   56,   55,   27,   55,   55,
 
-       17,   18,   19,   37,   24,   57,   57,   11,   56,   56,
-       56,   56,   56,   57,   57,   56,   56,   21,   56,   56,
-       34,   57,   56,   22,   56,   56,   32,   36,   35,   56,
+       17,   18,   19,   37,   24,   56,   56,   11,   55,   55,
+       55,   55,   55,   56,   56,   55,   55,   21,   55,   55,
+       34,   56,   55,   22,   55,   55,   32,   36,   35,   55,
        33,    0
     } ;
 
@@ -622,12 +622,12 @@ static yyconst flex_int16_t yy_chk[448] =
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[67] =
+static yyconst flex_int32_t yy_rule_can_match_eol[66] =
     {   0,
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 1, 0, 0, 0, 0,     };
+    0, 1, 0, 0, 0, 0,     };
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -1267,118 +1267,118 @@ YY_RULE_SETUP
 case 40:
 YY_RULE_SETUP
 #line 190 "lexer.l"
-{ return FIXED; }
+{ return VAR; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 191 "lexer.l"
-{ return VAR; }
+#line 192 "lexer.l"
+{ return ELLIPSIS; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
 #line 193 "lexer.l"
-{ return ELLIPSIS; }
+{ return RARROW; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
 #line 194 "lexer.l"
-{ return RARROW; }
+{ return COMMA; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
 #line 195 "lexer.l"
-{ return COMMA; }
+{ return COLON; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
 #line 196 "lexer.l"
-{ return COLON; }
+{ return LPAREN; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
 #line 197 "lexer.l"
-{ return LPAREN; }
+{ return RPAREN; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
 #line 198 "lexer.l"
-{ return RPAREN; }
+{ return LBRACE; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
 #line 199 "lexer.l"
-{ return LBRACE; }
+{ return RBRACE; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
 #line 200 "lexer.l"
-{ return RBRACE; }
+{ return LBRACK; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
 #line 201 "lexer.l"
-{ return LBRACK; }
+{ return RBRACK; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
 #line 202 "lexer.l"
-{ return RBRACK; }
+{ return STAR; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
 #line 203 "lexer.l"
-{ return STAR; }
+{ return EQUAL; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
 #line 204 "lexer.l"
-{ return EQUAL; }
+{ return QUESTIONMARK; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
 #line 205 "lexer.l"
-{ return QUESTIONMARK; }
+{ return BAR; }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 206 "lexer.l"
-{ return BAR; }
+#line 207 "lexer.l"
+{ yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_LOWER; }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
 #line 208 "lexer.l"
-{ yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_LOWER; }
+{ yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_UPPER; }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
 #line 209 "lexer.l"
-{ yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_UPPER; }
+{ yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_OTHER; }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 210 "lexer.l"
-{ yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_OTHER; }
+#line 211 "lexer.l"
+{ yylval->string = mk_stringlit(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return STRINGLIT; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
 #line 212 "lexer.l"
-{ yylval->string = mk_stringlit(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return STRINGLIT; }
+{ yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return INTEGER; }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
 #line 213 "lexer.l"
-{ yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return INTEGER; }
-	YY_BREAK
-case 61:
-YY_RULE_SETUP
-#line 214 "lexer.l"
 { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return FLOATNUMBER; }
 	YY_BREAK
+case 61:
+/* rule 61 can match eol */
+YY_RULE_SETUP
+#line 215 "lexer.l"
+{ yycolumn = 1; }
+	YY_BREAK
 case 62:
-/* rule 62 can match eol */
 YY_RULE_SETUP
 #line 216 "lexer.l"
-{ yycolumn = 1; }
+{} /* ignore */
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
@@ -1388,19 +1388,14 @@ YY_RULE_SETUP
 case 64:
 YY_RULE_SETUP
 #line 218 "lexer.l"
-{} /* ignore */
+{ return ERRTOKEN; }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 219 "lexer.l"
-{ return ERRTOKEN; }
-	YY_BREAK
-case 66:
-YY_RULE_SETUP
-#line 221 "lexer.l"
+#line 220 "lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1404 "lexer.c"
+#line 1399 "lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2523,7 +2518,7 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 221 "lexer.l"
+#line 220 "lexer.l"
 
 
 

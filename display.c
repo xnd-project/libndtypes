@@ -101,53 +101,6 @@ indent(ndt_context_t *ctx, buf_t *buf, int n)
 }
 
 static int
-dimensions(buf_t *buf, ndt_dim_t *dim, size_t ndim, ndt_context_t *ctx)
-{
-    size_t i;
-    int n;
-
-    for (i = 0; i < ndim; i++) {
-        if (i >= 1) {
-            n = ndt_snprintf(ctx, buf, " * ");
-            if (n < 0) return -1;
-        }
-
-        switch (dim[i].tag) {
-        case FixedDimKind:
-            n = ndt_snprintf(ctx, buf, "Fixed");
-            if (n < 0) return -1;
-            break;
-
-        case FixedDim:
-            n = ndt_snprintf(ctx, buf, "%zu", dim[i].FixedDim.shape);
-            if (n < 0) return -1;
-            break;
-
-        case VarDim:
-            n = ndt_snprintf(ctx, buf, "var");
-            if (n < 0) return -1;
-            break;
-
-        case SymbolicDim:
-            n = ndt_snprintf(ctx, buf, "%s", dim[i].SymbolicDim.name);
-            if (n < 0) return -1;
-            break;
-
-        case EllipsisDim:
-            n = ndt_snprintf(ctx, buf, "...", dim[i].SymbolicDim.name);
-            if (n < 0) return -1;
-            break;
-
-        default:
-            ndt_err_format(ctx, NDT_InvalidArgumentError, "not a dimension");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static int
 tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
              ndt_context_t *ctx)
 {
@@ -298,15 +251,52 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
     int n;
 
     switch (t->tag) {
-        case Array:
-            n = dimensions(buf, t->Array.dim, t->Array.ndim, ctx);
+        case FixedDimKind:
+            n = ndt_snprintf(ctx, buf, "Fixed * ");
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, " * ");
+            n = datashape(buf, t->FixedDimKind.type, d, ctx);
+            return n;
+
+        case FixedDim:
+            n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
             if (n < 0) return -1;
+
+            n = datashape(buf, t->FixedDim.type, d, ctx);
+            return n;
+
+        case VarDim:
+            n = ndt_snprintf(ctx, buf, "var * ");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->VarDim.type, d, ctx);
+            return n;
+
+        case SymbolicDim:
+            n = ndt_snprintf(ctx, buf, "%s * ", t->SymbolicDim.name);
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->SymbolicDim.type, d, ctx);
+            return n;
+
+        case EllipsisDim:
+            n = ndt_snprintf(ctx, buf, "... * ", t->SymbolicDim.name);
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->EllipsisDim.type, d, ctx);
+            return n;
+
+        case Ndarray: {
+            int i;
+
+            for (i = 0; i < t->Array.ndim; i++) {
+                n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->Array.shape[i]);
+                if (n < 0) return -1;
+            }
 
             n = datashape(buf, t->Array.dtype, d, ctx);
             return n;
+        }
 
         case Option:
             n = ndt_snprintf(ctx, buf, "?");

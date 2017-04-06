@@ -60,6 +60,21 @@
 /*                                 Datashape                                 */
 /*****************************************************************************/
 
+/* Type flags */
+#define NDT_Type_variable      0x00000001U
+#define NDT_Type_kind          0x00000002U
+#define NDT_Dimension_variable 0x00000004U
+#define NDT_Dimension_kind     0x00000008U
+#define NDT_Ellipsis_dimension 0x00000010U
+#define NDT_Variadic           0x00000010U
+
+#define NDT_Abstract ( NDT_Type_variable      \
+                     | NDT_Type_kind          \
+                     | NDT_Dimension_variable \
+                     | NDT_Dimension_kind     \
+                     | NDT_Ellipsis_dimension \
+                     | NDT_Variadic)
+
 /* Types: ndt_t */
 typedef struct _ndt ndt_t;
 
@@ -141,20 +156,18 @@ enum ndt_encoding {
   ErrorEncoding
 };
 
-/* Dimension kinds */
-enum ndt_dim {
-  FixedDimKind,
-  FixedDim,
-  VarDim,
-  SymbolicDim,
-  EllipsisDim
-};
-
 /* Datashape kinds */
 enum ndt {
   /* Any */
   AnyKind,
-    Array,
+    FixedDimKind,
+      FixedDim,
+
+    VarDim,
+    SymbolicDim,
+    EllipsisDim,
+
+    Ndarray,
 
     Option,
     Nominal,
@@ -231,40 +244,45 @@ typedef struct {
   uint8_t pad;
 } ndt_record_field_t;
 
-/* Dimension type */
-typedef struct {
-    enum ndt_dim tag;
-
-    union {
-        struct {
-            size_t shape;
-            int64_t stride;
-        } FixedDim;
-
-        struct {
-            int64_t stride;
-        } VarDim;
-
-        struct {
-            char *name;
-        } SymbolicDim;
-    };
-
-    size_t itemsize;
-    uint8_t itemalign;
-    bool abstract;
-} ndt_dim_t;
-
 /* Datashape type */
 struct _ndt {
     enum ndt tag;
 
     union {
         struct {
-            size_t ndim;
-            ndt_dim_t *dim;
-            ndt_t *dtype;
+            ndt_t *type;
+        } FixedDimKind;
+
+        struct {
+            int64_t shape;
+            int64_t stride;
+            size_t itemsize;
+            ndt_t *type;
+        } FixedDim;
+
+        struct {
+            char *name;
+            int64_t stride;
+            size_t itemsize;
+            ndt_t *type;
+        } SymbolicDim;
+
+        struct {
+            int64_t stride;
+            size_t itemsize;
+            ndt_t *type;
+        } VarDim;
+
+        struct {
+            ndt_t *type;
+        } EllipsisDim;
+
+        struct {
+            int64_t *shape;
+            int64_t *strides;
+            int ndim;
             char order;
+            ndt_t *dtype;
         } Array;
 
         struct {
@@ -331,12 +349,11 @@ struct _ndt {
     };
 
     size_t size;
+    uint32_t flags;
+    uint8_t ndim;
     uint8_t align;
     char endian;
-    bool abstract;
 };
-
-
 
 
 /*****************************************************************************/
@@ -396,10 +413,14 @@ int ndt_is_signed(const ndt_t *t);
 int ndt_is_unsigned(const ndt_t *t);
 int ndt_is_real(const ndt_t *t);
 int ndt_is_complex(const ndt_t *t);
+int ndt_is_abstract(const ndt_t *t);
 int ndt_is_scalar(const ndt_t *t);
+int ndt_is_array(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 
+const ndt_t *ndt_next_dim(const ndt_t *a);
+size_t ndt_get_dims_dtype(const ndt_t *dims[128], const ndt_t **dtype, const ndt_t *array);
 
 /*** String conversion ***/
 bool ndt_strtobool(const char *v, ndt_context_t *ctx);
@@ -427,18 +448,6 @@ ndt_record_field_t *ndt_record_field(char *name, ndt_t *type, uint8_t align, uin
 void ndt_record_field_del(ndt_record_field_t *field);
 void ndt_record_field_array_del(ndt_record_field_t *fields, size_t shape);
 
-ndt_dim_t *ndt_dim_new(enum ndt_dim tag, ndt_context_t *ctx);
-void ndt_dim_del(ndt_dim_t *d);
-void ndt_dim_array_del(ndt_dim_t *d, size_t shape);
-
-
-/*** Dimensions ***/
-ndt_dim_t *ndt_fixed_dim_kind(ndt_context_t *ctx);
-ndt_dim_t *ndt_fixed_dim(size_t shape, ndt_context_t *ctx);
-ndt_dim_t *ndt_var_dim(ndt_context_t *ctx);
-ndt_dim_t *ndt_symbolic_dim(char *name, ndt_context_t *ctx);
-ndt_dim_t *ndt_ellipsis_dim(ndt_context_t *ctx);
-
 
 /*** Datashape ***/
 ndt_t *ndt_new(enum ndt tag, ndt_context_t *ctx);
@@ -449,7 +458,13 @@ int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Any */
 ndt_t *ndt_any_kind(ndt_context_t *ctx);
-ndt_t *ndt_array(ndt_dim_t *dim, size_t ndim, ndt_t *dtype, int64_t *strides, char order, ndt_context_t *ctx);
+ndt_t *ndt_fixed_dim_kind(ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_var_dim(ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
+
+ndt_t *ndt_array(ndt_t **dim, size_t ndim, ndt_t *dtype, int64_t *strides, char order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
@@ -541,23 +556,21 @@ void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
 /*                            Low level details                               */
 /******************************************************************************/
 
-/* Example of two possible low-level alternatives for the String type */
-typedef struct {
-    char *ptr;
-    size_t size;
-} ndt_sized_string_t;
-
-typedef char * ndt_string_t;
+typedef ndt_t * ndt_fixed_dim_t;
 
 typedef struct {
+    size_t shape;
     char *ptr;
+} ndt_var_dim_t;
+
+typedef struct {
     size_t size;
+    char *ptr;
 } ndt_bytes_t;
 
 typedef struct {
-    char *ptr;
     size_t size;
-} ndt_var_dim_t;
-
+    char *ptr;
+} ndt_sized_string_t;
 
 #endif /* NDTYPES_H */

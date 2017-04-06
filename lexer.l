@@ -187,7 +187,6 @@ yycolumn = 1;
 "option"       { return OPTION; }
 
 "Fixed"        { return FIXED_DIM_KIND; }
-"fixed"        { return FIXED; }
 "var"          { return VAR; }
 
 "..."          { return ELLIPSIS; }

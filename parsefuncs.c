@@ -67,8 +67,8 @@ mk_stringlit(const char *lexeme, ndt_context_t *ctx)
 /*                        Functions used in the parser                       */
 /*****************************************************************************/
 
-ndt_dim_t *
-mk_fixed_dim(char *v, ndt_context_t *ctx)
+ndt_t *
+mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx)
 {
     size_t shape;
 
@@ -79,7 +79,7 @@ mk_fixed_dim(char *v, ndt_context_t *ctx)
         return NULL;
     }
 
-    return ndt_fixed_dim(shape, ctx);
+    return ndt_fixed_dim(shape, type, ctx);
 }
  
 ndt_t *
@@ -163,38 +163,49 @@ mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 }
 
 ndt_t *
-mk_array(ndt_dim_seq_t *dims, ndt_t *dtype, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     int64_t *strides = NULL;
     size_t strides_len = 0;
     char order = 'C';
-    ndt_t *t;
-
-    dims = ndt_dim_seq_finalize(dims);
+    char *style = NULL;
 
     if (attrs) {
-        int ret = ndt_parse_attr(Array, ctx, attrs, &strides, &strides_len, &order);
+        int ret = ndt_parse_attr(Ndarray, ctx, attrs, &strides, &strides_len,
+                                 &order, &style);
         ndt_attr_seq_del(attrs);
 
-        if (ret >= 0 && strides && strides_len != dims->len) {
+        if (ret >= 0 && strides && strides_len != array->ndim) {
             ndt_err_format(ctx, NDT_ValueError,
                            "len(strides) != number of dimensions");
             ret = -1;
         }
 
         if (ret < 0) {
-            ndt_dim_seq_del(dims);
-            ndt_del(dtype);
-            if (strides) {
-                ndt_free(strides);
-            }
-            return NULL;
+            goto error;
         }
     }
 
-    t = ndt_array(dims->ptr, dims->len, dtype, strides, order, ctx);
-    ndt_free(dims);
-    return t;
+    if (style == NULL || strcmp(style, "array") == 0) {
+        if (style) ndt_free(style);
+        if (strides) ndt_free(strides);
+        // return ndt_array(array, order, strides, strides_len);
+        return array;
+    }
+    else if (strcmp(style, "ndarray") == 0) {
+        ndt_err_format(ctx, NDT_NotImplementedError, "ndarray is not implemented");
+        goto error;
+    }
+    else {
+        ndt_err_format(ctx, NDT_ValueError, "invalid array style: '%s'", style);
+        goto error;
+    }
+
+error:
+    if (style) ndt_free(style);
+    if (strides) ndt_free(strides);
+    ndt_del(array);
+    return NULL;
 }
  
 ndt_tuple_field_t *

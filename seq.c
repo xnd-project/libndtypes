@@ -149,12 +149,6 @@ elem##_seq_finalize(elem##_seq_t *seq)                  \
     return seq;                                         \
 }
 
-NDT_SEQ_NEW(ndt_dim)
-NDT_SEQ_DEL(ndt_dim)
-NDT_SEQ_GROW(ndt_dim)
-NDT_SEQ_APPEND(ndt_dim)
-NDT_SEQ_FINALIZE(ndt_dim)
-
 NDT_SEQ_NEW(ndt_tuple_field)
 NDT_SEQ_DEL(ndt_tuple_field)
 NDT_SEQ_GROW(ndt_tuple_field)

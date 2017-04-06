@@ -73,8 +73,8 @@ resolve_sym(const char *key, symtable_entry_t w,
 }
 
 static int
-match_dimensions(ndt_dim_t *p, size_t pshape,
-                 ndt_dim_t *c, size_t cshape,
+match_dimensions(const ndt_t *p[], size_t pshape,
+                 const ndt_t *c[], size_t cshape,
                  symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
@@ -83,7 +83,7 @@ match_dimensions(ndt_dim_t *p, size_t pshape,
     int n;
 
     for (i=0, k=0; i!=pshape && k!=cshape; i+=stride, k+=stride) {
-        switch (p[i].tag) {
+        switch (p[i]->tag) {
         case EllipsisDim:
             if (i == pshape-stride) {
                 return 1;
@@ -93,32 +93,32 @@ match_dimensions(ndt_dim_t *p, size_t pshape,
             stride = -1;
             break;
         case FixedDimKind:
-            if (c[k].tag == FixedDimKind || c[k].tag == FixedDim)
+            if (c[k]->tag == FixedDimKind || c[k]->tag == FixedDim)
                 break;
             return 0;
         case FixedDim:
-            if (c[k].tag == FixedDim && p[i].FixedDim.shape == c[k].FixedDim.shape)
+            if (c[k]->tag == FixedDim && p[i]->FixedDim.shape == c[k]->FixedDim.shape)
                 break;
             return 0;
         case SymbolicDim:
-            switch (c[k].tag) {
+            switch (c[k]->tag) {
             case FixedDim:
                 v.tag = SizeEntry;
-                v.SizeEntry = c[k].FixedDim.shape;
+                v.SizeEntry = c[k]->FixedDim.shape;
                 break;
             case SymbolicDim:
                 v.tag = SymbolEntry;
-                v.SymbolEntry = c[k].SymbolicDim.name; /* borrowed */
+                v.SymbolEntry = c[k]->SymbolicDim.name; /* borrowed */
                 break;
             default:
                 return 0;
             }
-            n = resolve_sym(p[i].SymbolicDim.name, v, tbl, ctx);
+            n = resolve_sym(p[i]->SymbolicDim.name, v, tbl, ctx);
             if (n == 1)
                 break;
             return n;
         case VarDim:
-            if (c[k].tag == VarDim)
+            if (c[k]->tag == VarDim)
                 break;
             return 0;
         default: /* NOT REACHED */
@@ -202,11 +202,30 @@ match_datashape(const ndt_t *p, const ndt_t *c,
                 symtable_t *tbl,
                 ndt_context_t *ctx)
 {
+    const ndt_t *pdims[128];
+    const ndt_t *cdims[128];
+    const ndt_t *pdtype;
+    const ndt_t *cdtype;
+    size_t pn, cn;
     int n;
 
     switch (p->tag) {
     case AnyKind:
         return 1;
+    case FixedDimKind: case FixedDim: case SymbolicDim:
+    case VarDim: case EllipsisDim:
+        if (!ndt_is_array(c)) return 0;
+
+        pn = ndt_get_dims_dtype(pdims, &pdtype, p);
+        cn = ndt_get_dims_dtype(cdims, &cdtype, c);
+
+        n = match_dimensions(pdims, pn, cdims, cn, tbl, ctx);
+        if (n <= 0) return n;
+
+        return match_datashape(pdtype, cdtype, tbl, ctx);
+    case Ndarray:
+        ndt_err_format(ctx, NDT_NotImplementedError, "ndarray");
+        return -1;
     case Void: case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -288,13 +307,6 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     case Constr:
         return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
                ndt_equal(p->Constr.type, c->Constr.type);
-    case Array:
-        if (c->tag != Array) return 0;
-        n = match_dimensions(p->Array.dim, p->Array.ndim,
-                             c->Array.dim, c->Array.ndim,
-                             tbl, ctx);
-        if (n <= 0) return n;
-        return match_datashape(p->Array.dtype, c->Array.dtype, tbl, ctx);
     default: /* NOT REACHED */
         abort();
     }
