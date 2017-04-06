@@ -260,6 +260,7 @@ struct _ndt {
         struct {
             int64_t shape;
             int64_t stride;
+            int64_t offset;
             size_t itemsize;
             ndt_t *type;
         } FixedDim;
@@ -267,12 +268,14 @@ struct _ndt {
         struct {
             char *name;
             int64_t stride;
+            int64_t offset;
             size_t itemsize;
             ndt_t *type;
         } SymbolicDim;
 
         struct {
             int64_t stride;
+            int64_t offset;
             size_t itemsize;
             ndt_t *type;
         } VarDim;
@@ -287,7 +290,7 @@ struct _ndt {
             int ndim;
             char order;
             ndt_t *dtype;
-        } Array;
+        } Ndarray;
 
         struct {
             ndt_t *type;
@@ -304,13 +307,13 @@ struct _ndt {
 
         struct {
             enum ndt_variadic_flag flag;
-            size_t shape;
+            int64_t shape;
             ndt_tuple_field_t *fields;
         } Tuple;
 
         struct {
             enum ndt_variadic_flag flag;
-            size_t shape;
+            int64_t shape;
             ndt_record_field_t *fields;
         } Record;
 
