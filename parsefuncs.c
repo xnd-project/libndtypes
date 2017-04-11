@@ -166,20 +166,14 @@ ndt_t *
 mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     int64_t *strides = NULL;
-    size_t strides_len = 0;
+    int16_t len = 0;
     char order = 'C';
     char *style = NULL;
 
     if (attrs) {
-        int ret = ndt_parse_attr(Ndarray, ctx, attrs, &strides, &strides_len,
-                                 &order, &style);
+        int ret = ndt_parse_attr(Ndarray, ctx, attrs, &strides, &len, &order,
+                                 &style);
         ndt_attr_seq_del(attrs);
-
-        if (ret >= 0 && strides && strides_len != array->ndim) {
-            ndt_err_format(ctx, NDT_ValueError,
-                           "len(strides) != number of dimensions");
-            ret = -1;
-        }
 
         if (ret < 0) {
             goto error;
@@ -188,13 +182,11 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 
     if (style == NULL || strcmp(style, "array") == 0) {
         if (style) ndt_free(style);
-        if (strides) ndt_free(strides);
-        // return ndt_array(array, order, strides, strides_len);
-        return array;
+        return ndt_array(array, strides, len, order, ctx);
     }
     else if (strcmp(style, "ndarray") == 0) {
-        ndt_err_format(ctx, NDT_NotImplementedError, "ndarray is not implemented");
-        goto error;
+        ndt_free(style);
+        return ndt_ndarray(array, strides, len, order, ctx);
     }
     else {
         ndt_err_format(ctx, NDT_ValueError, "invalid array style: '%s'", style);

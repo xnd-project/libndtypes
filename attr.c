@@ -15,7 +15,7 @@ typedef struct {
 } attr_spec;
 
 /* Container attributes */
-static const attr_spec array_attr = {0, 4, {"strides", "_strides_len", "order", "style"}, {AttrInt64List, AttrUint8, AttrChar, AttrString}};
+static const attr_spec array_attr = {0, 4, {"strides", "_strides_len", "order", "style"}, {AttrInt64List, AttrInt16, AttrChar, AttrString}};
 static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
 static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
 
@@ -152,7 +152,7 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
             *(int64_t **)ptr = values;
 
             ptr = va_arg(ap, void *);
-            *(size_t *)ptr = v[i]->AttrList.len;
+            *(int16_t *)ptr = v[i]->AttrList.len;
             i++;
             break;
         }

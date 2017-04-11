@@ -60,6 +60,8 @@
 /*                                 Datashape                                 */
 /*****************************************************************************/
 
+#define NDT_MAX_DIM 128
+
 /* Type flags */
 #define NDT_Type_variable      0x00000001U
 #define NDT_Type_kind          0x00000002U
@@ -67,6 +69,8 @@
 #define NDT_Dimension_kind     0x00000008U
 #define NDT_Ellipsis_dimension 0x00000010U
 #define NDT_Variadic           0x00000020U
+#define NDT_Column_major       0x00000040U
+#define NDT_Big_endian         0x00000080U
 
 #define NDT_Abstract ( NDT_Type_variable      \
                      | NDT_Type_kind          \
@@ -75,8 +79,9 @@
                      | NDT_Ellipsis_dimension \
                      | NDT_Variadic)
 
-
-#define NDT_MAX_DIM 128U
+/* Ndarray special shapes */
+#define NDT_Ndarray_symbolic -2
+#define NDT_Ndarray_ellipsis -3
 
 
 /* Types: ndt_t */
@@ -281,8 +286,8 @@ struct _ndt {
         struct {
             int64_t *shape;
             int64_t *strides;
-            int ndim;
-            char order;
+            char **symbols;
+            size_t itemsize;
             ndt_t *dtype;
         } Ndarray;
 
@@ -349,11 +354,11 @@ struct _ndt {
         } Pointer;
     };
 
-    size_t size;
     uint32_t flags;
-    uint8_t ndim;
+    int ndim;
     uint8_t align;
-    char endian;
+    size_t size;
+    char extra[]; /* XXX: alignof(max_align_t) */
 };
 
 
@@ -419,8 +424,9 @@ int ndt_is_array(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 
-const ndt_t *ndt_next_dim(const ndt_t *a);
-size_t ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
+ndt_t *ndt_next_dim(ndt_t *a);
+void ndt_set_next_type(ndt_t *a, ndt_t *type);
+int ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
 
 /*** String conversion ***/
 bool ndt_strtobool(const char *v, ndt_context_t *ctx);
@@ -463,7 +469,8 @@ ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_var_dim(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *ndt_array(ndt_t **dim, size_t ndim, ndt_t *dtype, int64_t *strides, char order, ndt_context_t *ctx);
+ndt_t *ndt_array(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx);
+ndt_t *ndt_ndarray(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
@@ -555,7 +562,9 @@ void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
 /*                            Low level details                               */
 /******************************************************************************/
 
-typedef ndt_t * ndt_fixed_dim_t;
+typedef struct {
+    char *ptr;
+} ndt_fixed_dim_t;
 
 typedef struct {
     size_t shape;
@@ -571,5 +580,6 @@ typedef struct {
     size_t size;
     char *ptr;
 } ndt_sized_string_t;
+
 
 #endif /* NDTYPES_H */
