@@ -506,7 +506,26 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
     t->tag = tag;
     t->size = 0;
     t->align = 1;
-    t->endian = 'L';
+    t->ndim = 0;
+    t->flags = 0;
+
+    return t;
+}
+
+static ndt_t *
+ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    t = ndt_alloc(1, offsetof(ndt_t, extra) + n);
+    if (t == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        return NULL;
+    }
+
+    t->tag = tag;
+    t->size = 0;
+    t->align = 1;
     t->ndim = 0;
     t->flags = 0;
 
@@ -534,9 +553,14 @@ ndt_del(ndt_t *t)
     case EllipsisDim:
         ndt_del(t->EllipsisDim.type);
         break;
-    case Ndarray:
-        abort();
+    case Ndarray: {
+        int i;
+        for (i = 0; i < t->ndim; i++) {
+            ndt_free(t->Ndarray.symbols[i]);
+        }
+        ndt_free(t->Ndarray.dtype);
         break;
+    }
     case Option:
         ndt_del(t->Option.type);
         break;
@@ -607,7 +631,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
     t->ndim = type->ndim + 1;
     t->size = sizeof(ndt_fixed_dim_t);
     t->align = itemalign;
-    t->flags = type->flags;
+    t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
 
     return t;
 }
@@ -640,6 +664,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     t->ndim = type->ndim + 1;
     t->size = sizeof(ndt_fixed_dim_t);
     t->align = itemalign;
+    t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
     t->flags |= NDT_Dimension_variable;
 
     return t;
@@ -671,7 +696,7 @@ ndt_var_dim(ndt_t *type, ndt_context_t *ctx)
     t->ndim = type->ndim + 1;
     t->size = sizeof(ndt_var_dim_t);
     t->align = itemalign;
-    t->flags = type->flags;
+    t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
 
     return t;
 }
@@ -702,7 +727,325 @@ ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
     t->ndim = type->ndim + 1;
     t->size = 0;
     t->align = 1;
+    t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
     t->flags |= NDT_Ellipsis_dimension;
+
+    return t;
+}
+
+static int
+array_init_strides(ndt_t *array, int64_t *strides, ndt_context_t *ctx)
+{
+    ndt_t *a;
+    int i;
+
+    for (a=array, i=0; a->ndim > 0; i++) {
+        switch (a->tag) {
+        case FixedDim:
+            a->FixedDim.stride = strides[i];
+            a = a->FixedDim.type;
+            break;
+        case VarDim:
+            a->VarDim.stride = strides[i];
+            a = a->VarDim.type;
+            break;
+        case SymbolicDim: case EllipsisDim:
+            ndt_err_format(ctx, NDT_ValueError, "strides given for abstract array");
+            return -1;
+        default:
+            abort(); /* NOT REACHED */
+        }
+    }
+
+    return 0;
+}
+
+ndt_t *
+ndt_next_dim(ndt_t *a)
+{
+    assert(a->ndim > 0);
+
+    switch (a->tag) {
+    case FixedDim: return a->FixedDim.type;
+    case VarDim: return a->VarDim.type;
+    case SymbolicDim: return a->SymbolicDim.type;
+    case EllipsisDim: return a->EllipsisDim.type;
+    default: abort();
+    }
+}
+
+static void
+ndt_relink_dim(ndt_t *t, ndt_t *type)
+{
+    assert(ndt_is_array(t));
+
+    switch (t->tag) {
+    case FixedDim:
+        t->FixedDim.type = type;
+        break;
+    case VarDim:
+        t->VarDim.type = type;
+        break;
+    case SymbolicDim:
+        t->SymbolicDim.type = type;
+        break;
+    case EllipsisDim:
+        t->EllipsisDim.type = type;
+        break;
+    default: abort();
+    }
+}
+
+static ndt_t *
+ndt_copy_and_link_dim(ndt_t *t, ndt_t *type, ndt_context_t *ctx)
+{
+    char *name;
+
+    assert(ndt_is_array(t));
+
+    switch (t->tag) {
+    case FixedDim:
+        return ndt_fixed_dim(t->FixedDim.shape, type, ctx);
+    case VarDim:
+        return ndt_var_dim(type, ctx);
+    case SymbolicDim:
+        name = ndt_strdup(t->SymbolicDim.name, ctx);
+        if (name == NULL) {
+            return NULL;
+        }
+        return ndt_symbolic_dim(name, type, ctx);
+    case EllipsisDim:
+        return ndt_ellipsis_dim(type, ctx);
+    default: abort();
+    }
+}
+
+ndt_t *
+ndt_get_dtype(ndt_t *t)
+{
+    assert(ndt_is_array(t));
+
+    while (t->ndim > 0) {
+        t = ndt_next_dim(t);
+    }
+
+    return t;
+}
+
+static ndt_t *
+get_and_unlink_dtype(ndt_t *t)
+{
+    ndt_t *dtype;
+
+    assert(ndt_is_array(t));
+
+    while (t->ndim > 1) {
+        t = ndt_next_dim(t);
+    }
+    dtype = ndt_next_dim(t);
+    ndt_relink_dim(t, NULL);
+
+    return dtype;
+}
+
+static ndt_t *
+array_column_major(ndt_t *array, ndt_context_t *ctx)
+{
+    ndt_t *t, *u, *a;
+
+    u = array;
+    t = get_and_unlink_dtype(array);
+
+    for (a = array; a != NULL; a = ndt_next_dim(a)) {
+        u = ndt_copy_and_link_dim(a, t, ctx);
+        if (u == NULL) {
+            ndt_del(array);
+            return NULL;
+        }
+        u->flags |= NDT_Column_major;
+        t = u;
+    }
+
+    ndt_del(array);
+
+    return t;
+}
+
+ndt_t *
+ndt_array(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx)
+{
+    if (strides != NULL) {
+        int ret;
+        if (len != array->ndim) {
+            ndt_err_format(ctx, NDT_ValueError, "len(strides) != ndim");
+            ndt_free(strides);
+            ndt_del(array);
+            return NULL;
+        }
+
+        ret = array_init_strides(array, strides, ctx);
+        ndt_free(strides);
+        if (ret < 0) {
+            ndt_del(array);
+            return NULL;
+        }
+    }
+
+    if (order == 'C') {
+        return array;
+    }
+    else if (order == 'F') {
+        return array_column_major(array, ctx);
+    }
+    else {
+        ndt_err_format(ctx, NDT_ValueError, "order must be 'F' or 'C'");
+        ndt_del(array);
+        return NULL;
+    }
+}
+
+static int
+init_shape_symbols(ndt_t *t, const ndt_t *array, ndt_context_t *ctx)
+{
+    const ndt_t *a;
+    int i;
+
+    assert(t->tag == Ndarray);
+    assert(ndt_is_array(array));
+    assert(t->ndim == array->ndim);
+
+    for (i=0; i < t->ndim; i++) {
+        t->Ndarray.symbols[i] = NULL;
+    }
+
+    a = array;
+    for (i=0; i < t->ndim; i++) {
+        switch (a->tag) {
+        case FixedDim:
+            t->Ndarray.shape[i] = a->FixedDim.shape;
+            a = a->FixedDim.type;
+            break;
+        case SymbolicDim:
+            t->Ndarray.shape[i] = NDT_Ndarray_symbolic;
+            t->Ndarray.symbols[i] = ndt_strdup(a->SymbolicDim.name, ctx);
+            if (t->Ndarray.symbols[i] == NULL) {
+                return -1;
+            }
+            a = a->SymbolicDim.type;
+            break;
+        case EllipsisDim:
+            t->Ndarray.shape[i] = NDT_Ndarray_ellipsis;
+            a = a->EllipsisDim.type;
+            break;
+        default:
+            ndt_err_format(ctx, NDT_ValueError,
+                           "ndarray cannot have var dimensions");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static void
+init_strides_from_shape(ndt_t *t)
+{
+    int64_t *shape;
+    int64_t *strides;
+    size_t itemsize;
+    int ndim;
+    int i;
+
+    assert(t->tag == Ndarray);
+    ndim = t->ndim;
+    shape = t->Ndarray.shape;
+    strides = t->Ndarray.strides;
+    itemsize = t->Ndarray.itemsize;
+
+    if (t->flags & NDT_Abstract) { 
+        for (i = 0; i < ndim; i++) {
+            strides[i] = 0;
+        }
+    }
+    else if (t->flags & NDT_Column_major) {
+        strides[0] = itemsize;
+        for (i = 1; i < ndim; i++) {
+            strides[i] = strides[i-1] * shape[i-1];
+        }
+    }
+    else {
+        strides[ndim-1] = itemsize;
+        for (i = ndim-2; i >= 0; i--) {
+            strides[i] = strides[i+1] * shape[i+1];
+        }
+    }
+}
+
+ndt_t *
+ndt_ndarray(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx)
+{
+    ndt_t *t, *dtype;
+    int ndim = array->ndim;
+    uint32_t flags = array->flags;
+    size_t extra;
+    int ret;
+
+    assert(ndt_is_array(array));
+    assert(0 < array->ndim && array->ndim <= NDT_MAX_DIM);
+    assert((strides==NULL) == (len==0));
+
+    if (order == 'F') {
+        flags |= NDT_Column_major;
+    }
+    else if (order != 'C') {
+        ndt_err_format(ctx, NDT_ValueError, "order must be 'C' or 'F'");
+        ndt_del(array);
+        ndt_free(strides);
+        return NULL;
+    }
+
+    extra = 2 * array->ndim * sizeof(int64_t) + array->ndim * sizeof(char *);
+    t = ndt_new_extra(Ndarray, extra, ctx);
+    if (t == NULL) {
+        ndt_del(array);
+        ndt_free(strides);
+        return NULL;
+    }
+
+    dtype = get_and_unlink_dtype(array);
+
+    t->Ndarray.shape = (int64_t *)t->extra;
+    t->Ndarray.strides = (int64_t *)t->extra + ndim;
+    t->Ndarray.symbols = (char **)((int64_t *)t->extra + 2 * ndim);
+    t->Ndarray.dtype = dtype;
+    t->Ndarray.itemsize = dtype->size;
+    t->ndim = ndim;
+    t->size = sizeof(char *);
+    t->align = dtype->align;
+    t->flags = flags;
+
+    ret = init_shape_symbols(t, array, ctx); 
+    ndt_del(array);
+    if (ret < 0) {
+        ndt_del(t);
+        return NULL;
+    }
+
+    if (strides == NULL) {
+        init_strides_from_shape(t);
+    }
+    else {
+        int i;
+        if (len != ndim) {
+            ndt_err_format(ctx, NDT_ValueError, "len(strides) != ndim");
+            ndt_del(t);
+            return NULL;
+        }
+        for (i = 0; i < ndim; i++) {
+            t->Ndarray.strides[i] = strides[i];
+        }
+        ndt_free(strides);
+    }
 
     return t;
 }
@@ -1117,7 +1460,7 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
         return NULL;
     }
 
-    t->endian = endian;
+    t->flags = endian == 'B' ? NDT_Big_endian : 0;
 
     return t;
 }
@@ -1378,38 +1721,23 @@ ndt_is_array(const ndt_t *t)
     }
 }
 
-const ndt_t *
-ndt_next_dim(const ndt_t *a)
-{
-    assert(a->ndim > 0);
-
-    switch (a->tag) {
-    case FixedDim: return a->FixedDim.type;
-    case VarDim: return a->VarDim.type;
-    case SymbolicDim: return a->SymbolicDim.type;
-    case EllipsisDim: return a->EllipsisDim.type;
-    default: abort();
-    }
-}
-
-size_t
+int
 ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
 {
     const ndt_t *a = array;
-    size_t n = 0;
+    int n = 0;
 
     assert(array->ndim <= NDT_MAX_DIM);
 
     while (a->ndim > 0) {
         dims[n++] = a;
-        a = ndt_next_dim(a);
+        a = ndt_next_dim((ndt_t *)a);
     }
 
     *dtype = a;
 
     return n;
 }
-
 
 /* XXX: Semantics are not clear: Anything that is not a compound type?
         What about pointers? Should it be application specific? */

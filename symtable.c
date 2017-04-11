@@ -246,7 +246,7 @@ symtable_del(symtable_t *t)
 
 int
 symtable_add(symtable_t *t, const char *key, const symtable_entry_t entry,
-                 ndt_context_t *ctx)
+             ndt_context_t *ctx)
 {
     const unsigned char *cp;
     int i;

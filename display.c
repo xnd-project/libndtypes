@@ -282,7 +282,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         case Ndarray: {
             int i;
 
-            for (i = 0; i < t->Ndarray.ndim; i++) {
+            for (i = 0; i < t->ndim; i++) {
                 n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->Ndarray.shape[i]);
                 if (n < 0) return -1;
             }

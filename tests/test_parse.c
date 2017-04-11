@@ -1458,6 +1458,23 @@ const char *parse_tests[] = {
   "[2 * 3 * int64, strides=[-8, -16], order='F']",
   "[10 * complex128, strides=[32]]",
   "[10 * complex128, order='F']",
+
+  /* Ndarray */
+  "[10 * int32, order='C', style='ndarray']",
+  "[10 * int32, order='F', style='ndarray']",
+  "([10 * int32, order='F', style='ndarray'], float32)",
+  "([10 * int32, order='F', style='ndarray'], float32 |pack=2|, uint8)",
+  "([10 * int32, order='F', style='ndarray'], float32, uint8, pack=2)",
+
+  "[2 * 3 * int64, strides=[-8, -16], style='ndarray']",
+  "[2 * 3 * int64, strides=[-8, -16], order='F', style='ndarray']",
+  "[10 * complex128, strides=[32], style='ndarray']",
+  "[10 * complex128, order='F', style='ndarray']",
+
+  "[2 * N * int64, style='ndarray']",
+  "[N * 2 * int64, style='ndarray']",
+  "[P * N * int64, style='ndarray']",
+
   /* END MANUALLY GENERATED */
 
    NULL
