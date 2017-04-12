@@ -116,6 +116,13 @@ round_up(size_t offset, uint8_t align)
     return ((offset + align - 1) / align) * align;
 }
 
+void *
+ndt_memory_error(ndt_context_t *ctx)
+{
+    ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+    return NULL;
+}
+
 char *
 ndt_strdup(const char *s, ndt_context_t *ctx)
 {
@@ -124,8 +131,7 @@ ndt_strdup(const char *s, ndt_context_t *ctx)
 
     cp = ndt_alloc(1, len+1);
     if (cp == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     memcpy(cp, s, len);
@@ -254,8 +260,7 @@ ndt_tuple_field(ndt_t *type, uint8_t align, uint8_t pack, ndt_context_t *ctx)
     field = ndt_alloc(1, sizeof *field);
     if (field == NULL) {
         ndt_del(type);
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     field->type = type;
@@ -309,8 +314,7 @@ ndt_record_field(char *name, ndt_t *type, uint8_t align, uint8_t pack, ndt_conte
     if (field == NULL) {
         ndt_free(name);
         ndt_del(type);
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     field->name = name;
@@ -499,8 +503,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
 
     t = ndt_alloc(1, sizeof *t);
     if (t == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     t->tag = tag;
@@ -519,8 +522,7 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
 
     t = ndt_alloc(1, offsetof(ndt_t, extra) + n);
     if (t == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     t->tag = tag;
@@ -1780,10 +1782,9 @@ ndt_memory_from_number(char *v, ndt_t *t, ndt_context_t *ctx)
 
     mem = ndt_alloc(1, sizeof *mem);
     if (mem == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
         ndt_free(v);
         ndt_del(t);
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     switch (t->tag) {
@@ -1842,10 +1843,9 @@ ndt_memory_from_string(char *v, ndt_t *t, ndt_context_t *ctx)
 
     mem = ndt_alloc(1, sizeof *mem);
     if (mem == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
         ndt_free(v);
         ndt_del(t);
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     /* XXX: check utf8 */
@@ -2201,8 +2201,7 @@ ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
     s = ndt_alloc(1, n+1);
     if (s == NULL) {
         va_end(aq);
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     n = vsnprintf(s, n+1, fmt, aq);

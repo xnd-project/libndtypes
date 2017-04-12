@@ -357,10 +357,9 @@ mk_attr(char *name, char *value, ndt_context_t *ctx)
 
     attr = ndt_alloc(1, sizeof *attr);
     if (attr == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
         ndt_free(name);
         ndt_free(value);
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     attr->tag = AttrValue;
@@ -377,10 +376,9 @@ mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
 
     attr = ndt_alloc(1, sizeof *attr);
     if (attr == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
         ndt_free(name);
         ndt_string_seq_del(seq);
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     attr->tag = AttrList;

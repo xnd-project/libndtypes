@@ -408,6 +408,7 @@ void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 /*****************************************************************************/
 
 /*** Various ***/
+void *ndt_memory_error(ndt_context_t *ctx);
 char *ndt_strdup(const char *s, ndt_context_t *ctx);
 char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
 const char *ndt_tag_as_string(enum ndt tag);

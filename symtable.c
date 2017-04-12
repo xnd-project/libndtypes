@@ -77,8 +77,7 @@ typedef_trie_new(ndt_context_t *ctx)
 
     t = ndt_alloc(1, offsetof(typedef_trie_t, next) + ALPHABET_LEN * (sizeof t));
     if (t == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     t->value = NULL;
@@ -215,8 +214,7 @@ symtable_new(ndt_context_t *ctx)
 
     t = ndt_alloc(1, offsetof(symtable_t, next) + ALPHABET_LEN * (sizeof t));
     if (t == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     t->entry.tag = Unbound;

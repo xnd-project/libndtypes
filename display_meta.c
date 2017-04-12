@@ -755,8 +755,7 @@ ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx)
 
     buf.cur = s = ndt_alloc(1, count+1);
     if (buf.cur == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     if (datashape(&buf, t, 0, 0, ctx) < 0) {

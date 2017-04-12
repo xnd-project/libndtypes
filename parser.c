@@ -137,8 +137,7 @@ ndt_from_string(const char *input, ndt_context_t *ctx)
 
     buffer = ndt_alloc(1, size+2);
     if (buffer == NULL) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
     memcpy(buffer, input, size);
     buffer[size] = '\0';

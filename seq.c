@@ -48,16 +48,14 @@ elem##_seq_new(elem##_t *elt, ndt_context_t *ctx)              \
     seq = ndt_alloc(1, sizeof *seq);                           \
     if (seq == NULL) {                                         \
         elem##_del(elt);                                       \
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory"); \
-        return NULL;                                           \
+        return ndt_memory_error(ctx);                          \
     }                                                          \
                                                                \
     ptr = ndt_alloc(2, sizeof *ptr);                           \
     if (ptr == NULL) {                                         \
         ndt_free(seq);                                         \
         elem##_del(elt);                                       \
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory"); \
-        return NULL;                                           \
+        return ndt_memory_error(ctx);                          \
     }                                                          \
                                                                \
     ptr[0] = *elt;                                             \
@@ -184,16 +182,14 @@ ndt_string_seq_new(char *elt, ndt_context_t *ctx)
     seq = ndt_alloc(1, sizeof *seq);
     if (seq == NULL) {
         ndt_free(elt);
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     ptr = ndt_alloc(2, sizeof *ptr);
     if (ptr == NULL) {
         ndt_free(seq);
         ndt_free(elt);
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return NULL;
+        return ndt_memory_error(ctx);
     }
 
     ptr[0] = elt;
