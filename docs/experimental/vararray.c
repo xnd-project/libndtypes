@@ -16,7 +16,7 @@ typedef struct {
 } nd_array_t;
 
 static nd_array_t
-nd_get_pointer(nd_array_t a, const int64_t *indices, int ndim, ndt_context_t *ctx)
+nd_subarray(nd_array_t a, const int64_t *indices, int ndim, ndt_context_t *ctx)
 {
     ndt_t *t = a.type;
     char *ptr = a.ptr;
@@ -74,7 +74,7 @@ nd_get_pointer(nd_array_t a, const int64_t *indices, int ndim, ndt_context_t *ct
         return a;
     }
 
-    return nd_get_pointer(a, indices+1, ndim-1, ctx);
+    return nd_subarray(a, indices+1, ndim-1, ctx);
 }
 
 
@@ -214,7 +214,7 @@ main(void)
     indices[0] = 0;
     for (j = 0; j < 2; j++) {
         indices[1] = j;
-        b = nd_get_pointer(a, indices, 2, ctx);
+        b = nd_subarray(a, indices, 2, ctx);
         if (b.ptr == NULL) {
             ndt_err_fprint(stderr, ctx);
             return 1;
@@ -229,7 +229,7 @@ main(void)
     indices[0] = 1;
     for (j = 0; j < 3; j++) {
         indices[1] = j;
-        b = nd_get_pointer(a, indices, 2, ctx);
+        b = nd_subarray(a, indices, 2, ctx);
         if (b.ptr == NULL) {
             ndt_err_fprint(stderr, ctx);
             return 1;
