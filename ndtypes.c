@@ -1724,6 +1724,12 @@ ndt_is_array(const ndt_t *t)
 }
 
 int
+ndt_is_column_major(const ndt_t *t)
+{
+    return t->flags & NDT_Column_major;
+}
+
+int
 ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
 {
     const ndt_t *a = array;

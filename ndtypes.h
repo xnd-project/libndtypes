@@ -422,6 +422,7 @@ int ndt_is_complex(const ndt_t *t);
 int ndt_is_abstract(const ndt_t *t);
 int ndt_is_scalar(const ndt_t *t);
 int ndt_is_array(const ndt_t *t);
+int ndt_is_column_major(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 

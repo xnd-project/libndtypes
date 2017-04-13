@@ -39,6 +39,13 @@
 /*                          Structural equality                              */
 /*****************************************************************************/
 
+static inline int
+ndt_common_equal(const ndt_t *p, const ndt_t *c)
+{
+    return c->flags == p->flags && c->ndim == p->ndim &&
+           c->align == p->align && c->size == p->size;
+}
+
 static int
 tuple_fields_equal(ndt_tuple_field_t *p, size_t pshape,
                    ndt_tuple_field_t *c, size_t cshape)
@@ -106,6 +113,10 @@ categorical_equal(ndt_memory_t *p, size_t plen,
 int
 ndt_equal(const ndt_t *p, const ndt_t *c)
 {
+    if (!ndt_common_equal(p, c)) {
+        return 0;
+    }
+
     switch (p->tag) {
     case AnyKind:
     case ScalarKind:
@@ -150,8 +161,24 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case EllipsisDim:
         return c->tag == EllipsisDim &&
                ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
-    case Ndarray:
-        abort();
+    case Ndarray: {
+        int i;
+
+        if (c->Ndarray.itemsize != p->Ndarray.itemsize) {
+            return 0;
+        }
+
+        for (i = 0; i < p->ndim; i++) {
+            if ((c->Ndarray.shape[i] != p->Ndarray.shape[i]) ||
+                (c->Ndarray.strides[i] != p->Ndarray.strides[i]) ||
+                (!!c->Ndarray.symbols[i] != !!p->Ndarray.symbols[i]) ||
+                (p->Ndarray.symbols[i] && strcmp(c->Ndarray.symbols[i], p->Ndarray.symbols[i]))) {
+                return 0;
+            }
+        }
+
+        return ndt_equal(c->Ndarray.dtype, p->Ndarray.dtype);
+    }
     case Tuple:
         if (c->tag != Tuple || c->Tuple.flag != p->Tuple.flag) return 0;
         return tuple_fields_equal(p->Tuple.fields, p->Tuple.shape,

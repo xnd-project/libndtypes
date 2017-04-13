@@ -32,6 +32,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "ndtypes.h"
 #include "symtable.h"
 
@@ -126,6 +127,58 @@ match_dimensions(const ndt_t *p[], size_t pshape,
 }
 
 static int
+match_dimensions_ndarray(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
+                         ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+    int stride = 1;
+    size_t i, k, tmp;
+    size_t pshape, cshape;
+    int n;
+
+    assert(p->tag == Ndarray && c->tag == Ndarray);
+    pshape = p->ndim;
+    cshape = c->ndim;
+
+    for (i=0, k=0; i!=pshape && k!=cshape; i+=stride, k+=stride) {
+        switch (p->Ndarray.shape[i]) {
+        case NDT_Ndarray_ellipsis:
+            if (i == pshape-stride) {
+                return 1;
+            }
+            tmp = pshape; pshape = i-1; i = tmp;
+            tmp = cshape; cshape = k-1; k = tmp;
+            stride = -1;
+            break;
+        case NDT_Ndarray_symbolic:
+            switch (c->Ndarray.shape[k]) {
+            case NDT_Ndarray_ellipsis:
+                return 0;
+            case NDT_Ndarray_symbolic:
+                v.tag = SymbolEntry;
+                v.SymbolEntry = c->Ndarray.symbols[k]; /* borrowed */
+                break;
+            default: /* FixedDim */
+                v.tag = SizeEntry;
+                v.SizeEntry = c->Ndarray.shape[k];
+                break;
+            }
+            n = resolve_sym(p->Ndarray.symbols[i], v, tbl, ctx);
+            if (n == 1)
+                break;
+            return n;
+        default: /* FixedDim */
+            if (c->Ndarray.shape[k] == p->Ndarray.shape[k])
+                break;
+            return 0;
+        }
+    }
+
+    return i == pshape && k == cshape;
+}
+
+
+static int
 match_tuple_fields(ndt_tuple_field_t *p, size_t pshape,
                    ndt_tuple_field_t *c, size_t cshape,
                    symtable_t *tbl, ndt_context_t *ctx)
@@ -210,6 +263,7 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         return 1;
     case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
         if (!ndt_is_array(c)) return 0;
+        if (ndt_is_column_major(c) != ndt_is_column_major(p)) return 0;
 
         pn = ndt_get_dims_dtype(pdims, &pdtype, p);
         cn = ndt_get_dims_dtype(cdims, &cdtype, c);
@@ -219,8 +273,13 @@ match_datashape(const ndt_t *p, const ndt_t *c,
 
         return match_datashape(pdtype, cdtype, tbl, ctx);
     case Ndarray:
-        ndt_err_format(ctx, NDT_NotImplementedError, "ndarray");
-        return -1;
+        if (c->tag != Ndarray) return 0;
+        if (ndt_is_column_major(c) != ndt_is_column_major(p)) return 0;
+
+        n = match_dimensions_ndarray(p, c, tbl, ctx);
+        if (n <= 0) return n;
+
+        return match_datashape(p->Ndarray.dtype, c->Ndarray.dtype, tbl, ctx);
     case Void: case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
