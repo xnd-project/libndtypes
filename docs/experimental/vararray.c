@@ -77,14 +77,6 @@ nd_subarray(nd_array_t a, const int64_t *indices, int ndim, ndt_context_t *ctx)
     return nd_subarray(a, indices+1, ndim-1, ctx);
 }
 
-
-char *
-ndt_memory_error(ndt_context_t *ctx)
-{
-    ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-    return NULL;
-}
-
 /*
  * Allocate the memory (tree structure) required for a type.
  *
