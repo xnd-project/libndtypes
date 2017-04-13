@@ -7,7 +7,7 @@
 
 
 /*
- * Small (quick and dirty) example how to access an element.
+ * Small (quick and dirty) example how to access a typed subarray.
  */
 
 typedef struct {
