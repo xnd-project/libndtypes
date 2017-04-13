@@ -3628,6 +3628,31 @@ const match_testcase_t match_tests[] = {
 
   { "N * Z * ... * 10 * N * Z * foo_t",
     "10 * 20 * var * 10 * ... * 10 * 20 * foo_t", 0 },
+
+  /* ndarray */
+  { "[10 * 2 * int64, style='ndarray']",
+    "[10 * 2 * int64, style='ndarray']", 1 },
+
+  { "[10 * 2 * int32, style='ndarray']",
+    "[10 * 2 * int64, style='ndarray']", 0 },
+
+  { "[10 * N * int64, style='ndarray']",
+    "[10 * 2 * int64, style='ndarray']", 1 },
+
+  { "[10 * 2 * int64, style='ndarray']",
+    "[10 * N * int64, style='ndarray']", 0 },
+
+  { "[N * M * int64, style='ndarray']",
+    "[10 * 2 * int64, style='ndarray']", 1 },
+
+  { "[10 * 2 * int64, order='F', style='ndarray']",
+    "[10 * 2 * int64, order='F', style='ndarray']", 1 },
+
+  { "[10 * 2 * int64, order='C', style='ndarray']",
+    "[10 * 2 * int64, order='F', style='ndarray']", 0 },
+
+  { "[10 * 2 * int64, order='F', style='ndarray']",
+    "[10 * 2 * int64, order='C', style='ndarray']", 0 },
   /* END MANUALLY GENERATED */
 
   { NULL, NULL, 0 }
