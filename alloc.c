@@ -39,6 +39,7 @@
 
 /* Custom allocation and free functions */
 void *(* ndt_mallocfunc)(size_t size) = malloc;
+void *(* ndt_callocfunc)(size_t nmemb, size_t size) = calloc;
 void *(* ndt_reallocfunc)(void *ptr, size_t size) = realloc;
 void (* ndt_free)(void *ptr) = free;
 
@@ -52,6 +53,13 @@ ndt_alloc(size_t nmemb, size_t size)
     }
 
     return ndt_mallocfunc(nmemb * size);
+}
+
+/* calloc */
+void *
+ndt_calloc(size_t nmemb, size_t size)
+{
+    return ndt_callocfunc(nmemb, size);
 }
 
 /* realloc with overflow checking */
