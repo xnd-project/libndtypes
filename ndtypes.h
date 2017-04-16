@@ -556,6 +556,7 @@ char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
 /******************************************************************************/
 
 extern void *(* ndt_mallocfunc)(size_t size);
+extern void *(* ndt_callocfunc)(size_t nmemb, size_t size);
 extern void *(* ndt_reallocfunc)(void *ptr, size_t size);
 extern void (* ndt_free)(void *ptr);
 
