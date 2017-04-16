@@ -131,6 +131,8 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %type <string> untyped_value
 %type <string_seq> untyped_value_seq
+%type <string_seq> integer_seq
+%type <string_seq> integer_args_opt
 
 %type <attribute> attribute
 %type <attribute_seq> attribute_seq
@@ -201,14 +203,14 @@ array:
 | OPTION LPAREN array_nooption RPAREN { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
 
 array_nooption:
-  flexarray                                   { $$ = $1; }
+  flexarray                                   { $$ = ndt_array($1, NULL, 0, 'C', ctx); if ($$ == NULL) YYABORT; }
 | LBRACK flexarray COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 flexarray:
-  INTEGER STAR flexarray_tail        { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER STAR flexarray_tail     { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| VAR STAR flexarray_tail            { $$ = ndt_var_dim($3, ctx); if ($$ == NULL) YYABORT; }
-| ELLIPSIS STAR flexarray_tail       { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
+  INTEGER STAR flexarray_tail              { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER STAR flexarray_tail           { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| VAR integer_args_opt STAR flexarray_tail { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
+| ELLIPSIS STAR flexarray_tail             { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
 
 flexarray_tail:
   dtype     { $$ = $1; }
@@ -382,6 +384,14 @@ untyped_value:
 | INTEGER     { $$ = $1; if ($$ == NULL) YYABORT; }
 | FLOATNUMBER { $$ = $1; if ($$ == NULL) YYABORT; }
 | STRINGLIT   { $$ = $1; if ($$ == NULL) YYABORT; }
+
+integer_args_opt:
+  %empty                    { $$ = NULL; }
+| LPAREN integer_seq RPAREN { $$ = $2; if ($$ == NULL) YYABORT; }
+
+integer_seq:
+  INTEGER                   { $$ = ndt_string_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
+| integer_seq COMMA INTEGER { $$ = ndt_string_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 function_type:
   tuple_type RARROW datashape

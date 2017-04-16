@@ -83,6 +83,38 @@ mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx)
 }
  
 ndt_t *
+mk_var_dim(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
+{
+    int64_t *shapes = NULL;
+    int64_t nshapes = 0;
+
+    if (seq) {
+        int64_t k;
+        shapes = ndt_alloc(seq->len, sizeof *shapes);
+        if (shapes == NULL) {
+            ndt_string_seq_del(seq);
+            ndt_del(type);
+            return ndt_memory_error(ctx);
+        }
+
+        for (k = 0; k < (int64_t)seq->len; k++) {
+            shapes[k] = (int64_t)ndt_strtoll(seq->ptr[k], 0, INT64_MAX, ctx);
+            if (ctx->err != NDT_Success) {
+                ndt_string_seq_del(seq);
+                ndt_del(type);
+                ndt_free(shapes);
+                return NULL;
+            }
+        }
+
+        nshapes = seq->len;
+        ndt_string_seq_del(seq);
+    }
+
+    return ndt_var_dim(shapes, nshapes, type, ctx);
+}
+
+ndt_t *
 mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     char endian = 'L';

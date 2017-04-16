@@ -443,7 +443,9 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
 
             return ndt_snprintf_d(ctx, buf, d, ")");
 
-        case VarDim:
+        case VarDim: {
+            int i;
+
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "VarDim(\n");
             if (n < 0) return -1;
 
@@ -453,15 +455,24 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2,
-                               "stride=%" PRIi64 ", itemsize=%zu,\n",
-                               t->VarDim.stride, t->VarDim.itemsize);
+            n = ndt_snprintf_d(ctx, buf, d+2, "nshapes=%d, shapes=[", t->VarDim.nshapes);
+            if (n < 0) return -1;
+
+            for (i = 0; i < t->VarDim.nshapes; i++) {
+                n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s", t->VarDim.shapes[i],
+                                 i==t->VarDim.nshapes-1 ? "" : ", ");
+                if (n < 0) return -1;
+            }
+
+            n = ndt_snprintf(ctx, buf, "], stride=%" PRIi64 ", itemsize=%zu,\n",
+                             t->VarDim.stride, t->VarDim.itemsize);
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
+        }
 
         case EllipsisDim:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "EllipsisDim(\n");

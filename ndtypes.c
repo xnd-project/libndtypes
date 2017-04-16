@@ -546,6 +546,7 @@ ndt_del(ndt_t *t)
         ndt_del(t->FixedDim.type);
         break;
     case VarDim:
+        ndt_free(t->VarDim.shapes);
         ndt_del(t->VarDim.type);
         break;
     case SymbolicDim:
@@ -673,24 +674,30 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_var_dim(ndt_t *type, ndt_context_t *ctx)
+ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
     size_t itemsize = type->size;
     uint8_t itemalign = type->align;
 
+    assert((shapes==NULL) == (nshapes==0));
+
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+        ndt_free(shapes);
         ndt_del(type);
         return NULL;
     }
 
     t = ndt_new(VarDim, ctx);
     if (t == NULL) {
+        ndt_free(shapes);
         ndt_del(type);
         return NULL;
     }
 
+    t->VarDim.nshapes = nshapes; /* optional */
+    t->VarDim.shapes = shapes;   /* optional */
     t->VarDim.stride = itemsize;
     t->VarDim.offset = 0;
     t->VarDim.itemsize = itemsize;
@@ -699,6 +706,7 @@ ndt_var_dim(ndt_t *type, ndt_context_t *ctx)
     t->size = sizeof(ndt_var_dim_t);
     t->align = itemalign;
     t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
+    t->flags |= nshapes ? NDT_Var_shapes : 0;
 
     return t;
 }
@@ -809,7 +817,7 @@ ndt_copy_and_link_dim(ndt_t *t, ndt_t *type, ndt_context_t *ctx)
     case FixedDim:
         return ndt_fixed_dim(t->FixedDim.shape, type, ctx);
     case VarDim:
-        return ndt_var_dim(type, ctx);
+        return ndt_var_dim(t->VarDim.shapes, t->VarDim.nshapes, type, ctx); /* XXX */
     case SymbolicDim:
         name = ndt_strdup(t->SymbolicDim.name, ctx);
         if (name == NULL) {
@@ -873,6 +881,54 @@ array_column_major(ndt_t *array, ndt_context_t *ctx)
     return t;
 }
 
+/* Sum an array of positive int64_t. */
+static int64_t
+sum_pos_int64(int64_t *values, int64_t len, ndt_context_t *ctx)
+{
+    int64_t sum = 0;
+    int64_t i;
+
+    for (i = 0; i < len; i++) {
+        sum += values[i];
+        if (sum < 0) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "overflow: shape values too large");
+            return -1;
+        }
+    }
+
+    return sum;
+}
+
+int
+ndt_validate_var_shapes(ndt_t *t, int64_t n, ndt_context_t *ctx)
+{
+    switch (t->tag) {
+    case FixedDim:
+        return ndt_validate_var_shapes(t->FixedDim.type, t->FixedDim.shape, ctx);
+    case VarDim:
+        if (t->VarDim.nshapes == 0) {
+            ndt_err_format(ctx, NDT_InvalidArgumentError,
+                "shape arguments must be given for all var dimensions or none");
+            return -1;
+        }
+        else if (t->VarDim.nshapes != n) {
+            ndt_err_format(ctx, NDT_InvalidArgumentError,
+                "number of shape arguments not compatible with previous dimension");
+            return -1;
+        }
+        else {
+            n = sum_pos_int64(t->VarDim.shapes, t->VarDim.nshapes, ctx);
+            if (n < 0) {
+                return -1;
+            }
+            return ndt_validate_var_shapes(t->VarDim.type, n, ctx);
+        }
+    default:
+        return 0;
+    }
+}
+
 ndt_t *
 ndt_array(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx)
 {
@@ -894,6 +950,12 @@ ndt_array(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ct
     }
 
     if (order == 'C') {
+        if (array->flags & NDT_Var_shapes) {
+            if (ndt_validate_var_shapes(array, 1, ctx) < 0) {
+                ndt_del(array);
+                return NULL;
+            }
+        }
         return array;
     }
     else if (order == 'F') {

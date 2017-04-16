@@ -68,9 +68,10 @@
 #define NDT_Dimension_variable 0x00000004U
 #define NDT_Dimension_kind     0x00000008U
 #define NDT_Ellipsis_dimension 0x00000010U
-#define NDT_Variadic           0x00000020U
-#define NDT_Column_major       0x00000040U
-#define NDT_Big_endian         0x00000080U
+#define NDT_Var_shapes         0x00000020U
+#define NDT_Variadic           0x00000040U
+#define NDT_Column_major       0x00000080U
+#define NDT_Big_endian         0x00000100U
 
 #define NDT_Abstract ( NDT_Type_variable      \
                      | NDT_Type_kind          \
@@ -273,6 +274,8 @@ struct _ndt {
         } SymbolicDim;
 
         struct {
+            int64_t nshapes; /* optional */
+            int64_t *shapes; /* optional */
             int64_t stride;
             int64_t offset;
             size_t itemsize;
@@ -468,7 +471,7 @@ int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_any_kind(ndt_context_t *ctx);
 ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_var_dim(ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
 ndt_t *ndt_array(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx);
@@ -557,6 +560,7 @@ extern void *(* ndt_reallocfunc)(void *ptr, size_t size);
 extern void (* ndt_free)(void *ptr);
 
 void *ndt_alloc(size_t nmemb, size_t size);
+void *ndt_calloc(size_t nmemb, size_t size);
 void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
 
 
@@ -565,22 +569,22 @@ void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
 /******************************************************************************/
 
 typedef struct {
-    char *ptr;
+    char *data;
 } ndt_fixed_dim_t;
 
 typedef struct {
-    size_t shape;
-    char *ptr;
+    int64_t shape;
+    char *data;
 } ndt_var_dim_t;
 
 typedef struct {
     size_t size;
-    char *ptr;
+    char *data;
 } ndt_bytes_t;
 
 typedef struct {
     size_t size;
-    char *ptr;
+    char *data;
 } ndt_sized_string_t;
 
 
