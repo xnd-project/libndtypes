@@ -635,6 +635,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
     t->size = sizeof(ndt_fixed_dim_t);
     t->align = itemalign;
     t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
+    t->flags |= NDT_Contiguous;
 
     return t;
 }
@@ -753,13 +754,25 @@ array_init_strides_offsets(ndt_t *array, int64_t *strides, int64_t *offsets,
     for (a=array, i=0; a->ndim > 0; i++) {
         switch (a->tag) {
         case FixedDim:
-            if (strides) a->FixedDim.stride = strides[i];
-            if (offsets) a->FixedDim.offset = offsets[i];
+            if (strides && a->FixedDim.stride != strides[i]) {
+                a->FixedDim.stride = strides[i];
+                a->flags &= ~NDT_Contiguous;
+            }
+            if (offsets && a->FixedDim.offset != offsets[i]) {
+                a->FixedDim.offset = offsets[i];
+                a->flags &= ~NDT_Contiguous;
+            }
             a = a->FixedDim.type;
             break;
         case VarDim:
-            if (strides) a->VarDim.stride = strides[i];
-            if (offsets) a->VarDim.offset = offsets[i];
+            if (strides && a->VarDim.stride != strides[i]) {
+                a->VarDim.stride = strides[i];
+                a->flags &= ~NDT_Contiguous;
+            }
+            if (offsets && a->VarDim.offset != offsets[i]) {
+                a->VarDim.offset = offsets[i];
+                a->flags &= ~NDT_Contiguous;
+            }
             a = a->VarDim.type;
             break;
         case SymbolicDim: case EllipsisDim:
@@ -821,7 +834,7 @@ ndt_copy_and_link_dim(ndt_t *t, ndt_t *type, ndt_context_t *ctx)
     case FixedDim:
         return ndt_fixed_dim(t->FixedDim.shape, type, ctx);
     case VarDim:
-        return ndt_var_dim(t->VarDim.shapes, t->VarDim.nshapes, type, ctx); /* XXX */
+        return ndt_var_dim(t->VarDim.shapes, t->VarDim.nshapes, type, ctx);
     case SymbolicDim:
         name = ndt_strdup(t->SymbolicDim.name, ctx);
         if (name == NULL) {
@@ -1039,12 +1052,14 @@ init_strides_from_shape(ndt_t *t)
         for (i = 1; i < ndim; i++) {
             strides[i] = strides[i-1] * shape[i-1];
         }
+        t->flags |= NDT_Contiguous;
     }
     else {
         strides[ndim-1] = itemsize;
         for (i = ndim-2; i >= 0; i--) {
             strides[i] = strides[i+1] * shape[i+1];
         }
+        t->flags |= NDT_Contiguous;
     }
 }
 
@@ -1103,7 +1118,7 @@ ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
     t->ndim = ndim;
     t->size = sizeof(char *);
     t->align = dtype->align;
-    t->flags = flags;
+    t->flags = flags & ~NDT_Contiguous;
 
     ret = init_shape_symbols(t, array, ctx); 
     ndt_del(array);
@@ -1112,12 +1127,13 @@ ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
         return NULL;
     }
 
-    if (strides == NULL) {
-        init_strides_from_shape(t);
-    }
-    else {
+    init_strides_from_shape(t);
+    if (strides) {
         for (i = 0; i < ndim; i++) {
-            t->Ndarray.strides[i] = strides[i];
+            if (t->Ndarray.strides[i] != strides[i]) {
+                t->Ndarray.strides[i] = strides[i];
+                t->flags &= ~NDT_Contiguous;
+            }
         }
         ndt_free(strides);
     }
@@ -1800,6 +1816,26 @@ int
 ndt_is_column_major(const ndt_t *t)
 {
     return t->flags & NDT_Column_major;
+}
+
+int
+ndt_is_contiguous(const ndt_t *t)
+{
+    return t->flags & NDT_Contiguous;
+}
+
+int
+ndt_is_c_contiguous(const ndt_t *t)
+{
+    return (t->tag == Ndarray) && (t->flags & NDT_Contiguous) &&
+           !(t->flags & NDT_Column_major);
+}
+
+int
+ndt_is_f_contiguous(const ndt_t *t)
+{
+    return (t->tag == Ndarray) && (t->flags & NDT_Contiguous) &&
+           (t->flags & NDT_Column_major);
 }
 
 int

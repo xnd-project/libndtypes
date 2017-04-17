@@ -71,7 +71,8 @@
 #define NDT_Var_shapes         0x00000020U
 #define NDT_Variadic           0x00000040U
 #define NDT_Column_major       0x00000080U
-#define NDT_Big_endian         0x00000100U
+#define NDT_Contiguous         0x00000100U
+#define NDT_Big_endian         0x00000200U
 
 #define NDT_Abstract ( NDT_Type_variable      \
                      | NDT_Type_kind          \
@@ -426,6 +427,9 @@ int ndt_is_abstract(const ndt_t *t);
 int ndt_is_scalar(const ndt_t *t);
 int ndt_is_array(const ndt_t *t);
 int ndt_is_column_major(const ndt_t *t);
+int ndt_is_contiguous(const ndt_t *t);
+int ndt_is_c_contiguous(const ndt_t *t);
+int ndt_is_f_contiguous(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 

@@ -142,6 +142,11 @@ flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
         if (n > 0) return -1;
         cont = 1;
     }
+    if (t->flags & NDT_Contiguous) {
+        n = ndt_snprintf(ctx, buf, "%sContiguous", cont ? ", " : "");
+        if (n > 0) return -1;
+        cont = 1;
+    }
     if (t->flags & NDT_Big_endian) {
         n = ndt_snprintf(ctx, buf, "%sBig_endian", cont ? ", " : "");
         if (n > 0) return -1;
