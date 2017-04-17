@@ -474,8 +474,8 @@ ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *ndt_array(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx);
-ndt_t *ndt_ndarray(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx);
+ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char order, ndt_context_t *ctx);
+ndt_t *ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);

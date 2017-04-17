@@ -744,7 +744,8 @@ ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
 }
 
 static int
-array_init_strides(ndt_t *array, int64_t *strides, ndt_context_t *ctx)
+array_init_strides_offsets(ndt_t *array, int64_t *strides, int64_t *offsets,
+                           ndt_context_t *ctx)
 {
     ndt_t *a;
     int i;
@@ -752,15 +753,18 @@ array_init_strides(ndt_t *array, int64_t *strides, ndt_context_t *ctx)
     for (a=array, i=0; a->ndim > 0; i++) {
         switch (a->tag) {
         case FixedDim:
-            a->FixedDim.stride = strides[i];
+            if (strides) a->FixedDim.stride = strides[i];
+            if (offsets) a->FixedDim.offset = offsets[i];
             a = a->FixedDim.type;
             break;
         case VarDim:
-            a->VarDim.stride = strides[i];
+            if (strides) a->VarDim.stride = strides[i];
+            if (offsets) a->VarDim.offset = offsets[i];
             a = a->VarDim.type;
             break;
         case SymbolicDim: case EllipsisDim:
-            ndt_err_format(ctx, NDT_ValueError, "strides given for abstract array");
+            ndt_err_format(ctx, NDT_ValueError,
+                "strides or offsets given for abstract array");
             return -1;
         default:
             abort(); /* NOT REACHED */
@@ -929,20 +933,19 @@ ndt_validate_var_shapes(ndt_t *t, int64_t n, ndt_context_t *ctx)
     }
 }
 
+/*
+ * Assumption:
+ *   (strides==NULL || len(strides)==ndim) &&
+ *   (offsets==NULL || len(offsets)==ndim)
+ */
 ndt_t *
-ndt_array(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx)
+ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
+          ndt_context_t *ctx)
 {
-    if (strides != NULL) {
-        int ret;
-        if (len != array->ndim) {
-            ndt_err_format(ctx, NDT_ValueError, "len(strides) != ndim");
-            ndt_free(strides);
-            ndt_del(array);
-            return NULL;
-        }
-
-        ret = array_init_strides(array, strides, ctx);
+    if (strides || offsets) {
+        int ret = array_init_strides_offsets(array, strides, offsets, ctx);
         ndt_free(strides);
+        ndt_free(offsets);
         if (ret < 0) {
             ndt_del(array);
             return NULL;
@@ -1045,18 +1048,32 @@ init_strides_from_shape(ndt_t *t)
     }
 }
 
+/*
+ * Assumption:
+ *   (strides==NULL || len(strides)==ndim) &&
+ *   (offsets==NULL || len(offsets)==ndim)
+ */
 ndt_t *
-ndt_ndarray(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *ctx)
+ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
+            ndt_context_t *ctx)
 {
     ndt_t *t, *dtype;
     int ndim = array->ndim;
     uint32_t flags = array->flags;
     size_t extra;
-    int ret;
+    int ret, i;
 
     assert(ndt_is_array(array));
     assert(0 < array->ndim && array->ndim <= NDT_MAX_DIM);
-    assert((strides==NULL) == (len==0));
+
+    if (offsets) {
+        ndt_err_format(ctx, NDT_NotImplementedError,
+                       "offsets not implemented for ndarray");
+        ndt_del(array);
+        ndt_free(strides);
+        ndt_free(offsets);
+        return NULL;
+    }
 
     if (order == 'F') {
         flags |= NDT_Column_major;
@@ -1099,12 +1116,6 @@ ndt_ndarray(ndt_t *array, int64_t *strides, int len, char order, ndt_context_t *
         init_strides_from_shape(t);
     }
     else {
-        int i;
-        if (len != ndim) {
-            ndt_err_format(ctx, NDT_ValueError, "len(strides) != ndim");
-            ndt_del(t);
-            return NULL;
-        }
         for (i = 0; i < ndim; i++) {
             t->Ndarray.strides[i] = strides[i];
         }
