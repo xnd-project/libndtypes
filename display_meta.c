@@ -415,8 +415,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
 
             n = ndt_snprintf_d(
                     ctx, buf, d+2,
-                    "shape=%zu, stride=%" PRIi64 ", itemsize=%zu,\n",
-                    t->FixedDim.shape, t->FixedDim.stride, t->FixedDim.itemsize);
+                    "shape=%zu, stride=%" PRIi64 ", offset=%" PRIi64 ", itemsize=%zu,\n",
+                    t->FixedDim.shape, t->FixedDim.stride, t->FixedDim.offset, t->FixedDim.itemsize);
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
@@ -455,7 +455,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "nshapes=%d, shapes=[", t->VarDim.nshapes);
+            n = ndt_snprintf_d(ctx, buf, d+2, "shapes=[");
             if (n < 0) return -1;
 
             for (i = 0; i < t->VarDim.nshapes; i++) {
@@ -464,8 +464,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                 if (n < 0) return -1;
             }
 
-            n = ndt_snprintf(ctx, buf, "], stride=%" PRIi64 ", itemsize=%zu,\n",
-                             t->VarDim.stride, t->VarDim.itemsize);
+            n = ndt_snprintf(ctx, buf, "], stride=%" PRIi64 ", offset=%" PRIi64 ", itemsize=%zu,\n",
+                             t->VarDim.stride, t->VarDim.offset, t->VarDim.itemsize);
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
