@@ -43,7 +43,9 @@ typedef struct {
 } attr_spec;
 
 /* Container attributes */
-static const attr_spec array_attr = {0, 4, {"strides", "_strides_len", "order", "style"}, {AttrInt64List, AttrInt16, AttrChar, AttrString}};
+static const attr_spec array_attr = {0, 6,
+    {"strides", "_strides_len", "offsets", "_offsets_len", "order", "style"},
+    {AttrInt64List, AttrInt16, AttrInt64List, AttrInt16, AttrChar, AttrString}};
 static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
 static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
 

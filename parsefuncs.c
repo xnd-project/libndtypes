@@ -198,27 +198,41 @@ ndt_t *
 mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     int64_t *strides = NULL;
-    int16_t len = 0;
+    int16_t strides_len = 0;
+    int64_t *offsets = NULL;
+    int16_t offsets_len = 0;
     char order = 'C';
     char *style = NULL;
 
     if (attrs) {
-        int ret = ndt_parse_attr(Ndarray, ctx, attrs, &strides, &len, &order,
-                                 &style);
+        int ret = ndt_parse_attr(Ndarray, ctx, attrs, &strides, &strides_len,
+                                 &offsets, &offsets_len, &order, &style);
         ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
             goto error;
         }
+
+        if (strides && strides_len != array->ndim) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "strides must have length ndim");
+            goto error;
+        }
+
+        if (offsets && offsets_len != array->ndim) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "offsets must have length ndim");
+            goto error;
+        }
     }
 
     if (style == NULL || strcmp(style, "array") == 0) {
-        if (style) ndt_free(style);
-        return ndt_array(array, strides, len, order, ctx);
+        ndt_free(style);
+        return ndt_array(array, strides, offsets, order, ctx);
     }
     else if (strcmp(style, "ndarray") == 0) {
         ndt_free(style);
-        return ndt_ndarray(array, strides, len, order, ctx);
+        return ndt_ndarray(array, strides, offsets, order, ctx);
     }
     else {
         ndt_err_format(ctx, NDT_ValueError, "invalid array style: '%s'", style);
@@ -226,8 +240,9 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     }
 
 error:
-    if (style) ndt_free(style);
-    if (strides) ndt_free(strides);
+    ndt_free(style);
+    ndt_free(offsets);
+    ndt_free(strides);
     ndt_del(array);
     return NULL;
 }

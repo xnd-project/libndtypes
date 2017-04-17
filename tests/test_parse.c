@@ -1459,6 +1459,17 @@ const char *parse_tests[] = {
   "[10 * complex128, strides=[32]]",
   "[10 * complex128, order='F']",
 
+  "[2 * 3 * int64, strides=[-8, -16], offsets=[8,0]]",
+  "[2 * 3 * int64, strides=[-8, -16], offsets=[0,8], order='F']",
+  "[10 * complex128, strides=[32], offsets=[64]]",
+  "[10 * complex128, offsets=[128], order='F']",
+
+  "10 * var(1,2,3,4,5,6,7,8,9,10) * float64",
+  "var(2) * var(3,4) * var(5,6,7,8,9,10,11) * float64",
+
+  "[10 * var(1,2,3,4,5,6,7,8,9,10) * float64, offsets=[0,32]]",
+  "[var(2) * var(3,4) * var(5,6,7,8,9,10,11) * float64, offsets=[8,0,16]]",
+
   /* Ndarray */
   "[10 * int32, order='C', style='ndarray']",
   "[10 * int32, order='F', style='ndarray']",
