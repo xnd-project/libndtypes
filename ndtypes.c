@@ -561,7 +561,7 @@ ndt_del(ndt_t *t)
         for (i = 0; i < t->ndim; i++) {
             ndt_free(t->Ndarray.symbols[i]);
         }
-        ndt_free(t->Ndarray.dtype);
+        ndt_del(t->Ndarray.dtype);
         break;
     }
     case Option:
@@ -708,6 +708,7 @@ ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
     t->align = itemalign;
     t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
     t->flags |= nshapes ? NDT_Var_shapes : 0;
+    t->flags |= NDT_Contiguous;
 
     return t;
 }

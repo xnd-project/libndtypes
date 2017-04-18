@@ -19,6 +19,9 @@ typedef struct {
 
 int nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx);
 void nd_clear(char *ptr, const ndt_t *t);
+static int ndarray_init(char *ptr, int64_t *shape, int64_t *strides, int ndim, ndt_t *dtype, ndt_context_t *ctx);
+static void ndarray_clear(char *ptr, int64_t *shape, int64_t *strides, int ndim, ndt_t *dtype);
+static char *ndarray_get_item(char *ptr, ndt_t *t, const int64_t *indices, ndt_context_t *ctx);
 
 
 /*****************************************************************************/
@@ -58,9 +61,9 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
 
     switch (t->tag) {
     case FixedDim:
-        if (t->FixedDim.offset != 0 || t->FixedDim.stride != t->FixedDim.itemsize) {
+        if (!ndt_is_contiguous(t)) {
             ndt_err_format(ctx, NDT_ValueError,
-                           "cannot initialize from type with offsets or strides");
+                           "cannot initialize from non-contiguous type");
             return -1;
         }
 
@@ -74,16 +77,16 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
             item = ND_FIXED_DATA(ptr) + i * t->FixedDim.itemsize;
             if (nd_init(item, t->FixedDim.type, i, ctx) < 0) {
                 nd_clear(ptr, t);
-                return 0;
+                return -1;
             }
         }
 
         return 0;
 
     case VarDim:
-        if (t->VarDim.offset != 0 || t->VarDim.stride != t->VarDim.itemsize) {
+        if (!ndt_is_contiguous(t)) {
             ndt_err_format(ctx, NDT_ValueError,
-                           "cannot initialize from type with offsets or strides");
+                           "cannot initialize from non-contiguous type");
             return -1;
         }
 
@@ -106,11 +109,11 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
                 nd_clear(ptr, t);
                 return -1;
             }
-       }
+        }
 
-       return 0;
+        return 0;
 
-   case Tuple:
+    case Tuple:
         for (i = 0; i < t->Tuple.shape; i++) {
             item = ptr + t->Tuple.fields[i].offset;
             if (nd_init(item, t->Tuple.fields[i].type, 0, ctx) < 0) {
@@ -121,7 +124,7 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
 
         return 0;
 
-   case Record:
+    case Record:
         for (i = 0; i < t->Record.shape; i++) {
             item = ptr + t->Record.fields[i].offset;
             if (nd_init(item, t->Record.fields[i].type, 0, ctx) < 0) {
@@ -132,6 +135,17 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
 
         return 0;
 
+    case Ndarray:
+        if (!ndt_is_contiguous(t)) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "cannot initialize from non-contiguous type");
+            return -1;
+        }
+
+        return ndarray_init(ptr, t->Ndarray.shape, t->Ndarray.strides, t->ndim,
+                            t->Ndarray.dtype, ctx);
+
+    /* Primitive types already initialized by calloc(). */
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -141,7 +155,7 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
     case Char: case String: case Bytes:
         return 0;
 
-    case Ndarray: case Function: case Option: case Nominal:
+    case Function: case Option: case Nominal:
     case Constr: case Categorical: case Pointer:
         ndt_err_format(ctx, NDT_NotImplementedError,
                        "initialization not implemented for this type");
@@ -151,10 +165,13 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
     case ScalarKind: case SignedKind: case UnsignedKind: case RealKind:
     case ComplexKind: case FixedStringKind: case FixedBytesKind: case Field:
     case Void:
-        abort(); /* NOT REACHED (abstract) */
+        ndt_err_format(ctx, NDT_RuntimeError,
+                       "nd_init() called on abstract type");
+        return -1;
    }
 
-   abort(); /* NOT REACHED */
+   ndt_err_format(ctx, NDT_RuntimeError, "invalid type tag in nd_init()");
+   return -1;
 }
 
 void
@@ -206,12 +223,78 @@ nd_clear(char *ptr, const ndt_t *t)
     }
 }
 
+static int
+ndarray_init_rec(char *ptr, int64_t *shape, int64_t *strides, int ndim,
+                 ndt_t *dtype, ndt_context_t *ctx)
+{
+    char *item;
+    int i;
+
+    if (ndim == 1) {
+        for (i = 0; i < shape[0]; i++) {
+            item = ptr + i * strides[i];
+            if (nd_init(item, dtype, 0, ctx) < 0) {
+                return -1;
+            }
+        }
+    }
+
+    for (i = 0; i < shape[i]; i++) {
+        if (ndarray_init_rec(ptr, shape+1, strides+1, ndim-1, dtype, ctx) < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static void
+ndarray_clear(char *ptr, int64_t *shape, int64_t *strides, int ndim, ndt_t *dtype)
+{
+    char *item;
+    int i;
+
+    if (ptr == NULL) {
+        return;
+    }
+
+    if (ndim == 1) {
+        for (i = 0; i < shape[0]; i++) {
+            item = ptr + i * strides[i];
+            nd_clear(item, dtype);
+        }
+    }
+
+    for (i = 0; i < shape[i]; i++) {
+        ndarray_clear(ptr, shape+1, strides+1, ndim-1, dtype);
+    }
+}
+
+/* Assumption: type is contiguous. */
+static int
+ndarray_init(char *ptr, int64_t *shape, int64_t *strides, int ndim, ndt_t *dtype,
+             ndt_context_t *ctx)
+{
+    if (ndim < 1) {
+        ndt_err_format(ctx, NDT_RuntimeError, "ndim < 1 in init_ndarray()");
+        return -1;
+    }
+
+    if (ndarray_init_rec(ptr, shape, strides, ndim, dtype, ctx) < 0) {
+        ndarray_clear(ptr, shape, strides, ndim, dtype);
+        return -1;
+    }
+
+    return 0;
+}
+
+
 /*****************************************************************************/
 /*                        Return a typed subarray                            */
 /*****************************************************************************/
 
 static nd_array_t
-nd_subarray(nd_array_t a, const int64_t *indices, int ndim, ndt_context_t *ctx)
+nd_subarray(nd_array_t a, const int64_t *indices, int len, ndt_context_t *ctx)
 {
     ndt_t *t = a.type;
     char *ptr = a.ptr;
@@ -224,7 +307,7 @@ nd_subarray(nd_array_t a, const int64_t *indices, int ndim, ndt_context_t *ctx)
         return a;
     }
 
-    if (ndim == 0) {
+    if (len == 0) {
         return a;
     }
 
@@ -252,32 +335,68 @@ nd_subarray(nd_array_t a, const int64_t *indices, int ndim, ndt_context_t *ctx)
         a.ptr += t->Record.fields[i].offset;
         break;
     case Ndarray:
-        ndt_err_format(ctx, NDT_NotImplementedError, "ndarray");
-        a.ptr = NULL;
-        return a;
+        if (len < t->ndim) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "subarrays not supported for ndarray");
+            a.ptr = NULL;
+            return a;
+        }
+        a.type = t->Ndarray.dtype;
+        a.ptr = ndarray_get_item(a.ptr, t, indices, ctx);
+        if (a.ptr == NULL) {
+            return a;
+        }
+        return nd_subarray(a, indices+t->ndim, len-t->ndim, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError, "type not indexable");
         a.ptr = NULL;
         return a;
     }
 
-    if (i < 0 || i > shape) {
+    if (i < 0 || i >= shape) {
         ndt_err_format(ctx, NDT_ValueError, "index out of bounds");
         a.ptr = NULL;
         return a;
     }
 
-    return nd_subarray(a, indices+1, ndim-1, ctx);
+    return nd_subarray(a, indices+1, len-1, ctx);
 }
 
+static char *
+ndarray_get_item(char *ptr, ndt_t *t, const int64_t *indices, ndt_context_t *ctx)
+{
+    int i, k;
+
+    if (t->tag != Ndarray) {
+        ndt_err_format(ctx, NDT_RuntimeError, "expect ndarray");
+        return NULL;
+    }
+
+    for (i = 0; i < t->ndim; i++) {
+        k = indices[i];
+        if (k < 0 || k >= t->Ndarray.shape[i]) {
+            ndt_err_format(ctx, NDT_ValueError, "index out of bounds");
+            return NULL;
+        }
+        ptr += k * t->Ndarray.strides[i];
+    }
+
+    return ptr;
+}
+
+/*
+ * Variable array example for:
+ *   [[0,1,2,3,4,5,6,7,8,9],
+ *    [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]]
+ */
 int
-main(void)
+var_example(void)
 {
     ndt_context_t *ctx;
     nd_array_t a, b;
     int64_t indices[2];
     char *ptr;
-    int ret = 1;
+    int ret = 0;
     int i;
 
     ctx = ndt_context_new();
@@ -346,10 +465,91 @@ main(void)
 
     printf("]\n");
 
+
+out:
     nd_del(a.ptr, a.type);
     ndt_del(a.type);
     ndt_context_del(ctx);
-    ret = 0;
+    return ret;
+
+error:
+    ret = -1;
+    ndt_err_fprint(stderr, ctx);
+    goto out;
+}
+
+/*
+ * Ndarray example for:
+ *   [[{0, 1.0}, {2, 3.0}, {4, 5.0}],
+ *    [{6, 7.0}, {8, 9.0}, {10, 11.0}]]
+ */
+int
+ndarray_example(void)
+{
+    ndt_context_t *ctx;
+    nd_array_t a, b;
+    const ndt_t *t, *dtype;
+    int64_t indices[3];
+    char *ptr, *item;
+    int ret = 0, count = 0;
+    int i, k;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "out of memory\n");
+        return 1;
+    }
+
+    a.type = ndt_from_string("[2 * 3 * {a: int32, b: float64}, style='ndarray']", ctx);
+    a.ptr = NULL;
+    if (a.type == NULL) {
+        goto error;
+    }
+
+    a.ptr = nd_new(a.type, ctx);
+    if (a.ptr == NULL) {
+        goto error;
+    }
+
+    /*** efficient initialization ***/
+    t =  a.type;
+    dtype = t->Ndarray.dtype;
+    for (i = 0; i < t->Ndarray.shape[0]; i++) {
+        for (k = 0; k < t->Ndarray.shape[1]; k++) {
+            ptr = a.ptr + i * t->Ndarray.strides[0] + k * t->Ndarray.strides[1];
+
+            item = ptr + dtype->Record.fields[0].offset;
+            *(int64_t *)item = count++;
+
+            item = ptr + dtype->Record.fields[1].offset;
+            *(double *)item = count++;
+        }
+    }
+
+    /*** print each element individually (for testing, inefficient) ***/
+    printf("[");
+    for (i = 0; i < t->Ndarray.shape[0]; i++) {
+        indices[0] = i;
+        printf("%s[", i > 0 ? " " : "");
+        for (k = 0; k < t->Ndarray.shape[1]; k++) {
+            indices[1] = k;
+            printf("{");
+
+            indices[2] = 0;
+            b = nd_subarray(a, indices, 3, ctx);
+            printf("%" PRIi64 "%s", *(int64_t *)b.ptr, ", ");
+
+            indices[2] = 1;
+            b = nd_subarray(a, indices, 3, ctx);
+            printf("%2.1f%s", *(double *)b.ptr, k < t->Ndarray.shape[1]-1 ? "}, " : "}");
+        }
+        printf("]%s", i < t->Ndarray.shape[0]-1 ? ",\n" : "");
+    }
+    printf("]\n");
+
+    nd_del(a.ptr, a.type);
+    ndt_del(a.type);
+    ndt_context_del(ctx);
 
 out:
     return ret;
@@ -360,4 +560,15 @@ error:
 }
 
 
+int
+main(void)
+{
+    if (var_example() < 0) {
+        return 1;
+    }
+    if (ndarray_example() < 0) {
+        return 1;
+    }
 
+    return 0;
+}
