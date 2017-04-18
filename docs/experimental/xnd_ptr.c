@@ -7,6 +7,10 @@
 #include "ndtypes.h"
 
 
+/******************************************************************************/
+/*                          Pointer-based array layout                        */
+/******************************************************************************/
+
 
 #define ND_FIXED_DATA(ptr) (((ndt_fixed_dim_t *)ptr)->data)
 #define ND_VAR_SHAPE(ptr) (((ndt_var_dim_t *)ptr)->shape)
