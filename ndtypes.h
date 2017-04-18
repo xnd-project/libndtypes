@@ -292,6 +292,7 @@ struct _ndt {
             int64_t *strides;
             char **symbols;
             size_t itemsize;
+            int64_t offset;
             ndt_t *dtype;
         } Ndarray;
 
@@ -479,7 +480,7 @@ ndt_t *ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t 
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
 ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char order, ndt_context_t *ctx);
-ndt_t *ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order, ndt_context_t *ctx);
+ndt_t *ndt_ndarray(ndt_t *array, int64_t *strides, int64_t offset, char order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);

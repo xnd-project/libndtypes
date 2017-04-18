@@ -199,14 +199,15 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     int64_t *strides = NULL;
     int16_t strides_len = 0;
-    int64_t *offsets = NULL;
-    int16_t offsets_len = 0;
+    int64_t *offsets = NULL; /* vararray */
+    int16_t offsets_len = 0; /* vararray */
+    int64_t offset = 0; /* ndarray */
     char order = 'C';
     char *style = NULL;
 
     if (attrs) {
         int ret = ndt_parse_attr(Ndarray, ctx, attrs, &strides, &strides_len,
-                                 &offsets, &offsets_len, &order, &style);
+                                 &offsets, &offsets_len, &offset, &order, &style);
         ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
@@ -228,11 +229,25 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 
     if (style == NULL || strcmp(style, "array") == 0) {
         ndt_free(style);
+
+        if (offset != 0) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "'offset' keyword is ndarray-only, use 'offsets'");
+            goto error;
+        }
+
         return ndt_array(array, strides, offsets, order, ctx);
     }
     else if (strcmp(style, "ndarray") == 0) {
         ndt_free(style);
-        return ndt_ndarray(array, strides, offsets, order, ctx);
+
+        if (offsets) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "'offsets' keyword is vararray-only, use 'offset'");
+            goto error;
+        }
+
+        return ndt_ndarray(array, strides, offset, order, ctx);
     }
     else {
         ndt_err_format(ctx, NDT_ValueError, "invalid array style: '%s'", style);

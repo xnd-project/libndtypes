@@ -1063,13 +1063,62 @@ init_strides_from_shape(ndt_t *t)
     }
 }
 
+static int
+ndarray_init_size(ndt_t *t, ndt_context_t *ctx)
+{
+    int64_t *shape = t->Ndarray.shape;
+    int64_t *strides = t->Ndarray.strides;
+    int64_t itemsize = t->Ndarray.itemsize;
+    int64_t offset = t->Ndarray.offset;
+    int ndim = t->ndim;
+    int64_t imin, imax;
+    int64_t n;
+
+    assert(t->tag == Ndarray);
+    assert(ndim >= 1);
+
+    for (n = 0; n < ndim; n++) {
+        if (strides[n] % itemsize) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "strides must be a multiple of itemsize");
+            return -1;
+        }
+    }
+
+    for (n = 0; n < ndim; n++) {
+        if (shape[n] == 0) {
+            t->size = 0;
+            return 0;
+        }
+    }
+
+    imin = imax = 0;
+    for (n = 0; n < ndim; n++) {
+        if (strides[n] <= 0) {
+            imin += (shape[n]-1) * strides[n];
+        }
+        else {
+            imax += (shape[n]-1) * strides[n];
+        }
+    }
+
+    if (imin + offset < 0) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "invalid combination of offset, shape and strides", offset);
+        return -1;
+    }
+
+    t->size = imax + offset + itemsize;
+    return 0;
+}
+
 /*
  * Assumption:
  *   (strides==NULL || len(strides)==ndim) &&
  *   (offsets==NULL || len(offsets)==ndim)
  */
 ndt_t *
-ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
+ndt_ndarray(ndt_t *array, int64_t *strides, int64_t offset, char order,
             ndt_context_t *ctx)
 {
     ndt_t *t, *dtype;
@@ -1080,15 +1129,6 @@ ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
 
     assert(ndt_is_array(array));
     assert(0 < array->ndim && array->ndim <= NDT_MAX_DIM);
-
-    if (offsets) {
-        ndt_err_format(ctx, NDT_NotImplementedError,
-                       "offsets not implemented for ndarray");
-        ndt_del(array);
-        ndt_free(strides);
-        ndt_free(offsets);
-        return NULL;
-    }
 
     if (order == 'F') {
         flags |= NDT_Column_major;
@@ -1114,9 +1154,9 @@ ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
     t->Ndarray.strides = (int64_t *)t->extra + ndim;
     t->Ndarray.symbols = (char **)((int64_t *)t->extra + 2 * ndim);
     t->Ndarray.dtype = dtype;
+    t->Ndarray.offset = offset;
     t->Ndarray.itemsize = dtype->size;
     t->ndim = ndim;
-    t->size = sizeof(char *);
     t->align = dtype->align;
     t->flags = flags & ~NDT_Contiguous;
 
@@ -1136,6 +1176,11 @@ ndt_ndarray(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
             }
         }
         ndt_free(strides);
+    }
+
+    if (ndarray_init_size(t, ctx) < 0) {
+        ndt_del(t);
+        return NULL;
     }
 
     return t;

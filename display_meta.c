@@ -531,7 +531,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "%" PRIi64 "],\n", t->Ndarray.strides[i]);
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "itemsize=%zu,\n", t->Ndarray.itemsize);
+            n = ndt_snprintf_d(ctx, buf, d+2, "offset=%" PRIi64 ", itemsize=%zu,\n",
+                               t->Ndarray.offset, t->Ndarray.itemsize);
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
