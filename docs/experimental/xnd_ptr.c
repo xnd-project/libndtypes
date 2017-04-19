@@ -15,6 +15,8 @@
 #define ND_FIXED_DATA(ptr) (((ndt_fixed_dim_t *)ptr)->data)
 #define ND_VAR_SHAPE(ptr) (((ndt_var_dim_t *)ptr)->shape)
 #define ND_VAR_DATA(ptr) (((ndt_var_dim_t *)ptr)->data)
+#define ND_POINTER_DATA(ptr) (((ndt_pointer_t *)ptr)->data)
+
 
 typedef struct {
     ndt_t *type;
@@ -26,6 +28,7 @@ void nd_clear(char *ptr, const ndt_t *t);
 static int ndarray_init(char *ptr, int64_t *shape, int64_t *strides, int ndim, ndt_t *dtype, ndt_context_t *ctx);
 static void ndarray_clear(char *ptr, int64_t *shape, int64_t *strides, int ndim, ndt_t *dtype);
 static char *ndarray_get_item(char *ptr, ndt_t *t, const int64_t *indices, ndt_context_t *ctx);
+
 
 
 /*****************************************************************************/
@@ -149,7 +152,48 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
         return ndarray_init(ptr, t->Ndarray.shape, t->Ndarray.strides, t->ndim,
                             t->Ndarray.dtype, ctx);
 
-    /* Primitive types already initialized by calloc(). */
+    /* Pointer represents a pointer to an explicit type. */
+    case Pointer:
+        ND_POINTER_DATA(ptr) = ndt_calloc(1, t->Pointer.type->size);
+        if (ND_POINTER_DATA(ptr) == NULL) {
+            ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+            return -1;
+        }
+
+        if (nd_init(ND_POINTER_DATA(ptr), t->Pointer.type, 0, ctx) < 0) {
+            nd_clear(ptr, t);
+            return -1;
+        }
+        return 0;
+
+    /* Constr is a named explicit type. */
+    case Constr:
+        if (nd_init(ptr, t->Constr.type, 0, ctx) < 0) {
+            nd_clear(ptr, t);
+            return -1;
+        }
+
+    /* Option is represented as a tuple: (type, byte).  'byte' is the flag
+     * that indicates whether an element is present and is initialized to
+     * 0 (NA). XXX
+     */
+    case Option:
+        ndt_err_format(ctx, NDT_NotImplementedError, "option semantics");
+        return -1;
+
+    /* Function represents a typed function pointer, initialized to NULL. */
+    case Function:
+        return 0;
+
+    /* Nominal represents a pointer to an opaque type, initialized to NULL. */
+    case Nominal:
+        return 0;
+
+    /* Categorical is already initialized by calloc(). */
+    case Categorical:
+        return 0;
+
+    /* Primitive types are already initialized by calloc(). */
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -158,12 +202,6 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
     case FixedString: case FixedBytes:
     case Char: case String: case Bytes:
         return 0;
-
-    case Function: case Option: case Nominal:
-    case Constr: case Categorical: case Pointer:
-        ndt_err_format(ctx, NDT_NotImplementedError,
-                       "initialization not implemented for this type");
-        return -1;
 
     case AnyKind: case SymbolicDim: case EllipsisDim: case Typevar:
     case ScalarKind: case SignedKind: case UnsignedKind: case RealKind:

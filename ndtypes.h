@@ -593,5 +593,9 @@ typedef struct {
     char *data;
 } ndt_sized_string_t;
 
+typedef struct {
+    char *data;
+} ndt_pointer_t;
+
 
 #endif /* NDTYPES_H */
