@@ -59,7 +59,7 @@ ndt_fopen(const char *name, const char *mode)
 }
 
 /* The yy_fatal_error() function of flex calls exit(). We intercept the function
-   and do a longjmp() for proper error handling. */ 
+   and do a longjmp() for proper error handling. */
 jmp_buf ndt_lexerror;
 
 
@@ -118,7 +118,7 @@ ndt_from_file(const char *name, ndt_context_t *ctx)
 
     t = _ndt_from_file(fp, ctx);
     fclose(fp);
- 
+
     return t;
 }
 

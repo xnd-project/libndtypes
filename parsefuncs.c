@@ -86,7 +86,7 @@ mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx)
 
     return ndt_fixed_dim(shape, type, ctx);
 }
- 
+
 ndt_t *
 mk_var_dim(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 {
@@ -134,7 +134,7 @@ mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 
     return ndt_primitive(tag, endian, ctx);
 }
- 
+
 ndt_t *
 mk_alias(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
@@ -165,7 +165,7 @@ mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
 
     return ndt_fixed_string(size, encoding, ctx);
 }
- 
+
 ndt_t *
 mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
@@ -181,7 +181,7 @@ mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 
     return ndt_bytes(target_align, ctx);
 }
- 
+
 ndt_t *
 mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
@@ -266,7 +266,7 @@ error:
     ndt_del(array);
     return NULL;
 }
- 
+
 ndt_tuple_field_t *
 mk_tuple_field(ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
@@ -363,7 +363,7 @@ mk_record(enum ndt_variadic_flag flag, ndt_record_field_seq_t *fields,
     ndt_free(fields);
     return t;
 }
- 
+
 ndt_t *
 mk_function(ndt_t *ret,
             enum ndt_variadic_flag tflag, ndt_tuple_field_seq_t *tseq,
