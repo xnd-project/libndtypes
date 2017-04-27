@@ -1048,7 +1048,7 @@ init_strides_from_shape(ndt_t *t)
     strides = t->Ndarray.strides;
     itemsize = t->Ndarray.itemsize;
 
-    if (t->flags & NDT_Abstract) { 
+    if (t->flags & NDT_Abstract) {
         for (i = 0; i < ndim; i++) {
             strides[i] = 0;
         }
@@ -1166,7 +1166,7 @@ ndt_ndarray(ndt_t *array, int64_t *strides, int64_t offset, char order,
     t->align = dtype->align;
     t->flags = flags & ~NDT_Contiguous;
 
-    ret = init_shape_symbols(t, array, ctx); 
+    ret = init_shape_symbols(t, array, ctx);
     ndt_del(array);
     if (ret < 0) {
         ndt_del(t);
@@ -1649,7 +1649,7 @@ ndt_from_alias(enum ndt_alias tag, char endian, ndt_context_t *ctx)
         return NULL;
     }
 }
-     
+
 ndt_t *
 ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
 {

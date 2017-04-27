@@ -199,7 +199,7 @@ tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
         }
-  
+
         n = ndt_snprintf_d(ctx, buf, d, "TupleField(\n");
         if (n < 0) return -1;
 
@@ -234,7 +234,7 @@ record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
         }
-  
+
         n = ndt_snprintf_d(ctx, buf, d, "RecordField(\n", fields[i].name);
         if (n < 0) return -1;
 
@@ -569,7 +569,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
- 
+
         case Constr:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Constr(\n");
             if (n < 0) return -1;
@@ -591,7 +591,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
 
             n = ndt_snprintf_d(ctx, buf, d, ")");
             return n;
- 
+
         case Tuple:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Tuple(\n");
             if (n < 0) return -1;
@@ -615,7 +615,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
- 
+
         case Record:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Record(\n");
             if (n < 0) return -1;
@@ -640,7 +640,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
- 
+
         case Function:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Function(\n");
             if (n < 0) return -1;
