@@ -639,29 +639,34 @@ static yyconst flex_int32_t yy_rule_can_match_eol[65] =
 #line 1 "lexer.l"
 #line 2 "lexer.l"
 /*
- * Copyright (c) 2016, Continuum Analytics, Inc. All rights reserved.
+ * BSD 3-Clause License
+ *
+ * Copyright (c) 2017, plures
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
+ * modification, are permitted provided that the following conditions are met:
  *
- * Redistributions of source code must retain the above copyright notice,
- * 
- * this list of conditions and the following disclaimer.
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
  *
- * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -719,7 +724,7 @@ yyfree(void *ptr,yyscan_t yyscanner)
 }
 
 #define YY_NO_INPUT 1
-#line 723 "lexer.c"
+#line 728 "lexer.c"
 
 #define INITIAL 0
 
@@ -961,10 +966,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 126 "lexer.l"
+#line 131 "lexer.l"
 
 
-#line 968 "lexer.c"
+#line 973 "lexer.c"
 
     yylval = yylval_param;
 
@@ -1061,7 +1066,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 128 "lexer.l"
+#line 133 "lexer.l"
 {
 yycolumn = 1;
 
@@ -1076,321 +1081,321 @@ yycolumn = 1;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 140 "lexer.l"
+#line 145 "lexer.l"
 { return ANY_KIND; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 141 "lexer.l"
+#line 146 "lexer.l"
 { return SCALAR_KIND; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 143 "lexer.l"
+#line 148 "lexer.l"
 { return VOID; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 144 "lexer.l"
+#line 149 "lexer.l"
 { return BOOL; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 146 "lexer.l"
+#line 151 "lexer.l"
 { return SIGNED_KIND; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 147 "lexer.l"
+#line 152 "lexer.l"
 { return INT8; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 148 "lexer.l"
+#line 153 "lexer.l"
 { return INT16; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 149 "lexer.l"
+#line 154 "lexer.l"
 { return INT32; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 150 "lexer.l"
+#line 155 "lexer.l"
 { return INT64; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 152 "lexer.l"
+#line 157 "lexer.l"
 { return UNSIGNED_KIND; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 153 "lexer.l"
+#line 158 "lexer.l"
 { return UINT8; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 154 "lexer.l"
+#line 159 "lexer.l"
 { return UINT16; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 155 "lexer.l"
+#line 160 "lexer.l"
 { return UINT32; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 156 "lexer.l"
+#line 161 "lexer.l"
 { return UINT64; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 158 "lexer.l"
+#line 163 "lexer.l"
 { return REAL_KIND; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 159 "lexer.l"
+#line 164 "lexer.l"
 { return FLOAT16; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 160 "lexer.l"
+#line 165 "lexer.l"
 { return FLOAT32; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 161 "lexer.l"
+#line 166 "lexer.l"
 { return FLOAT64; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 163 "lexer.l"
+#line 168 "lexer.l"
 { return COMPLEX_KIND; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 164 "lexer.l"
+#line 169 "lexer.l"
 { return COMPLEX64; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 165 "lexer.l"
+#line 170 "lexer.l"
 { return COMPLEX128; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 167 "lexer.l"
+#line 172 "lexer.l"
 { return INTPTR; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 168 "lexer.l"
+#line 173 "lexer.l"
 { return UINTPTR; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 169 "lexer.l"
+#line 174 "lexer.l"
 { return SIZE; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 170 "lexer.l"
+#line 175 "lexer.l"
 { return REAL; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 171 "lexer.l"
+#line 176 "lexer.l"
 { return COMPLEX; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 172 "lexer.l"
+#line 177 "lexer.l"
 { return INT; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 173 "lexer.l"
+#line 178 "lexer.l"
 { return CHAR; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 174 "lexer.l"
+#line 179 "lexer.l"
 { return STRING; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 175 "lexer.l"
+#line 180 "lexer.l"
 { return BYTES; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 177 "lexer.l"
+#line 182 "lexer.l"
 { return FIXED_STRING_KIND; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 178 "lexer.l"
+#line 183 "lexer.l"
 { return FIXED_STRING; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 180 "lexer.l"
+#line 185 "lexer.l"
 { return FIXED_BYTES_KIND; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 181 "lexer.l"
+#line 186 "lexer.l"
 { return FIXED_BYTES; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 183 "lexer.l"
+#line 188 "lexer.l"
 { return CATEGORICAL; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 185 "lexer.l"
+#line 190 "lexer.l"
 { return POINTER; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 187 "lexer.l"
+#line 192 "lexer.l"
 { return OPTION; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 189 "lexer.l"
+#line 194 "lexer.l"
 { return VAR; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 191 "lexer.l"
+#line 196 "lexer.l"
 { return ELLIPSIS; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 192 "lexer.l"
+#line 197 "lexer.l"
 { return RARROW; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 193 "lexer.l"
+#line 198 "lexer.l"
 { return COMMA; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 194 "lexer.l"
+#line 199 "lexer.l"
 { return COLON; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 195 "lexer.l"
+#line 200 "lexer.l"
 { return LPAREN; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 196 "lexer.l"
+#line 201 "lexer.l"
 { return RPAREN; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 197 "lexer.l"
+#line 202 "lexer.l"
 { return LBRACE; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 198 "lexer.l"
+#line 203 "lexer.l"
 { return RBRACE; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 199 "lexer.l"
+#line 204 "lexer.l"
 { return LBRACK; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 200 "lexer.l"
+#line 205 "lexer.l"
 { return RBRACK; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 201 "lexer.l"
+#line 206 "lexer.l"
 { return STAR; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 202 "lexer.l"
+#line 207 "lexer.l"
 { return EQUAL; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 203 "lexer.l"
+#line 208 "lexer.l"
 { return QUESTIONMARK; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 204 "lexer.l"
+#line 209 "lexer.l"
 { return BAR; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 206 "lexer.l"
+#line 211 "lexer.l"
 { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_LOWER; }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 207 "lexer.l"
+#line 212 "lexer.l"
 { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_UPPER; }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 208 "lexer.l"
+#line 213 "lexer.l"
 { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_OTHER; }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 210 "lexer.l"
+#line 215 "lexer.l"
 { yylval->string = mk_stringlit(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return STRINGLIT; }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 211 "lexer.l"
+#line 216 "lexer.l"
 { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return INTEGER; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 212 "lexer.l"
+#line 217 "lexer.l"
 { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return FLOATNUMBER; }
 	YY_BREAK
 case 60:
 /* rule 60 can match eol */
 YY_RULE_SETUP
-#line 214 "lexer.l"
+#line 219 "lexer.l"
 { yycolumn = 1; }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 215 "lexer.l"
+#line 220 "lexer.l"
 {} /* ignore */
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 216 "lexer.l"
+#line 221 "lexer.l"
 {} /* ignore */
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 217 "lexer.l"
+#line 222 "lexer.l"
 { return ERRTOKEN; }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 219 "lexer.l"
+#line 224 "lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1394 "lexer.c"
+#line 1399 "lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2513,7 +2518,7 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 219 "lexer.l"
+#line 224 "lexer.l"
 
 
 
