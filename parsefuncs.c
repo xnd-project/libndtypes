@@ -187,7 +187,7 @@ ndt_t *
 mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     uint8_t data_align = 1;
-    size_t data_size;
+    size_t data_size = 0;
 
     if (attrs) {
         int ret = ndt_parse_attr(FixedBytes, ctx, attrs, &data_size, &data_align);
