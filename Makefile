@@ -11,6 +11,14 @@ AR ?= ar
 RANLIB ?= ranlib
 CFLAGS ?= -Wall -Wextra -std=c11 -pedantic -O2 -g
 
+ifeq ($(MAKECMDGOALS), check)
+  CFLAGS = -Wall -Wextra -Werror -std=c11 -pedantic -O2 -g
+endif
+
+ifeq ($(MAKECMDGOALS), memcheck)
+  CFLAGS = -Wall -Wextra -Werror -std=c11 -pedantic -O2 -g
+endif
+
 ifeq ($(MAKECMDGOALS), coverage)
   CFLAGS = -O0 -g -fno-inline -fprofile-arcs -ftest-coverage -fpic
   LDFLAGS = -fprofile-arcs
