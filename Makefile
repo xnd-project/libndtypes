@@ -103,7 +103,7 @@ runtest:\
 Makefile tests/runtest.c tests/alloc_fail.c tests/test_parse.c tests/test_parse_error.c \
 tests/test_parse_roundtrip.c tests/test_indent.c tests/test_typedef.c tests/test_match.c \
 tests/test_record.c ndtypes.h tests/test.h tests/alloc_fail.h $(LIBSTATIC)
-	$(CC) -I. $(CFLAGS) -DTEST_ALLOC -o tests/runtest tests/runtest.c \
+	$(CC) -I. -Wno-gnu $(CFLAGS) -DTEST_ALLOC -o tests/runtest tests/runtest.c \
             tests/alloc_fail.c tests/test_parse.c tests/test_parse_error.c \
             tests/test_parse_roundtrip.c tests/test_indent.c tests/test_typedef.c \
             tests/test_match.c tests/test_record.c \
