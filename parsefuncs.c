@@ -136,12 +136,13 @@ mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 }
 
 ndt_t *
-mk_alias(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+mk_alias(enum ndt_alias tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     char endian = 'L';
 
     if (attrs) {
-        int ret = ndt_parse_attr(tag, ctx, attrs, &endian);
+        /* Alias attributes are the same as for Int64. */
+        int ret = ndt_parse_attr(Int64, ctx, attrs, &endian);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             return NULL;
