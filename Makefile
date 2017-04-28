@@ -20,7 +20,7 @@ ifeq ($(MAKECMDGOALS), memcheck)
 endif
 
 ifeq ($(MAKECMDGOALS), coverage)
-  CFLAGS = -O0 -g -fno-inline -fprofile-arcs -ftest-coverage -fpic
+  CFLAGS = -Wall -Wextra -std=c11 -pedantic -O0 -g -fno-inline -fprofile-arcs -ftest-coverage -fpic
   LDFLAGS = -fprofile-arcs
 endif
 
