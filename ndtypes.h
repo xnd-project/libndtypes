@@ -51,6 +51,8 @@
   typedef _Dcomplex ndt_complex128_t;
   typedef _Fcomplex ndt_complex64_t;
   #define alignof __alignof
+  #define alignas(n) __declspec(align(n))
+  #define MAX_ALIGN 8
 #else
   #if !defined(__APPLE__) && !defined(__STDC_IEC_559__)
     #error "ndtypes requires IEEE floating point arithmetic"
@@ -58,6 +60,7 @@
   #include <stdalign.h>
   typedef double complex ndt_complex128_t;
   typedef float complex ndt_complex64_t;
+  #define MAX_ALIGN (alignof(max_align_t))
 #endif
 
 
@@ -368,7 +371,7 @@ struct _ndt {
     int ndim;
     uint8_t align;
     size_t size;
-    char extra[]; /* XXX: alignof(max_align_t) */
+    alignas(MAX_ALIGN) char extra[];
 };
 
 
