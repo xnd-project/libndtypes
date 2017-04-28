@@ -1490,6 +1490,7 @@ const char *parse_tests[] = {
   "[2 * N * int64, style='ndarray']",
   "[N * 2 * int64, style='ndarray']",
   "[P * N * int64, style='ndarray']",
+  "[P * N * {a: N * float64}, style='ndarray']",
 
   /* END MANUALLY GENERATED */
 
