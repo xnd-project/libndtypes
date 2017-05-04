@@ -210,6 +210,23 @@ Take a[1]:
         We are now at a new subarray with shape 5 - 2 = 3.
 
 
+Nested arrays (via records)
+---------------------------
+
+   type = "2 * var * { a: 3 * var * float64 }"
+
+
+In the proposed array representation also the array in the struct would
+not be a pointer to an array.  In other words, there is always a single
+memory allocation for a type (unless the type contains explicit pointers).
+
+
+If the latter is desired, one would have to write explicitly:
+
+   type = "2 * var * { a: pointer(3 * var * float64) }"
+
+
+
 # ===========================================================================
 #                 Ideal Offset-based ragged arrays (do they exist?)
 # ===========================================================================
