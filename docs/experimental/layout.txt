@@ -32,7 +32,7 @@ Example
      |           |
      |           `-> [4.0,5.0,6.0,7.0]
      |
-     `-> [3,ptr] | var dim, shape 3, pointer to the data.  
+     `-> [3,ptr] # var dim, shape 3, pointer to the data.
              |
              `-> [1.0,2.0,3.0]
 
@@ -42,7 +42,7 @@ Advantages
 ----------
 
    - Extremely flexible. Suppose that arrays a=[1,2,...,1000000]
-     and b=[-1,-2,...,2000000] exist.  Perhaps they are columns
+     and b=[-1,-2,...,-2000000] exist.  Perhaps they are columns
      that have already been extracted from a PostgreSQL data set.
 
      Now one can put these into a new typed array [a,b] without
@@ -79,44 +79,124 @@ Disadvantages
 #                          Offset-based ragged arrays
 # ===========================================================================
 
-The pointers in the last example are replaced by offsets that would probably
-be stored directly in the dimensions.
+Example ('None' means missing value or missing dimension):
+
+   type: "3 * var(2,3,1) * ?var(2,2,3,0,1,2) * ?uint8"
+   array: [[[0, 1], [2, 3]], [[4, 5, None], None, [7]], [[8, 9]]]
+                                      |      |
+                                      |      `---> missing dimension
+                                      |
+                                      `---> missing value
 
 
-Example (still need to work out the details)
+Shapes and contiguous data (run vararray.py)
 --------------------------------------------
 
-  type: "2 * 2 * var(2,1,1,3) * float64"
-  data: [[[1.0, 2.0],
-          [3.0]],
-         [[4.0],
-          [5.0, 6.0, 7.0]]]
+   ([[3], [2, 3, 1], [2, 2, 3, 0, 1, 2]], [0, 1, 2, 3, 4, 5, None, 7, 8, 9])
 
 
-   [0]        # fixed dim, single offset
-   [0,24]     # fixed dim, two offsets
-   [0,16,0,8] # var dim, four offsets
+Offsets
+-------
 
-   [1.0,2.0,3.0,4.0,5.0,6.0,7.0] # data in one block
+   ([0, 3], [0, 2, 5, 6], [0, 2, 4, 7, 7, 8, 10])
+
+The offsets can be:
+
+   a) Arrow compatible (int32_t)
+
+   b) Space optimized -- if all values in the offset array fit in uint8_t,
+      use uint8_t.  If uint64_t is needed, use that.
 
 
-Advantages
+Array representation
+--------------------
+
+The array is internally represented by a tuple:
+
+   (offsets1, offsets2, offsets3, data, bitmap1, bitmap2, bitmap3, bitmap4)
+
+Bitmaps 1-3 are for validity bitmaps for missing dimensions, bitmap4 is
+the validity bitmap for missing data.
+
+If no data is missing, bitmaps in this example will have size zero.
+For example, bitmap2 in the above example will have size zero, since
+there are no missing second dimensions.
+
+
+The entire tuple and its members (no pointers) are written to a single
+char pointer: 
+
+
+ptr = (0, 3, 0, 2, 5, 6, 0, 2, 4, 7, 7, 8, 10, 0, 1, 2, 3, 4, 5, Undefined, 7, 8, 9, bitmap1, bitmap2, bitmap3, bitmap4)
+       ^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     offsets1 offsets2        offsets3                     data
+
+
+
+nd_array_t
 ----------
 
-    - Single contiguous block that contains all data.
+The nd_array_t will look like this:
 
-    - No pointer adjustments when copying.
+typedef struct {
+    ndt_t type;
+    char * const array; /* always points to the tuple that contains the access information */
+    int64_t cur;        /* current index of the dimension we're in, needed for accessing validity bitmaps */
+    char *ptr;          /* points to a subarray or an individual value */
+} nd_array_t;
 
 
-Disadvantages
--------------
+Some of the elegance of the pointer representation is lost here, since the
+array member of the struct is only needed for array types.
 
-     - Composing arrays bottom-up would require copying (see the example
-       above), a new allocation and type adjustment.
 
-     - Subarrays would not naturally return the correct type. It would
-       probably require adjustments (still have to work out the example,
-       but I think array views are considerably harder).
+The pointer representation is a true "nd_memory_t" type that could seamlessly
+represent a single "int64_t" that is not embedded in an array.
+
+In this representation the array member would be NULL for a single "int64_t".
+
+
+
+Subarrays
+---------
+
+Subarrays are taken in roughly the same way as in the pointer representation
+above.
+
+
+Example
+-------
+
+As above,
+
+   a = [[[0, 1], [2, 3]], [[4, 5, None], None, [7]], [[8, 9]]]
+   array = (0, 3, 0, 2, 5, 6, 0, 2, 4, 7, 7, 8, 10, 0, 1, 2, 3, 4, 5, Undefined, 7, 8, 9, bitmap1, bitmap2, bitmap3, bitmap4)
+            |
+            `--> initial location of 'ptr'
+
+
+Take a[1]:
+
+   array = (0, 3, 0, 2, 5, 6, 0, 2, 4, 7, 7, 8, 10, 0, 1, 2, 3, 4, 5, Undefined, 7, 8, 9, bitmap1, bitmap2, bitmap3, bitmap4)
+                  |
+                  `-> base offset of the second dimensions
+
+       1) Determine the shape of the dimension we stride into:  3 - 0 = 3.
+
+       2) Lookup the base offset of the second dimension in the top tuple type
+          (tuple offsets are always stored in the type).
+
+       3) Set a.ptr to &base[1]:
+
+       4) set a.cur to 1.
+
+
+   array = (0, 3, 0, 2, 5, 6, 0, 2, 4, 7, 7, 8, 10, 0, 1, 2, 3, 4, 5, Undefined, 7, 8, 9, bitmap1, bitmap2, bitmap3, bitmap4)
+                     |
+                     `-> &base[1]
+
+
+        We are now at a new subarray with shape 5 - 2 = 3.
 
 
 
