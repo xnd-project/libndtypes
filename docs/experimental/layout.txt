@@ -80,7 +80,8 @@ Disadvantages
 #                          Offset-based ragged arrays
 # ===========================================================================
 
-Example ('None' means missing value or missing dimension):
+Example ('None' means missing value or missing dimension)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
    type: "3 * var(2,3,1) * ?var(2,2,3,0,1,2) * ?uint8"
    array: [[[0, 1], [2, 3]], [[4, 5, None], None, [7]], [[8, 9]]]
@@ -126,8 +127,8 @@ OR (cache optimized):
    (offsets1, bitmap1, offsets2, bitmap2, offsets3, bitmap3, data, bitmap4)
 
 
-Bitmaps 1-3 are for validity bitmaps for missing dimensions, bitmap4 is
-the validity bitmap for missing data.
+Bitmaps 1-3 are validity bitmaps for missing dimensions, bitmap4 is the
+validity bitmap for missing data.
 
 If no data is missing, bitmaps in this example will have size zero.
 For example, bitmap2 in the above example will have size zero, since
@@ -140,7 +141,7 @@ char pointer:
 
 ptr = (0, 3, 0, 2, 5, 6, 0, 2, 4, 7, 7, 8, 10, 0, 1, 2, 3, 4, 5, Undefined, 7, 8, 9, bitmap1, bitmap2, bitmap3, bitmap4)
        ^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     offsets1 offsets2        offsets3                     data
+     offsets1 offsets2        offsets3                         data
 
 
 
@@ -160,11 +161,10 @@ typedef struct {
 Some of the elegance of the pointer representation is lost here, since the
 array member of the struct is only needed for array types.
 
-
 The pointer representation is a true "nd_memory_t" type that could seamlessly
 represent a single "int64_t" that is not embedded in an array.
 
-In this representation the array member would be NULL for a single "int64_t".
+In the offset representation the array member would be NULL for a single "int64_t".
 
 
 
@@ -213,6 +213,9 @@ Take a[1]:
 # ===========================================================================
 #                 Ideal Offset-based ragged arrays (do they exist?)
 # ===========================================================================
+
+Speculative, no solution has been found
+---------------------------------------
 
 In the above example, use relative offsets:
 
