@@ -115,6 +115,11 @@ The array is internally represented by a tuple:
 
    (offsets1, offsets2, offsets3, data, bitmap1, bitmap2, bitmap3, bitmap4)
 
+OR (cache optimized):
+
+   (offsets1, bitmap1, offsets2, bitmap2, offsets3, bitmap3, data, bitmap4)
+
+
 Bitmaps 1-3 are for validity bitmaps for missing dimensions, bitmap4 is
 the validity bitmap for missing data.
 
@@ -197,6 +202,28 @@ Take a[1]:
 
 
         We are now at a new subarray with shape 5 - 2 = 3.
+
+
+# ===========================================================================
+#                 Ideal Offset-based ragged arrays (do they exist?)
+# ===========================================================================
+
+In the above example, use relative offsets:
+
+   input: [[[0, 1], [2, 3]], [[4, 5, None], None, [7]], [[8, 9]]]
+
+   array = (2, 4, 4, 5, 7, 7, 0, 2, 4, 7, 7, 8, 10, 0, 1, 2, 3, 4, 5, Undefined, 7, 8, 9, bitmap1, bitmap2, bitmap3, bitmap4)
+            ^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+        offsets1  offsets2    offsets3
+
+This would work for the first two dimensions, which now contain the direct
+number of steps to move the 'ptr' forward when striding into the next
+dimension. The shape is now encoded as offset[i+1] - offset[i] + 1.
+
+But this only works for homogeneous arrays and breaks down for offsets3,
+which have some steps as int64_t and the rest as uint8_t.
+
+Also, the bitmaps still need to be addressed.
 
 
 
