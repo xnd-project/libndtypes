@@ -96,10 +96,15 @@ Shapes and contiguous data (run vararray.py)
    ([[3], [2, 3, 1], [2, 2, 3, 0, 1, 2]], [0, 1, 2, 3, 4, 5, None, 7, 8, 9])
 
 
-Offsets
--------
+Offsets (cumulative sum of each shape array prefixed by 0)
+----------------------------------------------------------
 
    ([0, 3], [0, 2, 5, 6], [0, 2, 4, 7, 7, 8, 10])
+
+
+The shape of a single var-dim is encoded as offsets[j+1]-offsets[j].
+Accessing j+1 is always valid.
+
 
 The offsets can be:
 
