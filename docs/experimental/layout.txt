@@ -1,4 +1,5 @@
 
+
 This is a short document for showing the advantages/disadvantages of three
 possible array layouts for libndtypes/libxnd.
 
@@ -104,7 +105,7 @@ The offsets can be:
 
    a) Arrow compatible (int32_t)
 
-   b) Space optimized -- if all values in the offset array fit in uint8_t,
+   b) Space optimized -- if all values in the offset array fit in e.g. uint8_t,
       use uint8_t.  If uint64_t is needed, use that.
 
 
@@ -145,7 +146,7 @@ The nd_array_t will look like this:
 
 typedef struct {
     ndt_t type;
-    char * const array; /* always points to the tuple that contains the access information */
+    char * const array; /* always points to the tuple that contains the top-level access information */
     int64_t cur;        /* current index of the dimension we're in, needed for accessing validity bitmaps */
     char *ptr;          /* points to a subarray or an individual value */
 } nd_array_t;
