@@ -1031,6 +1031,7 @@ init_offsets(ndt_t *a, const ndt_t *type, /* XXX bool align64, */ ndt_context_t 
                          dtype->align, alignof(uint64_t), alignof(uint64_t));
 }
 
+#if 0
 static inline int
 select_offset_type(int8_t offset_style, ndt_context_t *ctx)
 {
@@ -1044,6 +1045,7 @@ select_offset_type(int8_t offset_style, ndt_context_t *ctx)
         return -1;
     }
 }
+#endif
 
 /*
  * Assumption:
