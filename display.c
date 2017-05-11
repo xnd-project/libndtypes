@@ -256,6 +256,9 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
     int n;
 
     switch (t->tag) {
+        case Array:
+            return datashape(buf, t->Array.type, d, ctx);
+
         case FixedDim:
             n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
             if (n < 0) return -1;

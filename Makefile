@@ -118,11 +118,11 @@ tests/test_record.c ndtypes.h tests/test.h tests/alloc_fail.h $(LIBSTATIC)
             $(LIBSTATIC)
 
 check:\
-Makefile runtest
+Makefile clean runtest
 	./tests/runtest
 
 memcheck:\
-Makefile runtest
+Makefile clean runtest
 	valgrind --leak-check=full --show-leak-kinds=all --suppressions=tests/valgrind.supp ./tests/runtest
 
 

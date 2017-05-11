@@ -142,6 +142,11 @@ flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
         if (n > 0) return -1;
         cont = 1;
     }
+    if (t->flags & NDT_Option) {
+        n = ndt_snprintf(ctx, buf, "Option");
+        if (n > 0) return -1;
+        cont = 1;
+    }
     if (t->flags & NDT_Column_major) {
         n = ndt_snprintf(ctx, buf, "%sColumn_major", cont ? ", " : "");
         if (n > 0) return -1;
@@ -413,6 +418,34 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
     int n;
 
     switch (t->tag) {
+        case Array: {
+            int i;
+
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Array(\n");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->Array.type, d+2, 0, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "dim_type=%s, offsets=[",
+                               tag_as_constr(t->Array.dim_type));
+            if (n < 0) return -1;
+
+            for (i = 0; i < t->Array.noffsets; i++) {
+                n = ndt_snprintf(ctx, buf, "%zu%s", t->Array.offsets[i],
+                                 i == t->Array.noffsets-1 ? "],\n" : ", ");
+                if (n < 0) return -1;
+            }
+
+            n = common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
         case FixedDim:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedDim(\n");
             if (n < 0) return -1;

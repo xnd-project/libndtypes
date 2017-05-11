@@ -207,13 +207,14 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     int16_t strides_len = 0;
     int64_t *offsets = NULL; /* vararray */
     int16_t offsets_len = 0; /* vararray */
-    int64_t offset = 0; /* ndarray */
+    int64_t offset = 0;      /* ndarray */
     char order = 'C';
+    int8_t offset_style = NDT_OFFSETS_UNDEF; /* array */
     char *style = NULL;
 
     if (attrs) {
-        int ret = ndt_parse_attr(Ndarray, ctx, attrs, &strides, &strides_len,
-                                 &offsets, &offsets_len, &offset, &order, &style);
+        int ret = ndt_parse_attr(Array, ctx, attrs, &strides, &strides_len,
+                                 &offsets, &offsets_len, &offset, &order, &offset_style, &style);
         ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
@@ -242,7 +243,7 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
             goto error;
         }
 
-        return ndt_array(array, strides, offsets, order, ctx);
+        return ndt_array(array, strides, offsets, 8, ctx);
     }
     else if (strcmp(style, "ndarray") == 0) {
         ndt_free(style);

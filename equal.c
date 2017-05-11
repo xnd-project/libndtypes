@@ -166,6 +166,21 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case EllipsisDim:
         return c->tag == EllipsisDim &&
                ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
+    case Array: {
+        int i;
+        if (c->Array.dim_type != p->Array.dim_type) {
+            return 0;
+        }
+        if (c->Array.noffsets != p->Array.noffsets) {
+            return 0;
+        }
+        for (i = 0; i < p->Array.noffsets; i++) {
+            if (c->Array.offsets[i] != p->Array.offsets[i]) {
+                return 0;
+            }
+        }
+        return ndt_equal(c->Array.type, p->Array.type);
+    }
     case Ndarray: {
         int i;
 

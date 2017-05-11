@@ -48,9 +48,9 @@ typedef struct {
 } attr_spec;
 
 /* Container attributes */
-static const attr_spec array_attr = {0, 7,
-    {"strides", "_strides_len", "offsets", "_offsets_len", "offset", "order", "style"},
-    {AttrInt64List, AttrInt16, AttrInt64List, AttrInt16, AttrInt64, AttrChar, AttrString}};
+static const attr_spec array_attr = {0, 8,
+    {"strides", "_strides_len", "offsets", "_offsets_len", "offset", "order", "offset_style", "style"},
+    {AttrInt64List, AttrInt16, AttrInt64List, AttrInt16, AttrInt64, AttrChar, AttrInt8, AttrString}};
 static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
 static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
 
@@ -65,7 +65,7 @@ const attr_spec *
 ndt_get_attr_spec(enum ndt tag, ndt_context_t *ctx)
 {
     switch(tag) {
-    case Ndarray:
+    case Array:
         return &array_attr;
     case Tuple: case Record:
         return &tuple_record_attr;
