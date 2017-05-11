@@ -208,7 +208,7 @@ array:
 | OPTION LPAREN array_nooption RPAREN { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
 
 array_nooption:
-  flexarray                                   { $$ = ndt_array($1, NULL, 0, 'C', ctx); if ($$ == NULL) YYABORT; }
+  flexarray                                   { $$ = ndt_array($1, NULL, 0, 8, ctx); if ($$ == NULL) YYABORT; }
 | LBRACK flexarray COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 flexarray:

@@ -2035,7 +2035,7 @@ yyreduce:
 
   case 8:
 #line 211 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = ndt_array((yyvsp[0].ndt), NULL, 0, 'C', ctx); if ((yyval.ndt) == NULL) YYABORT; }
+    { (yyval.ndt) = ndt_array((yyvsp[0].ndt), NULL, 0, 8, ctx); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2040 "grammar.c" /* yacc.c:1646  */
     break;
 

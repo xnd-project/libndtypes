@@ -277,6 +277,9 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         if (n <= 0) return n;
 
         return match_datashape(pdtype, cdtype, tbl, ctx);
+    case Array:
+        if (c->tag != Array) return 0;
+        return match_datashape(p->Array.type, c->Array.type, tbl, ctx);
     case Ndarray:
         if (c->tag != Ndarray) return 0;
         if (ndt_is_column_major(c) != ndt_is_column_major(p)) return 0;

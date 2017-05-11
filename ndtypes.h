@@ -71,27 +71,34 @@
 #define NDT_MAX_DIM 128
 
 /* Type flags */
-#define NDT_Type_variable      0x00000001U
-#define NDT_Type_kind          0x00000002U
-#define NDT_Dimension_variable 0x00000004U
-#define NDT_Dimension_kind     0x00000008U
-#define NDT_Ellipsis_dimension 0x00000010U
-#define NDT_Var_shapes         0x00000020U
-#define NDT_Variadic           0x00000040U
-#define NDT_Column_major       0x00000080U
-#define NDT_Contiguous         0x00000100U
-#define NDT_Big_endian         0x00000200U
+#define NDT_Type_variable       0x00000001U
+#define NDT_Type_kind           0x00000002U
+#define NDT_Dimension_variable  0x00000004U
+#define NDT_Dimension_kind      0x00000008U
+#define NDT_Variable_incomplete 0x00000010U
+#define NDT_Ellipsis_dimension  0x00000020U
+#define NDT_Variadic            0x00000040U
+#define NDT_Column_major        0x00000080U
+#define NDT_Contiguous          0x00000100U
+#define NDT_Big_endian          0x00000200U
+#define NDT_Option              0x00000400U
 
-#define NDT_Abstract ( NDT_Type_variable      \
-                     | NDT_Type_kind          \
-                     | NDT_Dimension_variable \
-                     | NDT_Dimension_kind     \
-                     | NDT_Ellipsis_dimension \
+#define NDT_Abstract ( NDT_Type_variable       \
+                     | NDT_Type_kind           \
+                     | NDT_Dimension_variable  \
+                     | NDT_Dimension_kind      \
+                     | NDT_Variable_incomplete \
+                     | NDT_Ellipsis_dimension  \
                      | NDT_Variadic)
 
 /* Ndarray special shapes */
 #define NDT_Ndarray_symbolic -2
 #define NDT_Ndarray_ellipsis -3
+
+/* Space-saving offsets [uint8, ..., uint64] or Arrow offsets (int32) */
+#define NDT_OFFSETS_UNDEF 0
+#define NDT_OFFSETS_MIN 1
+#define NDT_OFFSETS_ARROW 2
 
 
 /* Types: ndt_t */
@@ -145,6 +152,7 @@ enum ndt_attr_tag {
   AttrList
 };
 
+
 /* Attribute: name=value or name=[value, value, ...]. */
 typedef struct {
     enum ndt_attr_tag tag;
@@ -179,6 +187,7 @@ enum ndt_encoding {
 enum ndt {
   /* Any */
   AnyKind,
+    Array,
     FixedDim,
     SymbolicDim,
     VarDim,
@@ -235,6 +244,8 @@ enum ndt {
         Categorical,
         Pointer,
 
+        Bitmap,
+
         Field /* used internally */
 };
 
@@ -261,6 +272,51 @@ typedef struct {
   uint8_t pad;
 } ndt_record_field_t;
 
+/*
+   Array: variable array type
+   --------------------------
+
+   The variable array is a map of dimensions, data and their respective validity
+   bitmaps.  Conceptually it is a tuple type, but for performance reasons it is
+   implemented as a custom type.
+
+   It is important to understand that the Array is a sort of virtual type that
+   contains the top level access information for the dimension data.
+
+   Here is an example layout for a two-dimensional variable array:
+
+     memory: (data, bitmap, dim1_data, dim1_bitmap, dim2_data, dim2_bitmap)
+     ndim:      0      0      1        1        2       2
+
+   The actual array data could also be referred to as dim0_data, the zero
+   is omitted for clarity.
+
+   Dimension data (for dimensions >= 1) consists of integers.  These integers
+   are indices into the following dimension.  For space optimization libndtypes
+   uses the smallest possible integer type by default.
+
+
+   Default dimension data type, alignment
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      The dimension data type is the smallest possible fixed width unsigned
+      integer type.
+
+      The array tuple (and thereby 'data') is aligned at 64 bytes and padded to
+      a 64-byte boundary.
+
+      Bitmaps (uint64_t[]) and dimension data (uintN_t[]) have their minimum
+      natural alignment.
+
+   Arrow dimension data type, alignment
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      The dimension data type is int32_t.
+
+      The array tuple and all individual members are aligned at 64 bytes
+      and padded to a 64-byte boundary.
+*/
+
 /* Datashape type */
 struct _ndt {
     enum ndt tag;
@@ -271,6 +327,7 @@ struct _ndt {
             int64_t stride;
             int64_t offset;
             size_t itemsize;
+            ndt_t *base;
             ndt_t *type;
         } FixedDim;
 
@@ -294,6 +351,14 @@ struct _ndt {
         struct {
             ndt_t *type;
         } EllipsisDim;
+
+        struct {
+            enum ndt dim_type; /* integer type of the dimension data */
+            size_t dim_size;   /* size of the above integer type */
+            int noffsets;
+            size_t *offsets;   /* offsets of the array tuple fields */
+            ndt_t *type;       /* linked list of dimension types */
+        } Array;
 
         struct {
             int64_t *shape;
@@ -428,6 +493,7 @@ const char *ndt_tag_as_string(enum ndt tag);
 enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 
+int ndt_is_optional(const ndt_t *t);
 int ndt_is_signed(const ndt_t *t);
 int ndt_is_unsigned(const ndt_t *t);
 int ndt_is_real(const ndt_t *t);
@@ -487,7 +553,7 @@ ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char order, ndt_context_t *ctx);
+ndt_t *ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, uint8_t align, ndt_context_t *ctx);
 ndt_t *ndt_ndarray(ndt_t *array, int64_t *strides, int64_t offset, char order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);

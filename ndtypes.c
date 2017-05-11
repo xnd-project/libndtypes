@@ -547,6 +547,9 @@ ndt_del(ndt_t *t)
     }
 
     switch (t->tag) {
+    case Array:
+        ndt_del(t->Array.type);
+        break;
     case FixedDim:
         ndt_del(t->FixedDim.type);
         break;
@@ -637,7 +640,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
     t->FixedDim.itemsize = itemsize;
     t->FixedDim.type = type;
     t->ndim = type->ndim + 1;
-    t->size = sizeof(ndt_fixed_dim_t);
+    t->size = sizeof(int64_t);
     t->align = itemalign;
     t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
     t->flags |= NDT_Contiguous;
@@ -671,7 +674,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     t->SymbolicDim.itemsize = itemsize;
     t->SymbolicDim.type = type;
     t->ndim = type->ndim + 1;
-    t->size = sizeof(ndt_fixed_dim_t);
+    t->size = sizeof(int64_t);
     t->align = itemalign;
     t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
     t->flags |= NDT_Dimension_variable;
@@ -695,6 +698,14 @@ ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
+    if (shapes && ndt_is_abstract(type)) {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "var-shapes given for abstract type");
+        ndt_free(shapes);
+        ndt_del(type);
+        return NULL;
+    }
+
     t = ndt_new(VarDim, ctx);
     if (t == NULL) {
         ndt_free(shapes);
@@ -709,10 +720,10 @@ ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
     t->VarDim.itemsize = itemsize;
     t->VarDim.type = type;
     t->ndim = type->ndim + 1;
-    t->size = sizeof(ndt_var_dim_t);
+    t->size = sizeof(int64_t);
     t->align = itemalign;
     t->flags = type->flags & (NDT_Abstract|NDT_Column_major);
-    t->flags |= nshapes ? NDT_Var_shapes : 0;
+    t->flags |= nshapes ? 0 : NDT_Variable_incomplete;
     t->flags |= NDT_Contiguous;
 
     return t;
@@ -829,6 +840,7 @@ ndt_relink_dim(ndt_t *t, ndt_t *type)
     }
 }
 
+#if 0
 static ndt_t *
 ndt_copy_and_link_dim(ndt_t *t, ndt_t *type, ndt_context_t *ctx)
 {
@@ -852,6 +864,7 @@ ndt_copy_and_link_dim(ndt_t *t, ndt_t *type, ndt_context_t *ctx)
     default: abort();
     }
 }
+#endif
 
 ndt_t *
 ndt_get_dtype(ndt_t *t)
@@ -881,6 +894,7 @@ get_and_unlink_dtype(ndt_t *t)
     return dtype;
 }
 
+#if 0
 static ndt_t *
 array_column_major(ndt_t *array, ndt_context_t *ctx)
 {
@@ -903,6 +917,7 @@ array_column_major(ndt_t *array, ndt_context_t *ctx)
 
     return t;
 }
+#endif
 
 /* Sum an array of positive int64_t. */
 static int64_t
@@ -923,32 +938,110 @@ sum_pos_int64(int64_t *values, int64_t len, ndt_context_t *ctx)
     return sum;
 }
 
-int
-ndt_validate_var_shapes(ndt_t *t, int64_t n, ndt_context_t *ctx)
+/*
+ * (data0, bitmap0, dim_data1, bitmap1, dim_data2, bitmap2, ...)
+ *  |-- ndim=0 --|  |---- ndim=1 ---|   |---- ndim=2 ---|
+ */
+static size_t
+_init_offsets(size_t *offsets, uint8_t *align, size_t *dim_sizes, int noffsets,
+              uint8_t dtype_align, uint8_t bitmap_align, uint8_t dim_align)
 {
-    switch (t->tag) {
-    case FixedDim:
-        return ndt_validate_var_shapes(t->FixedDim.type, t->FixedDim.shape, ctx);
-    case VarDim:
-        if (t->VarDim.nshapes == 0) {
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                "shape arguments must be given for all var dimensions or none");
-            return -1;
+    size_t offset = 0;
+    uint8_t maxalign;
+    int i;
+
+    maxalign = max(dtype_align, bitmap_align);
+    maxalign = max(maxalign, dim_align);
+
+    for (i = 0; i < noffsets; i++) {
+        if (i > 0) {
+            if (i % 2) {
+                offset = round_up(offset, bitmap_align);
+            }
+            else {
+                offset = round_up(offset, dim_align);
+            }
         }
-        else if (t->VarDim.nshapes != n) {
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                "number of shape arguments not compatible with previous dimension");
-            return -1;
-        }
-        else {
-            n = sum_pos_int64(t->VarDim.shapes, t->VarDim.nshapes, ctx);
+
+        offsets[i] = offset;
+        offset += dim_sizes[i];
+    }
+
+    *align = maxalign;
+
+    return round_up(offset, maxalign);
+}
+
+static size_t
+init_offsets(ndt_t *a, const ndt_t *type, /* XXX bool align64, */ ndt_context_t *ctx)
+{
+    const ndt_t *dims[NDT_MAX_DIM];
+    const ndt_t *dtype;
+    size_t dim_sizes[NDT_MAX_DIM+1];
+    size_t size, nitems;
+    int64_t n;
+    int i;
+
+    assert(type->ndim > 0);
+    assert(a->tag == Array);
+    assert(a->ndim == type->ndim);
+    assert(a->Array.noffsets == 2 * (type->ndim + 1));
+
+    ndt_get_dims_dtype(dims, &dtype, type);
+
+    nitems = 1;
+    for (i = 0; i < type->ndim; i++) {
+        switch (dims[i]->tag) {
+        case FixedDim:
+            n = dims[i]->FixedDim.shape;
+            nitems *= n;
+            dim_sizes[2 * dims[i]->ndim] = 0;
+            size = ndt_is_optional(dims[i]) ? round_up(n, 8) : 0;
+            dim_sizes[2 * dims[i]->ndim + 1] = size;
+            break;
+        case VarDim:
+            if ((size_t)dims[i]->VarDim.nshapes != nitems) {
+                ndt_err_format(ctx, NDT_InvalidArgumentError,
+                    "missing or invalid number of var-dim shape arguments");
+                return -1;
+            }
+            n = sum_pos_int64(dims[i]->VarDim.shapes, dims[i]->VarDim.nshapes, ctx);
             if (n < 0) {
                 return -1;
             }
-            return ndt_validate_var_shapes(t->VarDim.type, n, ctx);
+            nitems = n;
+            dim_sizes[2 * dims[i]->ndim] = dims[i]->VarDim.nshapes * a->Array.dim_size;
+            size = ndt_is_optional(dims[i]) ? round_up(n, 8) : 0;
+            dim_sizes[2 * dims[i]->ndim + 1] = size;
+            break;
+        default:
+            ndt_err_format(ctx, NDT_InvalidArgumentError,
+                "var shape arguments given for abstract array");
+            return -1;
         }
+    }
+
+    size = nitems * dtype->size;
+    dim_sizes[0] = size;
+
+    size = ndt_is_optional(dtype) ? round_up(nitems, 8) : 0;
+    dim_sizes[1] = size;
+
+    return _init_offsets(a->Array.offsets, &a->align, dim_sizes, a->Array.noffsets,
+                         dtype->align, alignof(uint64_t), alignof(uint64_t));
+}
+
+static inline int
+select_offset_type(int8_t offset_style, ndt_context_t *ctx)
+{
+    switch (offset_style) {
+    case NDT_OFFSETS_MIN:
+        return Uint64;
+    case NDT_OFFSETS_ARROW:
+        return Int32;
     default:
-        return 0;
+        ndt_err_format(ctx, NDT_ValueError, "invalid offset type");
+        return -1;
     }
 }
 
@@ -958,36 +1051,64 @@ ndt_validate_var_shapes(ndt_t *t, int64_t n, ndt_context_t *ctx)
  *   (offsets==NULL || len(offsets)==ndim)
  */
 ndt_t *
-ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char order,
-          ndt_context_t *ctx)
+ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, /* XXX int8_t offset_style, */
+          uint8_t align, ndt_context_t *ctx)
 {
+    ndt_t *t;
+    enum ndt dim_type;
+    size_t extra;
+    int noffsets;
+
     if (strides || offsets) {
-        int ret = array_init_strides_offsets(array, strides, offsets, ctx);
+        int ret = array_init_strides_offsets(type, strides, offsets, ctx);
         ndt_free(strides);
         ndt_free(offsets);
         if (ret < 0) {
-            ndt_del(array);
+            ndt_del(type);
             return NULL;
         }
     }
 
-    if (order == 'C') {
-        if (array->flags & NDT_Var_shapes) {
-            if (ndt_validate_var_shapes(array, 1, ctx) < 0) {
-                ndt_del(array);
-                return NULL;
-            }
-        }
-        return array;
-    }
-    else if (order == 'F') {
-        return array_column_major(array, ctx);
-    }
-    else {
-        ndt_err_format(ctx, NDT_ValueError, "order must be 'F' or 'C'");
-        ndt_del(array);
+    dim_type = Uint64; //select_offset_type(offset_style, ctx);
+    if (ctx->err != NDT_Success) {
+        ndt_del(type);
         return NULL;
     }
+
+    noffsets = (type->ndim + 1) * 2;
+    extra = noffsets * sizeof(int64_t);
+    t = ndt_new_extra(Array, extra, ctx);
+    if (t == NULL) {
+        ndt_del(type);
+        return NULL;
+    }
+    t->Array.dim_type = dim_type;
+    t->Array.dim_size = 8;
+    t->Array.noffsets = noffsets;
+    t->Array.offsets = (size_t *)t->extra;
+    t->Array.type = type;
+    t->ndim = type->ndim;
+    t->align = align;
+    t->flags = type->flags;
+
+    if (type->flags & NDT_Abstract) {
+        int i;
+        for (i = 0; i < noffsets; i++) {
+            t->Array.offsets[i] = 0;
+        }
+        t->size = 0;
+    }
+    else {
+        size_t n = init_offsets(t, type, ctx);
+        if (n == SIZE_MAX) {
+            ndt_del(type);
+            ndt_del(t);
+            return NULL;
+        }
+        t->size = n;
+    }
+
+    return t;
 }
 
 static int
@@ -1206,6 +1327,7 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
     t->size = type->size;
     t->align = type->align;
     t->flags = type->flags;
+    t->flags |= NDT_Option;
 
     return t;
 }
@@ -1800,6 +1922,12 @@ ndt_pointer(ndt_t *type, ndt_context_t *ctx)
     t->flags = type->flags;
 
     return t;
+}
+
+int
+ndt_is_optional(const ndt_t *t)
+{
+    return t->flags & NDT_Option;
 }
 
 int
