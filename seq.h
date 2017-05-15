@@ -42,14 +42,8 @@
 typedef struct {
     size_t len;
     size_t reserved;
-    ndt_tuple_field_t *ptr;
-} ndt_tuple_field_seq_t;
-
-typedef struct {
-    size_t len;
-    size_t reserved;
-    ndt_record_field_t *ptr;
-} ndt_record_field_seq_t;
+    ndt_field_t *ptr;
+} ndt_field_seq_t;
 
 typedef struct {
     size_t len;
@@ -70,15 +64,10 @@ typedef struct {
 } ndt_string_seq_t;
 
 
-ndt_tuple_field_seq_t *ndt_tuple_field_seq_new(ndt_tuple_field_t *, ndt_context_t *ctx);
-void ndt_tuple_field_seq_del(ndt_tuple_field_seq_t *);
-ndt_tuple_field_seq_t *ndt_tuple_field_seq_append(ndt_tuple_field_seq_t *, ndt_tuple_field_t *, ndt_context_t *ctx);
-ndt_tuple_field_seq_t *ndt_tuple_field_seq_finalize(ndt_tuple_field_seq_t *);
-
-ndt_record_field_seq_t *ndt_record_field_seq_new(ndt_record_field_t *, ndt_context_t *ctx);
-void ndt_record_field_seq_del(ndt_record_field_seq_t *);
-ndt_record_field_seq_t *ndt_record_field_seq_append(ndt_record_field_seq_t *, ndt_record_field_t *, ndt_context_t *ctx);
-ndt_record_field_seq_t *ndt_record_field_seq_finalize(ndt_record_field_seq_t *);
+ndt_field_seq_t *ndt_field_seq_new(ndt_field_t *, ndt_context_t *ctx);
+void ndt_field_seq_del(ndt_field_seq_t *);
+ndt_field_seq_t *ndt_field_seq_append(ndt_field_seq_t *, ndt_field_t *, ndt_context_t *ctx);
+ndt_field_seq_t *ndt_field_seq_finalize(ndt_field_seq_t *);
 
 ndt_memory_seq_t *ndt_memory_seq_new(ndt_memory_t *, ndt_context_t *ctx);
 void ndt_memory_seq_del(ndt_memory_seq_t *);

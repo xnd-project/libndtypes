@@ -126,20 +126,18 @@ union YYSTYPE
 #line 86 "grammar.y" /* yacc.c:1909  */
 
     ndt_t *ndt;
-    ndt_tuple_field_t *tuple_field;
-    ndt_tuple_field_seq_t *tuple_field_seq;
-    ndt_record_field_t *record_field;
-    ndt_record_field_seq_t *record_field_seq;
+    ndt_field_t *field;
+    ndt_field_seq_t *field_seq;
     ndt_memory_t *typed_value;
     ndt_memory_seq_t *typed_value_seq;
     ndt_attr_t *attribute;
     ndt_attr_seq_t *attribute_seq;
-    enum ndt_variadic_flag variadic_flag;
+    enum ndt_variadic variadic_flag;
     enum ndt_encoding encoding;
     char *string;
     ndt_string_seq_t *string_seq;
 
-#line 143 "grammar.h" /* yacc.c:1909  */
+#line 141 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -169,6 +167,6 @@ int yyparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 173 "grammar.h" /* yacc.c:1909  */
+#line 171 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */

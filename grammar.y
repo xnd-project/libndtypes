@@ -85,15 +85,13 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %union {
     ndt_t *ndt;
-    ndt_tuple_field_t *tuple_field;
-    ndt_tuple_field_seq_t *tuple_field_seq;
-    ndt_record_field_t *record_field;
-    ndt_record_field_seq_t *record_field_seq;
+    ndt_field_t *field;
+    ndt_field_seq_t *field_seq;
     ndt_memory_t *typed_value;
     ndt_memory_seq_t *typed_value_seq;
     ndt_attr_t *attribute;
     ndt_attr_seq_t *attribute_seq;
-    enum ndt_variadic_flag variadic_flag;
+    enum ndt_variadic variadic_flag;
     enum ndt_encoding encoding;
     char *string;
     ndt_string_seq_t *string_seq;
@@ -122,12 +120,12 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> pointer
 
 %type <ndt> tuple_type
-%type <tuple_field> tuple_field
-%type <tuple_field_seq> tuple_field_seq
+%type <field> tuple_field
+%type <field_seq> tuple_field_seq
 
 %type <ndt> record_type
-%type <record_field> record_field
-%type <record_field_seq> record_field_seq
+%type <field> record_field
+%type <field_seq> record_field_seq
 %type <string> record_field_name
 
 %type <ndt> categorical
@@ -181,10 +179,8 @@ ERRTOKEN
 %token ENDMARKER 0 "end of file"
 
 %destructor { ndt_del($$); } <ndt>
-%destructor { ndt_tuple_field_del($$); } <tuple_field>
-%destructor { ndt_tuple_field_seq_del($$); } <tuple_field_seq>
-%destructor { ndt_record_field_del($$); } <record_field>
-%destructor { ndt_record_field_seq_del($$); } <record_field_seq>
+%destructor { ndt_field_del($$); } <field>
+%destructor { ndt_field_seq_del($$); } <field_seq>
 %destructor { ndt_memory_del($$); } <typed_value>
 %destructor { ndt_memory_seq_del($$); } <typed_value_seq>
 %destructor { ndt_attr_del($$); } <attribute>
@@ -208,7 +204,7 @@ array:
 | OPTION LPAREN array_nooption RPAREN { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
 
 array_nooption:
-  flexarray                                   { $$ = ndt_array($1, NULL, 0, 'C', ctx); if ($$ == NULL) YYABORT; }
+  flexarray                                   { $$ = ndt_array($1, NULL, 0, ctx); if ($$ == NULL) YYABORT; }
 | LBRACK flexarray COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 flexarray:
@@ -343,12 +339,12 @@ tuple_type:
 | LPAREN tuple_field_seq COMMA attribute_seq RPAREN { $$ = mk_tuple(Nonvariadic, $2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 tuple_field_seq:
-  tuple_field                       { $$ = ndt_tuple_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
-| tuple_field_seq COMMA tuple_field { $$ = ndt_tuple_field_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  tuple_field                       { $$ = ndt_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
+| tuple_field_seq COMMA tuple_field { $$ = ndt_field_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 tuple_field:
-  datashape                       { $$ = mk_tuple_field($1, NULL, ctx); if ($$ == NULL) YYABORT; }
-| datashape BAR attribute_seq BAR { $$ = mk_tuple_field($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  datashape                       { $$ = mk_field(NULL, $1, NULL, ctx); if ($$ == NULL) YYABORT; }
+| datashape BAR attribute_seq BAR { $$ = mk_field(NULL, $1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 record_type:
   LBRACE variadic_flag RBRACE                        { $$ = mk_record($2, NULL, NULL, ctx); if ($$ == NULL) YYABORT; }
@@ -356,12 +352,12 @@ record_type:
 | LBRACE record_field_seq COMMA attribute_seq RBRACE { $$ = mk_record(Nonvariadic, $2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 record_field_seq:
-  record_field                         { $$ = ndt_record_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
-| record_field_seq COMMA record_field  { $$ = ndt_record_field_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  record_field                         { $$ = ndt_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
+| record_field_seq COMMA record_field  { $$ = ndt_field_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 record_field:
-  record_field_name COLON datashape                       { $$ = mk_record_field($1, $3, NULL, ctx); if ($$ == NULL) YYABORT; }
-| record_field_name COLON datashape BAR attribute_seq BAR { $$ = mk_record_field($1, $3, $5, ctx); if ($$ == NULL) YYABORT; }
+  record_field_name COLON datashape                       { $$ = mk_field($1, $3, NULL, ctx); if ($$ == NULL) YYABORT; }
+| record_field_name COLON datashape BAR attribute_seq BAR { $$ = mk_field($1, $3, $5, ctx); if ($$ == NULL) YYABORT; }
 
 record_field_name:
   NAME_LOWER { $$ = $1; if ($$ == NULL) YYABORT; }

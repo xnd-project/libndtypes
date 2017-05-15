@@ -37,6 +37,7 @@
 #include <inttypes.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <assert.h>
 #include "ndtypes.h"
 
 
@@ -106,19 +107,20 @@ indent(ndt_context_t *ctx, buf_t *buf, int n)
 }
 
 static int
-tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
-             ndt_context_t *ctx)
+tuple_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
-    size_t i;
+    int64_t i;
     int n;
 
-    for (i = 0; i < nfields; i++) {
+    assert(t->tag == Tuple);
+
+    for (i = 0; i < t->Tuple.shape; i++) {
         if (i >= 1) {
             n = ndt_snprintf(ctx, buf, ", ");
             if (n < 0) return -1;
         }
 
-        n = datashape(buf, fields[i].type, d, ctx);
+        n = datashape(buf, t->Tuple.types[i], d, ctx);
         if (n < 0) return -1;
     }
 
@@ -126,13 +128,14 @@ tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
 }
 
 static int
-record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
-              ndt_context_t *ctx)
+record_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
-    size_t i;
+    int64_t i;
     int n;
 
-    for (i = 0; i < nfields; i++) {
+    assert(t->tag == Record);
+
+    for (i = 0; i < t->Tuple.shape; i++) {
         if (i >= 1) {
             if (d >= 0) {
                 n = ndt_snprintf(ctx, buf, ",\n");
@@ -147,10 +150,10 @@ record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
             }
         }
 
-        n = ndt_snprintf(ctx, buf, "%s : ", fields[i].name);
+        n = ndt_snprintf(ctx, buf, "%s : ", t->Record.names[i]);
         if (n < 0) return -1;
 
-        n = datashape(buf, fields[i].type, d, ctx);
+        n = datashape(buf, t->Record.types[i], d, ctx);
         if (n < 0) return -1;
     }
 
@@ -158,7 +161,7 @@ record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
 }
 
 static int
-variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *ctx)
+variadic_flag(buf_t *buf, enum ndt_variadic flag, ndt_context_t *ctx)
 {
     if (flag == Variadic) {
         return ndt_snprintf(ctx, buf, "...");
@@ -168,7 +171,7 @@ variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, ndt_context_t *ctx)
 }
 
 static int
-comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *ctx)
+comma_variadic_flag(buf_t *buf, enum ndt_variadic flag, int d, ndt_context_t *ctx)
 {
     int n;
 
@@ -321,8 +324,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "(");
             if (n < 0) return -1;
 
-            if (t->Tuple.fields) {
-                n = tuple_fields(buf, t->Tuple.fields, t->Tuple.shape, d, ctx);
+            if (t->Tuple.shape > 0) {
+                n = tuple_fields(buf, t, d, ctx);
                 if (n < 0) return -1;
 
                 n = comma_variadic_flag(buf, t->Tuple.flag, INT_MIN, ctx);
@@ -347,8 +350,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
                 if (n < 0) return -1;
             }
 
-            if (t->Record.fields) {
-                n = record_fields(buf, t->Record.fields, t->Record.shape, d+2, ctx);
+            if (t->Record.shape > 0) {
+                n = record_fields(buf, t, d+2, ctx);
                 if (n < 0) return -1;
 
                 n = comma_variadic_flag(buf, t->Record.flag, d+2, ctx);
@@ -377,8 +380,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "(");
             if (n < 0) return -1;
 
-            if (pos->Tuple.fields) {
-                n = tuple_fields(buf, pos->Tuple.fields, pos->Tuple.shape, d, ctx);
+            if (pos->Tuple.shape > 0) {
+                n = tuple_fields(buf, pos, d, ctx);
                 if (n < 0) return -1;
 
                 n = comma_variadic_flag(buf, pos->Tuple.flag, INT_MIN, ctx);
@@ -389,13 +392,13 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
                 if (n < 0) return -1;
             }
 
-            if (kwds->Record.fields) {
-                if (pos->Tuple.flag == Variadic || pos->Tuple.fields) {
+            if (kwds->Record.shape > 0) {
+                if (pos->Tuple.flag == Variadic || pos->Tuple.shape > 0) {
                     n = ndt_snprintf(ctx, buf, ", ");
                     if (n < 0) return -1;
                 }
 
-                n = record_fields(buf, kwds->Record.fields, kwds->Record.shape, INT_MIN, ctx);
+                n = record_fields(buf, kwds, INT_MIN, ctx);
                 if (n < 0) return -1;
 
                 n = comma_variadic_flag(buf, kwds->Record.flag, INT_MIN, ctx);

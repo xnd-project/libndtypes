@@ -37,6 +37,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "ndtypes.h"
 
 
@@ -47,50 +48,48 @@
 static inline int
 ndt_common_equal(const ndt_t *p, const ndt_t *c)
 {
-    return c->flags == p->flags && c->ndim == p->ndim &&
-           c->align == p->align && c->size == p->size;
+    return c->ndim == p->ndim;
 }
 
 static int
-tuple_fields_equal(ndt_tuple_field_t *p, size_t pshape,
-                   ndt_tuple_field_t *c, size_t cshape)
+tuple_fields_equal(const ndt_t *p, const ndt_t *c)
 {
-    size_t i;
+    int64_t i;
 
-    if (!!p != !!c || pshape != cshape) {
+    assert(p->tag == Tuple && c->tag == Tuple);
+
+    if (p->Tuple.shape != c->Tuple.shape) {
         return 0;
     }
-    if (p == NULL) {
-        return 1;
-    }
 
-    for (i = 0; i < pshape; i++) {
-        if (!ndt_equal(p[i].type, c[i].type))
+    for (i = 0; i < p->Tuple.shape; i++) {
+        if (!ndt_equal(p->Tuple.types[i], c->Tuple.types[i])) {
             return 0;
+        }
     }
 
     return 1;
 }
 
 static int
-record_fields_equal(ndt_record_field_t *p, size_t pshape,
-                    ndt_record_field_t *c, size_t cshape)
+record_fields_equal(const ndt_t *p, const ndt_t *c)
 {
-    size_t i;
+    int64_t i;
 
-    if (!!p != !!c || pshape != cshape) {
+    assert(p->tag == Record && c->tag == Record);
+
+    if (p->Record.shape != c->Record.shape) {
         return 0;
     }
-    if (p == NULL) {
-        return 1;
-    }
 
-    for (i = 0; i < pshape; i++) {
-        if (strcmp(p[i].name, c[i].name) != 0)
+    for (i = 0; i < p->Record.shape; i++) {
+        if (strcmp(p->Record.names[i], c->Record.names[i]) != 0) {
             return 0;
+        }
 
-        if (!ndt_equal(p[i].type, c[i].type))
+        if (!ndt_equal(p->Record.types[i], c->Record.types[i])) {
             return 0;
+        }
     }
 
     return 1;
@@ -166,32 +165,12 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case EllipsisDim:
         return c->tag == EllipsisDim &&
                ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
-    case Ndarray: {
-        int i;
-
-        if (c->Ndarray.itemsize != p->Ndarray.itemsize) {
-            return 0;
-        }
-
-        for (i = 0; i < p->ndim; i++) {
-            if ((c->Ndarray.shape[i] != p->Ndarray.shape[i]) ||
-                (c->Ndarray.strides[i] != p->Ndarray.strides[i]) ||
-                (!!c->Ndarray.symbols[i] != !!p->Ndarray.symbols[i]) ||
-                (p->Ndarray.symbols[i] && strcmp(c->Ndarray.symbols[i], p->Ndarray.symbols[i]))) {
-                return 0;
-            }
-        }
-
-        return ndt_equal(c->Ndarray.dtype, p->Ndarray.dtype);
-    }
     case Tuple:
         if (c->tag != Tuple || c->Tuple.flag != p->Tuple.flag) return 0;
-        return tuple_fields_equal(p->Tuple.fields, p->Tuple.shape,
-                                  c->Tuple.fields, c->Tuple.shape);
+        return tuple_fields_equal(p, c);
     case Record:
-        if (c->tag != Record || c->Record.flag != p->Record.flag) return 0;
-        return record_fields_equal(p->Record.fields, p->Record.shape,
-                                   c->Record.fields, c->Record.shape);
+        if (c->tag != Record || c->Tuple.flag != p->Tuple.flag) return 0;
+        return record_fields_equal(p, c);
     case Function:
         return c->tag == Function &&
                ndt_equal(p->Function.ret, c->Function.ret) &&

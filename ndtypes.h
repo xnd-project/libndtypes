@@ -70,24 +70,17 @@
 
 #define NDT_MAX_DIM 128
 
-/* Type flags */
-#define NDT_Type_variable      0x00000001U
-#define NDT_Type_kind          0x00000002U
-#define NDT_Dimension_variable 0x00000004U
-#define NDT_Dimension_kind     0x00000008U
-#define NDT_Ellipsis_dimension 0x00000010U
-#define NDT_Var_shapes         0x00000020U
-#define NDT_Variadic           0x00000040U
-#define NDT_Column_major       0x00000080U
-#define NDT_Contiguous         0x00000100U
-#define NDT_Big_endian         0x00000200U
+/* Dimension flags */
+#define NDT_Dim_uint8       0x00000001U
+#define NDT_Dim_uint16      0x00000002U
+#define NDT_Dim_uint32      0x00000004U
+#define NDT_Dim_uint64      0x00000008U
+#define NDT_Ellipsis        0x00000010U
 
-#define NDT_Abstract ( NDT_Type_variable      \
-                     | NDT_Type_kind          \
-                     | NDT_Dimension_variable \
-                     | NDT_Dimension_kind     \
-                     | NDT_Ellipsis_dimension \
-                     | NDT_Variadic)
+#define NDT_Dim_size (NDT_Dim_uint8   \
+                     |NDT_Dim_uint16  \
+                     |NDT_Dim_uint32  \
+                     |NDT_Dim_uint64)
 
 /* Ndarray special shapes */
 #define NDT_Ndarray_symbolic -2
@@ -121,6 +114,17 @@ typedef struct {
     ndt_value_t v;
 } ndt_memory_t;
 
+/* Internal option type */
+enum ndt_option {
+  None,
+  Some
+};
+
+typedef struct {
+  enum ndt_option tag;
+  uint16_t Some;
+} uint16_opt_t;
+
 enum ndt_attr {
   AttrBool,
   AttrChar,
@@ -136,10 +140,10 @@ enum ndt_attr {
   AttrFloat32,
   AttrFloat64,
   AttrString,
-  AttrInt64List
+  AttrInt64List,
+  AttrUint16_Opt
 };
 
-/* Flag for variadic tuples and records */
 enum ndt_attr_tag {
   AttrValue,
   AttrList
@@ -160,10 +164,11 @@ typedef struct {
 
 
 /* Flag for variadic tuples and records */
-enum ndt_variadic_flag {
+enum ndt_variadic {
   Nonvariadic,
   Variadic
 };
+
 
 /* Encoding for characters and strings */
 enum ndt_encoding {
@@ -244,63 +249,56 @@ enum ndt_alias {
   Uintptr
 };
 
-/* Tuple field */
-typedef struct {
-  ndt_t *type;
-  size_t offset;
-  uint8_t align;
-  uint8_t pad;
-} ndt_tuple_field_t;
+/* Protect access to concrete type fields. */
+enum ndt_access {
+  Abstract,
+  Concrete
+};
 
-/* Record field */
+/* Tuple or record field, used in the parser. */
 typedef struct {
+  enum ndt_access access;
   char *name;
   ndt_t *type;
-  size_t offset;
-  uint8_t align;
-  uint8_t pad;
-} ndt_record_field_t;
+  struct {
+      uint16_t align;
+      bool explicit_align;
+  } Concrete;
+} ndt_field_t;
 
 /* Datashape type */
 struct _ndt {
     enum ndt tag;
+    enum ndt_access access;
+    int ndim;
 
+    /* Abstract */
     union {
         struct {
+            uint32_t flags;
             int64_t shape;
-            int64_t stride;
-            int64_t offset;
-            size_t itemsize;
             ndt_t *type;
         } FixedDim;
 
         struct {
+            uint32_t flags;
             char *name;
-            int64_t stride;
-            int64_t offset;
-            size_t itemsize;
             ndt_t *type;
         } SymbolicDim;
 
         struct {
-            int64_t nshapes; /* optional */
-            int64_t *shapes; /* optional */
-            int64_t stride;
-            int64_t offset;
-            size_t itemsize;
+            uint32_t flags;
             ndt_t *type;
         } VarDim;
 
         struct {
+            uint32_t flags;
             ndt_t *type;
         } EllipsisDim;
 
         struct {
             int64_t *shape;
-            int64_t *strides;
             char **symbols;
-            size_t itemsize;
-            int64_t offset;
             ndt_t *dtype;
         } Ndarray;
 
@@ -318,15 +316,16 @@ struct _ndt {
         } Constr;
 
         struct {
-            enum ndt_variadic_flag flag;
+            enum ndt_variadic flag;
             int64_t shape;
-            ndt_tuple_field_t *fields;
+            ndt_t **types;
         } Tuple;
 
         struct {
-            enum ndt_variadic_flag flag;
+            enum ndt_variadic flag;
             int64_t shape;
-            ndt_record_field_t *fields;
+            char **names;
+            ndt_t **types;
         } Record;
 
         struct {
@@ -344,7 +343,7 @@ struct _ndt {
         } Char;
 
         struct {
-            uint8_t target_align;
+            uint16_t target_align;
         } Bytes;
 
         struct {
@@ -354,7 +353,7 @@ struct _ndt {
 
         struct {
             size_t size;
-            uint8_t align;
+            uint16_t align;
         } FixedBytes;
 
         struct {
@@ -367,10 +366,46 @@ struct _ndt {
         } Pointer;
     };
 
-    uint32_t flags;
-    int ndim;
-    uint8_t align;
-    size_t size;
+    /* Concrete */
+    struct {
+        union {
+            struct {
+                int64_t offset;
+                int64_t itemsize;
+                int64_t stride;
+            } FixedDim;
+
+            struct {
+                int64_t offset;
+                int64_t itemsize;
+                int64_t stride;
+                int64_t nshapes; /* default: 0 */
+                int64_t *shapes; /* default: NULL */
+            } VarDim;
+
+            struct {
+                int64_t *strides;
+                ndt_t *dtype;
+            } Ndarray;
+
+            struct {
+                int64_t *offset;
+                uint16_t *align;
+                uint16_t *pad;
+            } Tuple;
+
+            struct {
+                int64_t *offset;
+                uint16_t *align;
+                uint16_t *pad;
+            } Record;
+        };
+
+        size_t size;
+        uint16_t align;
+
+    } Concrete;
+
     alignas(MAX_ALIGN) char extra[];
 };
 
@@ -428,6 +463,8 @@ const char *ndt_tag_as_string(enum ndt tag);
 enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 
+int ndt_is_abstract(const ndt_t *t);
+int ndt_is_concrete(const ndt_t *t);
 int ndt_is_signed(const ndt_t *t);
 int ndt_is_unsigned(const ndt_t *t);
 int ndt_is_real(const ndt_t *t);
@@ -439,6 +476,7 @@ int ndt_is_column_major(const ndt_t *t);
 int ndt_is_contiguous(const ndt_t *t);
 int ndt_is_c_contiguous(const ndt_t *t);
 int ndt_is_f_contiguous(const ndt_t *t);
+int ndt_is_scalar(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 
@@ -464,13 +502,9 @@ void ndt_memory_array_del(ndt_memory_t *types, size_t ntypes);
 void ndt_attr_del(ndt_attr_t *attr);
 void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
 
-ndt_tuple_field_t *ndt_tuple_field(ndt_t *type, uint8_t align, uint8_t pack, ndt_context_t *ctx);
-void ndt_tuple_field_del(ndt_tuple_field_t *field);
-void ndt_tuple_field_array_del(ndt_tuple_field_t *fields, size_t shape);
-
-ndt_record_field_t *ndt_record_field(char *name, ndt_t *type, uint8_t align, uint8_t pack, ndt_context_t *ctx);
-void ndt_record_field_del(ndt_record_field_t *field);
-void ndt_record_field_array_del(ndt_record_field_t *fields, size_t shape);
+ndt_field_t *ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
+void ndt_field_del(ndt_field_t *field);
+void ndt_field_array_del(ndt_field_t *fields, size_t shape);
 
 
 /*** Datashape ***/
@@ -487,18 +521,17 @@ ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char order, ndt_context_t *ctx);
-ndt_t *ndt_ndarray(ndt_t *array, int64_t *strides, int64_t offset, char order, ndt_context_t *ctx);
+ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
 
 
 /* Dtypes */
-ndt_t *ndt_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_t *fields, size_t shape,
-                 uint8_t align, uint8_t pack, ndt_context_t *ctx);
-ndt_t *ndt_record(enum ndt_variadic_flag flag, ndt_record_field_t *fields, size_t shape,
-                  uint8_t align, uint8_t pack, ndt_context_t *ctx);
+ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+                 uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
+ndt_t *ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+                  uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
 ndt_t *ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx);
 ndt_t *ndt_typevar(char *name, ndt_context_t *ctx);
 
@@ -524,8 +557,8 @@ ndt_t *ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx);
 /* Scalars */
 ndt_t *ndt_string(ndt_context_t *ctx);
 ndt_t *ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx);
-ndt_t *ndt_bytes(uint8_t target_align, ndt_context_t *ctx);
-ndt_t *ndt_fixed_bytes(size_t size, uint8_t align, ndt_context_t *ctx);
+ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
+ndt_t *ndt_fixed_bytes(size_t size, uint16_opt_t align, ndt_context_t *ctx);
 ndt_t *ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx);
 ndt_t *ndt_pointer(ndt_t *type, ndt_context_t *ctx);
 

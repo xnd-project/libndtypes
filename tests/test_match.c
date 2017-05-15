@@ -3635,6 +3635,8 @@ const match_testcase_t match_tests[] = {
     "10 * 20 * var * 10 * ... * 10 * 20 * foo_t", 0 },
 
   /* ndarray */
+#if 0
+XXX
   { "[10 * 2 * int64, style='ndarray']",
     "[10 * 2 * int64, style='ndarray']", 1 },
 
@@ -3658,6 +3660,7 @@ const match_testcase_t match_tests[] = {
 
   { "[10 * 2 * int64, order='F', style='ndarray']",
     "[10 * 2 * int64, order='C', style='ndarray']", 0 },
+#endif
   /* END MANUALLY GENERATED */
 
   { NULL, NULL, 0 }
