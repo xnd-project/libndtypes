@@ -58,13 +58,12 @@ ndt_t *mk_fixed_string(const char *v, enum ndt_encoding encoding, ndt_context_t 
 ndt_t *mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_array(ndt_t *dims, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
-ndt_tuple_field_t *mk_tuple_field(ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_tuple(enum ndt_variadic_flag flag, ndt_tuple_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
-ndt_record_field_t * mk_record_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_record(enum ndt_variadic_flag flag, ndt_record_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
+ndt_t *mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
+ndt_field_t *mk_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
+ndt_t *mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
 ndt_t *mk_function(ndt_t *ret,
-                   enum ndt_variadic_flag tflag, ndt_tuple_field_seq_t *tseq,
-                   enum ndt_variadic_flag rflag, ndt_record_field_seq_t *rseq,
+                   enum ndt_variadic tflag, ndt_field_seq_t *tseq,
+                   enum ndt_variadic rflag, ndt_field_seq_t *rseq,
                    ndt_context_t *ctx);
 ndt_t *mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx);
 ndt_t *mk_categorical(ndt_memory_seq_t *seq, ndt_context_t *ctx);

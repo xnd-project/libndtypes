@@ -100,19 +100,25 @@ test_struct_align_pack(void)
         ndt_context_del(ctx);
         return -1;
     }
+    if (ndt_is_abstract(t)) {
+        fprintf(stderr,
+            "test_struct_align_pack: parse: FAIL: unexpected abstract type\n");
+        ndt_context_del(ctx);
+        return -1;
+    }
 
-    if (t->size != sizeof(packed_no_trail) ||
-        t->align != alignof(packed_no_trail) ||
-        t->Record.fields[0].offset != offsetof(packed_no_trailing_padding_t, u1) ||
-        t->Record.fields[0].align !=  alignof(packed_no_trail.u1) ||
-        t->Record.fields[1].offset != offsetof(packed_no_trailing_padding_t, i1) ||
-        t->Record.fields[1].align !=  alignof(packed_no_trail.i1) ||
-        t->Record.fields[2].offset != offsetof(packed_no_trailing_padding_t, u2) ||
-        t->Record.fields[2].align !=  alignof(packed_no_trail.u2) ||
-        t->Record.fields[3].offset != offsetof(packed_no_trailing_padding_t, i2) ||
-        t->Record.fields[3].align !=  alignof(packed_no_trail.i2) ||
-        t->Record.fields[4].offset != offsetof(packed_no_trailing_padding_t, u3) ||
-        t->Record.fields[4].align !=  alignof(packed_no_trail.u3)) {
+    if (t->Concrete.size != sizeof(packed_no_trail) ||
+        t->Concrete.align != alignof(packed_no_trail) ||
+        t->Concrete.Record.offset[0] != offsetof(packed_no_trailing_padding_t, u1) ||
+        t->Concrete.Record.align[0] !=  alignof(packed_no_trail.u1) ||
+        t->Concrete.Record.offset[1] != offsetof(packed_no_trailing_padding_t, i1) ||
+        t->Concrete.Record.align[1] !=  alignof(packed_no_trail.i1) ||
+        t->Concrete.Record.offset[2] != offsetof(packed_no_trailing_padding_t, u2) ||
+        t->Concrete.Record.align[2] !=  alignof(packed_no_trail.u2) ||
+        t->Concrete.Record.offset[3] != offsetof(packed_no_trailing_padding_t, i2) ||
+        t->Concrete.Record.align[3] !=  alignof(packed_no_trail.i2) ||
+        t->Concrete.Record.offset[4] != offsetof(packed_no_trailing_padding_t, u3) ||
+        t->Concrete.Record.align[4] !=  alignof(packed_no_trail.u3)) {
         fprintf(stderr, "test_struct_align_pack: packed_no_trail: FAIL");
         ndt_context_del(ctx);
     }
@@ -126,19 +132,25 @@ test_struct_align_pack(void)
         ndt_context_del(ctx);
         return -1;
     }
+    if (ndt_is_abstract(t)) {
+        fprintf(stderr,
+            "test_struct_align_pack: parse: FAIL: unexpected abstract type\n");
+        ndt_context_del(ctx);
+        return -1;
+    }
 
-    if (t->size != sizeof(packed_no_trail) ||
-        t->align != alignof(packed_no_trail) ||
-        t->Record.fields[0].offset != offsetof(packed_no_trailing_padding_t, u1) ||
-        t->Record.fields[0].align !=  alignof(packed_no_trail.u1) ||
-        t->Record.fields[1].offset != offsetof(packed_no_trailing_padding_t, i1) ||
-        t->Record.fields[1].align !=  alignof(packed_no_trail.i1) ||
-        t->Record.fields[2].offset != offsetof(packed_no_trailing_padding_t, u2) ||
-        t->Record.fields[2].align !=  alignof(packed_no_trail.u2) ||
-        t->Record.fields[3].offset != offsetof(packed_no_trailing_padding_t, i2) ||
-        t->Record.fields[3].align !=  alignof(packed_no_trail.i2) ||
-        t->Record.fields[4].offset != offsetof(packed_no_trailing_padding_t, u3) ||
-        t->Record.fields[4].align !=  alignof(packed_no_trail.u3)) {
+    if (t->Concrete.size != sizeof(packed_no_trail) ||
+        t->Concrete.align != alignof(packed_no_trail) ||
+        t->Concrete.Record.offset[0] != offsetof(packed_no_trailing_padding_t, u1) ||
+        t->Concrete.Record.align[0] !=  alignof(packed_no_trail.u1) ||
+        t->Concrete.Record.offset[1] != offsetof(packed_no_trailing_padding_t, i1) ||
+        t->Concrete.Record.align[1] !=  alignof(packed_no_trail.i1) ||
+        t->Concrete.Record.offset[2] != offsetof(packed_no_trailing_padding_t, u2) ||
+        t->Concrete.Record.align[2] !=  alignof(packed_no_trail.u2) ||
+        t->Concrete.Record.offset[3] != offsetof(packed_no_trailing_padding_t, i2) ||
+        t->Concrete.Record.align[3] !=  alignof(packed_no_trail.i2) ||
+        t->Concrete.Record.offset[4] != offsetof(packed_no_trailing_padding_t, u3) ||
+        t->Concrete.Record.align[4] !=  alignof(packed_no_trail.u3)) {
         fprintf(stderr, "test_struct_align_pack: packed_no_trail_abbrev: FAIL\n");
         ndt_context_del(ctx);
     }
@@ -152,19 +164,25 @@ test_struct_align_pack(void)
         ndt_context_del(ctx);
         return -1;
     }
+    if (ndt_is_abstract(t)) {
+        fprintf(stderr,
+            "test_struct_align_pack: parse: FAIL: unexpected abstract type\n");
+        ndt_context_del(ctx);
+        return -1;
+    }
 
-    if (t->size != sizeof(packed_with_trail) ||
-        t->align != alignof(packed_with_trail) ||
-        t->Record.fields[0].offset != offsetof(packed_with_trailing_padding_t, u1) ||
-        t->Record.fields[0].align !=  alignof(packed_with_trail.u1) ||
-        t->Record.fields[1].offset != offsetof(packed_with_trailing_padding_t, i1) ||
-        t->Record.fields[1].align !=  alignof(packed_with_trail.u1) ||
-        t->Record.fields[2].offset != offsetof(packed_with_trailing_padding_t, u2) ||
-        t->Record.fields[2].align !=  alignof(packed_with_trail.u2) ||
-        t->Record.fields[3].offset != offsetof(packed_with_trailing_padding_t, i2) ||
-        t->Record.fields[3].align !=  alignof(packed_with_trail.i2) ||
-        t->Record.fields[4].offset != offsetof(packed_with_trailing_padding_t, u3) ||
-        t->Record.fields[4].align !=  alignof(packed_with_trail.u3)) {
+    if (t->Concrete.size != sizeof(packed_with_trail) ||
+        t->Concrete.align != alignof(packed_with_trail) ||
+        t->Concrete.Record.offset[0] != offsetof(packed_with_trailing_padding_t, u1) ||
+        t->Concrete.Record.align[0] !=  alignof(packed_with_trail.u1) ||
+        t->Concrete.Record.offset[1] != offsetof(packed_with_trailing_padding_t, i1) ||
+        t->Concrete.Record.align[1] !=  alignof(packed_with_trail.u1) ||
+        t->Concrete.Record.offset[2] != offsetof(packed_with_trailing_padding_t, u2) ||
+        t->Concrete.Record.align[2] !=  alignof(packed_with_trail.u2) ||
+        t->Concrete.Record.offset[3] != offsetof(packed_with_trailing_padding_t, i2) ||
+        t->Concrete.Record.align[3] !=  alignof(packed_with_trail.i2) ||
+        t->Concrete.Record.offset[4] != offsetof(packed_with_trailing_padding_t, u3) ||
+        t->Concrete.Record.align[4] !=  alignof(packed_with_trail.u3)) {
         fprintf(stderr, "test_struct_align_pack: packed_with_trail: FAIL");
         ndt_context_del(ctx);
     }
@@ -178,15 +196,21 @@ test_struct_align_pack(void)
         ndt_context_del(ctx);
         return -1;
     }
+    if (ndt_is_abstract(t)) {
+        fprintf(stderr,
+            "test_struct_align_pack: parse: FAIL: unexpected abstract type\n");
+        ndt_context_del(ctx);
+        return -1;
+    }
 
-    if (t->size != sizeof(aligned) ||
-        t->align != alignof(aligned) ||
-        t->Record.fields[0].offset != offsetof(aligned_t, u1) ||
-        t->Record.fields[0].align !=  alignof(aligned.u1) ||
-        t->Record.fields[1].offset != offsetof(aligned_t, i1) ||
-        t->Record.fields[1].align !=  alignof(aligned.i1) ||
-        t->Record.fields[2].offset != offsetof(aligned_t, u2) ||
-        t->Record.fields[2].align != alignof(aligned.u2)) {
+    if (t->Concrete.size != sizeof(aligned) ||
+        t->Concrete.align != alignof(aligned) ||
+        t->Concrete.Record.offset[0] != offsetof(aligned_t, u1) ||
+        t->Concrete.Record.align[0] !=  alignof(aligned.u1) ||
+        t->Concrete.Record.offset[1] != offsetof(aligned_t, i1) ||
+        t->Concrete.Record.align[1] !=  alignof(aligned.i1) ||
+        t->Concrete.Record.offset[2] != offsetof(aligned_t, u2) ||
+        t->Concrete.Record.align[2] != alignof(aligned.u2)) {
         fprintf(stderr, "test_struct_align_pack: aligned: FAIL");
         ndt_context_del(ctx);
     }

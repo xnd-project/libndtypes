@@ -37,6 +37,7 @@
 #include <inttypes.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <assert.h>
 #include "ndtypes.h"
 
 
@@ -131,6 +132,7 @@ ndt_snprintf_d(ndt_context_t *ctx, buf_t *buf, int d, const char *fmt, ...)
     return n;
 }
 
+#if 0
 static int
 flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 {
@@ -159,25 +161,24 @@ flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 
     return 0;
 }
+#endif
 
 static int
-common_attributes(buf_t *buf, const  ndt_t *t, int d, ndt_context_t *ctx)
+common_attributes(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
-    int n;
-
-    n = ndt_snprintf_d(ctx, buf, d,
-                       "ndim=%" PRIu8 ", size=%zu, align=%" PRIu8 ", flags=[",
-                       t->ndim, t->size, t->align);
-    if (n < 0) return -1;
-
-    n = flags(buf, t, ctx);
-    if (n < 0) return -1;
-
-    return ndt_snprintf(ctx, buf, "]");
+    if (ndt_is_abstract(t)) {
+        return ndt_snprintf_d(ctx, buf, d, "abstract=true, ndim=%d", t->ndim);
+    }
+    else {
+        return ndt_snprintf_d(ctx, buf, d,
+                   "abstract=false, ndim=%d, size=%zu, align=%" PRIu16,
+                   t->ndim, t->Concrete.size, t->Concrete.align);
+    }
 }
 
 static int
-common_attributes_with_newline(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
+common_attributes_with_newline(buf_t *buf, const ndt_t *t, int d,
+                               ndt_context_t *ctx)
 {
     int n;
 
@@ -188,13 +189,14 @@ common_attributes_with_newline(buf_t *buf, const ndt_t *t, int d, ndt_context_t 
 }
 
 static int
-tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
-             ndt_context_t *ctx)
+tuple_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
-    size_t i;
+    int64_t i;
     int n;
 
-    for (i = 0; i < nfields; i++) {
+    assert(t->tag == Tuple);
+
+    for (i = 0; i < t->Tuple.shape; i++) {
         if (i >= 1) {
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
@@ -206,14 +208,19 @@ tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
         n = ndt_snprintf_d(ctx, buf, d+2, "type=");
         if (n < 0) return -1;
 
-        n = datashape(buf, fields[i].type, d+5+2, 1, ctx);
+        n = datashape(buf, t->Tuple.types[i], d+5+2, 1, ctx);
         if (n < 0) return -1;
 
-        n = ndt_snprintf(ctx, buf, ",\n");
+        n = ndt_snprintf(ctx, buf, "%s\n", ndt_is_concrete(t) ? "," : "");
         if (n < 0) return -1;
 
-        n = ndt_snprintf_d(ctx, buf, d+2, "offset=%zu, align=%" PRIu8 ", pad=%" PRIu8 "\n",
-                           fields[i].offset, fields[i].align, fields[i].pad);
+        if (ndt_is_concrete(t)) {
+            n = ndt_snprintf_d(ctx, buf, d+2,
+                               "offset=%zu, align=%" PRIu16 ", pad=%" PRIu16 "\n",
+                               t->Concrete.Tuple.offset[i], t->Concrete.Tuple.align[i],
+                               t->Concrete.Tuple.pad[i]);
+            if (n < 0) return -1;
+        }
 
         n = ndt_snprintf_d(ctx, buf, d, ")");
         if (n < 0) return -1;
@@ -223,35 +230,41 @@ tuple_fields(buf_t *buf, ndt_tuple_field_t *fields, size_t nfields, int d,
 }
 
 static int
-record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
-              ndt_context_t *ctx)
+record_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
-    size_t i;
+    int64_t i;
     int n;
 
-    for (i = 0; i < nfields; i++) {
+    assert(t->tag == Record);
+
+    for (i = 0; i < t->Record.shape; i++) {
         if (i >= 1) {
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
         }
 
-        n = ndt_snprintf_d(ctx, buf, d, "RecordField(\n", fields[i].name);
+        n = ndt_snprintf_d(ctx, buf, d, "RecordField(\n");
         if (n < 0) return -1;
 
-        n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", fields[i].name);
+        n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Record.names[i]);
         if (n < 0) return -1;
 
         n = ndt_snprintf_d(ctx, buf, d+2, "type=");
         if (n < 0) return -1;
 
-        n = datashape(buf, fields[i].type, d+5+2, 1, ctx);
+        n = datashape(buf, t->Record.types[i], d+5+2, 1, ctx);
         if (n < 0) return -1;
 
-        n = ndt_snprintf(ctx, buf, ",\n");
+        n = ndt_snprintf(ctx, buf, "%s\n", ndt_is_concrete(t) ? "," : "");
         if (n < 0) return -1;
 
-        n = ndt_snprintf_d(ctx, buf, d+2, "offset=%zu, align=%" PRIu8 ", pad=%" PRIu8 "\n",
-                           fields[i].offset, fields[i].align, fields[i].pad);
+        if (ndt_is_concrete(t)) {
+            n = ndt_snprintf_d(ctx, buf, d+2,
+                "offset=%zu, align=%" PRIu16 ", pad=%" PRIu16 "\n",
+                t->Concrete.Record.offset[i], t->Concrete.Record.align[i],
+                t->Concrete.Record.pad[i]);
+            if (n < 0) return -1;
+        }
 
         n = ndt_snprintf_d(ctx, buf, d, ")");
         if (n < 0) return -1;
@@ -261,7 +274,7 @@ record_fields(buf_t *buf, ndt_record_field_t *fields, size_t nfields, int d,
 }
 
 static int
-variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *ctx)
+variadic_flag(buf_t *buf, enum ndt_variadic flag, int d, ndt_context_t *ctx)
 {
     if (flag == Variadic) {
         return ndt_snprintf_d(ctx, buf, d, "variadic=true,\n");
@@ -271,7 +284,7 @@ variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *ctx
 }
 
 static int
-comma_variadic_flag(buf_t *buf, enum ndt_variadic_flag flag, int d, ndt_context_t *ctx)
+comma_variadic_flag(buf_t *buf, enum ndt_variadic flag, int d, ndt_context_t *ctx)
 {
     if (flag == Variadic) {
         int n = ndt_snprintf(ctx, buf, ",\n");
@@ -423,10 +436,17 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(
-                    ctx, buf, d+2,
-                    "shape=%zu, stride=%" PRIi64 ", offset=%" PRIi64 ", itemsize=%zu,\n",
-                    t->FixedDim.shape, t->FixedDim.stride, t->FixedDim.offset, t->FixedDim.itemsize);
+            if (ndt_is_abstract(t)) {
+                n = ndt_snprintf_d(ctx, buf, d+2, "shape=%zu,\n",
+                                   t->FixedDim.shape);
+            }
+            else {
+                n = ndt_snprintf_d(ctx, buf, d+2,
+                    "shape=%zu, offset=%" PRIi64 ", itemsize=%" PRIi64 ", stride=%zu,\n",
+                    t->FixedDim.shape, t->Concrete.FixedDim.offset, t->Concrete.FixedDim.itemsize,
+                    t->Concrete.FixedDim.stride);
+            }
+           
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
@@ -444,8 +464,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s', stride=%" PRIi64 ", itemsize=%zu,\n",
-                               t->SymbolicDim.name, t->SymbolicDim.stride, t->SymbolicDim.itemsize);
+            assert(ndt_is_abstract(t));
+            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->SymbolicDim.name);
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
@@ -465,18 +485,22 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "shapes=[");
-            if (n < 0) return -1;
+            if (ndt_is_concrete(t)) {
+                n = ndt_snprintf_d(ctx, buf, d+2, "shapes=[");
+                if (n < 0) return -1;
 
-            for (i = 0; i < t->VarDim.nshapes; i++) {
-                n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s", t->VarDim.shapes[i],
-                                 i==t->VarDim.nshapes-1 ? "" : ", ");
+                for (i = 0; i < t->Concrete.VarDim.nshapes; i++) {
+                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s",
+                                     t->Concrete.VarDim.shapes[i],
+                                     i==t->Concrete.VarDim.nshapes-1 ? "" : ", ");
+                    if (n < 0) return -1;
+                }
+
+                n = ndt_snprintf(ctx, buf,
+                    "], offset=%" PRIi64 ", itemsize=%" PRIi64 ", stride=%zu,\n",
+                     t->Concrete.VarDim.offset, t->Concrete.VarDim.itemsize, t->Concrete.VarDim.stride);
                 if (n < 0) return -1;
             }
-
-            n = ndt_snprintf(ctx, buf, "], stride=%" PRIi64 ", offset=%" PRIi64 ", itemsize=%zu,\n",
-                             t->VarDim.stride, t->VarDim.offset, t->VarDim.itemsize);
-            if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
             if (n < 0) return -1;
@@ -498,53 +522,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
-
-        case Ndarray: {
-            int i;
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Ndarray(\n");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->Ndarray.dtype, d+2, 0, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, "\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "shape=[");
-            if (n < 0) return -1;
-
-            for (i = 0; i < t->ndim; i++) {
-                if (t->Ndarray.symbols[i]) {
-                    n = ndt_snprintf(ctx, buf, "%s%s", t->Ndarray.symbols[i],
-                                     i == t->ndim-1 ? "]\n" : ", ");
-                    if (n < 0) return -1;
-                }
-                else {
-                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s", t->Ndarray.shape[i],
-                                     i == t->ndim-1 ? "]\n" : ", ");
-                    if (n < 0) return -1;
-                }
-            }
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "strides=[");
-            if (n < 0) return -1;
-            for (i = 0; i < t->ndim-1; i++) {
-                n = ndt_snprintf(ctx, buf, "%" PRIi64 ", ", t->Ndarray.strides[i]);
-                if (n < 0) return -1;
-            }
-            n = ndt_snprintf(ctx, buf, "%" PRIi64 "],\n", t->Ndarray.strides[i]);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "offset=%" PRIi64 ", itemsize=%zu,\n",
-                               t->Ndarray.offset, t->Ndarray.itemsize);
-            if (n < 0) return -1;
-
-            n = common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-        }
 
         case Option:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Option(\n");
@@ -596,8 +573,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Tuple(\n");
             if (n < 0) return -1;
 
-            if (t->Tuple.fields) {
-                n = tuple_fields(buf, t->Tuple.fields, t->Tuple.shape, d+2, ctx);
+            if (t->Tuple.shape > 0) {
+                n = tuple_fields(buf, t, d+2, ctx);
                 if (n < 0) return -1;
 
                 n = comma_variadic_flag(buf, t->Tuple.flag, d+2, ctx);
@@ -620,8 +597,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Record(\n");
             if (n < 0) return -1;
 
-            if (t->Record.fields) {
-                n = record_fields(buf, t->Record.fields, t->Record.shape, d+2, ctx);
+            if (t->Record.shape > 0) {
+                n = record_fields(buf, t, d+2, ctx);
                 if (n < 0) return -1;
 
                 n = comma_variadic_flag(buf, t->Record.flag, d+2, ctx);
@@ -676,16 +653,16 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             return ndt_snprintf_d(ctx, buf, d, ")");
 
         case Typevar:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Typevar(\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Typevar(");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "name=%s,\n", t->Typevar.name);
+            n = ndt_snprintf(ctx, buf, "name=%s, ", t->Typevar.name);
             if (n < 0) return -1;
 
-            n = common_attributes_with_newline(buf, t, d+2, ctx);
+            n = common_attributes(buf, t, 0, ctx);
             if (n < 0) return -1;
 
-            return ndt_snprintf_d(ctx, buf, d, ")");
+            return ndt_snprintf(ctx, buf, ")");
 
         case AnyKind: case ScalarKind:
         case Void: case Bool:

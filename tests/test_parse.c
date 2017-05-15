@@ -1476,6 +1476,8 @@ const char *parse_tests[] = {
   "[var(2) * var(3,4) * var(5,6,7,8,9,10,11) * float64, offsets=[8,0,16]]",
 
   /* Ndarray */
+#if 0
+XXX
   "[10 * int32, order='C', style='ndarray']",
   "[10 * int32, order='F', style='ndarray']",
   "([10 * int32, order='F', style='ndarray'], float32)",
@@ -1491,6 +1493,7 @@ const char *parse_tests[] = {
   "[N * 2 * int64, style='ndarray']",
   "[P * N * int64, style='ndarray']",
   "[P * N * {a: N * float64}, style='ndarray']",
+#endif
 
   /* END MANUALLY GENERATED */
 

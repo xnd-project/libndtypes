@@ -48,17 +48,17 @@ typedef struct {
 } attr_spec;
 
 /* Container attributes */
-static const attr_spec array_attr = {0, 7,
-    {"strides", "_strides_len", "offsets", "_offsets_len", "offset", "order", "style"},
-    {AttrInt64List, AttrInt16, AttrInt64List, AttrInt16, AttrInt64, AttrChar, AttrString}};
-static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
-static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint8, AttrUint8}};
+static const attr_spec array_attr = {0, 6,
+    {"strides", "_strides_len", "offsets", "_offsets_len", "order", "style"},
+    {AttrInt64List, AttrInt16, AttrInt64List, AttrInt16, AttrChar, AttrString}};
+static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint16_Opt, AttrUint16_Opt}};
+static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint16_Opt, AttrUint16_Opt}};
 
 /* Type constructor attributes */
 static const attr_spec prim_attr = {0, 1, {"endian"}, {AttrChar}};
 static const attr_spec char_attr = {0, 1, {"encoding"}, {AttrString}};
-static const attr_spec bytes_attr = {0, 1, {"align"}, {AttrUint8}};
-static const attr_spec fixed_bytes_attr = {1, 2, {"size", "align"}, {AttrSize, AttrUint8}};
+static const attr_spec bytes_attr = {0, 1, {"align"}, {AttrUint16_Opt}};
+static const attr_spec fixed_bytes_attr = {1, 2, {"size", "align"}, {AttrSize, AttrUint16_Opt}};
 
 
 const attr_spec *
@@ -158,6 +158,11 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
         case AttrSize: *(size_t *)ptr = (size_t)ndt_strtoull(v[i]->AttrValue, SIZE_MAX, ctx); break;
         case AttrFloat32: *(float *)ptr = ndt_strtof(v[i]->AttrValue, ctx); break;
         case AttrFloat64: *(double *)ptr = ndt_strtod(v[i]->AttrValue, ctx); break;
+
+        case AttrUint16_Opt:
+            ((uint16_opt_t *)ptr)->tag = Some;
+            ((uint16_opt_t *)ptr)->Some = (uint16_t)ndt_strtoul(v[i]->AttrValue, UINT16_MAX, ctx);
+            break;
 
         case AttrString: {
             char *value = ndt_strdup(v[i]->AttrValue, ctx);

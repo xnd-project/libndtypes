@@ -184,22 +184,20 @@ match_dimensions_ndarray(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
 
 
 static int
-match_tuple_fields(ndt_tuple_field_t *p, size_t pshape,
-                   ndt_tuple_field_t *c, size_t cshape,
-                   symtable_t *tbl, ndt_context_t *ctx)
+match_tuple_fields(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
+                   ndt_context_t *ctx)
 {
-    size_t i;
+    int64_t i;
     int n;
 
-    if (!!p != !!c || pshape != cshape) {
+    assert(p->tag == Tuple && c->tag == Tuple);
+
+    if (p->Tuple.shape != c->Tuple.shape) {
         return 0;
     }
-    if (p == NULL) {
-        return 1;
-    }
 
-    for (i = 0; i < pshape; i++) {
-        n = match_datashape(p[i].type, c[i].type, tbl, ctx);
+    for (i = 0; i < p->Tuple.shape; i++) {
+        n = match_datashape(p->Tuple.types[i], c->Tuple.types[i], tbl, ctx);
         if (n <= 0) return n;
     }
 
@@ -207,25 +205,23 @@ match_tuple_fields(ndt_tuple_field_t *p, size_t pshape,
 }
 
 static int
-match_record_fields(ndt_record_field_t *p, size_t pshape,
-                    ndt_record_field_t *c, size_t cshape,
-                    symtable_t *tbl, ndt_context_t *ctx)
+match_record_fields(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
+                    ndt_context_t *ctx)
 {
-    size_t i;
+    int64_t i;
     int n;
 
-    if (!!p != !!c || pshape != cshape) {
+    assert(p->tag == Record && c->tag == Record);
+
+    if (p->Record.shape != c->Record.shape) {
         return 0;
     }
-    if (p == NULL) {
-        return 1;
-    }
 
-    for (i = 0; i < pshape; i++) {
-        n = strcmp(p[i].name, c[i].name);
+    for (i = 0; i < p->Record.shape; i++) {
+        n = strcmp(p->Record.names[i], c->Record.names[i]);
         if (n != 0) return 0;
 
-        n = match_datashape(p[i].type, c[i].type, tbl, ctx);
+        n = match_datashape(p->Record.types[i], c->Record.types[i], tbl, ctx);
         if (n <= 0) return n;
     }
 
@@ -326,15 +322,11 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         if (c->tag != Pointer) return 0;
         return match_datashape(p->Pointer.type, c->Pointer.type, tbl, ctx);
     case Tuple:
-        if (c->tag != Tuple || p->Tuple.flag != c->Tuple.flag) return 0;
-        return match_tuple_fields(p->Tuple.fields, p->Tuple.shape,
-                                  c->Tuple.fields, c->Tuple.shape,
-                                  tbl, ctx);
+        if (c->tag != Tuple) return 0;
+        return match_tuple_fields(p, c, tbl, ctx);
     case Record:
-        if (c->tag != Record || p->Record.flag != c->Record.flag) return 0;
-        return match_record_fields(p->Record.fields, p->Record.shape,
-                                   c->Record.fields, c->Record.shape,
-                                   tbl, ctx);
+        if (c->tag != Record) return 0;
+        return match_record_fields(p, c, tbl, ctx);
     case Function:
         if (c->tag != Function) return 0;
         n = match_datashape(p->Function.ret, c->Function.ret, tbl, ctx);

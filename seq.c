@@ -152,17 +152,11 @@ elem##_seq_finalize(elem##_seq_t *seq)                  \
     return seq;                                         \
 }
 
-NDT_SEQ_NEW(ndt_tuple_field)
-NDT_SEQ_DEL(ndt_tuple_field)
-NDT_SEQ_GROW(ndt_tuple_field)
-NDT_SEQ_APPEND(ndt_tuple_field)
-NDT_SEQ_FINALIZE(ndt_tuple_field)
-
-NDT_SEQ_NEW(ndt_record_field)
-NDT_SEQ_DEL(ndt_record_field)
-NDT_SEQ_GROW(ndt_record_field)
-NDT_SEQ_APPEND(ndt_record_field)
-NDT_SEQ_FINALIZE(ndt_record_field)
+NDT_SEQ_NEW(ndt_field)
+NDT_SEQ_DEL(ndt_field)
+NDT_SEQ_GROW(ndt_field)
+NDT_SEQ_APPEND(ndt_field)
+NDT_SEQ_FINALIZE(ndt_field)
 
 NDT_SEQ_NEW(ndt_memory)
 NDT_SEQ_DEL(ndt_memory)
