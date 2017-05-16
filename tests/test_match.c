@@ -156,18 +156,6 @@ const match_testcase_t match_tests[] = {
     "10 * ... *  30 * Any",
     1 },
 
-  { "?... * Any",
-    "?... * Any",
-    1 },
-
-  { "?... * Any",
-    "?1000 * Any",
-    1 },
-
-  { "?1000 * Any",
-    "?... * Any",
-    0 },
-
   { "10 * ... * Any",
     "10 * ... * Any",
     1 },
@@ -3519,10 +3507,6 @@ const match_testcase_t match_tests[] = {
     "?820208952 * 1636586098 * defined_t",
     1 },
 
-  { "?... * 2387127713 * 828995637 * 1463003959 * RI(defined_t)",
-    "?... * 2387127713 * 828995637 * 1463003959 * RI(defined_t)",
-    1 },
-
   { "(int32, float32, ..., scale : defined_t, color : float64, ...) -> defined_t",
     "(int32, float32, ..., scale : defined_t, color : float64, ...) -> defined_t",
     1 },
@@ -3554,10 +3538,6 @@ const match_testcase_t match_tests[] = {
 
   { "?820208952 * 1636586098 * foo_t",
     "?820208952 * 1636586098 * foo_t",
-    1 },
-
-  { "?... * 2387127713 * 828995637 * 1463003959 * RI(foo_t)",
-    "?... * 2387127713 * 828995637 * 1463003959 * RI(foo_t)",
     1 },
 
   { "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",

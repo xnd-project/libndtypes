@@ -56,7 +56,6 @@ const char *parse_roundtrip_tests[] = {
   "10 * 10 * var * Any",
   "?10 * 10 * var * Any",
   "... * Any",
-  "?... * Any",
   "10 * ... * Any",
   "?10 * ... * Any",
   "10 * 10 * ... * Any",
@@ -877,7 +876,6 @@ const char *parse_roundtrip_tests[] = {
   "?defined_t",
   "defined_t",
   "?820208952 * 1636586098 * defined_t",
-  "?... * 2387127713 * 828995637 * 1463003959 * RI(defined_t)",
   "(int32, float32, ..., scale : defined_t, color : float64, ...) -> defined_t",
   "(a : pointer({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
 
@@ -887,7 +885,6 @@ const char *parse_roundtrip_tests[] = {
   "?foo_t",
   "foo_t",
   "?820208952 * 1636586098 * foo_t",
-  "?... * 2387127713 * 828995637 * 1463003959 * RI(foo_t)",
   "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
   "(a : pointer({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
   /* END MANUALLY GENERATED */

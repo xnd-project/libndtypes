@@ -211,7 +211,7 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     char *style = NULL;
 
     if (attrs) {
-        int ret = ndt_parse_attr(Ndarray, ctx, attrs, &strides, &strides_len,
+        int ret = ndt_parse_attr(Array, ctx, attrs, &strides, &strides_len,
                                  &offsets, &offsets_len, &order, &style);
         ndt_attr_seq_del(attrs);
 

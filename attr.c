@@ -51,21 +51,21 @@ typedef struct {
 static const attr_spec array_attr = {0, 6,
     {"strides", "_strides_len", "offsets", "_offsets_len", "order", "style"},
     {AttrInt64List, AttrInt16, AttrInt64List, AttrInt16, AttrChar, AttrString}};
-static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint16_Opt, AttrUint16_Opt}};
-static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint16_Opt, AttrUint16_Opt}};
+static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
+static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
 
 /* Type constructor attributes */
 static const attr_spec prim_attr = {0, 1, {"endian"}, {AttrChar}};
 static const attr_spec char_attr = {0, 1, {"encoding"}, {AttrString}};
-static const attr_spec bytes_attr = {0, 1, {"align"}, {AttrUint16_Opt}};
-static const attr_spec fixed_bytes_attr = {1, 2, {"size", "align"}, {AttrSize, AttrUint16_Opt}};
+static const attr_spec bytes_attr = {0, 1, {"align"}, {AttrUint16Opt}};
+static const attr_spec fixed_bytes_attr = {1, 2, {"size", "align"}, {AttrSize, AttrUint16Opt}};
 
 
 const attr_spec *
 ndt_get_attr_spec(enum ndt tag, ndt_context_t *ctx)
 {
     switch(tag) {
-    case Ndarray:
+    case Array:
         return &array_attr;
     case Tuple: case Record:
         return &tuple_record_attr;
@@ -159,7 +159,7 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
         case AttrFloat32: *(float *)ptr = ndt_strtof(v[i]->AttrValue, ctx); break;
         case AttrFloat64: *(double *)ptr = ndt_strtod(v[i]->AttrValue, ctx); break;
 
-        case AttrUint16_Opt:
+        case AttrUint16Opt:
             ((uint16_opt_t *)ptr)->tag = Some;
             ((uint16_opt_t *)ptr)->Some = (uint16_t)ndt_strtoul(v[i]->AttrValue, UINT16_MAX, ctx);
             break;

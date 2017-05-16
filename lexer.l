@@ -189,8 +189,6 @@ yycolumn = 1;
 
 "pointer"      { return POINTER; }
 
-"option"       { return OPTION; }
-
 "var"          { return VAR; }
 
 "..."          { return ELLIPSIS; }
