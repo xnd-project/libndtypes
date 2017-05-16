@@ -331,11 +331,11 @@ tag_as_constr(enum ndt tag)
     switch (tag) {
     case AnyKind: return "Any";
 
+    case Array: return "Array";
     case FixedDim: return "FixedDim";
     case SymbolicDim: return "SymbolicDim";
     case VarDim: return "VarDim";
     case EllipsisDim: return "EllipsisDim";
-    case Ndarray: return "Ndarray";
 
     case Option: return "Option";
     case Nominal: return "Nominal";

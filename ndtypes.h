@@ -189,7 +189,6 @@ enum ndt {
     EllipsisDim,
 
     Array,
-    Ndarray,
 
     Option,
     Nominal,
@@ -277,12 +276,7 @@ struct _ndt {
         struct {
             uint32_t flags;
             ndt_t *type;
-        } Array; /* any dimensions */
-
-        struct {
-            uint32_t flags;
-            ndt_t *type;
-        } Ndarray; /* only fixed dimensions */
+        } Array;
 
         struct {
             uint32_t flags;
@@ -377,11 +371,6 @@ struct _ndt {
                 int noffsets;
                 size_t *offsets;
             } Array;
-
-            struct {
-                int noffsets;
-                size_t *offsets;
-            } Ndarray;
 
             struct {
                 int64_t offset;

@@ -226,13 +226,7 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         if (c->tag == Array) {
             return match_datashape(p->Array.type, c->Array.type, tbl, ctx);
         }
-        if (c->tag == Ndarray) {
-            return match_datashape(p->Ndarray.type, c->Ndarray.type, tbl, ctx);
-        }
         return 0;
-    case Ndarray:
-        if (c->tag != Ndarray) return 0;
-        return match_datashape(p->Array.type, c->Array.type, tbl, ctx);
     case Void: case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:

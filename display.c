@@ -312,9 +312,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         case Array:
              return datashape(buf, t->Array.type, d, ctx);
 
-        case Ndarray:
-             return datashape(buf, t->Ndarray.type, d, ctx);
-
         case Option:
             n = ndt_snprintf(ctx, buf, "?");
             if (n < 0) return -1;
