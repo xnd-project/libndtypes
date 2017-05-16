@@ -101,9 +101,9 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> input
 %type <ndt> datashape
 %type <ndt> array
-%type <ndt> array_nooption
-%type <ndt> flexarray
-%type <ndt> flexarray_tail
+%type <ndt> dimensions
+%type <ndt> dimensions_nooption
+%type <ndt> dimensions_tail
 %type <ndt> dtype
 %type <ndt> dtype_nooption
 %type <ndt> scalar
@@ -150,7 +150,6 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %token
  ANY_KIND
- OPTION
  SCALAR_KIND
    VOID
    BOOL
@@ -199,28 +198,26 @@ datashape:
 | dtype { $$ = $1; }
 
 array:
-  array_nooption                      { $$ = $1; }
-| QUESTIONMARK array_nooption         { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
-| OPTION LPAREN array_nooption RPAREN { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
+  dimensions                                   { $$ = ndt_array($1, NULL, 0, ctx); if ($$ == NULL) YYABORT; }
+| LBRACK dimensions COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
-array_nooption:
-  flexarray                                   { $$ = ndt_array($1, NULL, 0, ctx); if ($$ == NULL) YYABORT; }
-| LBRACK flexarray COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
+dimensions:
+  dimensions_nooption                      { $$ = $1; }
+| QUESTIONMARK dimensions_nooption         { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
 
-flexarray:
-  INTEGER STAR flexarray_tail              { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER STAR flexarray_tail           { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| VAR integer_args_opt STAR flexarray_tail { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
-| ELLIPSIS STAR flexarray_tail             { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
+dimensions_nooption:
+  INTEGER STAR dimensions_tail              { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER STAR dimensions_tail           { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| VAR integer_args_opt STAR dimensions_tail { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
+| ELLIPSIS STAR dimensions_tail             { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
 
-flexarray_tail:
-  dtype     { $$ = $1; }
-| flexarray { $$ = $1; }
+dimensions_tail:
+  dtype      { $$ = $1; }
+| dimensions { $$ = $1; }
 
 dtype:
   dtype_nooption                      { $$ = $1; }
 | QUESTIONMARK dtype_nooption         { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
-| OPTION LPAREN dtype_nooption RPAREN { $$ = ndt_option($3, ctx); if ($$ == NULL) YYABORT; }
 
 dtype_nooption:
   ANY_KIND                               { $$ = ndt_any_kind(ctx); if ($$ == NULL) YYABORT; }

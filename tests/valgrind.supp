@@ -11,110 +11,32 @@
 # and ndt_alloc_fail() is active.
 #
 
-#
-# Suppressions with -O0 -g
-#
-{
-   flex_inadequate_error_handling_dbg1
-   Memcheck:Leak
-   match-leak-kinds: indirect
-   fun:malloc
-   fun:ndt_alloc_fail
-   fun:ndt_alloc
-   fun:yyalloc
-   fun:yy_scan_buffer
-   fun:ndt_from_string
-}
-
-{
-   flex_inadequate_error_handling_dbg2
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:ndt_alloc_fail
-   fun:ndt_alloc
-   fun:yyalloc
-   fun:yy_scan_buffer
-   fun:ndt_from_string
-}
-
-{
-   flex_inadequate_error_handling_dbg3
-   Memcheck:Leak
-   match-leak-kinds: definite
-   fun:malloc
-   fun:ndt_alloc_fail
-   fun:ndt_alloc
-   fun:yyalloc
-   fun:yy_scan_buffer
-   fun:ndt_from_string
-}
-
-#
-# Suppressions with -O2 -g
-#
 {
    flex_inadequate_error_handling_opt1
    Memcheck:Leak
    match-leak-kinds: indirect
-   fun:malloc
+   ...
    fun:yyalloc
    fun:yy_scan_buffer
    fun:ndt_from_string
-}
-
-{
-   clang_flex_inadequate_error_handling_opt1
-   Memcheck:Leak
-   match-leak-kinds: indirect
-   fun:malloc
-   fun:yyalloc
-   fun:yy_scan_buffer
-   fun:ndt_from_string
-   fun:test_parse_error
-   fun:main
 }
 
 {
    flex_inadequate_error_handling_opt2
    Memcheck:Leak
    match-leak-kinds: possible
-   fun:malloc
+   ...
    fun:yyalloc
    fun:yy_scan_buffer
    fun:ndt_from_string
-}
-
-{
-   clang_flex_inadequate_error_handling_opt2
-   Memcheck:Leak
-   match-leak-kinds: definite
-   fun:malloc
-   fun:yyalloc
-   fun:yy_scan_buffer
-   fun:ndt_from_string
-   fun:test_parse
-   fun:main
 }
 
 {
    flex_inadequate_error_handling_opt3
    Memcheck:Leak
    match-leak-kinds: definite
-   fun:malloc
+   ...
    fun:yyalloc
    fun:yy_scan_buffer
    fun:ndt_from_string
-}
-
-{
-   clang_flex_inadequate_error_handling_opt2
-   Memcheck:Leak
-   match-leak-kinds: definite
-   fun:malloc
-   fun:yyalloc
-   fun:yy_scan_buffer
-   fun:ndt_from_string
-   fun:test_parse_error
-   fun:main
 }

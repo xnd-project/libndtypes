@@ -71,21 +71,20 @@
 #define NDT_MAX_DIM 128
 
 /* Dimension flags */
-#define NDT_Dim_uint8       0x00000001U
-#define NDT_Dim_uint16      0x00000002U
-#define NDT_Dim_uint32      0x00000004U
-#define NDT_Dim_uint64      0x00000008U
-#define NDT_Ellipsis        0x00000010U
+#define NDT_Dim_uint8    0x00000001U
+#define NDT_Dim_uint16   0x00000002U
+#define NDT_Dim_uint32   0x00000004U
+#define NDT_Dim_uint64   0x00000008U
+#define NDT_Dim_var      0x00000010U
+#define NDT_Dim_symbolic 0x00000020U
+#define NDT_Dim_ellipsis 0x00000040U
+#define NDT_Dim_option   0x00000080U
+#define NDT_Dim_ndarray  0x00000100U
 
-#define NDT_Dim_size (NDT_Dim_uint8   \
-                     |NDT_Dim_uint16  \
-                     |NDT_Dim_uint32  \
+#define NDT_Dim_size (NDT_Dim_uint8  \
+                     |NDT_Dim_uint16 \
+                     |NDT_Dim_uint32 \
                      |NDT_Dim_uint64)
-
-/* Ndarray special shapes */
-#define NDT_Ndarray_symbolic -2
-#define NDT_Ndarray_ellipsis -3
-
 
 /* Types: ndt_t */
 typedef struct _ndt ndt_t;
@@ -141,7 +140,7 @@ enum ndt_attr {
   AttrFloat64,
   AttrString,
   AttrInt64List,
-  AttrUint16_Opt
+  AttrUint16Opt
 };
 
 enum ndt_attr_tag {
@@ -189,6 +188,7 @@ enum ndt {
     VarDim,
     EllipsisDim,
 
+    Array,
     Ndarray,
 
     Option,
@@ -276,6 +276,16 @@ struct _ndt {
     union {
         struct {
             uint32_t flags;
+            ndt_t *type;
+        } Array; /* any dimensions */
+
+        struct {
+            uint32_t flags;
+            ndt_t *type;
+        } Ndarray; /* only fixed dimensions */
+
+        struct {
+            uint32_t flags;
             int64_t shape;
             ndt_t *type;
         } FixedDim;
@@ -295,12 +305,6 @@ struct _ndt {
             uint32_t flags;
             ndt_t *type;
         } EllipsisDim;
-
-        struct {
-            int64_t *shape;
-            char **symbols;
-            ndt_t *dtype;
-        } Ndarray;
 
         struct {
             ndt_t *type;
@@ -370,6 +374,16 @@ struct _ndt {
     struct {
         union {
             struct {
+                int noffsets;
+                size_t *offsets;
+            } Array;
+
+            struct {
+                int noffsets;
+                size_t *offsets;
+            } Ndarray;
+
+            struct {
                 int64_t offset;
                 int64_t itemsize;
                 int64_t stride;
@@ -382,11 +396,6 @@ struct _ndt {
                 int64_t nshapes; /* default: 0 */
                 int64_t *shapes; /* default: NULL */
             } VarDim;
-
-            struct {
-                int64_t *strides;
-                ndt_t *dtype;
-            } Ndarray;
 
             struct {
                 int64_t *offset;
@@ -460,6 +469,7 @@ void *ndt_memory_error(ndt_context_t *ctx);
 char *ndt_strdup(const char *s, ndt_context_t *ctx);
 char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
 const char *ndt_tag_as_string(enum ndt tag);
+const char *ndt_dim_type_as_string(const ndt_t *t);
 enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 
@@ -477,6 +487,7 @@ int ndt_is_contiguous(const ndt_t *t);
 int ndt_is_c_contiguous(const ndt_t *t);
 int ndt_is_f_contiguous(const ndt_t *t);
 int ndt_is_scalar(const ndt_t *t);
+int ndt_is_optional(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 

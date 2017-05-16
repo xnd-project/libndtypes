@@ -375,7 +375,6 @@ ndt_tag_as_string(enum ndt tag)
 {
     switch (tag) {
     case AnyKind: return "Any";
-    case Ndarray: return "ndarray";
     case Option: return "option";
     case Nominal: return "nominal";
     case Constr: return "constr";
@@ -550,6 +549,9 @@ ndt_del(ndt_t *t)
     }
 
     switch (t->tag) {
+    case Array:
+        ndt_del(t->Array.type);
+        break;
     case FixedDim:
         ndt_del(t->FixedDim.type);
         break;
@@ -566,14 +568,6 @@ ndt_del(ndt_t *t)
     case EllipsisDim:
         ndt_del(t->EllipsisDim.type);
         break;
-    case Ndarray: {
-        int i;
-        for (i = 0; i < t->ndim; i++) {
-            ndt_free(t->Ndarray.symbols[i]);
-        }
-        ndt_del(t->Ndarray.dtype);
-        break;
-    }
     case Option:
         ndt_del(t->Option.type);
         break;
@@ -627,9 +621,26 @@ ndt_any_kind(ndt_context_t *ctx)
 }
 
 uint32_t
+ndt_dim_stride(const ndt_t *t)
+{
+    assert(ndt_is_concrete(t));
+
+    switch (t->tag) {
+    case FixedDim:
+        return t->Concrete.FixedDim.stride;
+    case VarDim:
+        return t->Concrete.size;
+    default:
+        return t->Concrete.size;
+    }
+}
+
+uint32_t
 ndt_dim_flags(const ndt_t *t)
 {
     switch (t->tag) {
+    case Array:
+        return t->Array.flags;
     case FixedDim:
         return t->FixedDim.flags;
     case VarDim:
@@ -641,6 +652,12 @@ ndt_dim_flags(const ndt_t *t)
     default:
         return 0;
     }
+}
+
+uint32_t
+ndt_common_flags(const ndt_t *t)
+{
+    return ndt_dim_flags(t) & ~NDT_Dim_option;
 }
 
 uint32_t
@@ -670,6 +687,52 @@ ndt_dim_size(const ndt_t *t)
     return ndt_dim_flags(t) & NDT_Dim_size;
 }
 
+uint32_t
+ndt_dim_align(const ndt_t *t)
+{
+    switch (ndt_dim_size(t)) {
+    case 1: return alignof(uint8_t);
+    case 2: return alignof(uint16_t);
+    case 4: return alignof(uint32_t);
+    case 8: return alignof(uint64_t);
+    default: return 1;
+    }
+}
+
+const char *
+ndt_dim_type_as_string(const ndt_t *t)
+{
+    switch (ndt_dim_size(t)) {
+    case 1: return "uint8";
+    case 2: return "uint16";
+    case 4: return "uint32";
+    case 8: return "uint64";
+    default: return "none";
+    }
+}
+
+int
+ndt_dim_is_ndarray(const ndt_t *t)
+{
+    switch (t->tag) {
+    case FixedDim:
+        return ndt_is_concrete(t) &&
+            !(t->FixedDim.flags&(NDT_Dim_var|NDT_Dim_symbolic|NDT_Dim_ellipsis));
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_ndarray(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Array:
+        return t->Array.flags & NDT_Dim_ndarray;
+    default:
+        return 0;
+    }
+}
 
 ndt_t *
 ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
@@ -688,7 +751,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->FixedDim.flags = ndt_dim_flags(type);
+    t->FixedDim.flags = ndt_common_flags(type);
     t->FixedDim.shape = shape;
     t->FixedDim.type = type;
     t->ndim = type->ndim + 1;
@@ -698,7 +761,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
     if (t->access == Concrete) {
         t->Concrete.FixedDim.offset = 0;
         t->Concrete.FixedDim.itemsize = type->Concrete.size;
-        t->Concrete.FixedDim.stride = type->Concrete.size;
+        t->Concrete.FixedDim.stride = shape * ndt_dim_stride(type);
         t->Concrete.size = 0;
         t->Concrete.align = 1;
     }
@@ -731,7 +794,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->SymbolicDim.flags = ndt_dim_flags(type);
+    t->SymbolicDim.flags = ndt_common_flags(type) | NDT_Dim_symbolic;
     t->SymbolicDim.name = name;
     t->SymbolicDim.type = type;
     t->ndim = type->ndim + 1;
@@ -782,7 +845,7 @@ ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->VarDim.flags = ndt_dim_flags(type) | dim_size;
+    t->VarDim.flags = ndt_common_flags(type) | NDT_Dim_var | dim_size;
     t->VarDim.type = type;
     t->ndim = type->ndim + 1;
 
@@ -820,8 +883,8 @@ ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    flags = ndt_dim_flags(type);
-    if (flags & NDT_Ellipsis) {
+    flags = ndt_common_flags(type);
+    if (flags & NDT_Dim_ellipsis) {
         ndt_err_format(ctx, NDT_ValueError, "more than one ellipsis");
         ndt_del(type);
         return NULL;
@@ -833,7 +896,7 @@ ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->EllipsisDim.flags = flags | NDT_Ellipsis;
+    t->EllipsisDim.flags = flags | NDT_Dim_ellipsis;
     t->EllipsisDim.type = type;
     t->ndim = type->ndim + 1;
 
@@ -841,7 +904,8 @@ ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
 }
 
 static void
-array_init_strides_offsets(ndt_t *array, int64_t *strides, int64_t *offsets)
+dims_set_explicit_strides_offsets(ndt_t *array, const int64_t *strides,
+                                  const int64_t *offsets)
 {
     ndt_t *a;
     int i;
@@ -928,36 +992,178 @@ ndt_validate_var_shapes(ndt_t *t, int64_t n, ndt_context_t *ctx)
 }
 
 /*
+ * (data0, bitmap0, dim_data1, bitmap1, dim_data2, bitmap2, ...)
+ *  |-- ndim=0 --|  |---- ndim=1 ----|  |---- ndim=2 ----|
+ *
+ * len(offsets) == len(dim_sizes) == noffsets
+ */
+static size_t
+init_offsets(size_t *offsets, uint16_t *array_align,
+             size_t *dim_sizes, int noffsets,
+             uint16_t dtype_align, uint16_t bitmap_align, uint16_t dim_align)
+{
+    size_t offset = 0;
+    uint16_t maxalign;
+    int i;
+
+    maxalign = max(dtype_align, bitmap_align);
+    maxalign = max(maxalign, dim_align);
+
+    for (i = 0; i < noffsets; i++) {
+        if (i > 0) {
+            if (i % 2) {
+                offset = round_up(offset, bitmap_align);
+            }
+            else {
+                offset = round_up(offset, dim_align);
+            }
+        }
+
+        offsets[i] = offset;
+        offset += dim_sizes[i];
+    }
+
+    *array_align = maxalign;
+
+    return round_up(offset, maxalign);
+}
+
+static int
+init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
+{
+    const ndt_t *dims[NDT_MAX_DIM];
+    const ndt_t *dtype;
+    size_t dim_sizes[NDT_MAX_DIM+1];
+    size_t size, nitems;
+    uint16_t array_align, bitmap_align, dim_align;
+    int64_t n;
+    int i;
+
+    assert(a->tag == Array);
+    assert(ndt_is_concrete(a));
+    assert(a->ndim == type->ndim);
+    assert(a->ndim > 0);
+    assert(a->Concrete.Array.noffsets == 2 * (a->ndim + 1));
+
+    ndt_get_dims_dtype(dims, &dtype, type);
+
+    assert(ndt_is_concrete(dtype));
+
+    nitems = 1;
+    for (i = 0; i < type->ndim; i++) {
+        assert(ndt_is_concrete(dims[i]));
+
+        switch (dims[i]->tag) {
+        case FixedDim:
+            n = dims[i]->FixedDim.shape;
+            nitems *= n;
+            dim_sizes[2 * dims[i]->ndim] = 0;
+            size = ndt_is_optional(dims[i]) ? round_up(n, 8) : 0;
+            dim_sizes[2 * dims[i]->ndim + 1] = size;
+            break;
+        case VarDim:
+            if ((size_t)dims[i]->Concrete.VarDim.nshapes != nitems) {
+                ndt_err_format(ctx, NDT_InvalidArgumentError,
+                    "missing or invalid number of var-dim shape arguments");
+                return -1;
+            }
+            n = sum_pos_int64(dims[i]->Concrete.VarDim.shapes,
+                              dims[i]->Concrete.VarDim.nshapes, ctx);
+            if (n < 0) {
+                return -1;
+            }
+            nitems = n;
+            dim_sizes[2 * dims[i]->ndim] = dims[i]->Concrete.VarDim.nshapes * dims[i]->Concrete.size;
+            size = ndt_is_optional(dims[i]) ? round_up(n, 8) : 0;
+            dim_sizes[2 * dims[i]->ndim + 1] = size;
+            break;
+        default:
+            ndt_err_format(ctx, NDT_InvalidArgumentError,
+                "var shape arguments given for abstract array");
+            return -1;
+        }
+    }
+
+    size = nitems * dtype->Concrete.size;
+    dim_sizes[0] = size;
+
+    size = ndt_is_optional(dtype) ? round_up(nitems, 8) : 0;
+    dim_sizes[1] = size;
+
+    bitmap_align = alignof(uint64_t);
+    dim_align = ndt_dim_align(type);
+    size = init_offsets(a->Concrete.Array.offsets, &array_align, dim_sizes,
+                        a->Concrete.Array.noffsets,
+                        dtype->Concrete.align,
+                        bitmap_align,
+                        dim_align);
+
+    a->Concrete.size = size;
+    a->Concrete.align = array_align;
+
+    return 0;
+}
+
+/*
  * Assumption:
  *   (strides==NULL || len(strides)==t->ndim) &&
  *   (offsets==NULL || len(offsets)==t->ndim)
  */
 ndt_t *
-ndt_array(ndt_t *t, int64_t *strides, int64_t *offsets, ndt_context_t *ctx)
+ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, ndt_context_t *ctx)
 {
-    if (strides || offsets) {
-        if (ndt_is_abstract(t)) {
+    ndt_t *t;
+    size_t noffsets;
+
+    assert(type->ndim > 0);
+    noffsets = 2 * (type->ndim + 1);
+
+    /* abstract type */
+    t = ndt_new_extra(Array, noffsets * sizeof(size_t), ctx);
+    if (t == NULL) {
+        ndt_del(type);
+        ndt_free(strides);
+        ndt_free(offsets);
+        return NULL;
+    }
+    t->ndim = type->ndim;
+    t->Array.flags = ndt_dim_flags(type);
+    t->Array.type = type;
+
+    if (ndt_dim_is_ndarray(type)) {
+        t->Array.flags |= NDT_Dim_ndarray;
+    }
+
+    t->access = type->access;
+    if (t->access == Concrete) {
+        t->Concrete.Array.noffsets = noffsets;
+        t->Concrete.Array.offsets = (size_t *)t->extra;
+
+        if (strides || offsets) {
+            dims_set_explicit_strides_offsets(type, strides, offsets);
+            ndt_free(strides);
+            ndt_free(offsets);
+        }
+
+        if (init_concrete_array(t, type, ctx) < 0) {
+            ndt_del(t);
+            return NULL;
+        }
+
+        return t;
+    }
+    else {
+        if (strides || offsets) {
             ndt_err_format(ctx, NDT_InvalidArgumentError,
                            "abstract array cannot have strides or offsets");
             ndt_free(strides);
             ndt_free(offsets);
-            ndt_del(t);
+            ndt_del(type);
             return NULL;
         }
 
-        array_init_strides_offsets(t, strides, offsets);
-        ndt_free(strides);
-        ndt_free(offsets);
+        return t;
     }
-
-    if (ndt_dim_size(t) != 0) {
-        if (ndt_validate_var_shapes(t, 1, ctx) < 0) {
-            ndt_del(t);
-            return NULL;
-        }
-    }
-
-    return t;
 }
 
 ndt_t *
@@ -965,22 +1171,69 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    /* abstract type */
-    t = ndt_new(Option, ctx);
-    if (t == NULL) {
+    switch (type->tag) {
+    case FixedDim:
+        type->FixedDim.flags |= NDT_Dim_option;
+        return type;
+    case VarDim:
+        type->VarDim.flags |= NDT_Dim_option;
+        return type;
+    case SymbolicDim:
+        type->SymbolicDim.flags |= NDT_Dim_option;
+        return type;
+    case EllipsisDim:
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+            "ellipsis dimension cannot be optional");
         ndt_del(type);
         return NULL;
-    }
-    t->Option.type = type;
+    case Array:
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+            "arrays are optional iff the first dimension is optional");
+        ndt_del(type);
+        return NULL;
+    case Option:
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+                       "cannot create an option option");
+        ndt_del(type);
+    default:
+        /* abstract type */
+        t = ndt_new(Option, ctx);
+        if (t == NULL) {
+            ndt_del(type);
+            return NULL;
+        }
+        t->Option.type = type;
 
-    /* concrete access */
-    t->access = type->access;
-    if (t->access == Concrete) {
-        t->Concrete.size = type->Concrete.size;
-        t->Concrete.align = type->Concrete.align;
-    }
+        /* concrete access */
+        t->access = type->access;
+        if (t->access == Concrete) {
+            t->Concrete.size = type->Concrete.size;
+            t->Concrete.align = type->Concrete.align;
+        }
+ 
+        return t;
+     }
+}
 
-    return t;
+int
+ndt_is_optional(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Array:
+        return t->Array.flags & NDT_Dim_option;
+    case FixedDim:
+        return t->FixedDim.flags & NDT_Dim_option;
+    case VarDim:
+        return t->VarDim.flags & NDT_Dim_option;
+    case SymbolicDim:
+        return t->SymbolicDim.flags & NDT_Dim_option;
+    case EllipsisDim:
+        return t->EllipsisDim.flags & NDT_Dim_option;
+    case Option:
+        return 1;
+    default:
+        return 0;
+    }
 }
 
 int

@@ -153,18 +153,27 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
         if (c->tag != Pointer) return 0;
         return ndt_equal(p->Pointer.type, c->Pointer.type);
     case FixedDim:
-        return c->tag == FixedDim && c->FixedDim.shape == p->FixedDim.shape &&
+        return c->tag == FixedDim &&
+               ndt_is_optional(c) == ndt_is_optional(p) &&
+               c->FixedDim.shape == p->FixedDim.shape &&
                ndt_equal(c->FixedDim.type, p->FixedDim.type);
     case SymbolicDim:
         return c->tag == SymbolicDim &&
+               ndt_is_optional(c) == ndt_is_optional(p) &&
                strcmp(c->SymbolicDim.name, p->SymbolicDim.name) == 0 &&
                ndt_equal(c->SymbolicDim.type, p->SymbolicDim.type);
     case VarDim:
         return c->tag == VarDim &&
+               ndt_is_optional(c) == ndt_is_optional(p) &&
                ndt_equal(c->VarDim.type, p->VarDim.type);
     case EllipsisDim:
         return c->tag == EllipsisDim &&
+               ndt_is_optional(c) == ndt_is_optional(p) &&
                ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
+    case Array: {
+        /* XXX offsets */
+        return ndt_equal(c->Array.type, p->Array.type);
+    }
     case Tuple:
         if (c->tag != Tuple || c->Tuple.flag != p->Tuple.flag) return 0;
         return tuple_fields_equal(p, c);

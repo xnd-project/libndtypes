@@ -254,12 +254,25 @@ categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *
 }
 
 static int
+dim_option(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+{
+    if (ndt_is_optional(t)) {
+        return ndt_snprintf(ctx, buf, "?");
+    }
+
+    return 1;
+}
+
+static int
 datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
     int n;
 
     switch (t->tag) {
         case FixedDim:
+            n = dim_option(buf, t, ctx);
+            if (n < 0) return -1;
+
             n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
             if (n < 0) return -1;
 
@@ -267,6 +280,9 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case SymbolicDim:
+            n = dim_option(buf, t, ctx);
+            if (n < 0) return -1;
+
             n = ndt_snprintf(ctx, buf, "%s * ", t->SymbolicDim.name);
             if (n < 0) return -1;
 
@@ -274,6 +290,9 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case VarDim:
+            n = dim_option(buf, t, ctx);
+            if (n < 0) return -1;
+
             n = ndt_snprintf(ctx, buf, "var * ");
             if (n < 0) return -1;
 
@@ -281,23 +300,20 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case EllipsisDim:
+            n = dim_option(buf, t, ctx);
+            if (n < 0) return -1;
+
             n = ndt_snprintf(ctx, buf, "... * ", t->SymbolicDim.name);
             if (n < 0) return -1;
 
             n = datashape(buf, t->EllipsisDim.type, d, ctx);
             return n;
 
-        case Ndarray: {
-            int i;
+        case Array:
+             return datashape(buf, t->Array.type, d, ctx);
 
-            for (i = 0; i < t->ndim; i++) {
-                n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->Ndarray.shape[i]);
-                if (n < 0) return -1;
-            }
-
-            n = datashape(buf, t->Ndarray.dtype, d, ctx);
-            return n;
-        }
+        case Ndarray:
+             return datashape(buf, t->Ndarray.type, d, ctx);
 
         case Option:
             n = ndt_snprintf(ctx, buf, "?");
