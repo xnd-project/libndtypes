@@ -560,7 +560,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             if (ndt_is_concrete(t)) {
-                n = ndt_snprintf(ctx, buf, ", shapes=[");
+                n = ndt_snprintf_d(ctx, buf, d+2, "shapes=[");
                 if (n < 0) return -1;
 
                 for (i = 0; i < t->Concrete.VarDim.nshapes; i++) {
