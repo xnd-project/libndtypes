@@ -454,7 +454,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
 
             if (ndt_is_concrete(t)) {
                 n = ndt_snprintf_d(ctx, buf, d+2, "dim_type=%s, offsets=[",
-                                   ndt_dim_type_as_string(t));
+                                   ndt_dim_type_as_string(t->Concrete.Array.dim_type));
                 if (n < 0) return -1;
 
                 for (i = 0; i < t->Concrete.Array.noffsets; i++) {

@@ -699,16 +699,32 @@ ndt_dim_align(const ndt_t *t)
     }
 }
 
-const char *
-ndt_dim_type_as_string(const ndt_t *t)
+enum ndt_dim
+ndt_dim_type(const ndt_t *t)
 {
     switch (ndt_dim_size(t)) {
-    case 1: return "uint8";
-    case 2: return "uint16";
-    case 4: return "uint32";
-    case 8: return "uint64";
-    default: return "none";
+    case 0: return DimNone;
+    case 1: return DimUint8;
+    case 2: return DimUint16;
+    case 4: return DimUint32;
+    case 8: return DimUint64;
+    default: abort();
     }
+}
+
+const char *
+ndt_dim_type_as_string(enum ndt_dim tag)
+{
+    switch (tag) {
+    case DimNone: return "none";
+    case DimUint8: return "uint8";
+    case DimUint16: return "uint16";
+    case DimUint32: return "uint32";
+    case DimUint64: return "uint64";
+    case DimInt32: return "int32";
+    }
+
+    return "not reached";
 }
 
 int
@@ -1154,6 +1170,7 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
 
     t->access = type->access;
     if (t->access == Concrete) {
+        t->Concrete.Array.dim_type = ndt_dim_type(type);
         t->Concrete.Array.noffsets = noffsets;
         t->Concrete.Array.offsets = (size_t *)t->extra;
 

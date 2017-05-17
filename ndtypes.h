@@ -195,6 +195,16 @@ enum ndt_encoding {
   ErrorEncoding
 };
 
+/* Dimension data types */
+enum ndt_dim {
+  DimNone,
+  DimUint8,
+  DimUint16,
+  DimUint32,
+  DimUint64,
+  DimInt32
+};
+
 /* Datashape kinds */
 enum ndt {
   /* Any */
@@ -386,6 +396,7 @@ struct _ndt {
     struct {
         union {
             struct {
+                enum ndt_dim dim_type;
                 int noffsets;
                 size_t *offsets;
             } Array;
@@ -476,7 +487,8 @@ void *ndt_memory_error(ndt_context_t *ctx);
 char *ndt_strdup(const char *s, ndt_context_t *ctx);
 char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
 const char *ndt_tag_as_string(enum ndt tag);
-const char *ndt_dim_type_as_string(const ndt_t *t);
+enum ndt_dim ndt_dim_type(const ndt_t *t);
+const char *ndt_dim_type_as_string(enum ndt_dim tag);
 enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 uint32_t ndt_dim_flags(const ndt_t *t);
