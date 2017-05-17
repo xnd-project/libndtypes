@@ -76,7 +76,7 @@
 #define NDT_Dim_uint8        0x00000001U
 #define NDT_Dim_uint16       0x00000002U
 #define NDT_Dim_uint32       0x00000004U
-#define NDT_Dim_uint64       0x00000008U
+#define NDT_Dim_int64        0x00000008U
 #define NDT_Dim_ellipsis     0x00000010U
 
 /* Flags for individual dimensions */
@@ -91,7 +91,7 @@
 #define NDT_Dim_size (NDT_Dim_uint8  \
                      |NDT_Dim_uint16 \
                      |NDT_Dim_uint32 \
-                     |NDT_Dim_uint64)
+                     |NDT_Dim_int64)
 
 #define NDT_Contiguous (NDT_C_contiguous|NDT_F_contiguous)
 
@@ -201,8 +201,8 @@ enum ndt_dim {
   DimUint8,
   DimUint16,
   DimUint32,
-  DimUint64,
-  DimInt32
+  DimInt32,
+  DimInt64
 };
 
 /* Datashape kinds */
@@ -514,7 +514,7 @@ int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 ndt_t *ndt_next_dim(ndt_t *a);
 void ndt_set_next_type(ndt_t *a, ndt_t *type);
 int ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array);
-int ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
+int ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
 
 /*** String conversion ***/
 bool ndt_strtobool(const char *v, ndt_context_t *ctx);

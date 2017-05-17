@@ -215,8 +215,8 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         if (ndt_is_optional(c) != ndt_is_optional(p)) return 0;
         if (ndt_is_column_major(c) != ndt_is_column_major(p)) return 0;
 
-        pn = ndt_get_dims_dtype(pdims, &pdtype, p);
-        cn = ndt_get_dims_dtype(cdims, &cdtype, c);
+        pn = ndt_const_dims_dtype(pdims, &pdtype, p);
+        cn = ndt_const_dims_dtype(cdims, &cdtype, c);
 
         n = match_dimensions(pdims, pn, cdims, cn, tbl, ctx);
         if (n <= 0) return n;

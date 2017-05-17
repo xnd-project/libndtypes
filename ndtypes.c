@@ -677,8 +677,8 @@ ndt_select_dim_size(int64_t n)
         return NDT_Dim_uint32;
     }
 
-    assert(NDT_Dim_uint64 == 8);
-    return NDT_Dim_uint64;
+    assert(NDT_Dim_int64 == 8);
+    return NDT_Dim_int64;
 }
 
 uint32_t
@@ -694,7 +694,7 @@ ndt_dim_align(const ndt_t *t)
     case 1: return alignof(uint8_t);
     case 2: return alignof(uint16_t);
     case 4: return alignof(uint32_t);
-    case 8: return alignof(uint64_t);
+    case 8: return alignof(int64_t);
     default: return 1;
     }
 }
@@ -707,7 +707,7 @@ ndt_dim_type(const ndt_t *t)
     case 1: return DimUint8;
     case 2: return DimUint16;
     case 4: return DimUint32;
-    case 8: return DimUint64;
+    case 8: return DimInt64;
     default: abort();
     }
 }
@@ -720,7 +720,7 @@ ndt_dim_type_as_string(enum ndt_dim tag)
     case DimUint8: return "uint8";
     case DimUint16: return "uint16";
     case DimUint32: return "uint32";
-    case DimUint64: return "uint64";
+    case DimInt64: return "int64";
     case DimInt32: return "int32";
     }
 
@@ -1073,7 +1073,7 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
     assert(a->ndim > 0);
     assert(a->Concrete.Array.noffsets == 2 * (a->ndim + 1));
 
-    ndt_get_dims_dtype(dims, &dtype, type);
+    ndt_const_dims_dtype(dims, &dtype, type);
     assert(ndt_is_concrete(dtype));
 
     nitems = 1;
@@ -2078,7 +2078,7 @@ ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array)
 }
 
 int
-ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
+ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
 {
     const ndt_t *a = array;
     int n = 0;
