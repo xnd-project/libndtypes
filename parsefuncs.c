@@ -81,6 +81,7 @@ mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx)
     ndt_free(v);
 
     if (ctx->err != NDT_Success) {
+        ndt_del(type);
         return NULL;
     }
 
