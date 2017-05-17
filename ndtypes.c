@@ -984,41 +984,6 @@ ndt_next_dim(ndt_t *a)
     }
 }
 
-int
-ndt_validate_var_shapes(ndt_t *t, int64_t n, ndt_context_t *ctx)
-{
-    if (ndt_is_abstract(t)) {
-        ndt_err_format(ctx, NDT_RuntimeError,
-            "should have invariant var-shapes <==> concrete type");
-        return -1;
-    }
-
-    switch (t->tag) {
-    case FixedDim:
-        return ndt_validate_var_shapes(t->FixedDim.type, n * t->FixedDim.shape, ctx);
-    case VarDim:
-        if (t->Concrete.VarDim.nshapes == 0) {
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                "shape arguments must be given for all var dimensions or none");
-            return -1;
-        }
-        else if (t->Concrete.VarDim.nshapes != n) {
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                "number of shape arguments not compatible with previous dimension");
-            return -1;
-        }
-        else {
-            n = sum_pos_int64(t->Concrete.VarDim.shapes, t->Concrete.VarDim.nshapes, ctx);
-            if (n < 0) {
-                return -1;
-            }
-            return ndt_validate_var_shapes(t->VarDim.type, n, ctx);
-        }
-    default:
-        return 0;
-    }
-}
-
 /*
  * (data0, bitmap0, dim_data1, bitmap1, dim_data2, bitmap2, ...)
  *  |-- ndim=0 --|  |---- ndim=1 ----|  |---- ndim=2 ----|
@@ -1088,22 +1053,23 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
             size = ndt_is_optional(dims[i]) ? round_up(n, 8) : 0;
             dim_sizes[2 * dims[i]->ndim + 1] = size;
             break;
-        case VarDim:
-            if ((size_t)dims[i]->Concrete.VarDim.nshapes != nitems) {
+        case VarDim: {
+            size_t nshapes = (size_t)dims[i]->Concrete.VarDim.nshapes;
+            if (nshapes != nitems) {
                 ndt_err_format(ctx, NDT_InvalidArgumentError,
                     "missing or invalid number of var-dim shape arguments");
                 return -1;
             }
-            n = sum_pos_int64(dims[i]->Concrete.VarDim.shapes,
-                              dims[i]->Concrete.VarDim.nshapes, ctx);
+            n = sum_pos_int64(dims[i]->Concrete.VarDim.shapes, nshapes, ctx);
             if (n < 0) {
                 return -1;
             }
             nitems = n;
-            dim_sizes[2 * dims[i]->ndim] = dims[i]->Concrete.VarDim.nshapes * dims[i]->Concrete.size;
+            dim_sizes[2 * dims[i]->ndim] = (nshapes + 1) * dims[i]->Concrete.size;
             size = ndt_is_optional(dims[i]) ? round_up(n, 8) : 0;
             dim_sizes[2 * dims[i]->ndim + 1] = size;
             break;
+        }
         default:
             ndt_err_format(ctx, NDT_InvalidArgumentError,
                 "var shape arguments given for abstract array");
