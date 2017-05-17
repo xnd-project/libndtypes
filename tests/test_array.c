@@ -97,7 +97,7 @@ test_array(void)
         fprintf(stderr, "test_array: array_1: FAIL: %zu %zu", t->Concrete.size, sizeof(array_1));
     }
     else {
-        fprintf(stderr, "test_array (4 test cases)\n");
+        fprintf(stderr, "test_array (1 test case)\n");
     }
 
     ndt_del(t);

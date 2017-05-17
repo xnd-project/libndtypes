@@ -216,7 +216,7 @@ test_struct_align_pack(void)
     }
     ndt_del(t);
 
-    fprintf(stderr, "test_struct_align_pack (1 test case)\n");
+    fprintf(stderr, "test_struct_align_pack (4 test cases)\n");
 
     ndt_context_del(ctx);
     return 0;
