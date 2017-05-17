@@ -93,6 +93,7 @@ test_array(void)
         return -1;
     }
 
+    (void)array_1;
     if (t->Concrete.size != sizeof(array_1)) {
         fprintf(stderr, "test_array: array_1: FAIL: %zu %zu", t->Concrete.size, sizeof(array_1));
     }
