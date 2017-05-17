@@ -703,6 +703,7 @@ static int (*tests[])(void) = {
   test_match,
 #ifdef __GNUC__
   test_struct_align_pack,
+  test_array,
 #endif
   NULL
 };

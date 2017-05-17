@@ -712,23 +712,11 @@ ndt_dim_type_as_string(const ndt_t *t)
 }
 
 int
-ndt_dim_is_ndarray(const ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim:
-        return ndt_is_concrete(t) &&
-            !(t->FixedDim.flags&(NDT_Dim_var|NDT_Dim_symbolic|NDT_Dim_ellipsis));
-    default:
-        return 0;
-    }
-}
-
-int
 ndt_is_ndarray(const ndt_t *t)
 {
     switch (t->tag) {
     case Array:
-        return t->Array.flags & NDT_Dim_ndarray;
+        return t->Array.flags & NDT_Ndarray;
     default:
         return 0;
     }
@@ -794,7 +782,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->SymbolicDim.flags = ndt_common_flags(type) | NDT_Dim_symbolic;
+    t->SymbolicDim.flags = ndt_common_flags(type);
     t->SymbolicDim.name = name;
     t->SymbolicDim.type = type;
     t->ndim = type->ndim + 1;
@@ -845,7 +833,7 @@ ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->VarDim.flags = ndt_common_flags(type) | NDT_Dim_var | dim_size;
+    t->VarDim.flags = ndt_common_flags(type) | dim_size;
     t->VarDim.type = type;
     t->ndim = type->ndim + 1;
 
@@ -903,43 +891,67 @@ ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
-static void
-dims_set_explicit_strides_offsets(ndt_t *array, const int64_t *strides,
-                                  const int64_t *offsets)
+static int
+init_strides_order(ndt_t *a, ndt_t *type, char_opt_t order, ndt_context_t *ctx)
 {
-    ndt_t *a;
+    ndt_t *dims[NDT_MAX_DIM];
+    ndt_t *dtype;
+    uint32_t cflag;
+    int32_t stride;
     int i;
 
-    for (a=array, i=0; a->ndim > 0; i++) {
-        assert(a->access == Concrete);
+    assert(a->tag == Array);
+    assert(ndt_is_concrete(a));
+    assert(type->ndim > 0);
+    assert(ndt_is_concrete(type));
 
-        switch (a->tag) {
+    ndt_dims_dtype(dims, &dtype, type);
+
+    cflag = NDT_C_contiguous;
+    if (order.tag == Some && order.Some == 'F') {
+        cflag = NDT_F_contiguous;
+    }
+
+    /* check if subarrays are proper ndarrays */
+    for (i = type->ndim-1; i >= 0; i--) {
+        switch (dims[i]->tag) {
         case FixedDim:
-            if (strides && a->Concrete.FixedDim.stride != strides[i]) {
-                a->Concrete.FixedDim.stride = strides[i];
-                // XXX a->flags &= ~NDT_Contiguous;
-            }
-            if (offsets && a->Concrete.FixedDim.offset != offsets[i]) {
-                a->Concrete.FixedDim.offset = offsets[i];
-                // XXX a->flags &= ~NDT_Contiguous;
-            }
-            a = a->FixedDim.type;
+            dims[i]->FixedDim.flags |= cflag;
             break;
-        case VarDim:
-            if (strides && a->Concrete.VarDim.stride != strides[i]) {
-                a->Concrete.VarDim.stride = strides[i];
-                // XXX a->flags &= ~NDT_Contiguous;
-            }
-            if (offsets && a->Concrete.VarDim.offset != offsets[i]) {
-                a->Concrete.VarDim.offset = offsets[i];
-                // XXX a->flags &= ~NDT_Contiguous;
-            }
-            a = a->VarDim.type;
-            break;
-        default: /* SymbolicDim or EllipsisDim are abstract */
-            abort(); /* NOT REACHED */
+        default:
+            goto endloop;
         }
     }
+endloop:
+    if (dims[0]->FixedDim.flags & NDT_Contiguous) { /* only fixed dimensions */
+        a->Array.flags |= (dims[0]->FixedDim.flags & NDT_Contiguous);
+        a->Array.flags |= NDT_Ndarray;
+    }
+
+    if (order.tag == Some) {
+        if (!ndt_is_contiguous(dims[0])) {
+            ndt_err_format(ctx, NDT_InvalidArgumentError,
+                "order '%c' specified but array is not %c_contiguous",
+                order.Some, order.Some);
+            return -1;
+        }
+
+        if (order.Some == 'F') {
+            stride = dtype->Concrete.size;
+            for (i = 0; i < type->ndim-1; i++) {
+                switch (dims[i]->tag) {
+                case FixedDim:
+                    dims[i]->Concrete.FixedDim.stride = stride;
+                    stride *= dims[i]->FixedDim.shape;
+                    break;
+                default:
+                    abort(); /* NOT REACHED */
+                }
+            }
+        }
+    }
+
+    return 0;
 }
 
 ndt_t *
@@ -1046,7 +1058,6 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
     assert(a->Concrete.Array.noffsets == 2 * (a->ndim + 1));
 
     ndt_get_dims_dtype(dims, &dtype, type);
-
     assert(ndt_is_concrete(dtype));
 
     nitems = 1;
@@ -1110,13 +1121,24 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
  *   (offsets==NULL || len(offsets)==t->ndim)
  */
 ndt_t *
-ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, ndt_context_t *ctx)
+ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
+          ndt_context_t *ctx)
 {
     ndt_t *t;
     size_t noffsets;
 
     assert(type->ndim > 0);
     noffsets = 2 * (type->ndim + 1);
+
+    if (strides || offsets) {
+        /* What should happen with arbitrary user-supplied strides/offsets? */
+        ndt_err_format(ctx, NDT_NotImplementedError,
+                       "semantics need to be defined first");
+        ndt_del(type);
+        ndt_free(strides);
+        ndt_free(offsets);
+        return NULL;
+    }
 
     /* abstract type */
     t = ndt_new_extra(Array, noffsets * sizeof(size_t), ctx);
@@ -1130,40 +1152,23 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, ndt_context_t *ctx)
     t->Array.flags = ndt_dim_flags(type);
     t->Array.type = type;
 
-    if (ndt_dim_is_ndarray(type)) {
-        t->Array.flags |= NDT_Dim_ndarray;
-    }
-
     t->access = type->access;
     if (t->access == Concrete) {
         t->Concrete.Array.noffsets = noffsets;
         t->Concrete.Array.offsets = (size_t *)t->extra;
-
-        if (strides || offsets) {
-            dims_set_explicit_strides_offsets(type, strides, offsets);
-            ndt_free(strides);
-            ndt_free(offsets);
-        }
 
         if (init_concrete_array(t, type, ctx) < 0) {
             ndt_del(t);
             return NULL;
         }
 
-        return t;
-    }
-    else {
-        if (strides || offsets) {
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                           "abstract array cannot have strides or offsets");
-            ndt_free(strides);
-            ndt_free(offsets);
-            ndt_del(type);
+        if (init_strides_order(t, type, order, ctx) < 0) {
+            ndt_del(t);
             return NULL;
         }
-
-        return t;
     }
+
+    return t;
 }
 
 ndt_t *
@@ -2035,6 +2040,24 @@ ndt_is_f_contiguous(const ndt_t *t)
 {
     (void)t;
     return 0;
+}
+
+int
+ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array)
+{
+    ndt_t *a = array;
+    int n = 0;
+
+    assert(array->ndim <= NDT_MAX_DIM);
+
+    while (a->ndim > 0) {
+        dims[n++] = a;
+        a = ndt_next_dim((ndt_t *)a);
+    }
+
+    *dtype = a;
+
+    return n;
 }
 
 int

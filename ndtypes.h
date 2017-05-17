@@ -70,21 +70,31 @@
 
 #define NDT_MAX_DIM 128
 
-/* Dimension flags */
-#define NDT_Dim_uint8    0x00000001U
-#define NDT_Dim_uint16   0x00000002U
-#define NDT_Dim_uint32   0x00000004U
-#define NDT_Dim_uint64   0x00000008U
-#define NDT_Dim_var      0x00000010U
-#define NDT_Dim_symbolic 0x00000020U
-#define NDT_Dim_ellipsis 0x00000040U
-#define NDT_Dim_option   0x00000080U
-#define NDT_Dim_ndarray  0x00000100U
+/*** Dimension flags ***/
+
+/* Flags that are propagated through all dimensions */
+#define NDT_Dim_uint8        0x00000001U
+#define NDT_Dim_uint16       0x00000002U
+#define NDT_Dim_uint32       0x00000004U
+#define NDT_Dim_uint64       0x00000008U
+#define NDT_Dim_ellipsis     0x00000010U
+
+/* Flags for individual dimensions */
+#define NDT_Dim_option       0x00000020U
+
+/* Array flags */
+#define NDT_C_contiguous     0x00000040U
+#define NDT_F_contiguous     0x00000080U
+#define NDT_Ndarray          0x00000100U
+
 
 #define NDT_Dim_size (NDT_Dim_uint8  \
                      |NDT_Dim_uint16 \
                      |NDT_Dim_uint32 \
                      |NDT_Dim_uint64)
+
+#define NDT_Contiguous (NDT_C_contiguous|NDT_F_contiguous)
+
 
 /* Types: ndt_t */
 typedef struct _ndt ndt_t;
@@ -124,6 +134,11 @@ typedef struct {
   uint16_t Some;
 } uint16_opt_t;
 
+typedef struct {
+  enum ndt_option tag;
+  char Some;
+} char_opt_t;
+
 enum ndt_attr {
   AttrBool,
   AttrChar,
@@ -140,6 +155,7 @@ enum ndt_attr {
   AttrFloat64,
   AttrString,
   AttrInt64List,
+  AttrCharOpt,
   AttrUint16Opt
 };
 
@@ -240,6 +256,8 @@ enum ndt {
         Pointer,
 
         Field /* used internally */
+
+        /* User1, User2, ... tags for a limited number of user-defined types */
 };
 
 enum ndt_alias {
@@ -461,6 +479,7 @@ const char *ndt_tag_as_string(enum ndt tag);
 const char *ndt_dim_type_as_string(const ndt_t *t);
 enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 const char *ndt_encoding_as_string(enum ndt_encoding encoding);
+uint32_t ndt_dim_flags(const ndt_t *t);
 
 int ndt_is_abstract(const ndt_t *t);
 int ndt_is_concrete(const ndt_t *t);
@@ -482,6 +501,7 @@ int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 
 ndt_t *ndt_next_dim(ndt_t *a);
 void ndt_set_next_type(ndt_t *a, ndt_t *type);
+int ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array);
 int ndt_get_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
 
 /*** String conversion ***/
@@ -521,7 +541,7 @@ ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, ndt_context_t *ctx);
+ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char_opt_t order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);

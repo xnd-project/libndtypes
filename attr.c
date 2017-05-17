@@ -50,7 +50,7 @@ typedef struct {
 /* Container attributes */
 static const attr_spec array_attr = {0, 6,
     {"strides", "_strides_len", "offsets", "_offsets_len", "order", "style"},
-    {AttrInt64List, AttrInt16, AttrInt64List, AttrInt16, AttrChar, AttrString}};
+    {AttrInt64List, AttrInt16, AttrInt64List, AttrInt16, AttrCharOpt, AttrString}};
 static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
 static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
 
@@ -158,6 +158,11 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
         case AttrSize: *(size_t *)ptr = (size_t)ndt_strtoull(v[i]->AttrValue, SIZE_MAX, ctx); break;
         case AttrFloat32: *(float *)ptr = ndt_strtof(v[i]->AttrValue, ctx); break;
         case AttrFloat64: *(double *)ptr = ndt_strtod(v[i]->AttrValue, ctx); break;
+
+        case AttrCharOpt:
+            ((char_opt_t *)ptr)->tag = Some;
+            ((char_opt_t *)ptr)->Some = ndt_strtochar(v[i]->AttrValue, ctx);
+            break;
 
         case AttrUint16Opt:
             ((uint16_opt_t *)ptr)->tag = Some;

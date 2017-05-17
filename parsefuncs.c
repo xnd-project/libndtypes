@@ -207,7 +207,7 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     int16_t strides_len = 0;
     int64_t *offsets = NULL; /* vararray */
     int16_t offsets_len = 0; /* vararray */
-    char order = 'C';
+    char_opt_t order = {None, '\0'};
     char *style = NULL;
 
     if (attrs) {
@@ -234,7 +234,7 @@ mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 
     if (style == NULL || strcmp(style, "array") == 0) {
         ndt_free(style);
-        return ndt_array(array, strides, offsets, ctx);
+        return ndt_array(array, strides, offsets, order, ctx);
     }
     else {
         ndt_err_format(ctx, NDT_ValueError, "invalid array style: '%s'", style);

@@ -133,6 +133,42 @@ ndt_snprintf_d(ndt_context_t *ctx, buf_t *buf, int d, const char *fmt, ...)
 }
 
 static int
+dim_flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+{
+    uint32_t flags = ndt_dim_flags(t);
+    bool cont = 0;
+    int n;
+
+    if (flags & NDT_Ndarray) {
+        n = ndt_snprintf(ctx, buf, "Ndarray");
+        if (n > 0) return -1;
+        cont = 1;
+    }
+    if (flags & NDT_C_contiguous) {
+        n = ndt_snprintf(ctx, buf, "%sC_contig", cont ? ", " : "");
+        if (n > 0) return -1;
+        cont = 1;
+    }
+    if (flags & NDT_F_contiguous) {
+        n = ndt_snprintf(ctx, buf, "%sF_contig", cont ? ", " : "");
+        if (n > 0) return -1;
+        cont = 1;
+    }
+    if (flags & NDT_Dim_option) {
+        n = ndt_snprintf(ctx, buf, "%sOption", cont ? ", " : "");
+        if (n > 0) return -1;
+        cont = 1;
+    }
+    if (flags & NDT_Dim_ellipsis) {
+        n = ndt_snprintf(ctx, buf, "%sEllipsis", cont ? ", " : "");
+        if (n > 0) return -1;
+        cont = 1;
+    }
+
+    return 0;
+}
+
+static int
 common_attributes(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
     if (ndt_is_abstract(t)) {
@@ -407,16 +443,18 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "optional=%s",
-                               ndt_is_optional(t) ? "true" : "false");
+            n = ndt_snprintf_d(ctx, buf, d+2, "flags=[");
+            if (n < 0) return -1;
 
-            if (ndt_is_abstract(t)) {
-                n = ndt_snprintf(ctx, buf, ",\n");
-                if (n < 0) return -1;
-            }
-            else {
-                n = ndt_snprintf(ctx, buf, ", dim_type=%s, offsets=[",
-                                 ndt_dim_type_as_string(t));
+            dim_flags(buf, t, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "],\n");
+            if (n < 0) return -1;
+
+            if (ndt_is_concrete(t)) {
+                n = ndt_snprintf_d(ctx, buf, d+2, "dim_type=%s, offsets=[",
+                                   ndt_dim_type_as_string(t));
                 if (n < 0) return -1;
 
                 for (i = 0; i < t->Concrete.Array.noffsets; i++) {
@@ -442,9 +480,16 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "shape=%zu, optional=%s",
-                               t->FixedDim.shape,
-                               ndt_is_optional(t) ? "true" : "false");
+            n = ndt_snprintf_d(ctx, buf, d+2, "flags=[");
+            if (n < 0) return -1;
+
+            dim_flags(buf, t, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "],\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "shape=%zu", t->FixedDim.shape);
 
             if (ndt_is_abstract(t)) {
                 n = ndt_snprintf(ctx, buf, ",\n");
@@ -476,9 +521,16 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s', optional=%s,\n",
-                               t->SymbolicDim.name,
-                               ndt_is_optional(t) ? "true" : "false");
+            n = ndt_snprintf_d(ctx, buf, d+2, "flags=[");
+            if (n < 0) return -1;
+
+            dim_flags(buf, t, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "],\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s'", t->SymbolicDim.name);
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
@@ -498,14 +550,16 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "optional=%s",
-                               ndt_is_optional(t) ? "true" : "false");
+            n = ndt_snprintf_d(ctx, buf, d+2, "flags=[");
+            if (n < 0) return -1;
 
-            if (ndt_is_abstract(t)) {
-                n = ndt_snprintf(ctx, buf, ",\n");
-                if (n < 0) return -1;
-            }
-            else {
+            dim_flags(buf, t, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "],\n");
+            if (n < 0) return -1;
+
+            if (ndt_is_concrete(t)) {
                 n = ndt_snprintf(ctx, buf, ", shapes=[");
                 if (n < 0) return -1;
 
@@ -539,6 +593,15 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, "\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "flags=[");
+            if (n < 0) return -1;
+
+            dim_flags(buf, t, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "],\n");
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);

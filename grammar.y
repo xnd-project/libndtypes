@@ -35,6 +35,8 @@
 #include "grammar.h"
 #include "lexer.h"
 
+static char_opt_t char_none = {None, '\0'};
+
 #undef yyerror
 #undef yylex
 
@@ -198,7 +200,7 @@ datashape:
 | dtype { $$ = $1; }
 
 array:
-  dimensions                                   { $$ = ndt_array($1, NULL, 0, ctx); if ($$ == NULL) YYABORT; }
+  dimensions                                   { $$ = ndt_array($1, NULL, 0, char_none, ctx); if ($$ == NULL) YYABORT; }
 | LBRACK dimensions COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions:
