@@ -397,8 +397,9 @@ struct _ndt {
         union {
             struct {
                 enum ndt_dim dim_type;
-                int noffsets;
-                size_t *offsets;
+                int data_start;
+                int64_t *data;
+                int64_t *bitmaps;
             } Array;
 
             struct {

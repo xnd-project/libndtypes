@@ -453,13 +453,23 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             if (ndt_is_concrete(t)) {
-                n = ndt_snprintf_d(ctx, buf, d+2, "dim_type=%s, offsets=[",
-                                   ndt_dim_type_as_string(t->Concrete.Array.dim_type));
+                n = ndt_snprintf_d(ctx, buf, d+2, "dim_type=%s, data_start=%d, data=[",
+                                   ndt_dim_type_as_string(t->Concrete.Array.dim_type),
+                                   t->Concrete.Array.data_start);
                 if (n < 0) return -1;
 
-                for (i = 0; i < t->Concrete.Array.noffsets; i++) {
-                    n = ndt_snprintf(ctx, buf, "%zu%s", t->Concrete.Array.offsets[i],
-                                     i == t->Concrete.Array.noffsets-1 ? "],\n" : ", ");
+                for (i = 0; i < t->ndim+1; i++) {
+                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s", t->Concrete.Array.data[i],
+                                     i == t->ndim ? "]" : ", ");
+                    if (n < 0) return -1;
+                }
+
+                n = ndt_snprintf(ctx, buf, ", bitmaps=[");
+                if (n < 0) return -1;
+
+                for (i = 0; i < t->ndim+1; i++) {
+                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s", t->Concrete.Array.bitmaps[i],
+                                     i == t->ndim ? "],\n" : ", ");
                     if (n < 0) return -1;
                 }
             }

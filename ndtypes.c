@@ -765,9 +765,16 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
     if (t->access == Concrete) {
         t->Concrete.FixedDim.offset = 0;
         t->Concrete.FixedDim.itemsize = type->Concrete.size;
-        t->Concrete.FixedDim.stride = shape * ndt_dim_stride(type);
-        t->Concrete.size = 0;
-        t->Concrete.align = 1;
+        switch (t->FixedDim.type->tag) {
+        case VarDim:
+            t->Concrete.FixedDim.stride = ndt_dim_stride(type);
+            break;
+        default:
+            t->Concrete.FixedDim.stride = type->Concrete.size;
+            break;
+        }
+        t->Concrete.size = shape * type->Concrete.size;
+        t->Concrete.align = type->Concrete.align;
     }
 
     return t;
@@ -862,7 +869,7 @@ ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
         t->Concrete.VarDim.nshapes = nshapes;
         t->Concrete.VarDim.shapes = shapes;
         t->Concrete.size = dim_size;
-        t->Concrete.align = dim_size;
+        t->Concrete.align = dim_size; // XXX
     }
 
     return t;
@@ -987,111 +994,115 @@ ndt_next_dim(ndt_t *a)
 /*
  * (data0, bitmap0, dim_data1, bitmap1, dim_data2, bitmap2, ...)
  *  |-- ndim=0 --|  |---- ndim=1 ----|  |---- ndim=2 ----|
- *
- * len(offsets) == len(dim_sizes) == noffsets
  */
-static size_t
-init_offsets(size_t *offsets, uint16_t *array_align,
-             size_t *dim_sizes, int noffsets,
-             uint16_t dtype_align, uint16_t bitmap_align, uint16_t dim_align)
-{
-    size_t offset = 0;
-    uint16_t maxalign;
-    int i;
-
-    maxalign = max(dtype_align, bitmap_align);
-    maxalign = max(maxalign, dim_align);
-
-    for (i = 0; i < noffsets; i++) {
-        if (i > 0) {
-            if (i % 2) {
-                offset = round_up(offset, bitmap_align);
-            }
-            else {
-                offset = round_up(offset, dim_align);
-            }
-        }
-
-        offsets[i] = offset;
-        offset += dim_sizes[i];
-    }
-
-    *array_align = maxalign;
-
-    return round_up(offset, maxalign);
-}
-
 static int
 init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
 {
+    int64_t *data = a->Concrete.Array.data; /* offsets of dimension and array data */
+    int64_t *bitmaps = a->Concrete.Array.bitmaps; /* offsets of dimension and array bitmaps */
     const ndt_t *dims[NDT_MAX_DIM];
-    const ndt_t *dtype;
-    size_t dim_sizes[NDT_MAX_DIM+1];
-    size_t size, nitems;
-    uint16_t array_align, bitmap_align, dim_align;
-    int64_t n;
+    const ndt_t *dtype, *t;
+    int64_t nitems, nshapes;
+    int64_t offset;
+    int64_t array_size, data_size, bitmap_size;
+    uint16_t array_align, data_align, bitmap_align;
+    int data_start;
     int i;
 
     assert(a->tag == Array);
     assert(ndt_is_concrete(a));
     assert(a->ndim == type->ndim);
     assert(a->ndim > 0);
-    assert(a->Concrete.Array.noffsets == 2 * (a->ndim + 1));
 
     ndt_const_dims_dtype(dims, &dtype, type);
     assert(ndt_is_concrete(dtype));
 
+    /* Calculate number of items in the array */
+    data_start = 0;
     nitems = 1;
     for (i = 0; i < type->ndim; i++) {
-        assert(ndt_is_concrete(dims[i]));
+        t = dims[i];
+        assert(ndt_is_concrete(t));
 
-        switch (dims[i]->tag) {
+        switch (t->tag) {
         case FixedDim:
-            n = dims[i]->FixedDim.shape;
-            nitems *= n;
-            dim_sizes[2 * dims[i]->ndim] = 0;
-            size = ndt_is_optional(dims[i]) ? round_up(n, 8) : 0;
-            dim_sizes[2 * dims[i]->ndim + 1] = size;
+            nitems *= t->FixedDim.shape;
             break;
         case VarDim: {
-            size_t nshapes = (size_t)dims[i]->Concrete.VarDim.nshapes;
+            nshapes = (size_t)t->Concrete.VarDim.nshapes;
             if (nshapes != nitems) {
                 ndt_err_format(ctx, NDT_InvalidArgumentError,
                     "missing or invalid number of var-dim shape arguments");
                 return -1;
             }
-            n = sum_pos_int64(dims[i]->Concrete.VarDim.shapes, nshapes, ctx);
-            if (n < 0) {
+            nitems = sum_pos_int64(t->Concrete.VarDim.shapes, nshapes, ctx);
+            if (nitems < 0) {
                 return -1;
             }
-            nitems = n;
-            dim_sizes[2 * dims[i]->ndim] = (nshapes + 1) * dims[i]->Concrete.size;
-            size = ndt_is_optional(dims[i]) ? round_up(n, 8) : 0;
-            dim_sizes[2 * dims[i]->ndim + 1] = size;
+            if (data_start == 0) {
+                data_start = t->ndim;
+            }
             break;
         }
         default:
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                "var shape arguments given for abstract array");
+            ndt_err_format(ctx, NDT_RuntimeError,
+                "init_concrete_array: called on abstract array");
             return -1;
         }
     }
 
-    size = nitems * dtype->Concrete.size;
-    dim_sizes[0] = size;
-
-    size = ndt_is_optional(dtype) ? round_up(nitems, 8) : 0;
-    dim_sizes[1] = size;
-
+    /* Calculate data and bitmap offsets */
     bitmap_align = alignof(uint64_t);
-    dim_align = ndt_dim_align(type);
-    size = init_offsets(a->Concrete.Array.offsets, &array_align, dim_sizes,
-                        a->Concrete.Array.noffsets,
-                        dtype->Concrete.align,
-                        bitmap_align,
-                        dim_align);
+    data_align = ndt_dim_align(a);
 
-    a->Concrete.size = size;
+    data[0] = offset = 0;
+    data_size = nitems * dtype->Concrete.size;
+    offset += data_size;
+    array_align = dtype->Concrete.align;
+
+    if (ndt_is_optional(dtype)) {
+         bitmaps[0] = offset = round_up(offset, bitmap_align);
+         bitmap_size = round_up(nitems, sizeof(uint64_t));
+         offset += bitmap_size;
+         array_align = max(array_align, bitmap_align);
+    }
+    else {
+         bitmaps[0] = -1;
+    }
+
+    for (i = a->ndim-1; i >= 0; i--) {
+        t = dims[i];
+
+        switch (t->tag) {
+        case FixedDim:
+            /* Fixed dimensions do not require pointer adjustment. */
+            data[t->ndim] = 0;
+            break;
+        case VarDim: {
+            data[t->ndim] = offset = round_up(offset, data_align);
+            data_size = (dims[i]->Concrete.VarDim.nshapes + 1) * dims[i]->Concrete.size;
+            offset += data_size;
+            array_align = max(array_align, data_align);
+            break;
+        }
+        default:
+            abort(); /* NOT REACHED */
+        }
+
+        if (ndt_is_optional(dims[i])) {
+            bitmaps[t->ndim] = offset = round_up(offset, bitmap_align);
+            bitmap_size = round_up(nitems, sizeof(uint64_t));
+            offset += bitmap_size;
+            array_align = max(array_align, bitmap_align);
+        }
+        else {
+            bitmaps[t->ndim] = -1;
+        }
+    }
+
+    array_size = round_up(offset, array_align);
+    a->Concrete.Array.data_start = data_start;
+    a->Concrete.size = array_size;
     a->Concrete.align = array_align;
 
     return 0;
@@ -1107,10 +1118,9 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
           ndt_context_t *ctx)
 {
     ndt_t *t;
-    size_t noffsets;
+    size_t extra;
 
     assert(type->ndim > 0);
-    noffsets = 2 * (type->ndim + 1);
 
     if (strides || offsets) {
         /* What should happen with arbitrary user-supplied strides/offsets? */
@@ -1122,8 +1132,10 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
         return NULL;
     }
 
+    extra = 2 * (type->ndim + 1) * sizeof(size_t);
+
     /* abstract type */
-    t = ndt_new_extra(Array, noffsets * sizeof(size_t), ctx);
+    t = ndt_new_extra(Array, extra * sizeof(size_t), ctx);
     if (t == NULL) {
         ndt_del(type);
         ndt_free(strides);
@@ -1137,8 +1149,8 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
     t->access = type->access;
     if (t->access == Concrete) {
         t->Concrete.Array.dim_type = ndt_dim_type(type);
-        t->Concrete.Array.noffsets = noffsets;
-        t->Concrete.Array.offsets = (size_t *)t->extra;
+        t->Concrete.Array.data = (int64_t *)t->extra;
+        t->Concrete.Array.bitmaps = (int64_t *)t->extra + type->ndim + 1;
 
         if (init_concrete_array(t, type, ctx) < 0) {
             ndt_del(t);
