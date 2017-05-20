@@ -319,6 +319,13 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = datashape(buf, t->Option.type, d, ctx);
             return n;
 
+        case OptionItem:
+            n = ndt_snprintf(ctx, buf, "?");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->OptionItem.type, d, ctx);
+            return n;
+
         case Nominal:
             n = ndt_snprintf(ctx, buf, "%s", t->Nominal.name);
             return n;

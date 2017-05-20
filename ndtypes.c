@@ -376,6 +376,7 @@ ndt_tag_as_string(enum ndt tag)
     switch (tag) {
     case AnyKind: return "Any";
     case Option: return "option";
+    case OptionItem: return "option_item";
     case Nominal: return "nominal";
     case Constr: return "constr";
 
@@ -570,6 +571,9 @@ ndt_del(ndt_t *t)
         break;
     case Option:
         ndt_del(t->Option.type);
+        break;
+    case OptionItem:
+        ndt_del(t->OptionItem.type);
         break;
     case Nominal:
         ndt_free(t->Nominal.name);
@@ -1169,10 +1173,8 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
 }
 
 ndt_t *
-ndt_option(ndt_t *type, ndt_context_t *ctx)
+ndt_dim_option(ndt_t *type, ndt_context_t *ctx)
 {
-    ndt_t *t;
-
     switch (type->tag) {
     case FixedDim:
         type->FixedDim.flags |= NDT_Dim_option;
@@ -1188,12 +1190,60 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
             "ellipsis dimension cannot be optional");
         ndt_del(type);
         return NULL;
-    case Array:
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-            "arrays are optional iff the first dimension is optional");
+    default:
+        ndt_err_format(ctx, NDT_InvalidArgumentError, "not a dimension");
         ndt_del(type);
         return NULL;
-    case Option:
+    }
+}
+
+ndt_t *
+ndt_item_option(ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    switch (type->tag) {
+    case FixedDim: case VarDim: case SymbolicDim: case EllipsisDim:
+    case Array:
+        ndt_err_format(ctx, NDT_InvalidArgumentError, "not an item");
+        ndt_del(type);
+        return NULL;
+    case Option: case OptionItem:
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+                       "cannot create an option option");
+        ndt_del(type);
+    default:
+        /* abstract type */
+        t = ndt_new(OptionItem, ctx);
+        if (t == NULL) {
+            ndt_del(type);
+            return NULL;
+        }
+        t->OptionItem.type = type;
+
+        /* concrete access */
+        t->access = type->access;
+        if (t->access == Concrete) {
+            t->Concrete.size = type->Concrete.size;
+            t->Concrete.align = type->Concrete.align;
+        }
+ 
+        return t;
+     }
+}
+
+ndt_t *
+ndt_option(ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    switch (type->tag) {
+    case FixedDim: case VarDim: case SymbolicDim: case EllipsisDim:
+    case Array:
+        ndt_err_format(ctx, NDT_InvalidArgumentError, "not an item");
+        ndt_del(type);
+        return NULL;
+    case Option: case OptionItem:
         ndt_err_format(ctx, NDT_InvalidArgumentError,
                        "cannot create an option option");
         ndt_del(type);
@@ -1231,7 +1281,7 @@ ndt_is_optional(const ndt_t *t)
         return t->SymbolicDim.flags & NDT_Dim_option;
     case EllipsisDim:
         return t->EllipsisDim.flags & NDT_Dim_option;
-    case Option:
+    case Option: case OptionItem:
         return 1;
     default:
         return 0;

@@ -217,6 +217,7 @@ enum ndt {
     Array,
 
     Option,
+    OptionItem,
     Nominal,
     Constr,
 
@@ -331,6 +332,10 @@ struct _ndt {
         struct {
             ndt_t *type;
         } Option;
+
+        struct {
+            ndt_t *type;
+        } OptionItem;
 
         struct {
             char *name;
@@ -556,6 +561,8 @@ ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
 ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char_opt_t order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_dim_option(ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_item_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
 

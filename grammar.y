@@ -107,7 +107,6 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> dimensions_nooption
 %type <ndt> dimensions_tail
 %type <ndt> dtype
-%type <ndt> dtype_nooption
 %type <ndt> scalar
 %type <ndt> signed
 %type <ndt> unsigned
@@ -196,16 +195,17 @@ input:
 
 /* types */
 datashape:
-  array { $$ = $1; }
-| dtype { $$ = $1; }
+  array              { $$ = $1; }
+| dtype              { $$ = $1; }
+| QUESTIONMARK dtype { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
 
 array:
   dimensions                                   { $$ = ndt_array($1, NULL, 0, char_none, ctx); if ($$ == NULL) YYABORT; }
 | LBRACK dimensions COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions:
-  dimensions_nooption                      { $$ = $1; }
-| QUESTIONMARK dimensions_nooption         { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
+  dimensions_nooption              { $$ = $1; }
+| QUESTIONMARK dimensions_nooption { $$ = ndt_dim_option($2, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_nooption:
   INTEGER STAR dimensions_tail              { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
@@ -214,14 +214,11 @@ dimensions_nooption:
 | ELLIPSIS STAR dimensions_tail             { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_tail:
-  dtype      { $$ = $1; }
-| dimensions { $$ = $1; }
+  dtype              { $$ = $1; }
+| QUESTIONMARK dtype { $$ = ndt_item_option($2, ctx); if ($$ == NULL) YYABORT; }
+| dimensions         { $$ = $1; }
 
 dtype:
-  dtype_nooption                      { $$ = $1; }
-| QUESTIONMARK dtype_nooption         { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
-
-dtype_nooption:
   ANY_KIND                               { $$ = ndt_any_kind(ctx); if ($$ == NULL) YYABORT; }
 | SCALAR_KIND                            { $$ = ndt_scalar_kind(ctx); if ($$ == NULL) YYABORT; }
 | scalar                                 { $$ = $1; }

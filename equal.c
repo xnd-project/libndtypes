@@ -189,6 +189,8 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
         return c->tag == Typevar && strcmp(c->Typevar.name, p->Typevar.name) == 0;
     case Option:
         return c->tag == Option && ndt_equal(p->Option.type, c->Option.type);
+    case OptionItem:
+        return c->tag == OptionItem && ndt_equal(p->OptionItem.type, c->OptionItem.type);
     case Nominal:
         /* Assume that the type has been created through ndt_nominal(), in
            which case the name is guaranteed to be unique and present in the

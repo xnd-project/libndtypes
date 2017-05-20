@@ -296,6 +296,9 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     case Option:
         if (c->tag != Option) return 0;
         return match_datashape(p->Option.type, c->Option.type, tbl, ctx);
+    case OptionItem:
+        if (c->tag != OptionItem) return 0;
+        return match_datashape(p->OptionItem.type, c->OptionItem.type, tbl, ctx);
     case Nominal:
         /* Assume that the type has been created through ndt_nominal(), in
            which case the name is guaranteed to be unique and present in the

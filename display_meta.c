@@ -374,6 +374,7 @@ tag_as_constr(enum ndt tag)
     case EllipsisDim: return "EllipsisDim";
 
     case Option: return "Option";
+    case OptionItem: return "OptionItem";
     case Nominal: return "Nominal";
     case Constr: return "Constr";
 
@@ -626,6 +627,23 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             n = datashape(buf, t->Option.type, d+2, 0, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+
+            n = common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+
+        case OptionItem:
+            assert(!ndt_is_optional(t->OptionItem.type));
+
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "OptionItem(\n");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->OptionItem.type, d+2, 0, ctx);
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, ",\n");
