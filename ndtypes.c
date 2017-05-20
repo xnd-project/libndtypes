@@ -1118,6 +1118,7 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
           ndt_context_t *ctx)
 {
     ndt_t *t;
+    size_t bitmaps_offset;
     size_t extra;
 
     assert(type->ndim > 0);
@@ -1132,10 +1133,11 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
         return NULL;
     }
 
-    extra = 2 * (type->ndim + 1) * sizeof(size_t);
+    bitmaps_offset = (type->ndim + 1) * sizeof(int64_t);
+    extra = bitmaps_offset + (type->ndim + 1) * sizeof(int64_t);
 
     /* abstract type */
-    t = ndt_new_extra(Array, extra * sizeof(size_t), ctx);
+    t = ndt_new_extra(Array, extra, ctx);
     if (t == NULL) {
         ndt_del(type);
         ndt_free(strides);
@@ -1150,7 +1152,7 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
     if (t->access == Concrete) {
         t->Concrete.Array.dim_type = ndt_dim_type(type);
         t->Concrete.Array.data = (int64_t *)t->extra;
-        t->Concrete.Array.bitmaps = (int64_t *)t->extra + type->ndim + 1;
+        t->Concrete.Array.bitmaps = (int64_t *)(t->extra + bitmaps_offset);
 
         if (init_concrete_array(t, type, ctx) < 0) {
             ndt_del(t);

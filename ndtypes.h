@@ -396,10 +396,10 @@ struct _ndt {
     struct {
         union {
             struct {
-                enum ndt_dim dim_type;
-                int data_start;
-                int64_t *data;
-                int64_t *bitmaps;
+                enum ndt_dim dim_type; /* data type of the var-dim representation */
+                int data_start;        /* start index into the 'data' member array */
+                int64_t *data;         /* offsets of actual array data and var-dim data */
+                int64_t *bitmaps;      /* offsets of validity bitmaps */
             } Array;
 
             struct {
