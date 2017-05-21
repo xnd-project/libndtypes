@@ -1079,8 +1079,9 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
 
         switch (t->tag) {
         case FixedDim:
-            /* Fixed dimensions do not require pointer adjustment. */
-            data[t->ndim] = 0;
+            /* Fixed dimensions stride on the same data as previous dimensions.
+               Only var dimensions create new index arrays. */
+            data[t->ndim] = data[t->ndim-1];
             break;
         case VarDim: {
             data[t->ndim] = offset = round_up(offset, data_align);
