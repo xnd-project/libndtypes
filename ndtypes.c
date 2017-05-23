@@ -1056,7 +1056,7 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
     }
 
     /* Calculate data and bitmap offsets */
-    bitmap_align = alignof(uint64_t);
+    bitmap_align = alignof(uint8_t);
     data_align = ndt_dim_align(a);
 
     data[0] = offset = 0;
@@ -1066,7 +1066,7 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
 
     if (ndt_is_optional(dtype)) {
          bitmaps[0] = offset = round_up(offset, bitmap_align);
-         bitmap_size = round_up(nitems, sizeof(uint64_t));
+         bitmap_size = (nitems + 7) / 8;
          offset += bitmap_size;
          array_align = max(array_align, bitmap_align);
     }
@@ -1096,7 +1096,7 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
 
         if (ndt_is_optional(dims[i])) {
             bitmaps[t->ndim] = offset = round_up(offset, bitmap_align);
-            bitmap_size = round_up(nitems, sizeof(uint64_t));
+            bitmap_size = (nitems + 7) / 8;
             offset += bitmap_size;
             array_align = max(array_align, bitmap_align);
         }

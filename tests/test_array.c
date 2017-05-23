@@ -49,12 +49,12 @@
 #ifdef __GNUC__
 typedef struct {
     uint8_t data[2][3][10];
-    uint64_t bitmap[8];
+    uint8_t bitmap[8];
 } nested_1;
 
 typedef struct {
     ndt_complex64_t data[3][7];
-    uint64_t bitmap[3];
+    uint8_t bitmap[3];
 } nested_2;
 
 typedef struct {
