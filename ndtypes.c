@@ -1177,15 +1177,14 @@ ndt_t *
 ndt_dim_option(ndt_t *type, ndt_context_t *ctx)
 {
     switch (type->tag) {
-    case FixedDim:
-        type->FixedDim.flags |= NDT_Dim_option;
-        return type;
     case VarDim:
         type->VarDim.flags |= NDT_Dim_option;
         return type;
-    case SymbolicDim:
-        type->SymbolicDim.flags |= NDT_Dim_option;
-        return type;
+    case FixedDim: case SymbolicDim:
+        ndt_err_format(ctx, NDT_NotImplementedError,
+            "semantics for optional fixed dimensions need to be defined");
+        ndt_del(type);
+        return NULL;
     case EllipsisDim:
         ndt_err_format(ctx, NDT_InvalidArgumentError,
             "ellipsis dimension cannot be optional");
