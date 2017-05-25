@@ -1,0 +1,78 @@
+
+
+========================================================================
+                 Issues with explicit strides and offsets
+========================================================================
+
+Explicit non-contiguous strides and offsets are currently disabled until
+we decide what they mean.
+
+
+
+Role of libndtypes
+------------------
+
+Wiht contiguous strides, libndtypes has all the information required
+to calculate the precise memory access map.
+
+For example, libxnd uses the type trees to access elements.
+
+
+The information includes exact memory sizes for each subtree.
+
+
+This works as long as the strides are contiguous.
+
+
+
+Enter non-contiguous strides
+----------------------------
+
+NumPy has the option of using the low-level ndarray to specify pretty
+arbitrary strides and offsets.  The buffer is user-supplied (so the
+size is known!), and the only requirement is that any element that
+can be accesssed using the strides is inside the buffer.
+
+
+>>> x = np.ndarray(buffer=10 * '\0', shape=[2], strides=[-4], offset=4, dtype='B')
+>>> y = np.ndarray(buffer=10 * '\0', shape=[2], strides=[-4], offset=3, dtype='B')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ValueError: strides is incompatible with shape of requested array and size of buffer
+
+
+Here the first example is valid (but wastes space!), the second would access
+elements before the start of the buffer.
+
+
+
+Options for libndtypes
+======================
+
+
+1) Disallow non-contiguous strides
+----------------------------------
+
+The question is if a data description string needs to have non-contiguous
+strides at all:  Are arrays really copied and shipped to another place
+when they have non-contiguous strides?
+
+
+I would assume that usually a contiguous array is created.  *Of that array*
+non-contiguous views are taken, but why would one copy a non-contiguous
+view?
+
+
+
+2) Calculate the minimum size required for a set of strides
+-----------------------------------------------------------
+
+It is of course possible to calculate the *minimum* size for a certain
+stride configuration.
+
+
+But that still does not describe an array that wastes buffer space
+like above.
+
+
+
