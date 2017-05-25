@@ -781,7 +781,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Typevar(");
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, "name=%s, ", t->Typevar.name);
+            n = ndt_snprintf(ctx, buf, "name='%s', ", t->Typevar.name);
             if (n < 0) return -1;
 
             n = common_attributes(buf, t, 0, ctx);
