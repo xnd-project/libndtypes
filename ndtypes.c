@@ -1114,13 +1114,11 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
 }
 
 /*
- * Assumption:
- *   (strides==NULL || len(strides)==t->ndim) &&
- *   (offsets==NULL || len(offsets)==t->ndim)
+ * Assumption: strides==NULL || len(strides)==t->ndim
  */
 ndt_t *
-ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
-          ndt_context_t *ctx)
+ndt_array(ndt_t *type, int64_t *strides, int64_opt_t offset, int64_opt_t bufsize,
+          char_opt_t order, ndt_context_t *ctx)
 {
     ndt_t *t;
     size_t bitmaps_offset;
@@ -1128,13 +1126,14 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
 
     assert(type->ndim > 0);
 
-    if (strides || offsets) {
+    if (strides) {
+        (void)bufsize;
+        (void)offset;
         /* What should happen with arbitrary user-supplied strides/offsets? */
         ndt_err_format(ctx, NDT_NotImplementedError,
                        "semantics need to be defined first");
         ndt_del(type);
         ndt_free(strides);
-        ndt_free(offsets);
         return NULL;
     }
 
@@ -1146,13 +1145,13 @@ ndt_array(ndt_t *type, int64_t *strides, int64_t *offsets, char_opt_t order,
     if (t == NULL) {
         ndt_del(type);
         ndt_free(strides);
-        ndt_free(offsets);
         return NULL;
     }
     t->ndim = type->ndim;
     t->Array.flags = ndt_dim_flags(type);
     t->Array.type = type;
 
+    /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {
         t->Concrete.Array.dim_type = ndt_dim_type(type);

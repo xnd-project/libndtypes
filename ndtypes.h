@@ -131,13 +131,19 @@ enum ndt_option {
 
 typedef struct {
   enum ndt_option tag;
-  uint16_t Some;
-} uint16_opt_t;
+  char Some;
+} char_opt_t;
 
 typedef struct {
   enum ndt_option tag;
-  char Some;
-} char_opt_t;
+  int64_t Some;
+} int64_opt_t;
+
+typedef struct {
+  enum ndt_option tag;
+  uint16_t Some;
+} uint16_opt_t;
+
 
 enum ndt_attr {
   AttrBool,
@@ -156,6 +162,7 @@ enum ndt_attr {
   AttrString,
   AttrInt64List,
   AttrCharOpt,
+  AttrInt64Opt,
   AttrUint16Opt
 };
 
@@ -559,7 +566,7 @@ ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *ndt_array(ndt_t *array, int64_t *strides, int64_t *offsets, char_opt_t order, ndt_context_t *ctx);
+ndt_t *ndt_array(ndt_t *type, int64_t *strides, int64_opt_t offset, int64_opt_t bufsize, char_opt_t order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_dim_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_item_option(ndt_t *type, ndt_context_t *ctx);
