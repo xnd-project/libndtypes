@@ -2782,6 +2782,17 @@ const match_testcase_t match_tests[] = {
   { "N * Z * ... * 10 * N * Z * foo_t",
     "10 * 20 * var * 10 * ... * 10 * 20 * foo_t", 0 },
 
+  /* Named dtypes using the constructor syntax */
+  { "3 * Matrix(3 * 3 * float64)",
+    "3 * Matrix(3 * 3 * float64)", 1 },
+
+  { "3 * Matrix(3 * 3 * float64)",
+    "3 * 3 * 3 * float64", 0 },
+
+  { "3 * Matrix(3 * 3 * float64)",
+    "3 * OtherMatrix(3 * 3 * float64)", 0 },
+
+  /* ndarray */
   /* ndarray */
 #if 0
 XXX
