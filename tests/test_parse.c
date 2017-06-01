@@ -551,6 +551,9 @@ const char *parse_tests[] = {
   "10 * foo_t",
   "foo_t",
 
+  /* Constructor syntax for arrays */
+  "10 * Matrix(3 * 2 * float64)",
+
   /* Attributes and metadata */
   "[10 * int32, order='C']",
   "[10 * int32, order='F']",
