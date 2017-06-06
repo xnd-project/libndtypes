@@ -1,7 +1,7 @@
 # Definition of generalized slicing and indexing (includes vararrays).
 
 def getitem(lst, indices):
-    """generalized for arbitary indices and slices"""
+    """generalized for arbitrary indices and slices"""
     if not indices:
         return lst
     i, indices = indices[0], indices[1:]
