@@ -559,6 +559,7 @@ ndt_del(ndt_t *t)
     case VarDim:
         ndt_del(t->VarDim.type);
         if (ndt_is_concrete(t)) {
+            ndt_free(t->Concrete.VarDim.offsets);
             ndt_free(t->Concrete.VarDim.shapes);
         }
         break;
@@ -767,7 +768,6 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx)
     /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {
-        t->Concrete.FixedDim.offset = 0;
         t->Concrete.FixedDim.itemsize = type->Concrete.size;
         switch (t->FixedDim.type->tag) {
         case VarDim:
@@ -817,45 +817,43 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
+/* len(shapes) == nshapes && len(offsets) == nshapes+1 */
 ndt_t *
-ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
+ndt_var_dim(int64_t *offsets, int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
     uint32_t dim_size;
 
-    assert((shapes==NULL) == (nshapes==0));
+    assert((offsets==NULL) == (nshapes==0) && (shapes==NULL) == (nshapes==0));
 
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+        ndt_free(offsets);
         ndt_free(shapes);
         ndt_del(type);
         return NULL;
     }
 
     dim_size = ndt_dim_size(type);
-    if (shapes) {
+    if (nshapes > 0) {
         if (ndt_is_abstract(type)) {
             ndt_err_format(ctx, NDT_InvalidArgumentError,
                            "var-shapes given for abstract type");
+            ndt_free(offsets);
             ndt_free(shapes);
             ndt_del(type);
             return NULL;
         }
 
         if (dim_size == 0) {
-            int64_t n = sum_pos_int64(shapes, nshapes, ctx);
-            if (n < 0) {
-                ndt_free(shapes);
-                ndt_del(type);
-                return NULL;
-            }
-            dim_size = ndt_select_dim_size(n);
+            dim_size = ndt_select_dim_size(offsets[nshapes]);
         }
     }
 
     /* abstract type */
     t = ndt_new(VarDim, ctx);
     if (t == NULL) {
+        ndt_free(offsets);
         ndt_free(shapes);
         ndt_del(type);
         return NULL;
@@ -867,11 +865,12 @@ ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx)
     /* concrete access */
     t->access = shapes ? type->access : Abstract;
     if (t->access == Concrete) {
-        t->Concrete.VarDim.offset = 0;
         t->Concrete.VarDim.itemsize = type->Concrete.size;
         t->Concrete.VarDim.stride = type->Concrete.size;
         t->Concrete.VarDim.nshapes = nshapes;
+        t->Concrete.VarDim.offsets = offsets;
         t->Concrete.VarDim.shapes = shapes;
+        t->Concrete.VarDim.suboffset = 0;
         t->Concrete.size = dim_size;
         t->Concrete.align = dim_size; // XXX
     }
@@ -1010,7 +1009,7 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
     int64_t offset;
     int64_t array_size, data_size, bitmap_size;
     uint16_t array_align, data_align, bitmap_align;
-    int data_start;
+    int ndim_start;
     int i;
 
     assert(a->tag == Array);
@@ -1022,7 +1021,7 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
     assert(ndt_is_concrete(dtype));
 
     /* Calculate number of items in the array */
-    data_start = 0;
+    ndim_start = 0;
     nitems = 1;
     for (i = 0; i < type->ndim; i++) {
         t = dims[i];
@@ -1043,8 +1042,8 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
             if (nitems < 0) {
                 return -1;
             }
-            if (data_start == 0) {
-                data_start = t->ndim;
+            if (ndim_start == 0) {
+                ndim_start = t->ndim;
             }
             break;
         }
@@ -1106,7 +1105,8 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
     }
 
     array_size = round_up(offset, array_align);
-    a->Concrete.Array.data_start = data_start;
+    a->Concrete.Array.ndim_start = ndim_start;
+    a->Concrete.Array.suboffset = 0;
     a->Concrete.size = array_size;
     a->Concrete.align = array_align;
 

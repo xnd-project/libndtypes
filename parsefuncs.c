@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <assert.h>
 #include "ndtypes.h"
 #include "seq.h"
 #include "attr.h"
@@ -88,10 +89,30 @@ mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx)
     return ndt_fixed_dim(shape, type, ctx);
 }
 
+static int64_t *
+mk_offsets(const int64_t *shapes, int64_t nshapes, ndt_context_t *ctx)
+{
+    int64_t *offsets;
+    int64_t i;
+
+    offsets = ndt_alloc(nshapes+1, sizeof *offsets);
+    if (offsets == NULL) {
+        return ndt_memory_error(ctx);
+    }
+
+    offsets[0] = 0;
+    for (i = 0; i < nshapes; i++) {
+        offsets[i+1] = offsets[i] + shapes[i];
+    }
+
+    return offsets;
+}
+
 ndt_t *
 mk_var_dim(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 {
     int64_t *shapes = NULL;
+    int64_t *offsets = NULL;
     int64_t nshapes = 0;
 
     if (seq) {
@@ -115,9 +136,62 @@ mk_var_dim(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 
         nshapes = seq->len;
         ndt_string_seq_del(seq);
+
+        offsets = mk_offsets(shapes, nshapes, ctx);
+        if (offsets == NULL) {
+            ndt_free(shapes);
+            ndt_del(type);
+            return NULL;
+        }
     }
 
-    return ndt_var_dim(shapes, nshapes, type, ctx);
+    return ndt_var_dim(offsets, shapes, nshapes, type, ctx);
+}
+
+ndt_t *
+mk_var_dim_offsets(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
+{
+    int64_t *offsets = NULL;
+    int64_t *shapes = NULL;
+    int64_t nshapes = 0;
+    int64_t i;
+    size_t k;
+
+    assert(seq != NULL);
+    assert(seq->len % 2 == 0);
+
+    nshapes = (seq->len-2) / 2;
+
+    offsets = ndt_alloc(nshapes+1, sizeof *offsets);
+    shapes = ndt_alloc(nshapes, sizeof *shapes);
+    if (offsets == NULL || shapes == NULL) {
+        (void)ndt_memory_error(ctx);
+        goto error;
+    }
+
+    for (i=0, k=0; i<nshapes && k<seq->len-2; i++, k+=2) {
+        offsets[i] = (int64_t)ndt_strtoll(seq->ptr[k], 0, INT64_MAX, ctx);
+        shapes[i] = (int64_t)ndt_strtoll(seq->ptr[k+1], 0, INT64_MAX, ctx);
+        if (ctx->err != NDT_Success) {
+            goto error;
+        }
+    }
+
+    offsets[i] = (int64_t)ndt_strtoll(seq->ptr[k], 0, INT64_MAX, ctx);
+    if ((int64_t)ndt_strtoll(seq->ptr[k+1], 0, INT64_MAX, ctx) != 0) {
+        ndt_err_format(ctx, NDT_ValueError, "last shape must be 0"); 
+        goto error;
+    }
+
+    ndt_string_seq_del(seq);
+    return ndt_var_dim(offsets, shapes, nshapes, type, ctx);
+
+error:
+    ndt_free(shapes);
+    ndt_free(offsets);
+    ndt_string_seq_del(seq);
+    ndt_del(type);
+    return NULL;
 }
 
 ndt_t *

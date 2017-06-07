@@ -84,5 +84,8 @@ void ndt_string_seq_del(ndt_string_seq_t *);
 ndt_string_seq_t *ndt_string_seq_append(ndt_string_seq_t *, char *, ndt_context_t *ctx);
 ndt_string_seq_t *ndt_string_seq_finalize(ndt_string_seq_t *);
 
+ndt_string_seq_t *ndt_string_pair_seq_new(char *fst, char *snd, ndt_context_t *ctx);
+ndt_string_seq_t *ndt_string_pair_seq_append(ndt_string_seq_t *seq, char *fst, char *snd, ndt_context_t *ctx);
+
 
 #endif /* SEQ_H */

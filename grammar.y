@@ -137,7 +137,8 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <string> untyped_value
 %type <string_seq> untyped_value_seq
 %type <string_seq> integer_seq
-%type <string_seq> integer_args_opt
+%type <string_seq> integer_pair_seq
+%type <string_seq> integer_seq_opt
 
 %type <attribute> attribute
 %type <attribute_seq> attribute_seq
@@ -209,10 +210,11 @@ dimensions:
 | QUESTIONMARK dimensions_nooption { $$ = ndt_dim_option($2, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_nooption:
-  INTEGER STAR dimensions_tail              { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER STAR dimensions_tail           { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| VAR integer_args_opt STAR dimensions_tail { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
-| ELLIPSIS STAR dimensions_tail             { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
+  INTEGER STAR dimensions_tail                            { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER STAR dimensions_tail                         { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| VAR integer_seq_opt STAR dimensions_tail                { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
+| VAR LPAREN integer_pair_seq RPAREN STAR dimensions_tail { $$ = mk_var_dim_offsets($3, $6, ctx); if ($$ == NULL) YYABORT; }
+| ELLIPSIS STAR dimensions_tail                           { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_tail:
   dtype              { $$ = $1; }
@@ -383,13 +385,17 @@ untyped_value:
 | FLOATNUMBER { $$ = $1; if ($$ == NULL) YYABORT; }
 | STRINGLIT   { $$ = $1; if ($$ == NULL) YYABORT; }
 
-integer_args_opt:
-  %empty                    { $$ = NULL; }
-| LPAREN integer_seq RPAREN { $$ = $2; if ($$ == NULL) YYABORT; }
+integer_seq_opt:
+  %empty                         { $$ = NULL; }
+| LPAREN integer_seq RPAREN      { $$ = $2; if ($$ == NULL) YYABORT; }
 
 integer_seq:
   INTEGER                   { $$ = ndt_string_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
 | integer_seq COMMA INTEGER { $$ = ndt_string_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
+
+integer_pair_seq:
+  INTEGER COLON INTEGER                        { $$ = ndt_string_pair_seq_new($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| integer_pair_seq COMMA INTEGER COLON INTEGER { $$ = ndt_string_pair_seq_append($1, $3, $5, ctx); if ($$ == NULL) YYABORT; }
 
 function_type:
   tuple_type RARROW datashape

@@ -454,9 +454,10 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             if (ndt_is_concrete(t)) {
-                n = ndt_snprintf_d(ctx, buf, d+2, "dim_type=%s, data_start=%d, data=[",
+                n = ndt_snprintf_d(ctx, buf, d+2, "dim_type=%s, ndim_start=%d, suboffset=%d, data=[",
                                    ndt_dim_type_as_string(t->Concrete.Array.dim_type),
-                                   t->Concrete.Array.data_start);
+                                   t->Concrete.Array.ndim_start,
+                                   t->Concrete.Array.suboffset);
                 if (n < 0) return -1;
 
                 for (i = 0; i < t->ndim+1; i++) {
@@ -508,8 +509,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             }
             else {
                 n = ndt_snprintf(ctx, buf,
-                    ", offset=%" PRIi64 ", itemsize=%" PRIi64 ", stride=%zu,\n",
-                    t->Concrete.FixedDim.offset,
+                    ", itemsize=%" PRIi64 ", stride=%zu,\n",
                     t->Concrete.FixedDim.itemsize,
                     t->Concrete.FixedDim.stride);
             }
@@ -571,6 +571,19 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             if (ndt_is_concrete(t)) {
+                n = ndt_snprintf_d(ctx, buf, d+2, "offsets=[");
+                if (n < 0) return -1;
+
+                for (i = 0; i < t->Concrete.VarDim.nshapes+1; i++) {
+                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s",
+                                     t->Concrete.VarDim.offsets[i],
+                                     i==t->Concrete.VarDim.nshapes ? "" : ", ");
+                    if (n < 0) return -1;
+                }
+
+                n = ndt_snprintf(ctx, buf, "],\n");
+                if (n < 0) return -1;
+
                 n = ndt_snprintf_d(ctx, buf, d+2, "shapes=[");
                 if (n < 0) return -1;
 
@@ -581,9 +594,12 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                     if (n < 0) return -1;
                 }
 
-                n = ndt_snprintf(ctx, buf,
-                    "], offset=%" PRIi64 ", itemsize=%" PRIi64 ", stride=%zu,\n",
-                     t->Concrete.VarDim.offset, t->Concrete.VarDim.itemsize, t->Concrete.VarDim.stride);
+                n = ndt_snprintf(ctx, buf, "],\n");
+                if (n < 0) return -1;
+
+                n = ndt_snprintf_d(ctx, buf, d+2,
+                    "suboffset=%" PRIi64 ", itemsize=%" PRIi64 ", stride=%zu,\n",
+                     t->Concrete.VarDim.suboffset, t->Concrete.VarDim.itemsize, t->Concrete.VarDim.stride);
                 if (n < 0) return -1;
             }
 

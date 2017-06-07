@@ -52,6 +52,7 @@ char *mk_stringlit(const char *src, ndt_context_t *ctx);
 
 ndt_t *mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx);
 ndt_t *mk_var_dim(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
+ndt_attr_t *mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
 ndt_t *mk_alias(enum ndt_alias tag, ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_string(const char *v, enum ndt_encoding encoding, ndt_context_t *ctx);
@@ -68,7 +69,7 @@ ndt_t *mk_function(ndt_t *ret,
 ndt_t *mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx);
 ndt_t *mk_categorical(ndt_memory_seq_t *seq, ndt_context_t *ctx);
 ndt_attr_t *mk_attr(char *name, char *value, ndt_context_t *ctx);
-ndt_attr_t *mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx);
+ndt_t *mk_var_dim_offsets(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
 
 
 #endif /*  PARSEFUNCS_H */

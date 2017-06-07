@@ -409,23 +409,24 @@ struct _ndt {
         union {
             struct {
                 enum ndt_dim dim_type; /* data type of the var-dim representation */
-                int data_start;        /* start index into the 'data' member array */
+                int ndim_start;        /* start index into the 'data' member array */
+                int64_t suboffset;     /* suboffset into the start 'data' array */
                 int64_t *data;         /* offsets of actual array data and var-dim data */
                 int64_t *bitmaps;      /* offsets of validity bitmaps */
             } Array;
 
             struct {
-                int64_t offset;
                 int64_t itemsize;
                 int64_t stride;
             } FixedDim;
 
             struct {
-                int64_t offset;
+                int64_t suboffset;
                 int64_t itemsize;
                 int64_t stride;
-                int64_t nshapes; /* default: 0 */
-                int64_t *shapes; /* default: NULL */
+                int64_t nshapes;  /* default: 0 */
+                int64_t *shapes;  /* default: NULL */
+                int64_t *offsets; /* default: NULL */
             } VarDim;
 
             struct {
@@ -563,7 +564,7 @@ int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_any_kind(ndt_context_t *ctx);
 ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_var_dim(int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_var_dim(int64_t *offsets, int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
 
 ndt_t *ndt_array(ndt_t *type, int64_t *strides, int64_opt_t offset, int64_opt_t bufsize, char_opt_t order, ndt_context_t *ctx);

@@ -275,3 +275,38 @@ ndt_string_seq_finalize(ndt_string_seq_t *seq)
 
     return seq;
 }
+
+ndt_string_seq_t *
+ndt_string_pair_seq_new(char *first, char *second, ndt_context_t *ctx)
+{
+    ndt_string_seq_t *seq;
+
+    seq = ndt_string_seq_new(first, ctx);
+    if (seq == NULL) {
+        return NULL;
+    }
+
+    seq = ndt_string_seq_append(seq, second, ctx);
+    if (seq == NULL) {
+        return NULL;
+    }
+
+    return seq;
+}
+
+ndt_string_seq_t *
+ndt_string_pair_seq_append(ndt_string_seq_t *seq, char *first, char *second,
+                           ndt_context_t *ctx)
+{
+    seq = ndt_string_seq_append(seq, first, ctx);
+    if (seq == NULL) {
+        return NULL;
+    }
+
+    seq = ndt_string_seq_append(seq, second, ctx);
+    if (seq == NULL) {
+        return NULL;
+    }
+
+    return seq;
+}
