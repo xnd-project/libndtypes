@@ -175,25 +175,6 @@ ndt_strdup(const char *s, ndt_context_t *ctx)
     return cp;
 }
 
-/* Sum an array of positive int64_t. */
-static int64_t
-sum_pos_int64(int64_t *values, int64_t len, ndt_context_t *ctx)
-{
-    int64_t sum = 0;
-    int64_t i;
-
-    for (i = 0; i < len; i++) {
-        sum += values[i];
-        if (sum < 0) {
-            ndt_err_format(ctx, NDT_ValueError,
-                "overflow: shape values too large");
-            return -1;
-        }
-    }
-
-    return sum;
-}
-
 
 /******************************************************************************/
 /*                             Sequence elements                              */
@@ -1038,10 +1019,7 @@ init_concrete_array(ndt_t *a, const ndt_t *type, ndt_context_t *ctx)
                     "missing or invalid number of var-dim shape arguments");
                 return -1;
             }
-            nitems = sum_pos_int64(t->Concrete.VarDim.shapes, nshapes, ctx);
-            if (nitems < 0) {
-                return -1;
-            }
+            nitems = t->Concrete.VarDim.offsets[nshapes];
             if (ndim_start == 0) {
                 ndim_start = t->ndim;
             }
