@@ -448,9 +448,9 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         case UnsignedKind:
         case Uint8: case Uint16: case Uint32: case Uint64:
         case RealKind:
-        case Float32: case Float64:
+        case Float16: case Float32: case Float64:
         case ComplexKind:
-        case Complex64: case Complex128:
+        case Complex32: case Complex64: case Complex128:
         case FixedStringKind:
         case FixedBytesKind:
         case String:

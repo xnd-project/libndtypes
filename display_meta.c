@@ -405,6 +405,7 @@ tag_as_constr(enum ndt tag)
     case Float64: return "Float64";
 
     case ComplexKind: return "ComplexKind";
+    case Complex32: return "Complex32";
     case Complex64: return "Complex64";
     case Complex128: return "Complex128";
 
@@ -814,7 +815,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
         case RealKind:
         case Float16: case Float32: case Float64:
         case ComplexKind:
-        case Complex64: case Complex128:
+        case Complex32: case Complex64: case Complex128:
         case FixedStringKind: case FixedBytesKind:
         case String: case FixedString: case FixedBytes:
             assert(ndt_is_concrete(t));

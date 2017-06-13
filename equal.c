@@ -130,7 +130,7 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
     case Float16: case Float32: case Float64:
-    case Complex64: case Complex128:
+    case Complex32: case Complex64: case Complex128:
     case String:
         return c->tag == p->tag;
     case FixedString:

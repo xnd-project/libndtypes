@@ -159,7 +159,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    SIGNED_KIND INT8 INT16 INT32 INT64
    UNSIGNED_KIND UINT8 UINT16 UINT32 UINT64
    REAL_KIND FLOAT16 FLOAT32 FLOAT64
-   COMPLEX_KIND COMPLEX64 COMPLEX128
+   COMPLEX_KIND COMPLEX32 COMPLEX64 COMPLEX128
    CATEGORICAL
    REAL COMPLEX INT
    INTPTR UINTPTR SIZE
@@ -275,7 +275,8 @@ ieee_float:
 | FLOAT64 arguments_opt { $$ = mk_primitive(Float64, $2, ctx); if ($$ == NULL) YYABORT; }
 
 ieee_complex:
-  COMPLEX64 arguments_opt  { $$ = mk_primitive(Complex64, $2, ctx); if ($$ == NULL) YYABORT; }
+  COMPLEX32 arguments_opt  { $$ = mk_primitive(Complex32, $2, ctx); if ($$ == NULL) YYABORT; }
+| COMPLEX64 arguments_opt  { $$ = mk_primitive(Complex64, $2, ctx); if ($$ == NULL) YYABORT; }
 | COMPLEX128 arguments_opt { $$ = mk_primitive(Complex128, $2, ctx); if ($$ == NULL) YYABORT; }
 
 alias:

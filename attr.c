@@ -73,7 +73,8 @@ ndt_get_attr_spec(enum ndt tag, ndt_context_t *ctx)
         return &field_attr;
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
-    case Float32: case Float64: case Complex64: case Complex128:
+    case Float16: case Float32: case Float64:
+    case Complex32: case Complex64: case Complex128:
         return &prim_attr;
     case Char:
         return &char_attr;

@@ -388,6 +388,7 @@ ndt_tag_as_string(enum ndt tag)
     case Float64: return "float64";
 
     case ComplexKind: return "ComplexKind";
+    case Complex32: return "complex32";
     case Complex64: return "complex64";
     case Complex128: return "complex128";
 
@@ -1710,6 +1711,10 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
         t->Concrete.size = sizeof(uint64_t);
         t->Concrete.align = alignof(uint64_t);
         break;
+    case Float16:
+        t->Concrete.size = 2;
+        t->Concrete.align = 2;
+        break;
     case Float32:
         t->Concrete.size = sizeof(float);
         t->Concrete.align = alignof(float);
@@ -1717,6 +1722,10 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
     case Float64:
         t->Concrete.size = sizeof(double);
         t->Concrete.align = alignof(double);
+        break;
+    case Complex32:
+        t->Concrete.size = 4;
+        t->Concrete.align = 2;
         break;
     case Complex64:
         t->Concrete.size = sizeof(ndt_complex64_t);
@@ -1996,7 +2005,7 @@ int
 ndt_is_complex(const ndt_t *t)
 {
     switch (t->tag) {
-    case Complex64: case Complex128:
+    case Complex32: case Complex64: case Complex128:
         return 1;
     default:
         return 0;
@@ -2112,7 +2121,7 @@ ndt_is_scalar(const ndt_t *t)
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
     case Float16: case Float32: case Float64:
-    case Complex64: case Complex128:
+    case Complex32: case Complex64: case Complex128:
     case String:
     case FixedString:
     case FixedBytes:

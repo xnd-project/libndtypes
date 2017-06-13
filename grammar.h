@@ -75,45 +75,46 @@ extern int yydebug;
     FLOAT32 = 274,
     FLOAT64 = 275,
     COMPLEX_KIND = 276,
-    COMPLEX64 = 277,
-    COMPLEX128 = 278,
-    CATEGORICAL = 279,
-    REAL = 280,
-    COMPLEX = 281,
-    INT = 282,
-    INTPTR = 283,
-    UINTPTR = 284,
-    SIZE = 285,
-    CHAR = 286,
-    STRING = 287,
-    FIXED_STRING_KIND = 288,
-    FIXED_STRING = 289,
-    BYTES = 290,
-    FIXED_BYTES_KIND = 291,
-    FIXED_BYTES = 292,
-    POINTER = 293,
-    VAR = 294,
-    COMMA = 295,
-    COLON = 296,
-    LPAREN = 297,
-    RPAREN = 298,
-    LBRACE = 299,
-    RBRACE = 300,
-    LBRACK = 301,
-    RBRACK = 302,
-    STAR = 303,
-    ELLIPSIS = 304,
-    RARROW = 305,
-    EQUAL = 306,
-    QUESTIONMARK = 307,
-    BAR = 308,
-    ERRTOKEN = 309,
-    INTEGER = 310,
-    FLOATNUMBER = 311,
-    STRINGLIT = 312,
-    NAME_LOWER = 313,
-    NAME_UPPER = 314,
-    NAME_OTHER = 315
+    COMPLEX32 = 277,
+    COMPLEX64 = 278,
+    COMPLEX128 = 279,
+    CATEGORICAL = 280,
+    REAL = 281,
+    COMPLEX = 282,
+    INT = 283,
+    INTPTR = 284,
+    UINTPTR = 285,
+    SIZE = 286,
+    CHAR = 287,
+    STRING = 288,
+    FIXED_STRING_KIND = 289,
+    FIXED_STRING = 290,
+    BYTES = 291,
+    FIXED_BYTES_KIND = 292,
+    FIXED_BYTES = 293,
+    POINTER = 294,
+    VAR = 295,
+    COMMA = 296,
+    COLON = 297,
+    LPAREN = 298,
+    RPAREN = 299,
+    LBRACE = 300,
+    RBRACE = 301,
+    LBRACK = 302,
+    RBRACK = 303,
+    STAR = 304,
+    ELLIPSIS = 305,
+    RARROW = 306,
+    EQUAL = 307,
+    QUESTIONMARK = 308,
+    BAR = 309,
+    ERRTOKEN = 310,
+    INTEGER = 311,
+    FLOATNUMBER = 312,
+    STRINGLIT = 313,
+    NAME_LOWER = 314,
+    NAME_UPPER = 315,
+    NAME_OTHER = 316
   };
 #endif
 
@@ -136,7 +137,7 @@ union YYSTYPE
     char *string;
     ndt_string_seq_t *string_seq;
 
-#line 140 "grammar.h" /* yacc.c:1909  */
+#line 141 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -166,6 +167,6 @@ int yyparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 170 "grammar.h" /* yacc.c:1909  */
+#line 171 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */

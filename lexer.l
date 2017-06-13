@@ -166,6 +166,7 @@ yycolumn = 1;
 "float64"      { return FLOAT64; }
 
 "Complex"      { return COMPLEX_KIND; }
+"complex32"    { return COMPLEX32; }
 "complex64"    { return COMPLEX64; }
 "complex128"   { return COMPLEX128; }
 

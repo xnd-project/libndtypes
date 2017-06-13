@@ -257,6 +257,7 @@ enum ndt {
           Float64,
 
         ComplexKind,
+          Complex32,
           Complex64,
           Complex128,
 
