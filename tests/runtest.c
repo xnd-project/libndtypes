@@ -691,6 +691,80 @@ test_match(void)
     return 0;
 }
 
+static int
+test_static_context(void)
+{
+    const char **c;
+    NDT_STATIC_CONTEXT(ctx);
+    ndt_t *t;
+    char *s;
+    int count = 0;
+
+    for (c = parse_tests; *c != NULL; c++) {
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(&ctx);
+
+            ndt_set_alloc_fail();
+            t = ndt_from_string(*c, &ctx);
+            ndt_set_alloc();
+
+            if (ctx.err != NDT_MemoryError) {
+                break;
+            }
+
+            if (t != NULL) {
+                ndt_del(t);
+                fprintf(stderr, "test_static_context: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_static_context: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+        if (t == NULL) {
+            fprintf(stderr, "test_static_context: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_static_context: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx.err),
+                    ndt_context_msg(&ctx));
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(&ctx);
+
+            ndt_set_alloc_fail();
+            s = ndt_as_string(t, &ctx);
+            ndt_set_alloc();
+
+            if (ctx.err != NDT_MemoryError) {
+                break;
+            }
+
+            if (s != NULL) {
+                ndt_free(s);
+                ndt_del(t);
+                fprintf(stderr, "test_static_context: FAIL: s != NULL after MemoryError\n");
+                fprintf(stderr, "test_static_context: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+        if (s == NULL) {
+            fprintf(stderr, "test_static_context: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_static_context: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx.err),
+                    ndt_context_msg(&ctx));
+            ndt_del(t);
+            return -1;
+        }
+
+        ndt_free(s);
+        ndt_del(t);
+        count++;
+    }
+    fprintf(stderr, "test_static_context (%d test cases)\n", count);
+
+    return 0;
+}
+
+
 static int (*tests[])(void) = {
   test_parse,
   test_parse_error,
@@ -701,6 +775,7 @@ static int (*tests[])(void) = {
   test_typedef_error,
   test_equal,
   test_match,
+  test_static_context,
 #ifdef __GNUC__
   test_struct_align_pack,
   test_array,

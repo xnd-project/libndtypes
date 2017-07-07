@@ -456,6 +456,10 @@ struct _ndt {
 /*                        Context and  error handling                        */
 /*****************************************************************************/
 
+#define NDT_STATIC_CONTEXT(name) \
+    ndt_context_t name = { .err=NDT_Success, .msg=ConstMsg, .ConstMsg="Success" }
+
+
 enum ndt_error {
   NDT_Success,
   NDT_MemoryError,
