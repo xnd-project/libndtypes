@@ -1,7 +1,7 @@
 PYTHON ?= python
 CPPFLAGS := -I..
 CPPFLAGS += -I$(shell $(PYTHON) -c "import distutils.sysconfig as c; print(c.get_python_inc())")
-CFLAGS   := -fPIC -g
+CFLAGS   := -std=c11 -fPIC -g
 LDFLAGS  := -shared -L.. -g
 LIBS     := -lndtypes
 

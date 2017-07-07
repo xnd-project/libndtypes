@@ -12,11 +12,11 @@ RANLIB ?= ranlib
 CFLAGS ?= -Wall -Wextra -std=c11 -pedantic -O2 -g -fPIC
 
 ifeq ($(MAKECMDGOALS), check)
-  CFLAGS = -Wall -Wextra -Werror -std=c11 -pedantic -O2 -g
+  CFLAGS += -Werror
 endif
 
 ifeq ($(MAKECMDGOALS), memcheck)
-  CFLAGS = -Wall -Wextra -Werror -std=c11 -pedantic -O2 -g
+  CFLAGS += -Werror
 endif
 
 ifeq ($(MAKECMDGOALS), coverage)

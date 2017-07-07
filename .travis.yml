@@ -8,6 +8,7 @@ addons:
     packages:
     - gcc-4.9
     - valgrind
+    - python
 
 language: C
 
@@ -18,6 +19,7 @@ matrix:
         - export CC=gcc-4.9
       script:
         - make check
+        - make -C python check
 
     - compiler: gcc
       before_script:
@@ -30,6 +32,7 @@ matrix:
         - export CC=clang
       script:
         - make check
+        - make -C python check
 
     - language: objective-c
       os: osx
@@ -38,9 +41,10 @@ matrix:
         - export CC=clang
       script:
         - make check
+        - make -C python check
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bison; brew link bison --force; fi
-
+  - pip install -U pytest
 
