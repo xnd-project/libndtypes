@@ -136,8 +136,8 @@ yycolumn = 1;
 #undef YY_USER_ACTION
 #define YY_USER_ACTION \
     yylloc->first_line = yylloc->last_line = yylineno; \
-    yylloc->first_column = yycolumn;                  \
-    yylloc->last_column = yycolumn+yyleng-1;          \
+    yylloc->first_column = yycolumn;                   \
+    yylloc->last_column = yycolumn+yyleng-1;           \
     yycolumn += yyleng;
 
 }
@@ -173,8 +173,6 @@ yycolumn = 1;
 "intptr"       { return INTPTR; }
 "uintptr"      { return UINTPTR; }
 "size_t"       { return SIZE; }
-"complex"      { return COMPLEX; }
-"int"          { return INT; }
 "char"         { return CHAR; }
 "string"       { return STRING; }
 "bytes"        { return BYTES; }

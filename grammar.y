@@ -161,7 +161,6 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    FLOAT_KIND FLOAT16 FLOAT32 FLOAT64
    COMPLEX_KIND COMPLEX32 COMPLEX64 COMPLEX128
    CATEGORICAL
-   COMPLEX INT
    INTPTR UINTPTR SIZE
    CHAR
    STRING FIXED_STRING_KIND FIXED_STRING
@@ -280,11 +279,8 @@ ieee_complex:
 | COMPLEX128 arguments_opt { $$ = mk_primitive(Complex128, $2, ctx); if ($$ == NULL) YYABORT; }
 
 alias:
-  /* machine independent */
-  INT arguments_opt     { $$ = mk_primitive(Int32, $2, ctx); if ($$ == NULL) YYABORT; }
-| COMPLEX arguments_opt { $$ = mk_primitive(Complex128, $2, ctx); if ($$ == NULL) YYABORT; }
   /* machine dependent */
-| INTPTR arguments_opt  { $$ = mk_alias(Intptr, $2, ctx); if ($$ == NULL) YYABORT; }
+  INTPTR arguments_opt  { $$ = mk_alias(Intptr, $2, ctx); if ($$ == NULL) YYABORT; }
 | UINTPTR arguments_opt { $$ = mk_alias(Uintptr, $2, ctx); if ($$ == NULL) YYABORT; }
 | SIZE arguments_opt    { $$ = mk_alias(Size, $2, ctx); if ($$ == NULL) YYABORT; }
 

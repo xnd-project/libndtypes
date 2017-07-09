@@ -79,41 +79,39 @@ extern int yydebug;
     COMPLEX64 = 278,
     COMPLEX128 = 279,
     CATEGORICAL = 280,
-    COMPLEX = 281,
-    INT = 282,
-    INTPTR = 283,
-    UINTPTR = 284,
-    SIZE = 285,
-    CHAR = 286,
-    STRING = 287,
-    FIXED_STRING_KIND = 288,
-    FIXED_STRING = 289,
-    BYTES = 290,
-    FIXED_BYTES_KIND = 291,
-    FIXED_BYTES = 292,
-    POINTER = 293,
-    VAR = 294,
-    COMMA = 295,
-    COLON = 296,
-    LPAREN = 297,
-    RPAREN = 298,
-    LBRACE = 299,
-    RBRACE = 300,
-    LBRACK = 301,
-    RBRACK = 302,
-    STAR = 303,
-    ELLIPSIS = 304,
-    RARROW = 305,
-    EQUAL = 306,
-    QUESTIONMARK = 307,
-    BAR = 308,
-    ERRTOKEN = 309,
-    INTEGER = 310,
-    FLOATNUMBER = 311,
-    STRINGLIT = 312,
-    NAME_LOWER = 313,
-    NAME_UPPER = 314,
-    NAME_OTHER = 315
+    INTPTR = 281,
+    UINTPTR = 282,
+    SIZE = 283,
+    CHAR = 284,
+    STRING = 285,
+    FIXED_STRING_KIND = 286,
+    FIXED_STRING = 287,
+    BYTES = 288,
+    FIXED_BYTES_KIND = 289,
+    FIXED_BYTES = 290,
+    POINTER = 291,
+    VAR = 292,
+    COMMA = 293,
+    COLON = 294,
+    LPAREN = 295,
+    RPAREN = 296,
+    LBRACE = 297,
+    RBRACE = 298,
+    LBRACK = 299,
+    RBRACK = 300,
+    STAR = 301,
+    ELLIPSIS = 302,
+    RARROW = 303,
+    EQUAL = 304,
+    QUESTIONMARK = 305,
+    BAR = 306,
+    ERRTOKEN = 307,
+    INTEGER = 308,
+    FLOATNUMBER = 309,
+    STRINGLIT = 310,
+    NAME_LOWER = 311,
+    NAME_UPPER = 312,
+    NAME_OTHER = 313
   };
 #endif
 
@@ -136,7 +134,7 @@ union YYSTYPE
     char *string;
     ndt_string_seq_t *string_seq;
 
-#line 140 "grammar.h" /* yacc.c:1909  */
+#line 138 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -166,6 +164,6 @@ int yyparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 170 "grammar.h" /* yacc.c:1909  */
+#line 168 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */

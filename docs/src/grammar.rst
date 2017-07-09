@@ -84,8 +84,6 @@ Lexeme/Token Table
    "intptr" -> INTPTR
    "uintptr" -> UINTPTR
    "size" -> SIZE
-   "complex" -> COMPLEX
-   "int" -> INT
    "char" -> CHAR
    "string" -> STRING
    "bytes" -> BYTES
@@ -238,9 +236,7 @@ This is the actual grammar in BNF form:
    | COMPLEX LBRACK FLOAT64 RBRACK
    
    alias:
-     INT
-   | COMPLEX
-   | INTPTR
+     INTPTR
    | UINTPTR
    | SIZE
    
