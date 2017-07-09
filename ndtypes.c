@@ -503,6 +503,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
     t->tag = tag;
     t->access = Abstract;
     t->ndim = 0;
+    t->hash = -1;
 
     return t;
 }
@@ -520,6 +521,7 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
     t->tag = tag;
     t->access = Abstract;
     t->ndim = 0;
+    t->hash = -1;
 
     return t;
 }
@@ -599,6 +601,41 @@ ndt_del(ndt_t *t)
     }
 
     ndt_free(t);
+}
+
+/* Unoptimized hash function for experimenting. */
+int64_t
+ndt_hash(ndt_t *t, ndt_context_t *ctx)
+{
+    unsigned char *s, *cp;
+    size_t len;
+    int64_t x;
+
+    if (t->hash != -1) {
+        return t->hash;
+    }
+
+    cp = s = (unsigned char *)ndt_as_string(t, ctx);
+    if (s == NULL) {
+        return -1;
+    }
+
+    len = strlen((char *)s);
+
+    x = *cp << 7;
+    while (*cp != '\0') {
+        x = (1000003 * x) ^ *cp++;
+    }
+    x ^= len;
+
+    if (x == -1) {
+        x = -2;
+    }
+
+    ndt_free(s);
+    t->hash = x;
+
+    return x;
 }
 
 ndt_t *

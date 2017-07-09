@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
 #include <assert.h>
 #include "ndtypes.h"
@@ -764,6 +765,99 @@ test_static_context(void)
     return 0;
 }
 
+typedef struct {
+    const char *str;
+    int64_t hash;
+} hash_testcase_t;
+
+static int
+cmp_hash_testcase(const void *x, const void *y)
+{
+    const hash_testcase_t *p = (const hash_testcase_t *)x;
+    const hash_testcase_t *q = (const hash_testcase_t *)y;
+
+    if (p->hash < q->hash) {
+        return -1;
+    }
+    else if (p->hash == q->hash) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int
+test_hash(void)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    hash_testcase_t buf[1000];
+    ptrdiff_t n = 1;
+    const char **c;
+    ndt_t *t;
+    hash_testcase_t x;
+    int i;
+
+    for (c = parse_roundtrip_tests; *c != NULL; c++) {
+        n = c - parse_roundtrip_tests;
+        if (n >= 1000) {
+            break;
+        }
+
+        ndt_err_clear(&ctx);
+
+        t = ndt_from_string(*c, &ctx);
+        if (t == NULL) {
+            fprintf(stderr, "test_hash: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_hash: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx.err),
+                    ndt_context_msg(&ctx));
+            return -1;
+        }
+
+        x.hash = ndt_hash(t, &ctx);
+        x.str = *c;
+        ndt_del(t);
+
+        if (x.hash == -1) {
+            fprintf(stderr, "test_hash: FAIL: hash==-1\n\n");
+            return -1;
+        }
+
+        buf[n] = x;
+    }
+
+    qsort(buf, n, sizeof *buf, cmp_hash_testcase);
+    for (i = 0; i < n-1; i++) {
+        if (buf[i].hash == buf[i+1].hash) {
+            fprintf(stderr,
+                "test_hash: duplicate hash for %s: %" PRIi64 "\n\n",
+                buf[i].str, buf[i].hash);
+        }
+    }
+
+    t = ndt_from_string("2 * var * {a: (float64, () -> ()), b: string}", &ctx);
+    if (t == NULL) {
+        fprintf(stderr, "test_hash: FAIL: expected success\n\n");
+        return -1;
+    }
+
+    alloc_fail = 1;
+    ndt_set_alloc_fail();
+    x.hash = ndt_hash(t, &ctx);
+    ndt_set_alloc();
+
+    ndt_del(t);
+
+    if (x.hash != -1 || ctx.err != NDT_MemoryError) {
+        fprintf(stderr, "test_hash: FAIL: expected failure, got %" PRIi64 "\n\n", x.hash);
+        return -1;
+    }
+
+    fprintf(stderr, "test_hash (%d test cases)\n", (int)n);
+
+    return 0;
+}
+
 
 static int (*tests[])(void) = {
   test_parse,
@@ -776,6 +870,7 @@ static int (*tests[])(void) = {
   test_equal,
   test_match,
   test_static_context,
+  test_hash,
 #ifdef __GNUC__
   test_struct_align_pack,
   test_array,
