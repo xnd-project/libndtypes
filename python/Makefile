@@ -5,7 +5,8 @@ CFLAGS   := -std=c11 -fPIC -g
 LDFLAGS  := -shared -L.. -g
 LIBS     := -lndtypes
 
-all: _ndtypes.so
+all: #_ndtypes.so
+	$(PYTHON) setup.py build_ext --inplace
 
 _ndtypes.so: ndtypes.o
 	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
@@ -13,7 +14,7 @@ _ndtypes.so: ndtypes.o
 ndtypes.o: ndtypes.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
-check: _ndtypes.so
+check: all #_ndtypes.so
 	$(PYTHON) -m pytest -sv test_ndtypes.py
 
 clean:
