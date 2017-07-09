@@ -457,8 +457,10 @@ struct _ndt {
 /*                        Context and  error handling                        */
 /*****************************************************************************/
 
+#define NDT_Dynamic 0x00000001U
+
 #define NDT_STATIC_CONTEXT(name) \
-    ndt_context_t name = { .err=NDT_Success, .msg=ConstMsg, .ConstMsg="Success" }
+    ndt_context_t name = { .flags=0, .err=NDT_Success, .msg=ConstMsg, .ConstMsg="Success" }
 
 
 enum ndt_error {
@@ -480,6 +482,7 @@ enum ndt_msg {
 };
 
 typedef struct {
+    uint32_t flags;
     enum ndt_error err;
     enum ndt_msg msg;
     union {

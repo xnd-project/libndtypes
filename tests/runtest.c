@@ -760,6 +760,17 @@ test_static_context(void)
         ndt_del(t);
         count++;
     }
+
+    s = "2 * 1000000000000000000000000000 * complex128";
+    t = ndt_from_string(s, &ctx);
+    if (s == NULL) {
+        fprintf(stderr, "test_static_context: FAIL: expected failure: \"%s\"\n", s);
+        ndt_del(t);
+        return -1;
+    }
+    count++;
+
+    ndt_context_del(&ctx);
     fprintf(stderr, "test_static_context (%d test cases)\n", count);
 
     return 0;

@@ -2505,6 +2505,7 @@ ndt_context_new(void)
         return NULL;
     }
 
+    ctx->flags = NDT_Dynamic;
     ctx->err = NDT_Success;
     ctx->msg = ConstMsg;
     ctx->ConstMsg = "Success";
@@ -2519,7 +2520,9 @@ ndt_context_del(ndt_context_t *ctx)
         if (ctx->msg == DynamicMsg) {
             ndt_free(ctx->DynamicMsg);
         }
-        ndt_free(ctx);
+        if (ctx->flags & NDT_Dynamic) {
+            ndt_free(ctx);
+        }
     }
 }
 
