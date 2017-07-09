@@ -251,7 +251,7 @@ enum ndt {
           Uint32,
           Uint64,
 
-        RealKind,
+        FloatKind,
           Float16,
           Float32,
           Float64,
@@ -520,7 +520,7 @@ int ndt_is_abstract(const ndt_t *t);
 int ndt_is_concrete(const ndt_t *t);
 int ndt_is_signed(const ndt_t *t);
 int ndt_is_unsigned(const ndt_t *t);
-int ndt_is_real(const ndt_t *t);
+int ndt_is_float(const ndt_t *t);
 int ndt_is_complex(const ndt_t *t);
 int ndt_is_abstract(const ndt_t *t);
 int ndt_is_scalar(const ndt_t *t);
@@ -598,7 +598,7 @@ ndt_t *ndt_typevar(char *name, ndt_context_t *ctx);
 ndt_t *ndt_scalar_kind(ndt_context_t *ctx);
 ndt_t *ndt_signed_kind(ndt_context_t *ctx);
 ndt_t *ndt_unsigned_kind(ndt_context_t *ctx);
-ndt_t *ndt_real_kind(ndt_context_t *ctx);
+ndt_t *ndt_float_kind(ndt_context_t *ctx);
 ndt_t *ndt_complex_kind(ndt_context_t *ctx);
 ndt_t *ndt_fixed_string_kind(ndt_context_t *ctx);
 ndt_t *ndt_fixed_bytes_kind(ndt_context_t *ctx);

@@ -160,7 +160,7 @@ yycolumn = 1;
 "uint32"       { return UINT32; }
 "uint64"       { return UINT64; }
 
-"Real"         { return REAL_KIND; }
+"Float"        { return FLOAT_KIND; }
 "float16"      { return FLOAT16; }
 "float32"      { return FLOAT32; }
 "float64"      { return FLOAT64; }
@@ -173,7 +173,6 @@ yycolumn = 1;
 "intptr"       { return INTPTR; }
 "uintptr"      { return UINTPTR; }
 "size_t"       { return SIZE; }
-"real"         { return REAL; }
 "complex"      { return COMPLEX; }
 "int"          { return INT; }
 "char"         { return CHAR; }

@@ -158,10 +158,10 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    BOOL
    SIGNED_KIND INT8 INT16 INT32 INT64
    UNSIGNED_KIND UINT8 UINT16 UINT32 UINT64
-   REAL_KIND FLOAT16 FLOAT32 FLOAT64
+   FLOAT_KIND FLOAT16 FLOAT32 FLOAT64
    COMPLEX_KIND COMPLEX32 COMPLEX64 COMPLEX128
    CATEGORICAL
-   REAL COMPLEX INT
+   COMPLEX INT
    INTPTR UINTPTR SIZE
    CHAR
    STRING FIXED_STRING_KIND FIXED_STRING
@@ -242,7 +242,7 @@ scalar:
 | signed             { $$ = $1; }
 | UNSIGNED_KIND      { $$ = ndt_unsigned_kind(ctx); if ($$ == NULL) YYABORT; }
 | unsigned           { $$ = $1; }
-| REAL_KIND          { $$ = ndt_real_kind(ctx); if ($$ == NULL) YYABORT; }
+| FLOAT_KIND         { $$ = ndt_float_kind(ctx); if ($$ == NULL) YYABORT; }
 | ieee_float         { $$ = $1; }
 | COMPLEX_KIND       { $$ = ndt_complex_kind(ctx); if ($$ == NULL) YYABORT; }
 | ieee_complex       { $$ = $1; }
@@ -282,7 +282,6 @@ ieee_complex:
 alias:
   /* machine independent */
   INT arguments_opt     { $$ = mk_primitive(Int32, $2, ctx); if ($$ == NULL) YYABORT; }
-| REAL arguments_opt    { $$ = mk_primitive(Float64, $2, ctx); if ($$ == NULL) YYABORT; }
 | COMPLEX arguments_opt { $$ = mk_primitive(Complex128, $2, ctx); if ($$ == NULL) YYABORT; }
   /* machine dependent */
 | INTPTR arguments_opt  { $$ = mk_alias(Intptr, $2, ctx); if ($$ == NULL) YYABORT; }

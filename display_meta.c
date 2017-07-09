@@ -399,7 +399,7 @@ tag_as_constr(enum ndt tag)
     case Uint32: return "Uint32";
     case Uint64: return "Uint64";
 
-    case RealKind: return "RealKind";
+    case FloatKind: return "FloatKind";
     case Float16: return "Float16";
     case Float32: return "Float32";
     case Float64: return "Float64";
@@ -812,7 +812,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
         case Int8: case Int16: case Int32: case Int64:
         case UnsignedKind:
         case Uint8: case Uint16: case Uint32: case Uint64:
-        case RealKind:
+        case FloatKind:
         case Float16: case Float32: case Float64:
         case ComplexKind:
         case Complex32: case Complex64: case Complex128:

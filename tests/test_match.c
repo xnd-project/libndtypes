@@ -344,8 +344,8 @@ const match_testcase_t match_tests[] = {
     "?uint64",
     1 },
 
-  { "10 * Real",
-    "10 * Real",
+  { "10 * Float",
+    "10 * Float",
     1 },
 
   { "float64",

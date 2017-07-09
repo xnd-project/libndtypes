@@ -204,7 +204,7 @@ nd_init(char *ptr, const ndt_t *t, int64_t nth_shape, ndt_context_t *ctx)
         return 0;
 
     case AnyKind: case SymbolicDim: case EllipsisDim: case Typevar:
-    case ScalarKind: case SignedKind: case UnsignedKind: case RealKind:
+    case ScalarKind: case SignedKind: case UnsignedKind: case FloatKind:
     case ComplexKind: case FixedStringKind: case FixedBytesKind: case Field:
     case Void:
         ndt_err_format(ctx, NDT_RuntimeError,

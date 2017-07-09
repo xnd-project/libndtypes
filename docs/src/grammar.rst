@@ -71,7 +71,7 @@ Lexeme/Token Table
    "uint64" -> UINT64
    "uint128" -> UINT128
 
-   "Real" -> REAL_KIND
+   "Float" -> FLOAT_KIND
    "float16" -> FLOAT16
    "float32" -> FLOAT32
    "float64" -> FLOAT64
@@ -84,7 +84,6 @@ Lexeme/Token Table
    "intptr" -> INTPTR
    "uintptr" -> UINTPTR
    "size" -> SIZE
-   "real" -> REAL
    "complex" -> COMPLEX
    "int" -> INT
    "char" -> CHAR
@@ -200,7 +199,7 @@ This is the actual grammar in BNF form:
    | signed
    | UNSIGNED_KIND
    | unsigned
-   | REAL_KIND
+   | FLOAT_KIND
    | ieee_float
    | COMPLEX_KIND
    | ieee_complex
@@ -237,11 +236,9 @@ This is the actual grammar in BNF form:
    | COMPLEX128
    | COMPLEX LBRACK FLOAT32 RBRACK
    | COMPLEX LBRACK FLOAT64 RBRACK
-   | COMPLEX LBRACK REAL RBRACK
    
    alias:
      INT
-   | REAL
    | COMPLEX
    | INTPTR
    | UINTPTR

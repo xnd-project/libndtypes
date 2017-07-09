@@ -118,8 +118,6 @@ Machine independent aliases:
    +--------------+------------------------------+
    | ``int``      | :c:type:`int32_t`            |
    +--------------+------------------------------+
-   | ``real``     | :c:type:`float64`            |
-   +--------------+------------------------------+
    | ``complex``  | :c:type:`complex\<float64\>` |
    +--------------+------------------------------+
 
@@ -141,7 +139,7 @@ syntax for them:
    >>> ndt.type("complex64")
    ndt.type('complex[float32]')
 
-   >>> ndt.type("complex[real]")
+   >>> ndt.type("complex[float64]")
    ndt.type('complex[float64]')
 
    >>> ndt.type("complex[float64]")
@@ -652,7 +650,7 @@ Symbolic dimensions can be mixed with other dimension kinds:
 
 .. code-block:: py
 
-   >>> ndt.type("10 * N * var * real")
+   >>> ndt.type("10 * N * var * float64")
    ndt.type('10 * N * var * float64')
 
 

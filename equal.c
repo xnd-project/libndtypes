@@ -124,7 +124,7 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     switch (p->tag) {
     case AnyKind:
     case ScalarKind:
-    case SignedKind: case UnsignedKind: case RealKind: case ComplexKind:
+    case SignedKind: case UnsignedKind: case FloatKind: case ComplexKind:
     case FixedStringKind: case FixedBytesKind:
     case Void: case Bool:
     case Int8: case Int16: case Int32: case Int64:

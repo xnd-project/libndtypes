@@ -246,8 +246,8 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         return c->tag == SignedKind || ndt_is_signed(c);
     case UnsignedKind:
         return c->tag == UnsignedKind || ndt_is_unsigned(c);
-    case RealKind:
-        return c->tag == RealKind || ndt_is_real(c);
+    case FloatKind:
+        return c->tag == FloatKind || ndt_is_float(c);
     case ComplexKind:
         return c->tag == ComplexKind || ndt_is_complex(c);
     case FixedStringKind:

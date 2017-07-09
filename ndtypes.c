@@ -382,7 +382,7 @@ ndt_tag_as_string(enum ndt tag)
     case Uint32: return "uint32";
     case Uint64: return "uint64";
 
-    case RealKind: return "RealKind";
+    case FloatKind: return "FloatKind";
     case Float16: return "float16";
     case Float32: return "float32";
     case Float64: return "float64";
@@ -1665,9 +1665,9 @@ ndt_unsigned_kind(ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_real_kind(ndt_context_t *ctx)
+ndt_float_kind(ndt_context_t *ctx)
 {
-    return ndt_new(RealKind, ctx);
+    return ndt_new(FloatKind, ctx);
 }
 
 ndt_t *
@@ -2028,7 +2028,7 @@ ndt_is_unsigned(const ndt_t *t)
 }
 
 int
-ndt_is_real(const ndt_t *t)
+ndt_is_float(const ndt_t *t)
 {
     switch (t->tag) {
     case Float16: case Float32: case Float64:
