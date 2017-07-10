@@ -566,6 +566,7 @@ void ndt_field_array_del(ndt_field_t *fields, size_t shape);
 ndt_t *ndt_new(enum ndt tag, ndt_context_t *ctx);
 void ndt_del(ndt_t *t);
 int64_t ndt_hash(ndt_t *t, ndt_context_t *ctx);
+ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
 
 /* Typedef for nominal types */
 int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);

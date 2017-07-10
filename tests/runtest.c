@@ -864,7 +864,56 @@ test_hash(void)
         return -1;
     }
 
+    ndt_context_del(&ctx);
     fprintf(stderr, "test_hash (%d test cases)\n", (int)n);
+
+    return 0;
+}
+
+static int
+test_copy(void)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    const char **c;
+    ndt_t *t, *u;
+    int count = 0;
+
+    for (c = parse_roundtrip_tests; *c != NULL; c++) {
+        ndt_err_clear(&ctx);
+
+        t = ndt_from_string(*c, &ctx);
+        if (t == NULL) {
+            fprintf(stderr, "test_hash: FAIL: from_string: \"%s\"\n", *c);
+            fprintf(stderr, "test_hash: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx.err),
+                    ndt_context_msg(&ctx));
+            return -1;
+        }
+
+        u = ndt_copy(t, &ctx);
+        if (u == NULL) {
+            fprintf(stderr, "test_hash: FAIL: copy: \"%s\"\n", *c);
+            fprintf(stderr, "test_hash: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx.err),
+                    ndt_context_msg(&ctx));
+            ndt_del(t);
+            return -1;
+        }
+
+        if (!ndt_equal(t, u)) {
+            fprintf(stderr, "test_hash: FAIL: copy: not equal\n\n");
+            ndt_del(t);
+            ndt_del(u);
+            return -1;
+        }
+
+        ndt_del(t);
+        ndt_del(u);
+        count++;
+    }
+
+    ndt_context_del(&ctx);
+    fprintf(stderr, "test_copy (%d test cases)\n", count);
 
     return 0;
 }
@@ -882,6 +931,7 @@ static int (*tests[])(void) = {
   test_match,
   test_static_context,
   test_hash,
+  test_copy,
 #ifdef __GNUC__
   test_struct_align_pack,
   test_array,
