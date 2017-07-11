@@ -693,6 +693,112 @@ test_match(void)
 }
 
 static int
+test_typecheck(void)
+{
+    const typecheck_testcase_t *t;
+    ndt_context_t *ctx;
+    ndt_t *f;
+    ndt_t *args;
+    ndt_t *return_type;
+    ndt_t *expected;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (t = typecheck_tests; t->signature != NULL; t++) {
+        f = ndt_from_string(t->signature, ctx);
+        if (f == NULL) {
+            fprintf(stderr, "test_typecheck: FAIL: could not parse \"%s\"\n", t->signature);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        args = ndt_from_string(t->args, ctx);
+        if (args == NULL) {
+            ndt_del(f);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_typecheck: FAIL: could not parse \"%s\"\n", t->args);
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            return_type = ndt_typecheck(f, args, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (return_type != NULL) {
+                ndt_del(f);
+                ndt_del(args);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_typecheck: FAIL: expect ret == NULL after MemoryError\n");
+                fprintf(stderr, "test_typecheck: FAIL: \"%s\"\n", t->signature);
+                return -1;
+            }
+        }
+
+        ndt_err_clear(ctx);
+
+        if (!!return_type != !!t->expected) {
+            ndt_del(f);
+            ndt_del(args);
+            ndt_del(return_type);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_typecheck: FAIL: expected: \"%s\"\n", t->expected);
+            return -1;
+        }
+
+        if (return_type == NULL) {
+            ndt_del(f);
+            ndt_del(args);
+            ndt_del(return_type);
+            continue;
+        }
+
+        expected = ndt_from_string(t->expected, ctx);
+        if (expected == NULL) {
+            ndt_del(f);
+            ndt_del(args);
+            ndt_del(return_type);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_typecheck: FAIL: could not parse \"%s\"\n", t->expected);
+            return -1;
+        }
+
+        if (!ndt_equal(return_type, expected)) {
+            ndt_del(f);
+            ndt_del(args);
+            ndt_del(return_type);
+            ndt_del(expected);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_typecheck: FAIL: signature %s\n", t->signature ? "true" : "false");
+            fprintf(stderr, "test_typecheck: FAIL: args: \"%s\"\n", t->args);
+            fprintf(stderr, "test_typecheck: FAIL: expected: \"%s\"\n", t->expected);
+            return -1;
+        }
+
+        ndt_del(f);
+        ndt_del(args);
+        ndt_del(return_type);
+        ndt_del(expected);
+        count++;
+    }
+    fprintf(stderr, "test_typecheck (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
 test_static_context(void)
 {
     const char **c;
@@ -929,6 +1035,7 @@ static int (*tests[])(void) = {
   test_typedef_error,
   test_equal,
   test_match,
+  test_typecheck,
   test_static_context,
   test_hash,
   test_copy,

@@ -329,3 +329,129 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
 }
 
 
+/**********************************************************************/
+/*                        Experimental section                        */
+/**********************************************************************/
+
+static char_opt_t none_char = {None, '\0'};
+static int64_opt_t none_int64 = {None, 0};
+
+/* For demonstration: only handles fixed, symbolic, int64 */
+static ndt_t *
+ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+    ndt_t *u;
+
+    switch (t->tag) {
+    case Array:
+        u = ndt_substitute(t->Array.type, tbl, ctx);
+        if (u == NULL) {
+            return NULL;
+        }
+
+        return ndt_array(u, NULL, none_int64, none_int64, none_char, ctx);
+
+    case FixedDim:
+        u = ndt_substitute(t->FixedDim.type, tbl, ctx);
+        if (u == NULL) {
+            return NULL;
+        }
+
+        return ndt_fixed_dim(t->FixedDim.shape, u, ctx);
+
+    case SymbolicDim:
+        v = symtable_find(tbl, t->SymbolicDim.name);
+        switch (v.tag) {
+        case SizeEntry:
+            u = ndt_substitute(t->SymbolicDim.type, tbl, ctx);
+            if (u == NULL) {
+                return NULL;
+            }
+            return ndt_fixed_dim(v.SizeEntry, u, ctx);
+        case SymbolEntry:
+            ndt_err_format(ctx, NDT_ValueError,
+                "substitution must be concrete");
+            return NULL;
+        case TypeEntry:
+            ndt_err_format(ctx, NDT_ValueError,
+                "cannot substitute type for dimension variable");
+            return NULL;
+        case Unbound:
+            ndt_err_format(ctx, NDT_RuntimeError,
+                "no substitution found");
+            return NULL;
+        }
+
+    case Typevar:
+        v = symtable_find(tbl, t->Typevar.name);
+        switch (v.tag) {
+        case TypeEntry:
+            return ndt_substitute(v.TypeEntry, tbl, ctx);
+        case SymbolEntry:
+            ndt_err_format(ctx, NDT_ValueError,
+                "substitution must be concrete");
+            return NULL;
+        case SizeEntry:
+            ndt_err_format(ctx, NDT_ValueError,
+                "cannot substitute dimension ifor type variable");
+            return NULL;
+        case Unbound:
+            ndt_err_format(ctx, NDT_RuntimeError,
+                "no substitution found");
+            return NULL;
+        }
+
+    case Int64: case Float32: case Float64:
+        return ndt_primitive(t->tag, 'L', ctx);
+
+    default:
+        ndt_err_format(ctx, NDT_NotImplementedError,
+            "substitution not implemented for this type");
+        return NULL;
+    }
+}
+
+/*
+ * Check the concrete function arguments 'args' against the function
+ * signature 'f'.  On success, infer and return the concrete return
+ * type.
+ */
+ndt_t *
+ndt_typecheck(const ndt_t *f, const ndt_t *args, ndt_context_t *ctx)
+{
+    symtable_t *tbl;
+    ndt_t *return_type;
+    int ret;
+
+    if (f->tag != Function) {
+        ndt_err_format(ctx, NDT_RuntimeError, "expected function type");
+        return NULL;
+    }
+
+    if (f->Function.kwds->Record.shape != 0) {
+        ndt_err_format(ctx, NDT_NotImplementedError, "kwargs not implemented");
+        return NULL;
+    }
+
+    if (!ndt_is_concrete(args)) {
+        ndt_err_format(ctx, NDT_RuntimeError, "expected concrete argument types");
+        return NULL;
+    }
+
+    tbl = symtable_new(ctx);
+    if (tbl == NULL) {
+        return NULL;
+    }
+
+    ret = match_datashape(f->Function.pos, args, tbl, ctx);
+    if (ret <= 0) {
+        symtable_del(tbl);
+        return NULL;
+    }
+
+    return_type = ndt_substitute(f->Function.ret, tbl, ctx);
+    symtable_del(tbl);
+
+    return return_type;
+}
