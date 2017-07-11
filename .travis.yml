@@ -46,5 +46,5 @@ matrix:
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bison; brew link bison --force; fi
-  - pip install -U pytest
+  - pip install -U pytest enum34
 
