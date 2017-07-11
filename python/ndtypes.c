@@ -33,37 +33,6 @@
 #include <Python.h>
 #include <ndtypes.h>
 
-typedef struct
-{
-  PyObject_HEAD
-  /* Type-specific fields go here. */
-} context;
-
-static PyTypeObject contextType =
-{
-  PyVarObject_HEAD_INIT(NULL, 0)
-  "ndtypes.context",         /* tp_name */
-  sizeof(context), /* tp_basicsize */
-  0,                         /* tp_itemsize */
-  0,                         /* tp_dealloc */
-  0,                         /* tp_print */
-  0,                         /* tp_getattr */
-  0,                         /* tp_setattr */
-  0,                         /* tp_compare */
-  0,                         /* tp_repr */
-  0,                         /* tp_as_number */
-  0,                         /* tp_as_sequence */
-  0,                         /* tp_as_mapping */
-  0,                         /* tp_hash */
-  0,                         /* tp_call */
-  0,                         /* tp_str */
-  0,                         /* tp_getattro */
-  0,                         /* tp_setattro */
-  0,                         /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT,        /* tp_flags */
-  "context objects",           /* tp_doc */
-};
-
 static NDT_STATIC_CONTEXT(ctx);
 
 /*
@@ -76,15 +45,23 @@ typedef struct
   ndt_t *impl;
 } type;
 
-static void
-type_dealloc(type *self)
+static PyObject *raise_error(ndt_context_t *ctx)
+{
+  char const *err = ndt_err_as_string(ctx->err);
+  char buffer[128];
+  snprintf(buffer, 128, "%s: %s\n", err, ndt_context_msg(ctx));
+  PyErr_SetString(PyExc_RuntimeError, buffer);
+  return NULL;
+}
+
+
+static void type_dealloc(type *self)
 {
   ndt_del(self->impl);
   Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
-static PyObject *
-type_new(PyTypeObject *t, PyObject *args, PyObject *kwds)
+static PyObject *type_new(PyTypeObject *t, PyObject *args, PyObject *kwds)
 {
   type *self = (type *)t->tp_alloc(t, 0);
   self->impl = 0;
@@ -118,20 +95,30 @@ static PyObject *type_str(type *self)
 }
 
 static PyObject *type_richcompare(PyObject *self, PyObject *other, int op);
-
-//static PyObject *type_equal(PyObject *self, PyObject *other);
 static PyObject *type_match(PyObject *self, PyObject *args);
+static PyObject *type_mul(PyObject *self, PyObject *other);
+static PyObject *type_next_dim(PyObject *self, PyObject *args);
+static PyObject *_fixed_dim(long shape, type *base);
+
+static PyNumberMethods type_number_methods[] =
+{
+  0, /* nb_add */
+  0, /* nd_subtract */
+  type_mul,
+  0, /* nb_divide */
+};
+
 
 static PyMethodDef type_methods[] =
 {
   {"match", type_match, METH_VARARGS, "match"},
+  {"next_dim", type_next_dim, METH_VARARGS, "next dim"},
   {NULL}  /* Sentinel */
 };
 
 #define define_type_is(what)						\
 static PyObject *type_is_ ## what(PyObject *self, void *closure)	\
 {									\
-  type *t = (type*)self;						\
   return PyBool_FromLong(ndt_is_ ## what(((type*)self)->impl));		\
 }
 
@@ -139,7 +126,7 @@ define_type_is(abstract)
 define_type_is(concrete)
 define_type_is(signed)
 define_type_is(unsigned)
-define_type_is(real)
+define_type_is(float)
 define_type_is(complex)
 define_type_is(scalar)
 define_type_is(array)
@@ -156,11 +143,12 @@ static PyGetSetDef type_properties[] =
   {"is_concrete", type_is_concrete},
   {"is_signed", type_is_signed},
   {"is_unsigned", type_is_unsigned},
-  {"is_real", type_is_real},
+  {"is_float", type_is_float},
   {"is_complex", type_is_complex},
   {"is_scalar", type_is_scalar},
   {"is_array", type_is_array},
   {"is_colum_major", type_is_column_major},
+  {"is_contiguous", type_is_contiguous},
   {"is_c_contiguous", type_is_c_contiguous},
   {"is_f_contiguous", type_is_f_contiguous},
   {"is_optional", type_is_optional},
@@ -179,7 +167,7 @@ static PyTypeObject typeType =
   0,                        /* tp_setattr */
   0,                        /* tp_compare */
   0,                        /* tp_repr */
-  0,                        /* tp_as_number */
+  type_number_methods,      /* tp_as_number */
   0,                        /* tp_as_sequence */
   0,                        /* tp_as_mapping */
   0,                        /* tp_hash */
@@ -189,6 +177,9 @@ static PyTypeObject typeType =
   0,                        /* tp_setattro */
   0,                        /* tp_as_buffer */
   Py_TPFLAGS_DEFAULT |
+#if PY_MAJOR_VERSION < 3
+  Py_TPFLAGS_CHECKTYPES |
+#endif
   Py_TPFLAGS_BASETYPE,      /* tp_flags */
   "type objects",           /* tp_doc */
   0,                        /* tp_traverse */
@@ -224,8 +215,7 @@ static PyObject *type_richcompare(PyObject *self, PyObject *other, int op)
     case Py_NE:
       return PyBool_FromLong(!ndt_equal(t->impl, o->impl));
     default:
-      Py_INCREF(Py_False);
-      return Py_False;
+      Py_RETURN_FALSE;
   }
 }
 
@@ -234,14 +224,30 @@ static PyObject *type_match(PyObject *self, PyObject *args)
   type *t = (type*)self;
   PyObject *other;
   type *o;
-  if (!PyArg_ParseTuple(args, "O", args, &other) ||
+  if (!PyArg_ParseTuple(args, "O:match", args, &other) ||
       !PyObject_TypeCheck(other, &typeType))
     return NULL;
   o = (type*)other;
   return PyBool_FromLong(ndt_match(t->impl, o->impl, &ctx));
 }
 
+static PyObject *type_mul(PyObject *self, PyObject *other)
+{
+  if(!PyObject_TypeCheck(self, &typeType))
+  {
+    Py_INCREF(Py_NotImplemented);
+    return Py_NotImplemented;
+  }
+  return _fixed_dim(PyLong_AsLong(other), (type*)self);
+}
 
+static PyObject *type_next_dim(PyObject *self, PyObject *args)
+{
+  type *t = (type*)self;
+  type *inst = PyObject_New(type, &typeType);
+  inst->impl = ndt_next_dim(ndt_copy(t->impl, &ctx));
+  return (PyObject *)inst; 
+}
 
 /*
  * Module methods and attributes
@@ -250,21 +256,26 @@ static PyObject *type_match(PyObject *self, PyObject *args)
 static PyObject *init(PyObject *self, PyObject *args)
 {
   ndt_init(&ctx);
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *finish(PyObject *self, PyObject *args)
 {
   ndt_finalize();
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *any(PyObject *self)
 {
   type *inst = PyObject_New(type, &typeType);
   inst->impl = ndt_any_kind(&ctx);
+  return (PyObject *)inst;
+}
+
+static PyObject *_fixed_dim(long shape, type *base)
+{
+  type *inst = PyObject_New(type, &typeType);
+  inst->impl = ndt_fixed_dim(shape, ndt_copy(base->impl, &ctx), &ctx);
   return (PyObject *)inst;
 }
 
@@ -275,10 +286,7 @@ static PyObject *fixed_dim(PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "lO:fixed_dim", &shape, &pytype) ||
       !PyObject_TypeCheck(pytype, &typeType))
     return NULL;
-  type *inst = PyObject_New(type, &typeType);
-  inst->impl = ndt_fixed_dim(shape, ((type*)pytype)->impl, &ctx);
-  Py_INCREF(inst); // FIXME: Why is this needed ??
-  return (PyObject *)inst;
+  return _fixed_dim(shape, (type*)pytype);
 }
 
 #define declare_kind(k)				\
@@ -292,7 +300,7 @@ static PyObject *k ##_kind(PyObject *self)	\
 declare_kind(scalar)
 declare_kind(signed)
 declare_kind(unsigned)
-declare_kind(real)
+declare_kind(float)
 declare_kind(complex)
 declare_kind(fixed_string)
 declare_kind(fixed_bytes)
@@ -317,7 +325,10 @@ static PyObject *_signed(PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "lc:signed", &tag, &endian))
     return NULL;
   inst = PyObject_New(type, &typeType);
-  inst->impl = ndt_primitive(tag, endian, &ctx);
+  // TODO: validate endian
+  inst->impl = ndt_signed(tag, endian, &ctx);
+  if (ndt_err_isset(&ctx))
+    return raise_error(&ctx);
   return (PyObject *)inst;
 }
 
@@ -329,7 +340,7 @@ static PyObject *_unsigned(PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "lc:unsigned", &tag, &endian))
     return NULL;
   inst = PyObject_New(type, &typeType);
-  inst->impl = ndt_primitive(tag, endian, &ctx);
+  inst->impl = ndt_unsigned(tag, endian, &ctx);
   return (PyObject *)inst;
 }
 
@@ -372,7 +383,7 @@ static PyMethodDef methods[] =
   {"scalar_kind", (PyCFunction)scalar_kind, METH_NOARGS},
   {"signed_kind", (PyCFunction)signed_kind, METH_NOARGS},
   {"unsigned_kind", (PyCFunction)unsigned_kind, METH_NOARGS},
-  {"real_kind", (PyCFunction)real_kind, METH_NOARGS},
+  {"float_kind", (PyCFunction)float_kind, METH_NOARGS},
   {"complex_kind", (PyCFunction)complex_kind, METH_NOARGS},
   {"fixed_string_kind", (PyCFunction)fixed_string_kind, METH_NOARGS},
   {"fixed_bytes_kind", (PyCFunction)fixed_bytes_kind, METH_NOARGS},
@@ -384,6 +395,40 @@ static PyMethodDef methods[] =
   {"from_string", from_string, METH_VARARGS},
   {NULL, NULL, 0, NULL}
 };
+
+#define define_constant(N, V) if (PyModule_AddIntConstant(module, N, V)) return -1
+
+int define_constants(PyObject *module)
+{
+  /* encoding */
+  define_constant("_ascii", Ascii);
+  define_constant("_utf8", Utf8);
+  define_constant("_utf16", Utf16);
+  define_constant("_utf32", Utf32);
+  define_constant("_ucs2", Ucs2);
+  define_constant("_error_encoding", ErrorEncoding);
+  /* dimension data types */
+  define_constant("_dim_none", DimNone);
+  define_constant("_dim_uint8", DimUint8);
+  define_constant("_dim_uint16", DimUint16);
+  define_constant("_dim_uint32", DimUint32);
+  define_constant("_dim_int32", DimInt32);
+  define_constant("_dim_int64", DimInt64);
+  /* datashape kinds */
+  define_constant("_any_kind", AnyKind);
+  define_constant("_fixed_dim", FixedDim);
+  define_constant("_symbolic_dim", SymbolicDim);
+  define_constant("_var_dim", VarDim);
+  define_constant("_ellipsis_dim", EllipsisDim);
+  define_constant("_array", Array);
+  define_constant("_option", Option);
+  define_constant("_option_item", OptionItem);
+  define_constant("_nominal", Nominal);
+  define_constant("_constr", Constr);
+
+  return 0;
+}
+
 
 #if PY_MAJOR_VERSION >= 3
 
@@ -407,21 +452,28 @@ void init_ndtypes()
 {
   PyObject *module;
 #if PY_MAJOR_VERSION >= 3
-  if (PyType_Ready(&contextType) < 0 || PyType_Ready(&typeType) < 0)
+  if (PyType_Ready(&typeType) < 0)
     return NULL;
   module = PyModule_Create(&moduledef);
-  Py_INCREF(&contextType);
-  PyModule_AddObject(module, "context", (PyObject *)&contextType);
+  if (define_constants(module) == -1)
+  {
+    Py_XDECREF(module);
+    module = NULL;
+    return NULL;
+  }
   Py_INCREF(&typeType);
   PyModule_AddObject(module, "type", (PyObject *)&typeType);
   return module;
 #else
-  if (PyType_Ready(&contextType) < 0 || PyType_Ready(&typeType) < 0)
+  if (PyType_Ready(&typeType) < 0)
     return;
-  //  contextType.tp_new = PyType_GenericNew;
   module = Py_InitModule("_ndtypes", methods);
-  Py_INCREF(&contextType);
-  PyModule_AddObject(module, "context", (PyObject *)&contextType);
+  if (define_constants(module) == -1)
+  {
+    Py_XDECREF(module);
+    module = NULL;
+    return;
+  }
   Py_INCREF(&typeType);
   PyModule_AddObject(module, "type", (PyObject *)&typeType);
 #endif
