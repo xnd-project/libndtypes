@@ -494,6 +494,7 @@ typedef struct {
 ndt_context_t *ndt_context_new(void);
 void ndt_context_del(ndt_context_t *ctx);
 
+#define ndt_err_isset(ctx) ((ctx)->err != NDT_Success)
 void ndt_err_clear(ndt_context_t *ctx);
 const char *ndt_context_msg(ndt_context_t *ctx);
 const char *ndt_err_as_string(enum ndt_error err);
