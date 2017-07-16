@@ -495,6 +495,7 @@ typedef struct {
 ndt_context_t *ndt_context_new(void);
 void ndt_context_del(ndt_context_t *ctx);
 
+#define ndt_err_isset(ctx) ((ctx)->err != NDT_Success)
 void ndt_err_clear(ndt_context_t *ctx);
 const char *ndt_context_msg(ndt_context_t *ctx);
 const char *ndt_err_as_string(enum ndt_error err);
@@ -523,14 +524,12 @@ int ndt_is_signed(const ndt_t *t);
 int ndt_is_unsigned(const ndt_t *t);
 int ndt_is_float(const ndt_t *t);
 int ndt_is_complex(const ndt_t *t);
-int ndt_is_abstract(const ndt_t *t);
 int ndt_is_scalar(const ndt_t *t);
 int ndt_is_array(const ndt_t *t);
 int ndt_is_column_major(const ndt_t *t);
 int ndt_is_contiguous(const ndt_t *t);
 int ndt_is_c_contiguous(const ndt_t *t);
 int ndt_is_f_contiguous(const ndt_t *t);
-int ndt_is_scalar(const ndt_t *t);
 int ndt_is_optional(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
