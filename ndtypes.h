@@ -335,6 +335,7 @@ struct _ndt {
 
         struct {
             uint32_t flags;
+            char *name;
             ndt_t *type;
         } EllipsisDim;
 
@@ -577,7 +578,7 @@ ndt_t *ndt_any_kind(ndt_context_t *ctx);
 ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_var_dim(int64_t *offsets, int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 
 ndt_t *ndt_array(ndt_t *type, int64_t *strides, int64_opt_t offset, int64_opt_t bufsize, char_opt_t order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);

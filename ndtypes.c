@@ -552,6 +552,7 @@ ndt_del(ndt_t *t)
         ndt_del(t->SymbolicDim.type);
         break;
     case EllipsisDim:
+        ndt_free(t->EllipsisDim.name);
         ndt_del(t->EllipsisDim.type);
         break;
     case Option:
@@ -917,7 +918,7 @@ ndt_var_dim(int64_t *offsets, int64_t *shapes, int64_t nshapes, ndt_t *type, ndt
 }
 
 ndt_t *
-ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
+ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
     uint32_t flags;
@@ -949,6 +950,7 @@ ndt_ellipsis_dim(ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
     t->EllipsisDim.flags = flags | NDT_Dim_ellipsis;
+    t->EllipsisDim.name = name;
     t->EllipsisDim.type = type;
     t->ndim = type->ndim + 1;
 

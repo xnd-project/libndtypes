@@ -232,6 +232,18 @@ symtable_new(ndt_context_t *ctx)
 }
 
 void
+symtable_free_entry(symtable_entry_t entry)
+{
+    switch(entry.tag) {
+    case DimListEntry:
+       ndt_free(entry.DimListEntry.dims);
+       break;
+    default:
+       break;
+    }
+}
+
+void
 symtable_del(symtable_t *t)
 {
     int i;
@@ -244,6 +256,7 @@ symtable_del(symtable_t *t)
         symtable_del(t->next[i]);
     }
 
+    symtable_free_entry(t->entry);
     ndt_free(t);
 }
 
