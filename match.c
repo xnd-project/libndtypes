@@ -456,7 +456,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
         switch (v.tag) {
         case DimListEntry:
-            for (i = v.DimListEntry.size-1; i >= 0; i--) {
+            for (i = 0; i < v.DimListEntry.size; i++) {
                 w = v.DimListEntry.dims[i];
                 switch (w->tag) {
                 case FixedDim:
@@ -517,10 +517,10 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
  * type.
  */
 ndt_t *
-ndt_typecheck(const ndt_t *f, const ndt_t *args, ndt_context_t *ctx)
+ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx)
 {
     symtable_t *tbl;
-    ndt_t *return_type;
+    ndt_t *return_type, *t;
     int ret;
 
     if (f->tag != Function) {
@@ -550,7 +550,30 @@ ndt_typecheck(const ndt_t *f, const ndt_t *args, ndt_context_t *ctx)
     }
 
     return_type = ndt_substitute(f->Function.ret, tbl, ctx);
-    symtable_del(tbl);
+    *outer_dims = 0;
 
+    if (return_type != NULL) {
+        t = f->Function.ret;
+        if (t->tag == Pointer) t = t->Pointer.type;
+
+        if (t->tag == Array && 
+            t->Array.type->tag == EllipsisDim) {
+            const char *name = t->Array.type->EllipsisDim.name;
+
+            if (name != NULL) {
+                symtable_entry_t v = symtable_find(tbl, name);
+
+                switch (v.tag) {
+                case DimListEntry:
+                    *outer_dims = v.DimListEntry.size;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+    symtable_del(tbl);
     return return_type;
 }

@@ -534,7 +534,7 @@ int ndt_is_scalar(const ndt_t *t);
 int ndt_is_optional(const ndt_t *t);
 int ndt_equal(const ndt_t *p, const ndt_t *c);
 int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
-ndt_t * ndt_typecheck(const ndt_t *f, const ndt_t *args, ndt_context_t *ctx);
+ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
 
 ndt_t *ndt_next_dim(ndt_t *a);
 void ndt_set_next_type(ndt_t *a, ndt_t *type);
