@@ -36,9 +36,49 @@
 
 
 const typecheck_testcase_t typecheck_tests[] = {
+  { "() -> float32",
+    "()",
+    "float32" },
+
+  { "() -> T",
+    "()",
+    NULL },
+
+  { "(T) -> T",
+    "(T)",
+    NULL },
+
+  { "(T) -> T",
+    "(int64)",
+    "int64" },
+
   { "(M * N * T, N * P * T) -> M * P * T",
     "(2 * 3 * int64, 3 * 10 * int64)",
     "2 * 10 * int64" },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
+    "(2 * 3 * int64, 3 * 10 * int64)",
+    "2 * 10 * int64" },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
+    "(2 * 3 * int64, 3 * 10 * int32)",
+    NULL },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
+    "(3 * int64, 3 * 10 * int64)",
+    NULL },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * T",
+    "(2 * 3 * int64, 3 * 10 * int64)",
+    "2 * int64" },
+
+  { "(Dims... * M * T, Dims... * N * T) -> Dims... * M * T",
+    "(2 * 3 * int64, 3 * 3 * int64)",
+    NULL },
+
+  { "(Dims... * M * T, Dims... * N * T) -> Dims... * M * T",
+    "(2 * 3 * int64, 3 * 3 * int64)",
+    NULL },
 
   { "(M * N * T, N * P * T) -> M * P * T",
     "(2 * 3 * int64, 2 * 10 * int64)",
@@ -47,6 +87,18 @@ const typecheck_testcase_t typecheck_tests[] = {
   { "(M * N * T, N * P * T) -> M * P * T",
     "(2 * 3 * int64, 3 * 10 * int32)",
     NULL },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
+    "(3 * int64, 3 * 10 * int64)",
+    NULL },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
+    "(2 * 3 * int64, 3 * 10 * int64)",
+    "2 * 10 * int64" },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
+    "(400 * 2 * 3 * int64, 400 * 3 * 10 * int64)",
+    "400 * 2 * 10 * int64" },
 
   { NULL, NULL, 0 }
 };

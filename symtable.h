@@ -43,8 +43,14 @@ enum symtable_entry {
   Unbound,
   SizeEntry,
   SymbolEntry,
-  TypeEntry
+  TypeEntry,
+  DimListEntry
 };
+
+typedef struct {
+    int size;
+    const ndt_t **dims;
+} dim_list_t;
 
 typedef struct {
   enum symtable_entry tag;
@@ -52,6 +58,7 @@ typedef struct {
     size_t SizeEntry;
     const char *SymbolEntry;
     const ndt_t *TypeEntry;
+    dim_list_t DimListEntry;
   };
 } symtable_entry_t;
 
@@ -61,6 +68,7 @@ typedef struct symtable {
 } symtable_t;
 
 symtable_t *symtable_new(ndt_context_t *ctx);
+void symtable_free_entry(symtable_entry_t entry);
 void symtable_del(symtable_t *t);
 int symtable_add(symtable_t *t, const char *key, const symtable_entry_t entry,
                  ndt_context_t *ctx);

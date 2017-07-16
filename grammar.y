@@ -213,7 +213,8 @@ dimensions_nooption:
 | NAME_UPPER STAR dimensions_tail                         { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | VAR integer_seq_opt STAR dimensions_tail                { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
 | VAR LPAREN integer_pair_seq RPAREN STAR dimensions_tail { $$ = mk_var_dim_offsets($3, $6, ctx); if ($$ == NULL) YYABORT; }
-| ELLIPSIS STAR dimensions_tail                           { $$ = ndt_ellipsis_dim($3, ctx); if ($$ == NULL) YYABORT; }
+| ELLIPSIS STAR dimensions_tail                           { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER ELLIPSIS STAR dimensions_tail                { $$ = ndt_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_tail:
   dtype              { $$ = $1; }
