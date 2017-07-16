@@ -100,5 +100,13 @@ const typecheck_testcase_t typecheck_tests[] = {
     "(400 * 2 * 3 * int64, 400 * 3 * 10 * int64)",
     "400 * 2 * 10 * int64" },
 
+  { "(pointer(Dims... * M * N * T), pointer(Dims... * N * P * T)) -> Dims... * M * P * T",
+    "(pointer(400 * 2 * 3 * int64), pointer(400 * 3 * 10 * int64))",
+    "400 * 2 * 10 * int64" },
+
+  { "(pointer(Dims... * M * N * T), pointer(Dims... * N * P * T)) -> pointer(Dims... * M * P * T)",
+    "(pointer(400 * 2 * 3 * int64), pointer(400 * 3 * 10 * int64))",
+    "pointer(400 * 2 * 10 * int64)" },
+
   { NULL, NULL, 0 }
 };
