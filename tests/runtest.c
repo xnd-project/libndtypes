@@ -701,6 +701,7 @@ test_typecheck(void)
     ndt_t *args;
     ndt_t *return_type;
     ndt_t *expected;
+    int outer_dims;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -729,7 +730,7 @@ test_typecheck(void)
             ndt_err_clear(ctx);
 
             ndt_set_alloc_fail();
-            return_type = ndt_typecheck(f, args, ctx);
+            return_type = ndt_typecheck(f, args, &outer_dims, ctx);
             ndt_set_alloc();
 
             if (ctx->err != NDT_MemoryError) {
@@ -774,7 +775,7 @@ test_typecheck(void)
             return -1;
         }
 
-        if (!ndt_equal(return_type, expected)) {
+        if (!ndt_equal(return_type, expected) || outer_dims != t->outer_dims) {
             ndt_del(f);
             ndt_del(args);
             ndt_del(return_type);
@@ -783,6 +784,7 @@ test_typecheck(void)
             fprintf(stderr, "test_typecheck: FAIL: signature %s\n", t->signature ? "true" : "false");
             fprintf(stderr, "test_typecheck: FAIL: args: \"%s\"\n", t->args);
             fprintf(stderr, "test_typecheck: FAIL: expected: \"%s\"\n", t->expected);
+            fprintf(stderr, "test_typecheck: FAIL: expected: %d  outer_dims: %d\n", t->outer_dims, outer_dims);
             return -1;
         }
 

@@ -53,6 +53,7 @@ typedef struct {
     const char *signature;
     const char *args;
     const char *expected;
+    int outer_dims;
 } typecheck_testcase_t;
 
 

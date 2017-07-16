@@ -38,75 +38,83 @@
 const typecheck_testcase_t typecheck_tests[] = {
   { "() -> float32",
     "()",
-    "float32" },
+    "float32", 0 },
 
   { "() -> T",
     "()",
-    NULL },
+    NULL, 0 },
 
   { "(T) -> T",
     "(T)",
-    NULL },
+    NULL, 0 },
 
   { "(T) -> T",
     "(int64)",
-    "int64" },
+    "int64", 0 },
 
   { "(M * N * T, N * P * T) -> M * P * T",
     "(2 * 3 * int64, 3 * 10 * int64)",
-    "2 * 10 * int64" },
+    "2 * 10 * int64", 0 },
 
   { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
     "(2 * 3 * int64, 3 * 10 * int64)",
-    "2 * 10 * int64" },
+    "2 * 10 * int64", 0 },
 
   { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
     "(2 * 3 * int64, 3 * 10 * int32)",
-    NULL },
+    NULL, 0 },
 
   { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
     "(3 * int64, 3 * 10 * int64)",
-    NULL },
+    NULL, 0 },
 
   { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * T",
     "(2 * 3 * int64, 3 * 10 * int64)",
-    "2 * int64" },
+    "2 * int64", 0 },
 
   { "(Dims... * M * T, Dims... * N * T) -> Dims... * M * T",
     "(2 * 3 * int64, 3 * 3 * int64)",
-    NULL },
+    NULL, 0 },
 
   { "(Dims... * M * T, Dims... * N * T) -> Dims... * M * T",
     "(2 * 3 * int64, 3 * 3 * int64)",
-    NULL },
+    NULL, 0 },
 
   { "(M * N * T, N * P * T) -> M * P * T",
     "(2 * 3 * int64, 2 * 10 * int64)",
-    NULL },
+    NULL, 0 },
 
   { "(M * N * T, N * P * T) -> M * P * T",
     "(2 * 3 * int64, 3 * 10 * int32)",
-    NULL },
+    NULL, 0 },
 
   { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
     "(3 * int64, 3 * 10 * int64)",
-    NULL },
+    NULL, 0 },
 
   { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
     "(2 * 3 * int64, 3 * 10 * int64)",
-    "2 * 10 * int64" },
+    "2 * 10 * int64", 0 },
 
   { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
     "(400 * 2 * 3 * int64, 400 * 3 * 10 * int64)",
-    "400 * 2 * 10 * int64" },
+    "400 * 2 * 10 * int64", 1 },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
+    "(1000 * 400 * 2 * 3 * int64, 1000 * 400 * 3 * 10 * int64)",
+    "1000 * 400 * 2 * 10 * int64", 2 },
+
+  { "(Dims... * M * N * T, Dims... * N * P * T) -> Dims... * M * P * T",
+    "(2 * 3 * 1000 * 400 * 2 * 3 * int64, 2 * 3 * 1000 * 400 * 3 * 10 * int64)",
+    "2 * 3 * 1000 * 400 * 2 * 10 * int64", 4 },
 
   { "(pointer(Dims... * M * N * T), pointer(Dims... * N * P * T)) -> Dims... * M * P * T",
     "(pointer(400 * 2 * 3 * int64), pointer(400 * 3 * 10 * int64))",
-    "400 * 2 * 10 * int64" },
+    "400 * 2 * 10 * int64", 1 },
 
   { "(pointer(Dims... * M * N * T), pointer(Dims... * N * P * T)) -> pointer(Dims... * M * P * T)",
     "(pointer(400 * 2 * 3 * int64), pointer(400 * 3 * 10 * int64))",
-    "pointer(400 * 2 * 10 * int64)" },
+    "pointer(400 * 2 * 10 * int64)", 1 },
 
-  { NULL, NULL, 0 }
+  { NULL, NULL, 0, 0 }
 };
