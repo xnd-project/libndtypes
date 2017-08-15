@@ -310,9 +310,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = datashape(buf, t->EllipsisDim.type, d, ctx);
             return n;
 
-        case Array:
-             return datashape(buf, t->Array.type, d, ctx);
-
         case Option:
             n = ndt_snprintf(ctx, buf, "?");
             if (n < 0) return -1;

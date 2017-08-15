@@ -187,6 +187,7 @@ yycolumn = 1;
 
 "pointer"      { return POINTER; }
 
+"fixed"        { return FIXED; }
 "var"          { return VAR; }
 
 "..."          { return ELLIPSIS; }

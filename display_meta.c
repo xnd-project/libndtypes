@@ -367,7 +367,6 @@ tag_as_constr(enum ndt tag)
     switch (tag) {
     case AnyKind: return "Any";
 
-    case Array: return "Array";
     case FixedDim: return "FixedDim";
     case SymbolicDim: return "SymbolicDim";
     case VarDim: return "VarDim";
@@ -433,56 +432,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
     int n;
 
     switch (t->tag) {
-        case Array: {
-            int i;
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Array(\n");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->Array.type, d+2, 0, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "flags=[");
-            if (n < 0) return -1;
-
-            dim_flags(buf, t, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, "],\n");
-            if (n < 0) return -1;
-
-            if (ndt_is_concrete(t)) {
-                n = ndt_snprintf_d(ctx, buf, d+2, "dim_type=%s, ndim_start=%d, suboffset=%d, data=[",
-                                   ndt_dim_type_as_string(t->Concrete.Array.dim_type),
-                                   t->Concrete.Array.ndim_start,
-                                   t->Concrete.Array.suboffset);
-                if (n < 0) return -1;
-
-                for (i = 0; i < t->ndim+1; i++) {
-                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s", t->Concrete.Array.data[i],
-                                     i == t->ndim ? "]" : ", ");
-                    if (n < 0) return -1;
-                }
-
-                n = ndt_snprintf(ctx, buf, ", bitmaps=[");
-                if (n < 0) return -1;
-
-                for (i = 0; i < t->ndim+1; i++) {
-                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s", t->Concrete.Array.bitmaps[i],
-                                     i == t->ndim ? "],\n" : ", ");
-                    if (n < 0) return -1;
-                }
-            }
-
-            n = common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-        }
-
         case FixedDim:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedDim(\n");
             if (n < 0) return -1;

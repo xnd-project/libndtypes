@@ -283,11 +283,6 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         if (n <= 0) return n;
 
         return match_datashape(pdtype, cdtype, tbl, ctx);
-    case Array:
-        if (c->tag == Array) {
-            return match_datashape(p->Array.type, c->Array.type, tbl, ctx);
-        }
-        return 0;
     case Void: case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -394,9 +389,6 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
 /*                        Experimental section                        */
 /**********************************************************************/
 
-static char_opt_t none_char = {None, '\0'};
-static int64_opt_t none_int64 = {None, 0};
-
 /* For demonstration: only handles fixed, symbolic, int64 */
 static ndt_t *
 ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
@@ -407,21 +399,15 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
     int i;
 
     switch (t->tag) {
-    case Array:
-        u = ndt_substitute(t->Array.type, tbl, ctx);
-        if (u == NULL) {
-            return NULL;
-        }
-
-        return ndt_array(u, NULL, none_int64, none_int64, none_char, ctx);
-
     case FixedDim:
         u = ndt_substitute(t->FixedDim.type, tbl, ctx);
         if (u == NULL) {
             return NULL;
         }
 
-        return ndt_fixed_dim(t->FixedDim.shape, u, ctx);
+        assert(ndt_is_concrete(u));
+
+        return ndt_fixed_dim(t->FixedDim.shape, u, ndt_order(u), ctx);
 
     case SymbolicDim:
         v = symtable_find(tbl, t->SymbolicDim.name);
@@ -432,7 +418,10 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
             if (u == NULL) {
                 return NULL;
             }
-            return ndt_fixed_dim(v.SizeEntry, u, ctx);
+
+            assert(ndt_is_concrete(u));
+
+            return ndt_fixed_dim(v.SizeEntry, u, ndt_order(u), ctx);
 
         default:
             ndt_err_format(ctx, NDT_ValueError,
@@ -460,10 +449,14 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
                 w = v.DimListEntry.dims[i];
                 switch (w->tag) {
                 case FixedDim:
-                    u = ndt_fixed_dim(w->FixedDim.shape, u, ctx);
+
+                    assert(ndt_is_concrete(w));
+
+                    u = ndt_fixed_dim(w->FixedDim.shape, u, ndt_order(w), ctx);
                     if (u == NULL) {
                         return NULL;
                     }
+
                     break;
                default:
                    ndt_err_format(ctx, NDT_NotImplementedError,
@@ -556,9 +549,8 @@ ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t 
         t = f->Function.ret;
         if (t->tag == Pointer) t = t->Pointer.type;
 
-        if (t->tag == Array && 
-            t->Array.type->tag == EllipsisDim) {
-            const char *name = t->Array.type->EllipsisDim.name;
+        if (t->tag == EllipsisDim) {
+            const char *name = t->EllipsisDim.name;
 
             if (name != NULL) {
                 symtable_entry_t v = symtable_find(tbl, name);

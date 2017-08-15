@@ -170,10 +170,6 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
         return c->tag == EllipsisDim &&
                ndt_is_optional(c) == ndt_is_optional(p) &&
                ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
-    case Array: {
-        /* XXX offsets */
-        return ndt_equal(c->Array.type, p->Array.type);
-    }
     case Tuple:
         if (c->tag != Tuple || c->Tuple.flag != p->Tuple.flag) return 0;
         return tuple_fields_equal(p, c);

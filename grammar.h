@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 61 "grammar.y" /* yacc.c:1909  */
+#line 59 "grammar.y" /* yacc.c:1909  */
 
   #include "ndtypes.h"
   #include "seq.h"
@@ -90,28 +90,29 @@ extern int yydebug;
     FIXED_BYTES_KIND = 289,
     FIXED_BYTES = 290,
     POINTER = 291,
-    VAR = 292,
-    COMMA = 293,
-    COLON = 294,
-    LPAREN = 295,
-    RPAREN = 296,
-    LBRACE = 297,
-    RBRACE = 298,
-    LBRACK = 299,
-    RBRACK = 300,
-    STAR = 301,
-    ELLIPSIS = 302,
-    RARROW = 303,
-    EQUAL = 304,
-    QUESTIONMARK = 305,
-    BAR = 306,
-    ERRTOKEN = 307,
-    INTEGER = 308,
-    FLOATNUMBER = 309,
-    STRINGLIT = 310,
-    NAME_LOWER = 311,
-    NAME_UPPER = 312,
-    NAME_OTHER = 313
+    FIXED = 292,
+    VAR = 293,
+    COMMA = 294,
+    COLON = 295,
+    LPAREN = 296,
+    RPAREN = 297,
+    LBRACE = 298,
+    RBRACE = 299,
+    LBRACK = 300,
+    RBRACK = 301,
+    STAR = 302,
+    ELLIPSIS = 303,
+    RARROW = 304,
+    EQUAL = 305,
+    QUESTIONMARK = 306,
+    BAR = 307,
+    ERRTOKEN = 308,
+    INTEGER = 309,
+    FLOATNUMBER = 310,
+    STRINGLIT = 311,
+    NAME_LOWER = 312,
+    NAME_UPPER = 313,
+    NAME_OTHER = 314
   };
 #endif
 
@@ -120,7 +121,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 89 "grammar.y" /* yacc.c:1909  */
+#line 87 "grammar.y" /* yacc.c:1909  */
 
     ndt_t *ndt;
     ndt_field_t *field;
@@ -134,7 +135,7 @@ union YYSTYPE
     char *string;
     ndt_string_seq_t *string_seq;
 
-#line 138 "grammar.h" /* yacc.c:1909  */
+#line 139 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -158,12 +159,12 @@ struct YYLTYPE
 
 int yyparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
-#line 69 "grammar.y" /* yacc.c:1909  */
+#line 67 "grammar.y" /* yacc.c:1909  */
 
   #define YY_DECL extern int lexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 168 "grammar.h" /* yacc.c:1909  */
+#line 169 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */

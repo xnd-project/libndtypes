@@ -35,8 +35,6 @@
 #include "grammar.h"
 #include "lexer.h"
 
-static char_opt_t none_char = {None, '\0'};
-static int64_opt_t none_int64 = {None, 0};
 
 #undef yyerror
 #undef yylex
@@ -103,7 +101,6 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %start input
 %type <ndt> input
 %type <ndt> datashape
-%type <ndt> array
 %type <ndt> dimensions
 %type <ndt> dimensions_nooption
 %type <ndt> dimensions_tail
@@ -136,9 +133,6 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %type <string> untyped_value
 %type <string_seq> untyped_value_seq
-%type <string_seq> integer_seq
-%type <string_seq> integer_pair_seq
-%type <string_seq> integer_seq_opt
 
 %type <attribute> attribute
 %type <attribute_seq> attribute_seq
@@ -167,7 +161,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    BYTES FIXED_BYTES_KIND FIXED_BYTES
    POINTER
 
-VAR
+FIXED VAR
 
 COMMA COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
 RARROW EQUAL QUESTIONMARK BAR
@@ -196,23 +190,19 @@ input:
 
 /* types */
 datashape:
-  array              { $$ = $1; }
+  dimensions         { $$ = $1; }
 | dtype              { $$ = $1; }
 | QUESTIONMARK dtype { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
-
-array:
-  dimensions                                   { $$ = ndt_array($1, NULL, none_int64, none_int64, none_char, ctx); if ($$ == NULL) YYABORT; }
-| LBRACK dimensions COMMA attribute_seq RBRACK { $$ = mk_array($2, $4, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions:
   dimensions_nooption              { $$ = $1; }
 | QUESTIONMARK dimensions_nooption { $$ = ndt_dim_option($2, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_nooption:
-  INTEGER STAR dimensions_tail                            { $$ = mk_fixed_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  INTEGER STAR dimensions_tail                            { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| FIXED LPAREN attribute_seq RPAREN STAR dimensions_tail  { $$ = mk_fixed_dim_from_attrs($3, $6, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER STAR dimensions_tail                         { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| VAR integer_seq_opt STAR dimensions_tail                { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
-| VAR LPAREN integer_pair_seq RPAREN STAR dimensions_tail { $$ = mk_var_dim_offsets($3, $6, ctx); if ($$ == NULL) YYABORT; }
+| VAR arguments_opt STAR dimensions_tail                  { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
 | ELLIPSIS STAR dimensions_tail                           { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER ELLIPSIS STAR dimensions_tail                { $$ = ndt_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
@@ -381,18 +371,6 @@ untyped_value:
 | INTEGER     { $$ = $1; if ($$ == NULL) YYABORT; }
 | FLOATNUMBER { $$ = $1; if ($$ == NULL) YYABORT; }
 | STRINGLIT   { $$ = $1; if ($$ == NULL) YYABORT; }
-
-integer_seq_opt:
-  %empty                         { $$ = NULL; }
-| LPAREN integer_seq RPAREN      { $$ = $2; if ($$ == NULL) YYABORT; }
-
-integer_seq:
-  INTEGER                   { $$ = ndt_string_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
-| integer_seq COMMA INTEGER { $$ = ndt_string_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
-
-integer_pair_seq:
-  INTEGER COLON INTEGER                        { $$ = ndt_string_pair_seq_new($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| integer_pair_seq COMMA INTEGER COLON INTEGER { $$ = ndt_string_pair_seq_append($1, $3, $5, ctx); if ($$ == NULL) YYABORT; }
 
 function_type:
   tuple_type RARROW datashape
