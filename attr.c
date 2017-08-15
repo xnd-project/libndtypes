@@ -48,9 +48,13 @@ typedef struct {
 } attr_spec;
 
 /* Container attributes */
-static const attr_spec array_attr = {0, 5,
-    {"strides", "_nstrides", "offset", "bufsize", "order"},
-    {AttrInt64List, AttrInt16, AttrInt64, AttrInt64, AttrCharOpt}};
+static const attr_spec fixed_dim_attr = {1, 3,
+    {"shape", "stride", "order"},
+    {AttrInt64, AttrInt64, AttrChar}};
+static const attr_spec var_dim_attr = {1, 6,
+   {"shapes", "_nshapes", "offsets", "_noffsets", "bitmap", "_nbitmap"},
+   {AttrInt64List, AttrInt64, AttrInt64List, AttrInt64, AttrInt64List, AttrInt64}};
+
 static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
 static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
 
@@ -65,8 +69,10 @@ const attr_spec *
 ndt_get_attr_spec(enum ndt tag, ndt_context_t *ctx)
 {
     switch(tag) {
-    case Array:
-        return &array_attr;
+    case FixedDim:
+        return &fixed_dim_attr;
+    case VarDim:
+        return &var_dim_attr;
     case Tuple: case Record:
         return &tuple_record_attr;
     case Field:
@@ -202,7 +208,7 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
             *(int64_t **)ptr = values;
 
             ptr = va_arg(ap, void *);
-            *(int16_t *)ptr = v[i]->AttrList.len;
+            *(int64_t *)ptr = v[i]->AttrList.len;
             i++;
             break;
         }

@@ -50,15 +50,15 @@ char *mk_stringlit(const char *src, ndt_context_t *ctx);
 /*                        Functions used in the parser                       */
 /*****************************************************************************/
 
-ndt_t *mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx);
-ndt_t *mk_var_dim(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
+ndt_t *mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx);
+ndt_t *mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx);
+ndt_t *mk_var_dim(ndt_attr_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
 ndt_attr_t *mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
 ndt_t *mk_alias(enum ndt_alias tag, ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_string(const char *v, enum ndt_encoding encoding, ndt_context_t *ctx);
 ndt_t *mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_array(ndt_t *dims, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
 ndt_t *mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
 ndt_field_t *mk_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);

@@ -221,8 +221,6 @@ enum ndt {
     VarDim,
     EllipsisDim,
 
-    Array,
-
     Option,
     OptionItem,
     Nominal,
@@ -311,11 +309,6 @@ struct _ndt {
 
     /* Abstract */
     union {
-        struct {
-            uint32_t flags;
-            ndt_t *type;
-        } Array;
-
         struct {
             uint32_t flags;
             int64_t shape;
@@ -427,9 +420,10 @@ struct _ndt {
                 int64_t suboffset;
                 int64_t itemsize;
                 int64_t stride;
-                int64_t nshapes;  /* default: 0 */
-                int64_t *shapes;  /* default: NULL */
-                int64_t *offsets; /* default: NULL */
+                int64_t nshapes;
+                const int64_t *shapes;
+                const int64_t *offsets;
+                const uint8_t *bitmap;
             } VarDim;
 
             struct {
@@ -516,6 +510,7 @@ const char *ndt_dim_type_as_string(enum ndt_dim tag);
 enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 uint32_t ndt_dim_flags(const ndt_t *t);
+char ndt_order(const ndt_t *t);
 
 int ndt_is_abstract(const ndt_t *t);
 int ndt_is_concrete(const ndt_t *t);
@@ -575,9 +570,11 @@ int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Any */
 ndt_t *ndt_any_kind(ndt_context_t *ctx);
-ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx);
 ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_var_dim(int64_t *offsets, int64_t *shapes, int64_t nshapes, ndt_t *type, ndt_context_t *ctx);
+ndt_t *ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
+                   const int64_t *shapes, const int64_t *offsets, const uint8_t *bitmap,
+                   ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 
 ndt_t *ndt_array(ndt_t *type, int64_t *strides, int64_opt_t offset, int64_opt_t bufsize, char_opt_t order, ndt_context_t *ctx);

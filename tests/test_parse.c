@@ -555,11 +555,11 @@ const char *parse_tests[] = {
   "10 * Matrix(3 * 2 * float64)",
 
   /* Attributes and metadata */
-  "[10 * int32, order='C']",
-  "[10 * int32, order='F']",
-  "([10 * int32, order='F'], float32)",
-  "([10 * int32, order='F'], float32 |pack=2|, uint8)",
-  "([10 * int32, order='F'], float32, uint8, pack=2)",
+  "fixed(shape=10, order='C') * int32",
+  "fixed(shape=10, order='F') * int32",
+  "(fixed(shape=10, order='F') * int32, float32)",
+  "(fixed(shape=10, order='F') * int32, float32 |pack=2|, uint8)",
+  "(fixed(shape=10, order='F') * int32, float32, uint8, pack=2)",
   "{x : float32 |align=16|, y : float64}",
 
 #if 0
@@ -567,7 +567,7 @@ const char *parse_tests[] = {
   "[2 * 3 * int64, strides=[-8, -16], order='F']",
   "[10 * complex128, strides=[32]]",
 #endif
-  "[10 * complex128, order='F']",
+  "fixed(shape=10, order='F') * complex128",
 
 #if 0
   "[2 * 3 * int64, strides=[-8, -16], offsets=[8,0]]",
@@ -576,8 +576,8 @@ const char *parse_tests[] = {
   "[10 * complex128, offsets=[128], order='F']",
 #endif
 
-  "10 * var(1,2,3,4,5,6,7,8,9,10) * float64",
-  "var(2) * var(3,4) * var(5,6,7,8,9,10,11) * float64",
+  "10 * var(shapes=[1,2,3,4,5,6,7,8,9,10]) * float64",
+  "var(shapes=[2]) * var(shapes=[3,4]) * var(shapes=[5,6,7,8,9,10,11]) * float64",
 
 #if 0
   "[10 * var(1,2,3,4,5,6,7,8,9,10) * float64, offsets=[0,32]]",

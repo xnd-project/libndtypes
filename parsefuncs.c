@@ -74,11 +74,11 @@ mk_stringlit(const char *lexeme, ndt_context_t *ctx)
 /*****************************************************************************/
 
 ndt_t *
-mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx)
+mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx)
 {
-    size_t shape;
+    int64_t shape;
 
-    shape = (size_t)ndt_strtoull(v, SIZE_MAX, ctx);
+    shape = ndt_strtoll(v, 0, INT64_MAX, ctx);
     ndt_free(v);
 
     if (ctx->err != NDT_Success) {
@@ -86,7 +86,25 @@ mk_fixed_dim(char *v, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    return ndt_fixed_dim(shape, type, ctx);
+    return ndt_fixed_dim(shape, type, 'C', ctx);
+}
+
+ndt_t *
+mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
+{
+    int64_t shape;
+    int64_t stride = -1;
+    char order = 'C';
+    int ret;
+
+    ret = ndt_parse_attr(FixedDim, ctx, attrs, &shape, &stride, &order);
+    ndt_attr_seq_del(attrs);
+    if (ret < 0) {
+        ndt_del(type);
+        return NULL;
+    }
+
+    return ndt_fixed_dim(shape, type, order, ctx);
 }
 
 static int64_t *
@@ -108,90 +126,98 @@ mk_offsets(const int64_t *shapes, int64_t nshapes, ndt_context_t *ctx)
     return offsets;
 }
 
-ndt_t *
-mk_var_dim(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
+static uint8_t *
+mk_bitmap(const int64_t *valid, int64_t nvalid, ndt_context_t *ctx)
 {
-    int64_t *shapes = NULL;
-    int64_t *offsets = NULL;
-    int64_t nshapes = 0;
+    uint8_t *bitmap;
+    int64_t i;
 
-    if (seq) {
-        int64_t k;
-        shapes = ndt_alloc(seq->len, sizeof *shapes);
-        if (shapes == NULL) {
-            ndt_string_seq_del(seq);
+    bitmap = ndt_calloc((nvalid+7) / 8, sizeof *bitmap);
+    if (bitmap == NULL) {
+        return ndt_memory_error(ctx);
+    }
+
+    for (i = 0; i < nvalid; i++) {
+        if (valid[i]) {
+            bitmap[i / 8] |= ((uint8_t )1 << (i % 8));
+        }
+    }
+
+    return bitmap;
+}
+
+ndt_t *
+mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
+{
+    if (attrs) {
+        ndt_t *t;
+        int64_t *shapes = NULL;
+        int64_t *offsets = NULL;
+        int64_t *valid = NULL;
+        uint8_t *bitmap = NULL;
+        int64_t nshapes = 0;
+        int64_t noffsets = 0;
+        int64_t nvalid = 0;
+        int ret;
+
+        ret = ndt_parse_attr(VarDim, ctx, attrs, &shapes, &nshapes,
+                             &offsets, &noffsets, &valid, &nvalid);
+        ndt_attr_seq_del(attrs);
+        if (ret < 0) {
             ndt_del(type);
-            return ndt_memory_error(ctx);
+            return NULL;
         }
 
-        for (k = 0; k < (int64_t)seq->len; k++) {
-            shapes[k] = (int64_t)ndt_strtoll(seq->ptr[k], 0, INT64_MAX, ctx);
-            if (ctx->err != NDT_Success) {
-                ndt_string_seq_del(seq);
-                ndt_del(type);
+        if (shapes == NULL) {
+            ndt_free(offsets);
+            ndt_free(valid);
+            ndt_del(type);
+            return NULL;
+        }
+
+        if ((offsets && noffsets != nshapes+1) ||
+            (valid && nvalid != nshapes)) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "invalid number of elements in offsets or bitmap");
+            ndt_free(shapes);
+            ndt_free(offsets);
+            ndt_free(valid);
+            ndt_del(type);
+            return NULL;
+        }
+
+        if (offsets == NULL) {
+            offsets = mk_offsets(shapes, nshapes, ctx);
+            if (offsets == NULL) {
                 ndt_free(shapes);
+                ndt_free(bitmap);
+                ndt_free(valid);
+                ndt_del(type);
                 return NULL;
             }
         }
 
-        nshapes = seq->len;
-        ndt_string_seq_del(seq);
-
-        offsets = mk_offsets(shapes, nshapes, ctx);
-        if (offsets == NULL) {
-            ndt_free(shapes);
-            ndt_del(type);
-            return NULL;
+        if (valid) {
+            bitmap = mk_bitmap(valid, nvalid, ctx);
+            ndt_free(valid);
+            if (bitmap == NULL) {
+                ndt_free(shapes);
+                ndt_free(bitmap);
+                ndt_del(type);
+                return NULL;
+            }
         }
+
+        t = ndt_var_dim(type, true, Int32, nshapes, shapes, offsets, bitmap, ctx);
+        ndt_free(shapes);
+        ndt_free(offsets);
+        ndt_free(bitmap);
+        return t;
+
     }
-
-    return ndt_var_dim(offsets, shapes, nshapes, type, ctx);
-}
-
-ndt_t *
-mk_var_dim_offsets(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
-{
-    int64_t *offsets = NULL;
-    int64_t *shapes = NULL;
-    int64_t nshapes = 0;
-    int64_t i;
-    size_t k;
-
-    assert(seq != NULL);
-    assert(seq->len % 2 == 0);
-
-    nshapes = (seq->len-2) / 2;
-
-    offsets = ndt_alloc(nshapes+1, sizeof *offsets);
-    shapes = ndt_alloc(nshapes, sizeof *shapes);
-    if (offsets == NULL || shapes == NULL) {
-        (void)ndt_memory_error(ctx);
-        goto error;
+    else {
+        return ndt_var_dim(type, false, Void, 0, NULL, NULL, NULL, ctx);
     }
-
-    for (i=0, k=0; i<nshapes && k<seq->len-2; i++, k+=2) {
-        offsets[i] = (int64_t)ndt_strtoll(seq->ptr[k], 0, INT64_MAX, ctx);
-        shapes[i] = (int64_t)ndt_strtoll(seq->ptr[k+1], 0, INT64_MAX, ctx);
-        if (ctx->err != NDT_Success) {
-            goto error;
-        }
-    }
-
-    offsets[i] = (int64_t)ndt_strtoll(seq->ptr[k], 0, INT64_MAX, ctx);
-    if ((int64_t)ndt_strtoll(seq->ptr[k+1], 0, INT64_MAX, ctx) != 0) {
-        ndt_err_format(ctx, NDT_ValueError, "last shape must be 0"); 
-        goto error;
-    }
-
-    ndt_string_seq_del(seq);
-    return ndt_var_dim(offsets, shapes, nshapes, type, ctx);
-
-error:
-    ndt_free(shapes);
-    ndt_free(offsets);
-    ndt_string_seq_del(seq);
-    ndt_del(type);
-    return NULL;
 }
 
 ndt_t *
@@ -273,39 +299,6 @@ mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     }
 
     return ndt_fixed_bytes(data_size, data_align, ctx);
-}
-
-ndt_t *
-mk_array(ndt_t *array, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
-{
-    int64_t *strides = NULL;
-    int16_t nstrides = 0;
-    int64_opt_t offset = {None, 0};
-    int64_opt_t bufsize = {None, 0};
-    char_opt_t order = {None, '\0'};
-
-    if (attrs) {
-        int ret = ndt_parse_attr(Array, ctx, attrs, &strides, &nstrides,
-                                 &offset, &bufsize, &order);
-        ndt_attr_seq_del(attrs);
-
-        if (ret < 0) {
-            goto error;
-        }
-
-        if (strides && nstrides != array->ndim) {
-            ndt_err_format(ctx, NDT_ValueError,
-                           "strides must have length ndim");
-            goto error;
-        }
-    }
-
-    return ndt_array(array, strides, offset, bufsize, order, ctx);
-
-error:
-    ndt_free(strides);
-    ndt_del(array);
-    return NULL;
 }
 
 ndt_field_t *
