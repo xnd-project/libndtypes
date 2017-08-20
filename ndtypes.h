@@ -99,6 +99,9 @@
 /* Types: ndt_t */
 typedef struct _ndt ndt_t;
 
+/* Metadata: ndt_meta_t */
+typedef struct _ndt_meta ndt_meta_t;
+
 /* Values: ndt_value_t */
 typedef union {
   bool Bool;
@@ -295,7 +298,7 @@ typedef struct {
   char *name;
   ndt_t *type;
   struct {
-      uint16_t align;
+      uint16_t data_align;
       bool explicit_align;
   } Concrete;
 } ndt_field_t;
@@ -431,10 +434,53 @@ struct _ndt {
             } Record;
         };
 
-        size_t size;
-        uint16_t align;
+        size_t data_size;
+        uint16_t data_align;
 
     } Concrete;
+
+    alignas(MAX_ALIGN) char extra[];
+};
+
+
+/*****************************************************************************/
+/*                                   Metadata                                */
+/*****************************************************************************/
+
+struct _ndt_meta {
+    enum ndt tag;
+    int64_t data_size;
+    uint16_t data_align;
+    int64_t meta_size;
+
+    union {
+        struct {
+            int64_t itemsize;
+            int64_t stride;
+        } FixedDim;
+
+        struct {
+            int64_t suboffset;
+            int64_t itemsize;
+            int64_t stride;
+            int64_t nshapes;
+            const int64_t *shapes;
+            const int64_t *offsets;
+            const uint8_t *bitmap;
+        } VarDim;
+
+        struct {
+            int64_t *offset;
+            uint16_t *align;
+            uint16_t *pad;
+        } Tuple;
+
+        struct {
+            int64_t *offset;
+            uint16_t *align;
+            uint16_t *pad;
+        } Record;
+    };
 
     alignas(MAX_ALIGN) char extra[];
 };
