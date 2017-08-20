@@ -1104,7 +1104,7 @@ ndt_item_option(ndt_t *type, ndt_context_t *ctx)
         }
  
         return t;
-     }
+    }
 }
 
 ndt_t *
@@ -1139,7 +1139,7 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
         }
  
         return t;
-     }
+    }
 }
 
 int
