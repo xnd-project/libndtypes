@@ -1086,6 +1086,7 @@ ndt_item_option(ndt_t *type, ndt_context_t *ctx)
         ndt_err_format(ctx, NDT_InvalidArgumentError,
                        "cannot create an option option");
         ndt_del(type);
+        return NULL;
     default:
         /* abstract type */
         t = ndt_new(OptionItem, ctx);
@@ -1120,6 +1121,7 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
         ndt_err_format(ctx, NDT_InvalidArgumentError,
                        "cannot create an option option");
         ndt_del(type);
+        return NULL;
     default:
         /* abstract type */
         t = ndt_new(Option, ctx);
