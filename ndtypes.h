@@ -404,14 +404,6 @@ struct _ndt {
     struct {
         union {
             struct {
-                enum ndt_dim dim_type; /* data type of the var-dim representation */
-                int ndim_start;        /* start index into the 'data' member array */
-                int64_t suboffset;     /* suboffset into the start 'data' array */
-                int64_t *data;         /* offsets of actual array data and var-dim data */
-                int64_t *bitmaps;      /* offsets of validity bitmaps */
-            } Array;
-
-            struct {
                 int64_t itemsize;
                 int64_t stride;
             } FixedDim;
