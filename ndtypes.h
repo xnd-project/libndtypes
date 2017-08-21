@@ -305,10 +305,15 @@ typedef struct {
 
 /* Datashape type */
 struct _ndt {
+    /* Always defined */
     enum ndt tag;
     enum ndt_access access;
     int ndim;
     int64_t hash;
+    /* Undefined if the type is abstract */
+    int64_t data_size;
+    uint16_t data_align;
+    int64_t meta_size;
 
     /* Abstract */
     union {
@@ -433,10 +438,6 @@ struct _ndt {
                 uint16_t *pad;
             } Record;
         };
-
-        size_t data_size;
-        uint16_t data_align;
-
     } Concrete;
 
     alignas(MAX_ALIGN) char extra[];
@@ -447,39 +448,35 @@ struct _ndt {
 /*                                   Metadata                                */
 /*****************************************************************************/
 
+typedef struct {
+    int64_t itemsize;
+    int64_t stride;
+} ndt_fixed_dim_meta_t;
+
+typedef struct {
+    int64_t suboffset;
+    int64_t itemsize;
+    int64_t stride;
+    int64_t nshapes;
+    const int64_t *shapes;
+    const int64_t *offsets;
+    const uint8_t *bitmap;
+} ndt_var_dim_meta_t;
+
+typedef struct {
+    int64_t *offset;
+    uint16_t *align;
+    uint16_t *pad;
+} ndt_record_meta_t;
+
 struct _ndt_meta {
     enum ndt tag;
-    int64_t data_size;
-    uint16_t data_align;
-    int64_t meta_size;
 
     union {
-        struct {
-            int64_t itemsize;
-            int64_t stride;
-        } FixedDim;
-
-        struct {
-            int64_t suboffset;
-            int64_t itemsize;
-            int64_t stride;
-            int64_t nshapes;
-            const int64_t *shapes;
-            const int64_t *offsets;
-            const uint8_t *bitmap;
-        } VarDim;
-
-        struct {
-            int64_t *offset;
-            uint16_t *align;
-            uint16_t *pad;
-        } Tuple;
-
-        struct {
-            int64_t *offset;
-            uint16_t *align;
-            uint16_t *pad;
-        } Record;
+        ndt_fixed_dim_meta_t FixedDim;
+        ndt_var_dim_meta_t VarDim;
+        ndt_record_meta_t Tuple;
+        ndt_record_meta_t Record;
     };
 
     alignas(MAX_ALIGN) char extra[];
