@@ -833,6 +833,7 @@ test_static_context(void)
             fprintf(stderr, "test_static_context: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
+            ndt_context_del(&ctx);
             return -1;
         }
 
@@ -852,6 +853,7 @@ test_static_context(void)
                 ndt_del(t);
                 fprintf(stderr, "test_static_context: FAIL: s != NULL after MemoryError\n");
                 fprintf(stderr, "test_static_context: FAIL: %s\n", *c);
+                ndt_context_del(&ctx);
                 return -1;
             }
         }
@@ -861,6 +863,7 @@ test_static_context(void)
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
             ndt_del(t);
+            ndt_context_del(&ctx);
             return -1;
         }
 
@@ -874,6 +877,7 @@ test_static_context(void)
     if (s == NULL) {
         fprintf(stderr, "test_static_context: FAIL: expected failure: \"%s\"\n", s);
         ndt_del(t);
+        ndt_context_del(&ctx);
         return -1;
     }
     count++;
@@ -930,6 +934,7 @@ test_hash(void)
             fprintf(stderr, "test_hash: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
+            ndt_context_del(&ctx);
             return -1;
         }
 
@@ -939,6 +944,7 @@ test_hash(void)
 
         if (x.hash == -1) {
             fprintf(stderr, "test_hash: FAIL: hash==-1\n\n");
+            ndt_context_del(&ctx);
             return -1;
         }
 
@@ -954,9 +960,10 @@ test_hash(void)
         }
     }
 
-    t = ndt_from_string("2 * var * {a: (float64, () -> ()), b: string}", &ctx);
+    t = ndt_from_string("var * {a: (float64, () -> ()), b: string}", &ctx);
     if (t == NULL) {
         fprintf(stderr, "test_hash: FAIL: expected success\n\n");
+        ndt_context_del(&ctx);
         return -1;
     }
 
@@ -969,6 +976,7 @@ test_hash(void)
 
     if (x.hash != -1 || ctx.err != NDT_MemoryError) {
         fprintf(stderr, "test_hash: FAIL: expected failure, got %" PRIi64 "\n\n", x.hash);
+        ndt_context_del(&ctx);
         return -1;
     }
 
@@ -995,6 +1003,7 @@ test_copy(void)
             fprintf(stderr, "test_hash: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
+            ndt_context_del(&ctx);
             return -1;
         }
 
@@ -1005,6 +1014,7 @@ test_copy(void)
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
             ndt_del(t);
+            ndt_context_del(&ctx);
             return -1;
         }
 
@@ -1012,6 +1022,7 @@ test_copy(void)
             fprintf(stderr, "test_hash: FAIL: copy: not equal\n\n");
             ndt_del(t);
             ndt_del(u);
+            ndt_context_del(&ctx);
             return -1;
         }
 

@@ -800,6 +800,13 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx)
     ndt_t *t;
     uint32_t flags;
 
+    if (type->tag == VarDim) {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "fixed dimensions cannot contain variable dimensions");
+        ndt_del(type);
+        return NULL;
+    }
+
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
         ndt_del(type);
@@ -848,14 +855,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx)
     t->access = type->access;
     if (t->access == Concrete) {
         t->Concrete.FixedDim.itemsize = type->data_size;
-        switch (t->FixedDim.type->tag) {
-        case VarDim:
-            t->Concrete.FixedDim.stride = ndt_dim_stride(type);
-            break;
-        default:
-            t->Concrete.FixedDim.stride = type->data_size;
-            break;
-        }
+        t->Concrete.FixedDim.stride = type->data_size;
         t->data_size = shape * type->data_size;
         t->data_align = type->data_align;
         t->meta_size = sizeof(ndt_fixed_dim_meta_t);
@@ -868,6 +868,13 @@ ndt_t *
 ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
+
+    if (type->tag == VarDim) {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "symbolic dimensions cannot contain variable dimensions");
+        ndt_del(type);
+        return NULL;
+    }
 
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
@@ -935,7 +942,8 @@ ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
 
         access = Concrete;
         if (copy_meta) {
-            extra = 4 * (nshapes + nshapes + 1 + (nshapes + 7) / 8);
+            extra = (2 * nshapes + 1) * sizeof(int32_t) + \
+                    (nshapes + 7) / 8;
         }
 
         break;
@@ -970,34 +978,53 @@ ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
 
     /* concrete access */
     if (access == Concrete) {
-        t->Concrete.VarDim.itemsize = type->data_size;
-        t->Concrete.VarDim.stride = type->data_size;
-        t->Concrete.VarDim.suboffset = 0;
-
         t->Concrete.VarDim.nshapes = nshapes;
         if (copy_meta) {
             int32_t *_shapes = (int32_t *)t->extra;
-            int32_t *_offsets = (int32_t *)(t->extra + nshapes * sizeof(int32_t));
-            char *_bitmap = t->extra + (nshapes + nshapes + 1) * sizeof(int32_t);
+            int32_t *_offsets = _shapes + nshapes;
+            char *_bitmap = (char *)_offsets + nshapes * sizeof(int32_t);
+            int32_t i;
 
-            memcpy(_shapes, shapes, nshapes * sizeof(int32_t));
-            memcpy(_offsets, offsets, (nshapes + 1) * sizeof(int32_t));
+            for (i = 0; i < nshapes; i++) {
+                _shapes[i] = shapes[i];
+                _offsets[i] = offsets[i];
+            }
+            _offsets[i] = offsets[i];
+
             if (bitmap) {
                 memcpy(_bitmap, bitmap, (nshapes + 7) / 8);
             }
 
-            t->Concrete.VarDim.shapes = (const int64_t *)_shapes;
-            t->Concrete.VarDim.offsets = (const int64_t *)_offsets;
+            t->Concrete.VarDim.shapes = (const int32_t *)_shapes;
+            t->Concrete.VarDim.offsets = (const int32_t *)_offsets;
             t->Concrete.VarDim.bitmap = bitmap ? (const uint8_t *)_bitmap : NULL;
         }
         else {
-            t->Concrete.VarDim.shapes = shapes;
-            t->Concrete.VarDim.offsets = offsets;
-            t->Concrete.VarDim.bitmap = bitmap;
+            // XXX t->Concrete.VarDim.shapes = shapes;
+            // t->Concrete.VarDim.offsets = offsets;
+            // t->Concrete.VarDim.bitmap = bitmap;
         }
 
-        t->data_size = sizeof(int32_t);
-        t->data_align = alignof(int32_t);
+        t->Concrete.VarDim.suboffset = 0;
+        t->Concrete.VarDim.stride = 0;
+
+        switch (type->tag) {
+        case VarDim:
+            if (offsets[nshapes] != type->Concrete.VarDim.nshapes) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "missing or invalid number of var-dim shape arguments");
+                ndt_del(t);
+                return NULL;
+            }
+            t->data_size = type->data_size;
+            t->Concrete.VarDim.itemsize = type->Concrete.VarDim.itemsize;
+            break;
+        default:
+            t->Concrete.VarDim.itemsize = type->data_size;
+            t->data_size = offsets[nshapes] * type->data_size;
+            break;
+        }
+        t->data_align = type->data_align;
         t->meta_size = sizeof(ndt_var_dim_meta_t) + extra;
     }
 
@@ -1009,6 +1036,13 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
     uint32_t flags;
+
+    if (type->tag == VarDim) {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "ellipsis dimensions cannot contain variable dimensions");
+        ndt_del(type);
+        return NULL;
+    }
 
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);

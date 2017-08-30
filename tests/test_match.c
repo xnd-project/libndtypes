@@ -96,18 +96,6 @@ const match_testcase_t match_tests[] = {
     "?var * Any",
     1 },
 
-  { "10 * var * Any",
-    "10 * var * Any",
-    1 },
-
-  { "10 * N * Any",
-    "10 * var * Any",
-    0 },
-
-  { "10 * 10 * var * Any",
-    "10 * 10 * var * Any",
-    1 },
-
   { "... * Any",
     "... * Any",
     1 },
@@ -2350,8 +2338,8 @@ const match_testcase_t match_tests[] = {
     "?pointer(fixed_string(3865363101, 'ucs2'))",
     1 },
 
-  { "ZmQxcy * var * 1098824011 * var * var * (...)",
-    "ZmQxcy * var * 1098824011 * var * var * (...)",
+  { "var * var * var * (...)",
+    "var * var * var * (...)",
     1 },
 
   { "categorical('a' : string, 1619552300 : uint64, 49062 : uint16, 18772 : int16, -84 : int8, 'l' : string)",
@@ -2374,8 +2362,8 @@ const match_testcase_t match_tests[] = {
     "categorical(2753441703 : uint32, 1.2e-32 : float32)",
     1 },
 
-  { "1293035889 * SQc2jI * 508611408 * var * ... * var * FYqqwF * VKte * string",
-    "1293035889 * SQc2jI * 508611408 * var * ... * var * FYqqwF * VKte * string",
+  { "var * var * FYqqwF * ... * VKte * string",
+    "var * var * FYqqwF * ... * X * VKte * string",
     1 },
 
   { "1286044356 * LbR6JPFI * 2096958782 * uint8",
@@ -2386,48 +2374,48 @@ const match_testcase_t match_tests[] = {
     "categorical(1.2e-32 : float64, -25910 : int16, 'xM3Mys0XqH' : string, 4265882500 : uint64)",
     1 },
 
-  { "var * 279953679 * NaZyx * ZQ * 221035040 * var * 1446706288 * FixedBytes",
-    "var * 279953679 * NaZyx * ZQ * 221035040 * var * 1446706288 * FixedBytes",
+  { "var * var * 1446706288 * FixedBytes",
+    "var * var * 1446706288 * FixedBytes",
     1 },
 
-  { "SJBOs2xZm * var * ... * 4142176455 * BeL * 584505763 * Nf",
-    "SJBOs2xZm * var * ... * 4142176455 * BeL * 584505763 * Nf",
+  { "var * ... * 4142176455 * BeL * 584505763 * Nf",
+    "var * ... * 4142176455 * BeL * 584505763 * Nf",
     1 },
 
-  { "S * 3750021327 * 66749723 * var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(size=2816010943, align=16)",
-    "S * 3750021327 * 66749723 * var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(size=2816010943, align=16)",
+  { "var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(size=2816010943, align=16)",
+    "var * var * var * 3816827158 * IhlydZ515 * 1507982035 * fixed_bytes(size=2816010943, align=16)",
     1 },
 
   { "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
     "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
     1 },
 
-  { "BfM2hS6zey * var * 163901665 * var * 747688899 * FbU2mb * var * ZcTmBXnKPi",
-    "BfM2hS6zey * var * 163901665 * var * 747688899 * FbU2mb * var * ZcTmBXnKPi",
+  { "var * var * var * ZcTmBXnKPi",
+    "var * var * var * ZcTmBXnKPi",
     1 },
 
   { "?categorical(31275 : uint16, 69 : uint8, 1.2e-32 : float64)",
     "?categorical(31275 : uint16, 69 : uint8, 1.2e-32 : float64)",
     1 },
 
-  { "3334650506 * var * var * ... * void",
-    "3334650506 * var * var * ... * void",
+  { "var * var * ... * void",
+    "var * var * ... * void",
     1 },
 
   { "categorical('omhwkoWVWw' : string, 43 : uint8, 946986991 : int64)",
     "categorical('omhwkoWVWw' : string, 43 : uint8, 946986991 : int64)",
     1 },
 
-  { "2857261760 * var * 888172155 * float32",
-    "2857261760 * var * 888172155 * float32",
+  { "var * 888172155 * float32",
+    "var * 888172155 * float32",
     1 },
 
-  { "RZxERR * var * var * 2828578146 * var * 2925191533 * uint16",
-    "RZxERR * var * var * 2828578146 * var * 2925191533 * uint16",
+  { "var * var * var * 2925191533 * uint16",
+    "var * var * var * 2925191533 * uint16",
     1 },
 
-  { "2995650016 * var * N_IeNyWYjQ * ... * int16",
-    "2995650016 * var * N_IeNyWYjQ * ... * int16",
+  { "var * N_IeNyWYjQ * ... * int16",
+    "var * N_IeNyWYjQ * ... * int16",
     1 },
 
   { "var * var * var * 3340205417 * 2074830512 * Scalar",
@@ -2446,20 +2434,20 @@ const match_testcase_t match_tests[] = {
     "fixed_string(1901614748, 'utf32')",
     1 },
 
-  { "A8w8pNJ * 3945513946 * 3057917060 * var * IFB * 1919373335 * M7",
-    "A8w8pNJ * 3945513946 * 3057917060 * var * IFB * 1919373335 * M7",
+  { "var * IFB * 1919373335 * M7",
+    "var * IFB * 1919373335 * M7",
     1 },
 
   { "?categorical(1.2e-32 : float64, 3715192786 : uint32, 1.2e-32 : float32, 'oJgBt_WUse' : string, -67 : int8)",
     "?categorical(1.2e-32 : float64, 3715192786 : uint32, 1.2e-32 : float32, 'oJgBt_WUse' : string, -67 : int8)",
     1 },
 
-  { "3546970538 * var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=2)",
-    "3546970538 * var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=2)",
+  { "var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=2)",
+    "var * 542837605 * J0fcbFoNy3 * 1766819960 * bytes(align=2)",
     1 },
 
-  { "3608776903 * MYlGTj * 1980216455 * Hce1_dqKx * var * Jfl * ... * E",
-    "3608776903 * MYlGTj * 1980216455 * Hce1_dqKx * var * Jfl * ... * E",
+  { "var * Jfl * ... * E",
+    "var * Jfl * ... * E",
     1 },
 
   { "2948091211 * ... * categorical(-1869840431 : int64, 2052908559 : uint32)",
@@ -2482,8 +2470,8 @@ const match_testcase_t match_tests[] = {
     "pointer(AilcKv4su1(FixedBytes))",
     1 },
 
-  { "R79_AhZau0 * 950069447 * 2112203142 * 3298306739 * var * ... * complex128",
-    "R79_AhZau0 * 950069447 * 2112203142 * 3298306739 * var * ... * complex128",
+  { "var * ... * complex128",
+    "var * ... * complex128",
     1 },
 
   { "?fixed_string(2371793992, 'ucs2')",
@@ -2502,8 +2490,8 @@ const match_testcase_t match_tests[] = {
     "var * 2253137925 * VUx39mzbW * QoFb",
     1 },
 
-  { "57676169 * var * ... * fixed_string(1464831555, 'ucs2')",
-    "57676169 * var * ... * fixed_string(1464831555, 'ucs2')",
+  { "var * ... * fixed_string(1464831555, 'ucs2')",
+    "var * ... * fixed_string(1464831555, 'ucs2')",
     1 },
 
   { "var * 2859160145 * fixed_string(1233383142, 'utf32')",
@@ -2740,47 +2728,47 @@ const match_testcase_t match_tests[] = {
   { "... * 10 * foo_t",
     "... * foo_t", 0 },
 
-  { "... * 10 * var * foo_t",
+  { "var * ... * 10 * 30 * foo_t",
     "... * foo_t", 0 },
 
   { "... * foo_t",
-    "... * 10 * var * foo_t", 1 },
+    "... * 10 * foo_t", 1 },
 
   { "N * N * foo_t",
     "10 * 10 * foo_t", 1 },
 
-  { "N * N * foo_t",
-    "10 * 20 * var * foo_t", 0 },
+  { "var * N * N * foo_t",
+    "var * 10 * 20 * foo_t", 0 },
 
   { "N * Z * foo_t",
     "10 * 20 * foo_t", 1 },
 
   { "N * Z * ... * foo_t",
-    "10 * 20 * var * foo_t", 1 },
+    "10 * 20 * 30 * foo_t", 1 },
 
   { "N * Z * ... * foo_t",
-    "10 * 20 * var * 10 * ... * foo_t", 1 },
+    "10 * 20 * 30 * 10 * ... * foo_t", 1 },
 
   { "N * Z * ... * foo_t",
-    "10 * 20 * var * 10 * ... * foo_t", 1 },
+    "10 * 20 * 30 * 10 * ... * foo_t", 1 },
 
   { "N * Z * ... * N * foo_t",
-    "10 * 20 * var * 10 * ... * 10 * foo_t", 1 },
+    "10 * 20 * 30 * 10 * ... * 10 * foo_t", 1 },
 
   { "N * Z * ... * N * foo_t",
-    "10 * 20 * var * 10 * ... * 10 * foo_t", 1 },
+    "10 * 20 * 30 * 10 * ... * 10 * foo_t", 1 },
 
   { "N * Z * ... * N * foo_t",
-    "10 * 20 * var * 10 * ... * 20 * foo_t", 0 },
+    "10 * 20 * 30 * 10 * ... * 20 * foo_t", 0 },
 
   { "N * Z * ... * N * foo_t",
-    "A * 20 * var * 10 * ... * A * foo_t", 1 },
+    "A * 20 * 30 * 10 * ... * A * foo_t", 1 },
 
   { "N * Z * ... * N * Z * foo_t",
-    "10 * 20 * var * 10 * ... * 10 * 20 * foo_t", 1 },
+    "10 * 20 * 30 * 10 * ... * 10 * 20 * foo_t", 1 },
 
   { "N * Z * ... * 10 * N * Z * foo_t",
-    "10 * 20 * var * 10 * ... * 10 * 20 * foo_t", 0 },
+    "10 * 20 * 30 * 10 * ... * 10 * 20 * foo_t", 0 },
 
   /* Half-float */
   { "3 * float16",
@@ -2831,7 +2819,7 @@ const match_testcase_t match_tests[] = {
     "(3 * 5 * float64, 3 * 5 * float64) -> 3 * 5 * float64", 1 },
 
   { "(A... * float64, A... * float32, B... * float32)",
-    "(B... * float64, 2 * var * float32, 3 * var * float32)", 0 },
+    "(B... * float64, 2 * 30 * float32, 3 * 30 * float32)", 0 },
 
   { "(A... * float64, A... * float64)",
     "(3 * 5 * float64, 3 * 5 * float64)", 1 },

@@ -525,7 +525,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                 if (n < 0) return -1;
 
                 for (i = 0; i < t->Concrete.VarDim.nshapes+1; i++) {
-                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s",
+                    n = ndt_snprintf(ctx, buf, "%" PRIi32 "%s",
                                      t->Concrete.VarDim.offsets[i],
                                      i==t->Concrete.VarDim.nshapes ? "" : ", ");
                     if (n < 0) return -1;
@@ -538,7 +538,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                 if (n < 0) return -1;
 
                 for (i = 0; i < t->Concrete.VarDim.nshapes; i++) {
-                    n = ndt_snprintf(ctx, buf, "%" PRIi64 "%s",
+                    n = ndt_snprintf(ctx, buf, "%" PRIi32 "%s",
                                      t->Concrete.VarDim.shapes[i],
                                      i==t->Concrete.VarDim.nshapes-1 ? "" : ", ");
                     if (n < 0) return -1;

@@ -421,8 +421,8 @@ struct _ndt {
                 int64_t itemsize;
                 int64_t stride;
                 int64_t nshapes;
-                const int64_t *shapes;
-                const int64_t *offsets;
+                const int32_t *shapes;
+                const int32_t *offsets;
                 const uint8_t *bitmap;
             } VarDim;
 
@@ -458,8 +458,8 @@ typedef struct {
     int64_t itemsize;
     int64_t stride;
     int64_t nshapes;
-    const int64_t *shapes;
-    const int64_t *offsets;
+    const int32_t *shapes;
+    const int32_t *offsets;
     const uint8_t *bitmap;
 } ndt_var_dim_meta_t;
 
