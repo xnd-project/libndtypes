@@ -107,116 +107,29 @@ mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
     return ndt_fixed_dim(shape, type, order, ctx);
 }
 
-static int64_t *
-mk_offsets(const int64_t *shapes, int64_t nshapes, ndt_context_t *ctx)
-{
-    int64_t *offsets;
-    int64_t i;
-
-    offsets = ndt_alloc(nshapes+1, sizeof *offsets);
-    if (offsets == NULL) {
-        return ndt_memory_error(ctx);
-    }
-
-    offsets[0] = 0;
-    for (i = 0; i < nshapes; i++) {
-        offsets[i+1] = offsets[i] + shapes[i];
-    }
-
-    return offsets;
-}
-
-static uint8_t *
-mk_bitmap(const int64_t *valid, int64_t nvalid, ndt_context_t *ctx)
-{
-    uint8_t *bitmap;
-    int64_t i;
-
-    bitmap = ndt_calloc((nvalid+7) / 8, sizeof *bitmap);
-    if (bitmap == NULL) {
-        return ndt_memory_error(ctx);
-    }
-
-    for (i = 0; i < nvalid; i++) {
-        if (valid[i]) {
-            bitmap[i / 8] |= ((uint8_t )1 << (i % 8));
-        }
-    }
-
-    return bitmap;
-}
-
 ndt_t *
 mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 {
     if (attrs) {
         ndt_t *t;
-        int64_t *shapes = NULL;
-        int64_t *offsets = NULL;
-        int64_t *valid = NULL;
-        uint8_t *bitmap = NULL;
-        int64_t nshapes = 0;
+        int32_t *offsets = NULL;
         int64_t noffsets = 0;
-        int64_t nvalid = 0;
         int ret;
 
-        ret = ndt_parse_attr(VarDim, ctx, attrs, &shapes, &nshapes,
-                             &offsets, &noffsets, &valid, &nvalid);
+        ret = ndt_parse_attr(VarDim, ctx, attrs, &offsets, &noffsets);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             ndt_del(type);
             return NULL;
         }
 
-        if (shapes == NULL) {
-            ndt_free(offsets);
-            ndt_free(valid);
-            ndt_del(type);
-            return NULL;
-        }
-
-        if ((offsets && noffsets != nshapes+1) ||
-            (valid && nvalid != nshapes)) {
-            ndt_err_format(ctx, NDT_ValueError,
-                           "invalid number of elements in offsets or bitmap");
-            ndt_free(shapes);
-            ndt_free(offsets);
-            ndt_free(valid);
-            ndt_del(type);
-            return NULL;
-        }
-
-        if (offsets == NULL) {
-            offsets = mk_offsets(shapes, nshapes, ctx);
-            if (offsets == NULL) {
-                ndt_free(shapes);
-                ndt_free(bitmap);
-                ndt_free(valid);
-                ndt_del(type);
-                return NULL;
-            }
-        }
-
-        if (valid) {
-            bitmap = mk_bitmap(valid, nvalid, ctx);
-            ndt_free(valid);
-            if (bitmap == NULL) {
-                ndt_free(shapes);
-                ndt_free(bitmap);
-                ndt_del(type);
-                return NULL;
-            }
-        }
-
-        t = ndt_var_dim(type, true, Int32, nshapes, shapes, offsets, bitmap, ctx);
-        ndt_free(shapes);
+        t = ndt_var_dim(type, true, noffsets, offsets, ctx);
         ndt_free(offsets);
-        ndt_free(bitmap);
         return t;
 
     }
     else {
-        return ndt_var_dim(type, false, Void, 0, NULL, NULL, NULL, ctx);
+        return ndt_var_dim(type, false, 0, NULL, ctx);
     }
 }
 

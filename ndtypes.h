@@ -163,7 +163,7 @@ enum ndt_attr {
   AttrFloat32,
   AttrFloat64,
   AttrString,
-  AttrInt64List,
+  AttrInt32List,
   AttrCharOpt,
   AttrInt64Opt,
   AttrUint16Opt
@@ -421,9 +421,7 @@ struct _ndt {
                 int64_t itemsize;
                 int64_t stride;
                 int64_t nshapes;
-                const int32_t *shapes;
                 const int32_t *offsets;
-                const uint8_t *bitmap;
             } VarDim;
 
             struct {
@@ -607,12 +605,9 @@ int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_any_kind(ndt_context_t *ctx);
 ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx);
 ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
-                   const int64_t *shapes, const int64_t *offsets, const uint8_t *bitmap,
-                   ndt_context_t *ctx);
+ndt_t *ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offsets, ndt_context_t *ctx);
 ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *ndt_array(ndt_t *type, int64_t *strides, int64_opt_t offset, int64_opt_t bufsize, char_opt_t order, ndt_context_t *ctx);
 ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_dim_option(ndt_t *type, ndt_context_t *ctx);
 ndt_t *ndt_item_option(ndt_t *type, ndt_context_t *ctx);

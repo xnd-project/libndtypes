@@ -51,9 +51,7 @@ typedef struct {
 static const attr_spec fixed_dim_attr = {1, 3,
     {"shape", "stride", "order"},
     {AttrInt64, AttrInt64, AttrChar}};
-static const attr_spec var_dim_attr = {1, 6,
-   {"shapes", "_nshapes", "offsets", "_noffsets", "bitmap", "_nbitmap"},
-   {AttrInt64List, AttrInt64, AttrInt64List, AttrInt64, AttrInt64List, AttrInt64}};
+static const attr_spec var_dim_attr = {1, 2, {"offsets", "_noffsets"}, {AttrInt32List, AttrInt32}};
 
 static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
 static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
@@ -189,8 +187,8 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
             break;
         }
 
-        case AttrInt64List: {
-            int64_t *values = ndt_alloc(v[i]->AttrList.len, sizeof(int64_t));
+        case AttrInt32List: {
+            int32_t *values = ndt_alloc(v[i]->AttrList.len, sizeof(int32_t));
 
             if (values == NULL) {
                 ndt_err_format(ctx, NDT_MemoryError, "out of memory");
@@ -198,17 +196,17 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
             }
 
             for (k = 0; k < v[i]->AttrList.len; k++) {
-                values[k] = (int64_t)ndt_strtoll(v[i]->AttrList.items[k], INT64_MIN, INT64_MAX, ctx);
+                values[k] = (int32_t)ndt_strtol(v[i]->AttrList.items[k], 0, INT32_MAX, ctx);
                 if (ctx->err != NDT_Success) {
                     ndt_free(values);
                     return -1;
                 }
             }
 
-            *(int64_t **)ptr = values;
+            *(int32_t **)ptr = values;
 
             ptr = va_arg(ap, void *);
-            *(int64_t *)ptr = v[i]->AttrList.len;
+            *(int32_t *)ptr = v[i]->AttrList.len;
             i++;
             break;
         }

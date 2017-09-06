@@ -716,73 +716,6 @@ ndt_order(const ndt_t *t)
     return 'A';
 }
 
-uint32_t
-ndt_select_dim_size(int64_t n)
-{
-
-    if (n <= UINT8_MAX) {
-        assert(NDT_Dim_uint8 == 1);
-        return NDT_Dim_uint8;
-    }
-    if (n <= UINT16_MAX) {
-        assert(NDT_Dim_uint16 == 2);
-        return NDT_Dim_uint16;
-    }
-    if (n <= UINT32_MAX) {
-        assert(NDT_Dim_uint32 == 4);
-        return NDT_Dim_uint32;
-    }
-
-    assert(NDT_Dim_int64 == 8);
-    return NDT_Dim_int64;
-}
-
-uint32_t
-ndt_dim_size(const ndt_t *t)
-{
-    return ndt_dim_flags(t) & NDT_Dim_size;
-}
-
-uint32_t
-ndt_dim_align(const ndt_t *t)
-{
-    switch (ndt_dim_size(t)) {
-    case 1: return alignof(uint8_t);
-    case 2: return alignof(uint16_t);
-    case 4: return alignof(uint32_t);
-    case 8: return alignof(int64_t);
-    default: return 1;
-    }
-}
-
-enum ndt_dim
-ndt_dim_type(const ndt_t *t)
-{
-    switch (ndt_dim_size(t)) {
-    case 0: return DimNone;
-    case 1: return DimUint8;
-    case 2: return DimUint16;
-    case 4: return DimUint32;
-    case 8: return DimInt64;
-    default: abort();
-    }
-}
-
-const char *
-ndt_dim_type_as_string(enum ndt_dim tag)
-{
-    switch (tag) {
-    case DimNone: return "none";
-    case DimUint8: return "uint8";
-    case DimUint16: return "uint16";
-    case DimUint32: return "uint32";
-    case DimInt64: return "int64";
-    case DimInt32: return "int32";
-    }
-
-    return "not reached";
-}
-
 int
 ndt_is_ndarray(const ndt_t *t)
 {
@@ -882,13 +815,6 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    if (ndt_dim_size(type) != 0) {
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "var-shapes given for abstract type");
-        ndt_del(type);
-        return NULL;
-    }
-
     /* abstract type */
     t = ndt_new(SymbolicDim, ctx);
     if (t == NULL) {
@@ -910,8 +836,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
  * len(bitmap) == (nshapes + 7) / 8
  */
 ndt_t *
-ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
-            const int64_t *shapes, const int64_t *offsets, const uint8_t *bitmap,
+ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offsets,
             ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -924,8 +849,7 @@ ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
         return NULL;
     }
 
-    switch (meta_type) {
-    case Int32:
+    if (noffsets != 0) {
         if (ndt_is_abstract(type)) {
             ndt_err_format(ctx, NDT_InvalidArgumentError,
                            "var dimension: metadata given for abstract type");
@@ -933,7 +857,7 @@ ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
             return NULL;
         }
 
-        if (nshapes == 0 || shapes == NULL || offsets == NULL) {
+        if (offsets == NULL) {
             ndt_err_format(ctx, NDT_InvalidArgumentError,
                            "incomplete meta information");
             ndt_del(type);
@@ -942,27 +866,8 @@ ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
 
         access = Concrete;
         if (copy_meta) {
-            extra = (2 * nshapes + 1) * sizeof(int32_t) + \
-                    (nshapes + 7) / 8;
+            extra = noffsets * sizeof(int32_t);
         }
-
-        break;
-
-    case Void:
-        if (nshapes != 0 || shapes != NULL || offsets != NULL) {
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                           "metadata given without data size");
-            ndt_del(type);
-            return NULL;
-        }
-
-        break;
-
-    default:
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "invalid metadata type");
-        ndt_del(type);
-        return NULL;
     }
 
     /* abstract type */
@@ -978,31 +883,19 @@ ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
 
     /* concrete access */
     if (access == Concrete) {
-        t->Concrete.VarDim.nshapes = nshapes;
+        t->Concrete.VarDim.nshapes = noffsets-1;
         if (copy_meta) {
-            int32_t *_shapes = (int32_t *)t->extra;
-            int32_t *_offsets = _shapes + nshapes;
-            char *_bitmap = (char *)_offsets + nshapes * sizeof(int32_t);
+            int32_t *_offsets = (int32_t *)t->extra;
             int32_t i;
 
-            for (i = 0; i < nshapes; i++) {
-                _shapes[i] = shapes[i];
+            for (i = 0; i < noffsets; i++) {
                 _offsets[i] = offsets[i];
             }
-            _offsets[i] = offsets[i];
 
-            if (bitmap) {
-                memcpy(_bitmap, bitmap, (nshapes + 7) / 8);
-            }
-
-            t->Concrete.VarDim.shapes = (const int32_t *)_shapes;
-            t->Concrete.VarDim.offsets = (const int32_t *)_offsets;
-            t->Concrete.VarDim.bitmap = bitmap ? (const uint8_t *)_bitmap : NULL;
+            t->Concrete.VarDim.offsets = _offsets;
         }
         else {
-            // XXX t->Concrete.VarDim.shapes = shapes;
-            // t->Concrete.VarDim.offsets = offsets;
-            // t->Concrete.VarDim.bitmap = bitmap;
+            t->Concrete.VarDim.offsets = offsets;
         }
 
         t->Concrete.VarDim.suboffset = 0;
@@ -1010,7 +903,7 @@ ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
 
         switch (type->tag) {
         case VarDim:
-            if (offsets[nshapes] != type->Concrete.VarDim.nshapes) {
+            if (offsets[noffsets-1] != type->Concrete.VarDim.nshapes) {
                 ndt_err_format(ctx, NDT_ValueError,
                     "missing or invalid number of var-dim shape arguments");
                 ndt_del(t);
@@ -1021,7 +914,7 @@ ndt_var_dim(ndt_t *type, bool copy_meta, enum ndt meta_type, int64_t nshapes,
             break;
         default:
             t->Concrete.VarDim.itemsize = type->data_size;
-            t->data_size = offsets[nshapes] * type->data_size;
+            t->data_size = offsets[noffsets-1] * type->data_size;
             break;
         }
         t->data_align = type->data_align;
@@ -1046,13 +939,6 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
-        ndt_del(type);
-        return NULL;
-    }
-
-    if (ndt_dim_size(type) != 0) {
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "var-shapes given for abstract type");
         ndt_del(type);
         return NULL;
     }
