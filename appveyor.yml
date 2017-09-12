@@ -7,16 +7,19 @@ os: Visual Studio 2015
 
 environment:
   matrix:
-    - PYTHON_ARCH: "x86_64"
-      platform: x64
-    - PYTHON_ARCH: "x86"
-      platform: x86
+    - PLATFORM: "x64"
+      PYTHON: "C:\\Python35-x64"
+    - PLATFORM: "x86"
+      PYTHON: "C:\\Python35"
+
 
 before_build:
-  "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %platform%"
+  "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %PLATFORM%"
 
 build_script:
   - move /y Makefile.vc Makefile
   - nmake check
+  - "%PYTHON%\\python.exe setup.py build"
+  - "%PYTHON%\\python.exe setup.py test"
 
 

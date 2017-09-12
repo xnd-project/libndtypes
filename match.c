@@ -517,7 +517,7 @@ ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t 
     int ret;
 
     if (f->tag != Function) {
-        ndt_err_format(ctx, NDT_RuntimeError, "expected function type");
+        ndt_err_format(ctx, NDT_ValueError, "expected function type");
         return NULL;
     }
 
@@ -527,7 +527,7 @@ ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t 
     }
 
     if (!ndt_is_concrete(args)) {
-        ndt_err_format(ctx, NDT_RuntimeError, "expected concrete argument types");
+        ndt_err_format(ctx, NDT_ValueError, "expected concrete argument types");
         return NULL;
     }
 
@@ -539,6 +539,10 @@ ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t 
     ret = match_datashape(f->Function.pos, args, tbl, ctx);
     if (ret <= 0) {
         symtable_del(tbl);
+        if (ret == 0) {
+            ndt_err_format(ctx, NDT_TypeError,
+                           "argument types do not match");
+        }
         return NULL;
     }
 

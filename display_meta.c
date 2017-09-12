@@ -53,7 +53,7 @@ static int datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t 
 
 
 static int
-_snprintf(ndt_context_t *ctx, buf_t *buf, const char *fmt, va_list ap)
+_xsnprintf(ndt_context_t *ctx, buf_t *buf, const char *fmt, va_list ap)
 {
     int n;
 
@@ -92,7 +92,7 @@ ndt_snprintf(ndt_context_t *ctx, buf_t *buf, const char *fmt, ...)
     int n;
 
     va_start(ap, fmt);
-    n = _snprintf(ctx, buf, fmt, ap);
+    n = _xsnprintf(ctx, buf, fmt, ap);
     va_end(ap);
 
     return n;
@@ -126,7 +126,7 @@ ndt_snprintf_d(ndt_context_t *ctx, buf_t *buf, int d, const char *fmt, ...)
     if (n < 0) return -1;
 
     va_start(ap, fmt);
-    n = _snprintf(ctx, buf, fmt, ap);
+    n = _xsnprintf(ctx, buf, fmt, ap);
     va_end(ap);
 
     return n;
