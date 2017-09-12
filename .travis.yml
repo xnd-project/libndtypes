@@ -20,6 +20,7 @@ matrix:
       script:
         - cd libndtypes
         - make check
+        - cd ..
         - python3 setup.py build
         - python3 setup.py test
 
@@ -29,6 +30,7 @@ matrix:
       script:
         - cd libndtypes
         - make memcheck
+        - cd ..
         - python3 setup.py build
         - python3 setup.py test
 
@@ -38,6 +40,7 @@ matrix:
       script:
         - cd libndtypes
         - make check
+        - cd ..
         - python3 setup.py build
         - python3 setup.py test
 
@@ -49,6 +52,7 @@ matrix:
       script:
         - cd libndtypes
         - make check
+        - cd ..
         - python3 setup.py build
         - python3 setup.py test
 

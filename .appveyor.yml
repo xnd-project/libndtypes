@@ -20,6 +20,7 @@ build_script:
   - cd libndtypes
   - move /y Makefile.vc Makefile
   - nmake check
+  - cd ..
   - "%PYTHON%\\python.exe setup.py build"
   - "%PYTHON%\\python.exe setup.py test"
 
