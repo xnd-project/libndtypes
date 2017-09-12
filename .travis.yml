@@ -19,24 +19,24 @@ matrix:
         - export CC=gcc-4.9
       script:
         - make check
-        - python setup.py build
-        - python setup.py test
+        - python3 setup.py build
+        - python3 setup.py test
 
     - compiler: gcc
       before_script:
         - export CC=gcc-4.9
       script:
         - make memcheck
-        - python setup.py build
-        - python setup.py test
+        - python3 setup.py build
+        - python3 setup.py test
 
     - compiler: clang
       before_script:
         - export CC=clang
       script:
         - make check
-        - python setup.py build
-        - python setup.py test
+        - python3 setup.py build
+        - python3 setup.py test
 
     - language: objective-c
       os: osx
@@ -45,8 +45,8 @@ matrix:
         - export CC=clang
       script:
         - make check
-        - python setup.py build
-        - python setup.py test
+        - python3 setup.py build
+        - python3 setup.py test
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
