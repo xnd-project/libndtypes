@@ -32,84 +32,87 @@
 
 from distutils.core import setup, Extension
 from distutils.cmd import Command
-from sys import platform
 from glob import glob
+import sys, os
+import subprocess
+import shutil
 
 
 DESCRIPTION = \
     """Dynamic types for data description and in-memory computations"""
 
 
-class TestCommand(Command):
-    user_options = []
+def get_module_path():
+    pathlist = glob("build/lib.*/")
+    if pathlist:
+        return pathlist[0]
+    raise RuntimeError("cannot find ndtypes module in build directory")
 
-    def initialize_options(self):
-        pass
 
-    def finalize_options(self):
-        pass
-
-    def get_module_path(self):
-        pathlist = glob("build/lib.*/")
-        if pathlist:
-            return pathlist[0]
-        raise RuntimeError("cannot find ndtypes module in build directory")
-
-    def run(self):
-        import sys, os, subprocess
+if len(sys.argv) == 2:
+    if sys.argv[1] == 'test':
+        module_path = get_module_path()
         python_path = os.getenv('PYTHONPATH')
-        module_path = self.get_module_path()
         path = python_path + ':' + module_path if python_path else module_path
         env = os.environ.copy()
         env['PYTHONPATH'] = path
-
         ret = subprocess.call([sys.executable, "python/test_ndtypes.py"], env=env)
-        raise SystemExit(ret)
+        sys.exit(ret)
+    elif sys.argv[1] == 'clean':
+        shutil.rmtree("build", ignore_errors=True)
+        os.chdir("python")
+        shutil.rmtree("__pycache__", ignore_errors=True)
+        sys.exit(0)
+    else:
+        pass
 
 
 def ndtypes_ext():
+    include_dirs = ["libndtypes"]
+
     depends = [
-      "attr.h",
-      "grammar.h",
-      "lexer.h",
-      "ndtypes.h",
-      "parsefuncs.h",
-      "seq.h",
-      "symtable.h"
+      "libndtypes/attr.h",
+      "libndtypes/grammar.h",
+      "libndtypes/lexer.h",
+      "libndtypes/ndtypes.h",
+      "libndtypes/parsefuncs.h",
+      "libndtypes/seq.h",
+      "libndtypes/symtable.h"
     ]
 
     sources = [
-      "alloc.c",
-      "attr.c",
-      "display.c",
-      "display_meta.c",
-      "equal.c",
-      "grammar.c",
-      "lexer.c",
-      "match.c",
-      "ndtypes.c",
-      "parsefuncs.c",
-      "parser.c",
-      "seq.c",
-      "symtable.c",
       "python/_ndtypes.c",
+      "libndtypes/alloc.c",
+      "libndtypes/attr.c",
+      "libndtypes/display.c",
+      "libndtypes/display_meta.c",
+      "libndtypes/equal.c",
+      "libndtypes/grammar.c",
+      "libndtypes/lexer.c",
+      "libndtypes/match.c",
+      "libndtypes/ndtypes.c",
+      "libndtypes/parsefuncs.c",
+      "libndtypes/parser.c",
+      "libndtypes/seq.c",
+      "libndtypes/symtable.c",
     ]
 
-    if platform == "win32":
+    if sys.platform == "win32":
         extra_compile_args = [
-          "-I.", "/wd4200", "/wd4201", "/wd4244", "/wd4267", "/wd4702",
+          "/wd4200", "/wd4201", "/wd4244", "/wd4267", "/wd4702",
           "/wd4127", "/nologo", "/DYY_NO_UNISTD_H=1", "/D__STDC_VERSION__=199901L"
         ]
     else:
         extra_compile_args = [
-           "-I.", "-Wextra", "-Wno-missing-field-initializers", "-std=c11"
+           "-Wextra", "-Wno-missing-field-initializers", "-std=c11"
         ]
 
     return Extension (
       "_ndtypes",
+      include_dirs=include_dirs,
+      extra_compile_args = extra_compile_args,
       depends = depends,
-      sources = sources,
-      extra_compile_args = extra_compile_args
+      sources = sources
     )
 
 setup (
@@ -125,7 +128,4 @@ setup (
         "Intended Audience :: Developers",
     ],
     ext_modules = [ndtypes_ext()],
-    cmdclass = {
-        'test': TestCommand
-    }
 )

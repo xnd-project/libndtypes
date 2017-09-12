@@ -17,6 +17,7 @@ before_build:
   "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %PLATFORM%"
 
 build_script:
+  - cd libndtypes
   - move /y Makefile.vc Makefile
   - nmake check
   - "%PYTHON%\\python.exe setup.py build"

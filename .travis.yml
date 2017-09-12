@@ -18,6 +18,7 @@ matrix:
       before_script:
         - export CC=gcc-4.9
       script:
+        - cd libndtypes
         - make check
         - python3 setup.py build
         - python3 setup.py test
@@ -26,6 +27,7 @@ matrix:
       before_script:
         - export CC=gcc-4.9
       script:
+        - cd libndtypes
         - make memcheck
         - python3 setup.py build
         - python3 setup.py test
@@ -34,6 +36,7 @@ matrix:
       before_script:
         - export CC=clang
       script:
+        - cd libndtypes
         - make check
         - python3 setup.py build
         - python3 setup.py test
@@ -44,6 +47,7 @@ matrix:
       before_script:
         - export CC=clang
       script:
+        - cd libndtypes
         - make check
         - python3 setup.py build
         - python3 setup.py test
