@@ -152,8 +152,6 @@ Makefile tools/indent.c ndtypes.h $(LIBSTATIC)
 
 clean: FORCE
 	rm -f *.o *.gch *.gcov *.gcda *.gcno bench indent print_ast tests/runtest $(LIBSTATIC)
-	rm -rf *.so build __pycache__
-	cd python && rm -rf __pycache__
 
 distclean: clean
 	rm -f grammar.c grammar.h lexer.c lexer.h

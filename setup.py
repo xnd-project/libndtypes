@@ -48,12 +48,17 @@ def get_module_path():
         return pathlist[0]
     raise RuntimeError("cannot find ndtypes module in build directory")
 
+def copy_ext():
+    pathlist = glob("build/lib.*/_ndtypes.*.so")
+    if pathlist:
+        shutil.copy2(pathlist[0], "python/")
+
 
 if len(sys.argv) == 2:
     if sys.argv[1] == 'test':
         module_path = get_module_path()
         python_path = os.getenv('PYTHONPATH')
-        path = python_path + ':' + module_path if python_path else module_path
+        path = module_path + ':' + python_path if python_path else module_path
         env = os.environ.copy()
         env['PYTHONPATH'] = path
         ret = subprocess.call([sys.executable, "python/test_ndtypes.py"], env=env)
@@ -62,6 +67,8 @@ if len(sys.argv) == 2:
         shutil.rmtree("build", ignore_errors=True)
         os.chdir("python")
         shutil.rmtree("__pycache__", ignore_errors=True)
+        for f in glob("*.so"):
+            os.remove(f)
         sys.exit(0)
     else:
         pass
@@ -127,5 +134,9 @@ setup (
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
     ],
+    package_dir = {"": "python"},
+    py_modules = ["ndtypes"],
     ext_modules = [ndtypes_ext()],
 )
+
+copy_ext()
