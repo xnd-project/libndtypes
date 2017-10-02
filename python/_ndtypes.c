@@ -513,6 +513,9 @@ PyInit__ndtypes(void)
         goto error;
     }
 
+    if (PyModule_AddIntConstant(m, "MAX_DIM", NDT_MAX_DIM) < 0) {
+        goto error;
+    }
 
     num_modules++;
     return m;
