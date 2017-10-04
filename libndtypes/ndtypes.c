@@ -1140,6 +1140,33 @@ ndt_nominal(char *name, ndt_context_t *ctx)
 }
 
 ndt_t *
+ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    t = ndt_new(Module, ctx);
+    if (t == NULL) {
+        ndt_free(name);
+        ndt_del(type);
+        return NULL;
+    }
+
+    /* abstract type */
+    t->Module.name = name;
+    t->Module.type = type;
+
+    /* concrete access */
+    t->access = type->access;
+    if (t->access == Concrete) {
+        t->data_size = type->data_size;
+        t->data_align = type->data_align;
+        t->meta_size = 0;
+    }
+
+    return t;
+}
+
+ndt_t *
 ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;

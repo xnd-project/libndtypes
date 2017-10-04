@@ -193,6 +193,7 @@ yycolumn = 1;
 "..."          { return ELLIPSIS; }
 "->"           { return RARROW; }
 ","            { return COMMA; }
+"."            { return DOT; }
 ":"            { return COLON; }
 "("            { return LPAREN; }
 ")"            { return RPAREN; }

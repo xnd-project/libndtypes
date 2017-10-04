@@ -217,6 +217,9 @@ enum ndt_dim {
 
 /* Datashape kinds */
 enum ndt {
+  /* Name space */
+  Module,
+
   /* Any */
   AnyKind,
     FixedDim,
@@ -317,6 +320,11 @@ struct _ndt {
 
     /* Abstract */
     union {
+        struct {
+            char *name;
+            ndt_t *type;
+        } Module;
+
         struct {
             uint32_t flags;
             int64_t shape;
@@ -598,6 +606,9 @@ ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
 
 /* Typedef for nominal types */
 int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
+
+/* Module */
+ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Any */
 ndt_t *ndt_any_kind(ndt_context_t *ctx);

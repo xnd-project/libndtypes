@@ -375,6 +375,7 @@ tag_as_constr(enum ndt tag)
     case Option: return "Option";
     case OptionItem: return "OptionItem";
     case Nominal: return "Nominal";
+    case Module: return "Module";
     case Constr: return "Constr";
 
     case Tuple: return "Tuple";
@@ -620,6 +621,28 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
+
+        case Module:
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Module(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Module.name);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "type=");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->Module.type, d+5+2, 1, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "\n");
+            if (n < 0) return -1;
+
+            n = common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d, ")");
+            return n;
 
         case Constr:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Constr(\n");

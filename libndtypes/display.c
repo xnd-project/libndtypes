@@ -328,6 +328,16 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "%s", t->Nominal.name);
             return n;
 
+        case Module:
+            n = ndt_snprintf(ctx, buf, "%s.(", t->Module.name);
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->Module.type, d, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ")");
+            return n;
+
         case Constr:
             n = ndt_snprintf(ctx, buf, "%s(", t->Constr.name);
             if (n < 0) return -1;

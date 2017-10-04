@@ -100,6 +100,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %start input
 %type <ndt> input
+%type <ndt> datashape_or_module
 %type <ndt> datashape
 %type <ndt> dimensions
 %type <ndt> dimensions_nooption
@@ -163,7 +164,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 FIXED VAR
 
-COMMA COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
+COMMA DOT COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
 RARROW EQUAL QUESTIONMARK BAR
 ERRTOKEN
 
@@ -186,7 +187,12 @@ ERRTOKEN
 %%
 
 input:
-  datashape ENDMARKER { $$ = $1;  *ast = $$; YYACCEPT; }
+  datashape_or_module ENDMARKER { $$ = $1;  *ast = $$; YYACCEPT; }
+
+/* types (optionally with module qualifier) */
+datashape_or_module:
+  datashape                              { $$ = $1; }
+| NAME_UPPER DOT LPAREN datashape RPAREN { $$ = ndt_module($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 /* types */
 datashape:

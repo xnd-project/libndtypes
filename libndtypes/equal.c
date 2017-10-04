@@ -192,6 +192,9 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
            which case the name is guaranteed to be unique and present in the
            typedef table. */
         return c->tag == Nominal && strcmp(p->Nominal.name, c->Nominal.name) == 0;
+    case Module:
+        return c->tag == Module && strcmp(p->Module.name, c->Module.name) == 0 &&
+               ndt_equal(p->Module.type, c->Module.type);
     case Constr:
         return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
                ndt_equal(p->Constr.type, c->Constr.type);
