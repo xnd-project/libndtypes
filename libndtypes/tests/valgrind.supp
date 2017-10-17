@@ -16,7 +16,6 @@
    Memcheck:Leak
    match-leak-kinds: indirect
    ...
-   fun:yyalloc
    fun:yy_scan_buffer
    fun:ndt_from_string
 }
@@ -26,7 +25,6 @@
    Memcheck:Leak
    match-leak-kinds: possible
    ...
-   fun:yyalloc
    fun:yy_scan_buffer
    fun:ndt_from_string
 }
@@ -36,7 +34,6 @@
    Memcheck:Leak
    match-leak-kinds: definite
    ...
-   fun:yyalloc
    fun:yy_scan_buffer
    fun:ndt_from_string
 }
