@@ -1,0 +1,53 @@
+
+SRCDIR = ..
+
+LIBSTATIC = libndtypes-0.1.0.lib
+LIBSHARED = libndtypes-0.1.0.dll.lib
+
+
+CC = cl.exe
+CFLAGS = /MT /Ox /GS /EHsc
+CFLAGS_SHARED = /DIMPORT /MD /Ox /GS /EHsc
+
+default: runtest runtest_shared
+
+
+runtest:\
+Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
+test_indent.c test_typedef.c test_match.c test.h alloc_fail.h \
+$(SRCDIR)\ndtypes.h $(SRCDIR)\$(LIBSTATIC)
+	$(CC) -I$(SRCDIR) $(CFLAGS) -DTEST_ALLOC /Feruntest runtest.c \
+            alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
+            test_indent.c test_typedef.c test_match.c test_typecheck.c \
+            $(SRCDIR)\$(LIBSTATIC)
+
+runtest_shared:\
+Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
+test_indent.c test_typedef.c test_match.c test.h alloc_fail.h \
+$(SRCDIR)\ndtypes.h $(SRCDIR)\$(LIBSHARED)
+	$(CC) -I$(SRCDIR) $(CFLAGS_SHARED) -DTEST_ALLOC /Feruntest_shared runtest.c \
+            alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
+            test_indent.c test_typedef.c test_match.c test_typecheck.c \
+            $(SRCDIR)\$(LIBSHARED)
+
+
+
+FORCE:
+
+clean: FORCE
+        -@if exist *.obj del *.obj
+        -@if exist *.dll del *.dll
+        -@if exist *.exp del *.exp
+        -@if exist *.lib del *.lib
+        -@if exist *.ilk del *.ilk
+        -@if exist *.pdb del *.pdb
+        -@if exist *.pgc del *.pgc
+        -@if exist *.pgd del *.pgd
+        -@if exist *.manifest del *.manifest
+        -@if exist *.exe del *.exe
+
+distclean: FORCE
+	$(MAKE) clean
+	rm -rf Makefile
+
+
