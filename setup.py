@@ -77,30 +77,36 @@ if len(sys.argv) == 2:
 def ndtypes_ext():
     include_dirs = ["libndtypes"]
     library_dirs = ["libndtypes"]
-    libraries = ["ndtypes"]
-    runtime_library_dirs = ["$ORIGIN", "$ORIGIN/../libndtypes"]
     depends = ["libndtypes/ndtypes.h"]
     sources = ["python/_ndtypes.c"]
+    libraries = ["ndtypes"]
 
     if sys.platform == "win32":
         extra_compile_args = [
           "/wd4200", "/wd4201", "/wd4244", "/wd4267", "/wd4702",
           "/wd4127", "/nologo", "/DYY_NO_UNISTD_H=1", "/D__STDC_VERSION__=199901L"
         ]
+        extra_link_args = []
+        runtime_library_dirs = []
     else:
-        extra_compile_args = [
-           "-Wextra", "-Wno-missing-field-initializers", "-std=c11"
-        ]
+        extra_compile_args = ["-Wextra", "-Wno-missing-field-initializers", "-std=c11"]
+        if sys.platform == "Darwin":
+            extra_link_args = ["-Wl,-rpath,@loader_path:@loader_path/../libndtypes"]
+            runtime_library_dirs = []
+        else:
+            extra_link_args = []
+            runtime_library_dirs = ["$ORIGIN", "$ORIGIN/../libndtypes"]
 
     return Extension (
       "_ndtypes",
       include_dirs = include_dirs,
       library_dirs = library_dirs,
-      libraries = libraries,
-      runtime_library_dirs = runtime_library_dirs,
-      extra_compile_args = extra_compile_args,
       depends = depends,
-      sources = sources
+      sources = sources,
+      libraries = libraries,
+      extra_compile_args = extra_compile_args,
+      extra_link_args = extra_link_args,
+      runtime_library_dirs = runtime_library_dirs
     )
 
 setup (

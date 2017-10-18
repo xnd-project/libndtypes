@@ -16,7 +16,7 @@ case $ac_sys_system in
         LIBNAME="libndtypes.dylib"
         LIBSONAME="libndtypes.0.dylib"
         LIBSHARED="libndtypes.0.1.0.dylib"
-        CONFIGURE_LDFLAGS="-dynamiclib -install_name ${prefix}/$LIBSONAME -compatibility_version 0.1 -current_version 0.1.0"
+        CONFIGURE_LDFLAGS="-dynamiclib -install_name @rpath/$LIBSONAME -compatibility_version 0.1 -current_version 0.1.0"
         ;;
     *)
         LIBRARY_PATH="LD_LIBRARY_PATH"
