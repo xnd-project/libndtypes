@@ -4,10 +4,32 @@ AC_INIT(ndtypes, 0.1.0, plures@anaconda.com, ndtypes, https://github.com/plures/
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([Makefile libndtypes/Makefile libndtypes/tests/Makefile])
 
+# System and machine type (only used for Darwin):
+AC_MSG_CHECKING(system as reported by uname -s)
+ac_sys_system=`uname -s`
+AC_MSG_RESULT($ac_sys_system)
+
 LIBSTATIC=libndtypes.a
-LIBSONAME=libndtypes.so.0
-LIBSHARED=libndtypes.so.0.1.0
+case $ac_sys_system in
+    darwin*|Darwin*)
+        LIBRARY_PATH="DYLD_LIBRARY_PATH"
+        LIBNAME="libndtypes.dylib"
+        LIBSONAME="libndtypes.0.dylib"
+        LIBSHARED="libndtypes.0.1.0.dylib"
+        CONFIGURE_LDFLAGS="-dynamiclib -install_name ${prefix}/$LIBSONAME -compatibility_version 0.1 -current_version 0.1.0"
+        ;;
+    *)
+        LIBRARY_PATH="LD_LIBRARY_PATH"
+        LIBNAME="libndtypes.so"
+        LIBSONAME="libndtypes.so.0"
+        LIBSHARED="libndtypes.so.0.1.0"
+        CONFIGURE_LDFLAGS="-shared -Wl,-soname,$LIBSONAME"
+        ;;
+esac
+
 AC_SUBST(LIBSTATIC)
+AC_SUBST(LIBRARY_PATH)
+AC_SUBST(LIBNAME)
 AC_SUBST(LIBSONAME)
 AC_SUBST(LIBSHARED)
 

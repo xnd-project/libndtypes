@@ -6,6 +6,7 @@
 
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 LIBSTATIC = @LIBSTATIC@
+LIBNAME = @LIBNAME@
 LIBSONAME = @LIBSONAME@
 LIBSHARED = @LIBSHARED@
 INSTALL = @INSTALL@
@@ -27,12 +28,12 @@ runtest: default
 check: runtest
 	cd libndtypes/tests && ./runtest
 	@printf "\n\n"
-	cd libndtypes/tests && LD_LIBRARY_PATH=.. ./runtest_shared
+	cd libndtypes/tests && @LIBRARY_PATH@=.. ./runtest_shared
 
 memcheck: runtest
 	cd libndtypes/tests && valgrind --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp ./runtest
 	@printf "\n\n"
-	cd libndtypes/tests && LD_LIBRARY_PATH=.. valgrind --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp ./runtest_shared
+	cd libndtypes/tests && @LIBRARY_PATH@=.. valgrind --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp ./runtest_shared
 
 
 install: FORCE
@@ -41,18 +42,21 @@ install: FORCE
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libdir)
 	$(INSTALL) -m 644 libndtypes/$(LIBSTATIC) $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 libndtypes/$(LIBSHARED) $(DESTDIR)$(libdir)
-	cd $(DESTDIR)$(libdir) && ln -sf $(LIBSHARED) $(LIBSONAME) && ln -sf $(LIBSHARED) libndtypes.so
+	cd $(DESTDIR)$(libdir) && ln -sf $(LIBSHARED) $(LIBSONAME) && ln -sf $(LIBSHARED) $(LIBNAME)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(docdir)
 	cp -R doc/* $(DESTDIR)$(docdir)
 
 clean: FORCE
 	cd libndtypes && if [ -f Makefile ]; then $(MAKE) clean; else exit 0; fi
 	cd libndtypes/tests && if [ -f Makefile ]; then $(MAKE) clean; else exit 0; fi
+	cd python && rm -f *.so
 
 distclean: FORCE
 	cd libndtypes && if [ -f Makefile ]; then $(MAKE) distclean; else exit 0; fi
 	cd libndtypes/tests && if [ -f Makefile ]; then $(MAKE) distclean; else exit 0; fi
 	rm -f config.h config.log config.status Makefile
+	rm -rf build
+	cd python && rm -f *.so && rm -rf __pycache__
 
 FORCE:
 

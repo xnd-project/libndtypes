@@ -620,6 +620,8 @@ build_cpu
 build
 LIBSHARED
 LIBSONAME
+LIBNAME
+LIBRARY_PATH
 LIBSTATIC
 target_alias
 host_alias
@@ -1845,9 +1847,33 @@ ac_config_headers="$ac_config_headers config.h"
 ac_config_files="$ac_config_files Makefile libndtypes/Makefile libndtypes/tests/Makefile"
 
 
+# System and machine type (only used for Darwin):
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking system as reported by uname -s" >&5
+$as_echo_n "checking system as reported by uname -s... " >&6; }
+ac_sys_system=`uname -s`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_sys_system" >&5
+$as_echo "$ac_sys_system" >&6; }
+
 LIBSTATIC=libndtypes.a
-LIBSONAME=libndtypes.so.0
-LIBSHARED=libndtypes.so.0.1.0
+case $ac_sys_system in
+    darwin*|Darwin*)
+        LIBRARY_PATH="DYLD_LIBRARY_PATH"
+        LIBNAME="libndtypes.dylib"
+        LIBSONAME="libndtypes.0.dylib"
+        LIBSHARED="libndtypes.0.1.0.dylib"
+        CONFIGURE_LDFLAGS="-dynamiclib -install_name ${prefix}/$LIBSONAME -compatibility_version 0.1 -current_version 0.1.0"
+        ;;
+    *)
+        LIBRARY_PATH="LD_LIBRARY_PATH"
+        LIBNAME="libndtypes.so"
+        LIBSONAME="libndtypes.so.0"
+        LIBSHARED="libndtypes.so.0.1.0"
+        CONFIGURE_LDFLAGS="-shared -Wl,-soname,$LIBSONAME"
+        ;;
+esac
+
+
+
 
 
 
