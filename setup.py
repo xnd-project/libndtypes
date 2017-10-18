@@ -76,33 +76,11 @@ if len(sys.argv) == 2:
 
 def ndtypes_ext():
     include_dirs = ["libndtypes"]
-
-    depends = [
-      "libndtypes/attr.h",
-      "libndtypes/grammar.h",
-      "libndtypes/lexer.h",
-      "libndtypes/ndtypes.h",
-      "libndtypes/parsefuncs.h",
-      "libndtypes/seq.h",
-      "libndtypes/symtable.h"
-    ]
-
-    sources = [
-      "python/_ndtypes.c",
-      "libndtypes/alloc.c",
-      "libndtypes/attr.c",
-      "libndtypes/display.c",
-      "libndtypes/display_meta.c",
-      "libndtypes/equal.c",
-      "libndtypes/grammar.c",
-      "libndtypes/lexer.c",
-      "libndtypes/match.c",
-      "libndtypes/ndtypes.c",
-      "libndtypes/parsefuncs.c",
-      "libndtypes/parser.c",
-      "libndtypes/seq.c",
-      "libndtypes/symtable.c",
-    ]
+    library_dirs = ["libndtypes"]
+    libraries = ["ndtypes"]
+    runtime_library_dirs = ["$ORIGIN", "$ORIGIN/../libndtypes"]
+    depends = ["libndtypes/ndtypes.h"]
+    sources = ["python/_ndtypes.c"]
 
     if sys.platform == "win32":
         extra_compile_args = [
@@ -116,7 +94,10 @@ def ndtypes_ext():
 
     return Extension (
       "_ndtypes",
-      include_dirs=include_dirs,
+      include_dirs = include_dirs,
+      library_dirs = library_dirs,
+      libraries = libraries,
+      runtime_library_dirs = runtime_library_dirs,
       extra_compile_args = extra_compile_args,
       depends = depends,
       sources = sources
