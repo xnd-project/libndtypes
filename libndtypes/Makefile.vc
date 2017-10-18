@@ -3,93 +3,151 @@
 #                Visual C (nmake) Makefile for libndtypes
 # ======================================================================
 
-LIBSTATIC = libndtypes.lib
+LIBSTATIC = libndtypes-0.1.0.lib
+LIBIMPORT = libndtypes-0.1.0.dll.lib
+LIBSHARED = libndtypes-0.1.0.dll
 
-!if "$(DEBUG)" == "1"
-OPT = /MDd /Od /Zi
-!else
-OPT = /MD /Ox /GS /EHsc
-!endif
+OPT = /MT /Ox /GS /EHsc
+OPT_SHARED = /DEXPORT /MD /Ox /GS /EHsc /Fo.objs^\
 
-CFLAGS = /W4 /wd4200 /wd4201 /wd4204 /nologo $(OPT)
-CFLAGS_FOR_GENERATED = /W4 /wd4200 /wd4201 /wd4244 /wd4267 /wd4702 /wd4127 /nologo /DYY_NO_UNISTD_H=1 /D__STDC_VERSION__=199901L $(OPT)
-CFLAGS_FOR_PARSER = /W4 /wd4200 /wd4201 /wd4090 /nologo /DYY_NO_UNISTD_H=1 $(OPT)
+COMMON_CFLAGS = /W4 /wd4200 /wd4201 /wd4204 /nologo
+COMMON_CFLAGS_FOR_GENERATED = /W4 /wd4200 /wd4201 /wd4244 /wd4267 /wd4702 /wd4127 /nologo /DYY_NO_UNISTD_H=1 /D__STDC_VERSION__=199901L
+COMMON_CFLAGS_FOR_PARSER = /W4 /wd4200 /wd4201 /wd4090 /nologo /DYY_NO_UNISTD_H=1
+
+CFLAGS = $(COMMON_CFLAGS) $(OPT)
+CFLAGS_SHARED = $(COMMON_CFLAGS) $(OPT_SHARED)
+
+CFLAGS_FOR_GENERATED = $(COMMON_CFLAGS_FOR_GENERATED) $(OPT)
+CFLAGS_FOR_GENERATED_SHARED = $(COMMON_CFLAGS_FOR_GENERATED) $(OPT_SHARED)
+
+CFLAGS_FOR_PARSER = $(COMMON_CFLAGS_FOR_PARSER) $(OPT)
+CFLAGS_FOR_PARSER_SHARED = $(COMMON_CFLAGS_FOR_PARSER) $(OPT_SHARED)
 
 
-default: $(LIBSTATIC)
+default: $(LIBSTATIC) $(LIBSHARED)
 
 
 OBJS = alloc.obj attr.obj display.obj equal.obj grammar.obj lexer.obj match.obj \
        ndtypes.obj parsefuncs.obj parser.obj seq.obj symtable.obj
 
+SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\display.obj .objs\equal.obj \
+              .objs\grammar.obj .objs\lexer.obj .objs\match.obj .objs\ndtypes.obj \
+              .objs\parsefuncs.obj .objs\parser.obj .objs\seq.obj .objs\symtable.obj
+
+
 $(LIBSTATIC):\
 Makefile $(OBJS)
 	-@if exist $@ del $(LIBSTATIC)
-	lib $(LFLAGS) /out:$(LIBSTATIC) $(OBJS)
+	lib /out:$(LIBSTATIC) $(OBJS)
+
+$(LIBSHARED):\
+Makefile $(SHARED_OBJS)
+	-@if exist $@ del $(LIBSHARED)
+	link /DLL /MANIFEST /out:$(LIBSHARED) /implib:$(LIBIMPORT) $(SHARED_OBJS)
+	mt -manifest $(LIBSHARED).manifest -outputresource:$(LIBSHARED);2
 
 alloc.obj:\
 Makefile alloc.c ndtypes.h
 	$(CC) $(CFLAGS) -c alloc.c
 
+.objs\alloc.obj:\
+Makefile alloc.c ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c alloc.c
+
 attr.obj:\
 Makefile attr.c attr.h ndtypes.h
 	$(CC) $(CFLAGS) -c attr.c
 
+.objs\attr.obj:\
+Makefile attr.c attr.h ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c attr.c
+
 display.obj:\
 Makefile display.c ndtypes.h
-        $(CC) $(CFLAGS) -c display.c
+	$(CC) $(CFLAGS) -c display.c
+
+.objs\display.obj:\
+Makefile display.c ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c display.c
 
 equal.obj:\
 Makefile equal.c ndtypes.h
         $(CC) $(CFLAGS) -c equal.c
 
+.objs\equal.obj:\
+Makefile equal.c ndtypes.h
+        $(CC) $(CFLAGS_SHARED) -c equal.c
+
 grammar.obj:\
 Makefile grammar.c grammar.h lexer.h ndtypes.h parsefuncs.h seq.h
 	$(CC) $(CFLAGS_FOR_GENERATED) -c grammar.c
+
+.objs\grammar.obj:\
+Makefile grammar.c grammar.h lexer.h ndtypes.h parsefuncs.h seq.h
+	$(CC) $(CFLAGS_FOR_GENERATED_SHARED) -c grammar.c
 
 lexer.obj:\
 Makefile lexer.c grammar.h lexer.h parsefuncs.h
 	$(CC) $(CFLAGS_FOR_GENERATED) -c lexer.c
 
+.objs\lexer.obj:\
+Makefile lexer.c grammar.h lexer.h parsefuncs.h
+	$(CC) $(CFLAGS_FOR_GENERATED_SHARED) -c lexer.c
+
 match.obj:\
 Makefile match.c ndtypes.h symtable.h
        $(CC) $(CFLAGS) -c match.c
+
+.objs\match.obj:\
+Makefile match.c ndtypes.h symtable.h
+       $(CC) $(CFLAGS_SHARED) -c match.c
 
 ndtypes.obj:\
 Makefile ndtypes.c ndtypes.h
 	$(CC) $(CFLAGS) -c ndtypes.c
 
+.objs\ndtypes.obj:\
+Makefile ndtypes.c ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c ndtypes.c
+
 parsefuncs.obj:\
 Makefile parsefuncs.c ndtypes.h parsefuncs.h seq.h
 	$(CC) $(CFLAGS) -c parsefuncs.c
+
+.objs\parsefuncs.obj:\
+Makefile parsefuncs.c ndtypes.h parsefuncs.h seq.h
+	$(CC) $(CFLAGS_SHARED) -c parsefuncs.c
 
 parser.obj:\
 Makefile parser.c grammar.h lexer.h ndtypes.h seq.h
 	$(CC) $(CFLAGS_FOR_PARSER) -c parser.c
 
+.objs\parser.obj:\
+Makefile parser.c grammar.h lexer.h ndtypes.h seq.h
+	$(CC) $(CFLAGS_FOR_PARSER_SHARED) -c parser.c
+
 seq.obj:\
 Makefile seq.c ndtypes.h seq.h
 	$(CC) $(CFLAGS) -c seq.c
+
+.objs\seq.obj:\
+Makefile seq.c ndtypes.h seq.h
+	$(CC) $(CFLAGS_SHARED) -c seq.c
 
 symtable.obj:\
 Makefile symtable.c ndtypes.h symtable.h
         $(CC) $(CFLAGS) -c symtable.c
 
+.objs\symtable.obj:\
+Makefile symtable.c ndtypes.h symtable.h
+        $(CC) $(CFLAGS_SHARED) -c symtable.c
 
-# Tests
-runtest:\
-Makefile tests\runtest.c tests\alloc_fail.c tests\test_parse.c tests\test_parse_error.c \
-tests\test_parse_roundtrip.c tests\test_indent.c tests\test_typedef.c tests\test_match.c \
-ndtypes.h tests\test.h tests\alloc_fail.h $(LIBSTATIC)
-	$(CC) -I. $(CFLAGS) -DTEST_ALLOC /Fetests\runtest.exe tests\runtest.c \
-            tests\alloc_fail.c tests\test_parse.c tests\test_parse_error.c \
-            tests\test_parse_roundtrip.c tests\test_indent.c tests\test_typedef.c \
-            tests\test_match.c tests\test_typecheck.c \
-            $(LIBSTATIC)
 
 check:\
-Makefile runtest
+Makefile default
+	cd tests && copy /y Makefile.vc Makefile && nmake
 	.\tests\runtest.exe
+	.\tests\runtest_shared.exe
 
 
 # Benchmark

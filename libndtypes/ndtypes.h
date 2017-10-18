@@ -48,12 +48,22 @@
 #endif
 
 #ifdef _MSC_VER
+  #if defined (EXPORT)
+    #define NDTYPES_API __declspec(dllexport)
+  #elif defined(IMPORT)
+    #define NDTYPES_API __declspec(dllimport)
+  #else
+    #define NDTYPES_API
+  #endif
+
   typedef _Dcomplex ndt_complex128_t;
   typedef _Fcomplex ndt_complex64_t;
   #define alignof __alignof
   #define alignas(n) __declspec(align(n))
   #define MAX_ALIGN 8
 #else
+  #define NDTYPES_API
+
   #if !defined(__APPLE__) && !defined(__STDC_IEC_559__)
     #error "ndtypes requires IEEE floating point arithmetic"
   #endif
@@ -527,14 +537,14 @@ typedef struct {
     };
 } ndt_context_t;
 
-ndt_context_t *ndt_context_new(void);
-void ndt_context_del(ndt_context_t *ctx);
+NDTYPES_API ndt_context_t *ndt_context_new(void);
+NDTYPES_API void ndt_context_del(ndt_context_t *ctx);
 
-void ndt_err_clear(ndt_context_t *ctx);
-const char *ndt_context_msg(ndt_context_t *ctx);
-const char *ndt_err_as_string(enum ndt_error err);
-void ndt_err_format(ndt_context_t *ctx, enum ndt_error err, const char *fmt, ...);
-void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
+NDTYPES_API void ndt_err_clear(ndt_context_t *ctx);
+NDTYPES_API const char *ndt_context_msg(ndt_context_t *ctx);
+NDTYPES_API const char *ndt_err_as_string(enum ndt_error err);
+NDTYPES_API void ndt_err_format(ndt_context_t *ctx, enum ndt_error err, const char *fmt, ...);
+NDTYPES_API void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 
 
 /*****************************************************************************/
@@ -542,170 +552,170 @@ void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 /*****************************************************************************/
 
 /*** Various ***/
-void *ndt_memory_error(ndt_context_t *ctx);
-char *ndt_strdup(const char *s, ndt_context_t *ctx);
-char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
-const char *ndt_tag_as_string(enum ndt tag);
-enum ndt_dim ndt_dim_type(const ndt_t *t);
-const char *ndt_dim_type_as_string(enum ndt_dim tag);
-enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
-const char *ndt_encoding_as_string(enum ndt_encoding encoding);
-uint32_t ndt_dim_flags(const ndt_t *t);
-char ndt_order(const ndt_t *t);
+NDTYPES_API void *ndt_memory_error(ndt_context_t *ctx);
+NDTYPES_API char *ndt_strdup(const char *s, ndt_context_t *ctx);
+NDTYPES_API char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
+NDTYPES_API const char *ndt_tag_as_string(enum ndt tag);
+NDTYPES_API enum ndt_dim ndt_dim_type(const ndt_t *t);
+NDTYPES_API const char *ndt_dim_type_as_string(enum ndt_dim tag);
+NDTYPES_API enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
+NDTYPES_API const char *ndt_encoding_as_string(enum ndt_encoding encoding);
+NDTYPES_API uint32_t ndt_dim_flags(const ndt_t *t);
+NDTYPES_API char ndt_order(const ndt_t *t);
 
-int ndt_is_abstract(const ndt_t *t);
-int ndt_is_concrete(const ndt_t *t);
-int ndt_is_signed(const ndt_t *t);
-int ndt_is_unsigned(const ndt_t *t);
-int ndt_is_float(const ndt_t *t);
-int ndt_is_complex(const ndt_t *t);
-int ndt_is_scalar(const ndt_t *t);
-int ndt_is_array(const ndt_t *t);
-int ndt_is_column_major(const ndt_t *t);
-int ndt_is_contiguous(const ndt_t *t);
-int ndt_is_c_contiguous(const ndt_t *t);
-int ndt_is_f_contiguous(const ndt_t *t);
-int ndt_is_optional(const ndt_t *t);
-int ndt_equal(const ndt_t *p, const ndt_t *c);
-int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
-ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
+NDTYPES_API int ndt_is_abstract(const ndt_t *t);
+NDTYPES_API int ndt_is_concrete(const ndt_t *t);
+NDTYPES_API int ndt_is_signed(const ndt_t *t);
+NDTYPES_API int ndt_is_unsigned(const ndt_t *t);
+NDTYPES_API int ndt_is_float(const ndt_t *t);
+NDTYPES_API int ndt_is_complex(const ndt_t *t);
+NDTYPES_API int ndt_is_scalar(const ndt_t *t);
+NDTYPES_API int ndt_is_array(const ndt_t *t);
+NDTYPES_API int ndt_is_column_major(const ndt_t *t);
+NDTYPES_API int ndt_is_contiguous(const ndt_t *t);
+NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);
+NDTYPES_API int ndt_is_f_contiguous(const ndt_t *t);
+NDTYPES_API int ndt_is_optional(const ndt_t *t);
+NDTYPES_API int ndt_equal(const ndt_t *p, const ndt_t *c);
+NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
 
-ndt_t *ndt_next_dim(ndt_t *a);
-void ndt_set_next_type(ndt_t *a, ndt_t *type);
-int ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array);
-int ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
+NDTYPES_API ndt_t *ndt_next_dim(ndt_t *a);
+NDTYPES_API void ndt_set_next_type(ndt_t *a, ndt_t *type);
+NDTYPES_API int ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array);
+NDTYPES_API int ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
 
 /*** String conversion ***/
-bool ndt_strtobool(const char *v, ndt_context_t *ctx);
-char ndt_strtochar(const char *v, ndt_context_t *ctx);
-long ndt_strtol(const char *v, long min, long max, ndt_context_t *ctx);
-long long ndt_strtoll(const char *v, long long min, long long max, ndt_context_t *ctx);
-unsigned long ndt_strtoul(const char *v, unsigned long max, ndt_context_t *ctx);
-unsigned long long ndt_strtoull(const char *v, unsigned long long max, ndt_context_t *ctx);
-float ndt_strtof(const char *v, ndt_context_t *ctx);
-double ndt_strtod(const char *v, ndt_context_t *ctx);
+NDTYPES_API bool ndt_strtobool(const char *v, ndt_context_t *ctx);
+NDTYPES_API char ndt_strtochar(const char *v, ndt_context_t *ctx);
+NDTYPES_API long ndt_strtol(const char *v, long min, long max, ndt_context_t *ctx);
+NDTYPES_API long long ndt_strtoll(const char *v, long long min, long long max, ndt_context_t *ctx);
+NDTYPES_API unsigned long ndt_strtoul(const char *v, unsigned long max, ndt_context_t *ctx);
+NDTYPES_API unsigned long long ndt_strtoull(const char *v, unsigned long long max, ndt_context_t *ctx);
+NDTYPES_API float ndt_strtof(const char *v, ndt_context_t *ctx);
+NDTYPES_API double ndt_strtod(const char *v, ndt_context_t *ctx);
 
 
 /*** Sequence elements ***/
-void ndt_memory_del(ndt_memory_t *mem);
-void ndt_memory_array_del(ndt_memory_t *types, size_t ntypes);
+NDTYPES_API void ndt_memory_del(ndt_memory_t *mem);
+NDTYPES_API void ndt_memory_array_del(ndt_memory_t *types, size_t ntypes);
 
-void ndt_attr_del(ndt_attr_t *attr);
-void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
+NDTYPES_API void ndt_attr_del(ndt_attr_t *attr);
+NDTYPES_API void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
 
-ndt_field_t *ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
-void ndt_field_del(ndt_field_t *field);
-void ndt_field_array_del(ndt_field_t *fields, size_t shape);
+NDTYPES_API ndt_field_t *ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
+NDTYPES_API void ndt_field_del(ndt_field_t *field);
+NDTYPES_API void ndt_field_array_del(ndt_field_t *fields, size_t shape);
 
 
 /*** Datashape ***/
-ndt_t *ndt_new(enum ndt tag, ndt_context_t *ctx);
-void ndt_del(ndt_t *t);
-int64_t ndt_hash(ndt_t *t, ndt_context_t *ctx);
-ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_new(enum ndt tag, ndt_context_t *ctx);
+NDTYPES_API void ndt_del(ndt_t *t);
+NDTYPES_API int64_t ndt_hash(ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
 
 /* Typedef for nominal types */
-int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Module */
-ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Any */
-ndt_t *ndt_any_kind(ndt_context_t *ctx);
-ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx);
-ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offsets, ndt_context_t *ctx);
-ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offsets, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_dim_option(ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_item_option(ndt_t *type, ndt_context_t *ctx);
-ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
-ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_dim_option(ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_item_option(ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
 
 
 /* Dtypes */
-ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+NDTYPES_API ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                  uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
-ndt_t *ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+NDTYPES_API ndt_t *ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                   uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
-ndt_t *ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx);
-ndt_t *ndt_typevar(char *name, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_typevar(char *name, ndt_context_t *ctx);
 
 
 /* Scalar Kinds */
-ndt_t *ndt_scalar_kind(ndt_context_t *ctx);
-ndt_t *ndt_signed_kind(ndt_context_t *ctx);
-ndt_t *ndt_unsigned_kind(ndt_context_t *ctx);
-ndt_t *ndt_float_kind(ndt_context_t *ctx);
-ndt_t *ndt_complex_kind(ndt_context_t *ctx);
-ndt_t *ndt_fixed_string_kind(ndt_context_t *ctx);
-ndt_t *ndt_fixed_bytes_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_scalar_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_signed_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_unsigned_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_float_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_complex_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_string_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_bytes_kind(ndt_context_t *ctx);
 
 
 /* Primitive Scalars */
-ndt_t *ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx);
-ndt_t *ndt_signed(int size, char endian, ndt_context_t *ctx);
-ndt_t *ndt_unsigned(int size, char endian, ndt_context_t *ctx);
-ndt_t *ndt_from_alias(enum ndt_alias tag, char endian, ndt_context_t *ctx);
-ndt_t *ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_signed(int size, char endian, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_unsigned(int size, char endian, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_from_alias(enum ndt_alias tag, char endian, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx);
 
 
 /* Scalars */
-ndt_t *ndt_string(ndt_context_t *ctx);
-ndt_t *ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx);
-ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
-ndt_t *ndt_fixed_bytes(size_t size, uint16_opt_t align, ndt_context_t *ctx);
-ndt_t *ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx);
-ndt_t *ndt_pointer(ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_string(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_bytes(size_t size, uint16_opt_t align, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_pointer(ndt_t *type, ndt_context_t *ctx);
 
 
 /* Typed values */
-ndt_memory_t *ndt_memory_from_number(char *v, ndt_t *t, ndt_context_t *ctx);
-ndt_memory_t *ndt_memory_from_string(char *v, ndt_t *t, ndt_context_t *ctx);
-int ndt_memory_equal(const ndt_memory_t *x, const ndt_memory_t *y);
-int ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y);
+NDTYPES_API ndt_memory_t *ndt_memory_from_number(char *v, ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API ndt_memory_t *ndt_memory_from_string(char *v, ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API int ndt_memory_equal(const ndt_memory_t *x, const ndt_memory_t *y);
+NDTYPES_API int ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y);
 
 
 /******************************************************************************/
 /*                                  Parsing                                   */
 /******************************************************************************/
 
-ndt_t *ndt_from_file(const char *name, ndt_context_t *ctx);
-ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_from_file(const char *name, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
 
 
 /******************************************************************************/
 /*                       Initialization and tables                            */
 /******************************************************************************/
 
-int ndt_init(ndt_context_t *ctx);
-void ndt_finalize(void);
-int ndt_typedef_add(const char *name, const ndt_t *type, ndt_context_t *ctx);
-const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
+NDTYPES_API int ndt_init(ndt_context_t *ctx);
+NDTYPES_API void ndt_finalize(void);
+NDTYPES_API int ndt_typedef_add(const char *name, const ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 
 
 /******************************************************************************/
 /*                                 Printing                                   */
 /******************************************************************************/
 
-char *ndt_as_string(ndt_t *t, ndt_context_t *ctx);
-char *ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx);
-char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_as_string(ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
 
 
 /******************************************************************************/
 /*                            Memory handling                                 */
 /******************************************************************************/
 
-extern void *(* ndt_mallocfunc)(size_t size);
-extern void *(* ndt_callocfunc)(size_t nmemb, size_t size);
-extern void *(* ndt_reallocfunc)(void *ptr, size_t size);
-extern void (* ndt_free)(void *ptr);
+NDTYPES_API extern void *(* ndt_mallocfunc)(size_t size);
+NDTYPES_API extern void *(* ndt_callocfunc)(size_t nmemb, size_t size);
+NDTYPES_API extern void *(* ndt_reallocfunc)(void *ptr, size_t size);
+NDTYPES_API extern void (* ndt_free)(void *ptr);
 
-void *ndt_alloc(size_t nmemb, size_t size);
-void *ndt_calloc(size_t nmemb, size_t size);
-void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
+NDTYPES_API void *ndt_alloc(size_t nmemb, size_t size);
+NDTYPES_API void *ndt_calloc(size_t nmemb, size_t size);
+NDTYPES_API void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
 
 
 /******************************************************************************/
