@@ -25,14 +25,17 @@ CFLAGS_FOR_PARSER_SHARED = $(COMMON_CFLAGS_FOR_PARSER) $(OPT_SHARED)
 
 
 default: $(LIBSTATIC) $(LIBSHARED)
+	copy /y $(LIBSHARED) ..\python\ndtypes
 
 
-OBJS = alloc.obj attr.obj display.obj equal.obj grammar.obj lexer.obj match.obj \
-       ndtypes.obj parsefuncs.obj parser.obj seq.obj symtable.obj
+OBJS = alloc.obj attr.obj display.obj display_meta.obj equal.obj grammar.obj \
+       lexer.obj match.obj ndtypes.obj parsefuncs.obj parser.obj seq.obj \
+       symtable.obj
 
-SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\display.obj .objs\equal.obj \
-              .objs\grammar.obj .objs\lexer.obj .objs\match.obj .objs\ndtypes.obj \
-              .objs\parsefuncs.obj .objs\parser.obj .objs\seq.obj .objs\symtable.obj
+SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\display.obj .objs\display_meta.obj \
+              .objs\equal.obj .objs\grammar.obj .objs\lexer.obj .objs\match.obj \
+              .objs\ndtypes.obj .objs\parsefuncs.obj .objs\parser.obj .objs\seq.obj \
+              .objs\symtable.obj
 
 
 $(LIBSTATIC):\
@@ -69,6 +72,14 @@ Makefile display.c ndtypes.h
 .objs\display.obj:\
 Makefile display.c ndtypes.h
 	$(CC) $(CFLAGS_SHARED) -c display.c
+
+display_meta.obj:\
+Makefile display_meta.c ndtypes.h
+	$(CC) $(CFLAGS) -c display_meta.c
+
+.objs\display_meta.obj:\
+Makefile display_meta.c ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c display_meta.c
 
 equal.obj:\
 Makefile equal.c ndtypes.h

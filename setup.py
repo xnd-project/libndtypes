@@ -49,7 +49,10 @@ def get_module_path():
     raise RuntimeError("cannot find ndtypes module in build directory")
 
 def copy_ext():
-    pathlist = glob("build/lib.*/ndtypes/_ndtypes.*.so")
+    if sys.platform == "win32":
+        pathlist = glob("build/lib.*/ndtypes/_ndtypes.*.pyd")
+    else:
+        pathlist = glob("build/lib.*/ndtypes/_ndtypes.*.so")
     if pathlist:
         shutil.copy2(pathlist[0], "python/ndtypes")
 
@@ -79,16 +82,14 @@ def ndtypes_ext():
     library_dirs = ["libndtypes"]
     depends = ["libndtypes/ndtypes.h"]
     sources = ["python/ndtypes/_ndtypes.c"]
-    libraries = ["ndtypes"]
 
     if sys.platform == "win32":
-        extra_compile_args = [
-          "/wd4200", "/wd4201", "/wd4244", "/wd4267", "/wd4702",
-          "/wd4127", "/nologo", "/DYY_NO_UNISTD_H=1", "/D__STDC_VERSION__=199901L"
-        ]
+        libraries = ["libndtypes-0.1.0.dll"]
+        extra_compile_args = ["/DIMPORT"]
         extra_link_args = []
         runtime_library_dirs = []
     else:
+        libraries = ["ndtypes"]
         extra_compile_args = ["-Wextra", "-Wno-missing-field-initializers", "-std=c11"]
         if sys.platform == "darwin":
             extra_link_args = ["-Wl,-rpath,@loader_path"]
