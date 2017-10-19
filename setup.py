@@ -65,9 +65,9 @@ if len(sys.argv) == 2:
         sys.exit(ret)
     elif sys.argv[1] == 'clean':
         shutil.rmtree("build", ignore_errors=True)
-        os.chdir("python")
+        os.chdir("python/ndtypes")
         shutil.rmtree("__pycache__", ignore_errors=True)
-        for f in glob("*.so"):
+        for f in glob("_ndtypes*.so"):
             os.remove(f)
         sys.exit(0)
     else:
@@ -123,6 +123,7 @@ setup (
     ],
     package_dir = {"": "python"},
     packages = ["ndtypes"],
+    package_data = {"ndtypes": ["libndtypes*"]},
     ext_modules = [ndtypes_ext()],
 )
 

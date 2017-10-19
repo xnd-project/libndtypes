@@ -21,8 +21,7 @@ docdir = @docdir@
 
 default: FORCE
 	cd libndtypes && $(MAKE)
-	cp libndtypes/@LIBSHARED@ python/ndtypes
-	cd python/ndtypes && ln -sf @LIBSHARED@ @LIBSONAME@
+	cp libndtypes/@LIBSHARED@ python/ndtypes/@LIBSONAME@
 
 runtest: default
 	cd libndtypes/tests && $(MAKE)
