@@ -21,6 +21,8 @@ docdir = @docdir@
 
 default: FORCE
 	cd libndtypes && $(MAKE)
+	cp libndtypes/@LIBSHARED@ python/ndtypes
+	cd python/ndtypes && ln -sf @LIBSHARED@ @LIBSONAME@
 
 runtest: default
 	cd libndtypes/tests && $(MAKE)
@@ -49,14 +51,17 @@ install: FORCE
 clean: FORCE
 	cd libndtypes && if [ -f Makefile ]; then $(MAKE) clean; else exit 0; fi
 	cd libndtypes/tests && if [ -f Makefile ]; then $(MAKE) clean; else exit 0; fi
-	cd python && rm -f *.so
+	rm -rf build
+	cd python/ndtypes && rm -f *.so $(LIBSTATIC) $(LIBSHARED) $(LIBSONAME) $(LIBNAME)
+	cd python/ndtypes && rm -rf __pycache__
 
 distclean: FORCE
 	cd libndtypes && if [ -f Makefile ]; then $(MAKE) distclean; else exit 0; fi
 	cd libndtypes/tests && if [ -f Makefile ]; then $(MAKE) distclean; else exit 0; fi
 	rm -f config.h config.log config.status Makefile
 	rm -rf build
-	cd python && rm -f *.so && rm -rf __pycache__
+	cd python/ndtypes && rm -f *.so $(LIBSTATIC) $(LIBSHARED) $(LIBSONAME) $(LIBNAME)
+	cd python/ndtypes && rm -rf __pycache__
 
 FORCE:
 

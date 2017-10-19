@@ -1,7 +1,4 @@
 
-import _ndtypes
-from _ndtypes import *
-
 def pretty_repr(self):
     return """\
 ApplySpec(
@@ -11,6 +8,9 @@ ApplySpec(
   outer_dims=%r
 )""" % (self.func, self.args, self.ret, self.outer_dims)
 
+from . import _ndtypes
 _ndtypes.ApplySpec.__repr__ = pretty_repr
+del _ndtypes
 
+from ._ndtypes import *
 

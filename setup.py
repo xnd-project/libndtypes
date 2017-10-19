@@ -49,9 +49,9 @@ def get_module_path():
     raise RuntimeError("cannot find ndtypes module in build directory")
 
 def copy_ext():
-    pathlist = glob("build/lib.*/_ndtypes.*.so")
+    pathlist = glob("build/lib.*/ndtypes/_ndtypes.*.so")
     if pathlist:
-        shutil.copy2(pathlist[0], "python/")
+        shutil.copy2(pathlist[0], "python/ndtypes")
 
 
 if len(sys.argv) == 2:
@@ -78,7 +78,7 @@ def ndtypes_ext():
     include_dirs = ["libndtypes"]
     library_dirs = ["libndtypes"]
     depends = ["libndtypes/ndtypes.h"]
-    sources = ["python/_ndtypes.c"]
+    sources = ["python/ndtypes/_ndtypes.c"]
     libraries = ["ndtypes"]
 
     if sys.platform == "win32":
@@ -91,14 +91,14 @@ def ndtypes_ext():
     else:
         extra_compile_args = ["-Wextra", "-Wno-missing-field-initializers", "-std=c11"]
         if sys.platform == "darwin":
-            extra_link_args = ["-Wl,-rpath,@loader_path", "-Wl,-rpath,@loader_path/../libndtypes"]
+            extra_link_args = ["-Wl,-rpath,@loader_path"]
             runtime_library_dirs = []
         else:
             extra_link_args = []
-            runtime_library_dirs = ["$ORIGIN", "$ORIGIN/../libndtypes"]
+            runtime_library_dirs = ["$ORIGIN"]
 
     return Extension (
-      "_ndtypes",
+      "ndtypes._ndtypes",
       include_dirs = include_dirs,
       library_dirs = library_dirs,
       depends = depends,
@@ -110,7 +110,7 @@ def ndtypes_ext():
     )
 
 setup (
-    name = "_ndtypes",
+    name = "ndtypes",
     version = "0.1",
     description = DESCRIPTION,
     url = "https://github.com/plures/ndtypes",
@@ -122,7 +122,7 @@ setup (
         "Intended Audience :: Developers",
     ],
     package_dir = {"": "python"},
-    py_modules = ["ndtypes"],
+    packages = ["ndtypes"],
     ext_modules = [ndtypes_ext()],
 )
 
