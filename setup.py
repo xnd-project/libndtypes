@@ -91,7 +91,7 @@ def ndtypes_ext():
     else:
         extra_compile_args = ["-Wextra", "-Wno-missing-field-initializers", "-std=c11"]
         if sys.platform == "darwin":
-            extra_link_args = ["-Wl,-rpath,@loader_path:@loader_path/../libndtypes"]
+            extra_link_args = ["-Wl,-rpath,@loader_path", "-Wl,-rpath,@loader_path/../libndtypes"]
             runtime_library_dirs = []
         else:
             extra_link_args = []
