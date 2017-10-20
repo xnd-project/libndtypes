@@ -57,7 +57,18 @@ def copy_ext():
         shutil.copy2(pathlist[0], "python/ndtypes")
 
 
-if len(sys.argv) == 2:
+if len(sys.argv) == 3 and sys.argv[1] == "install" and \
+    sys.argv[2].startswith("--local"):
+    localdir = sys.argv[2].split("=")[1]
+    sys.argv = sys.argv[:2] + [
+        "--install-base=" + localdir,
+        "--install-purelib=" + localdir,
+        "--install-platlib=" + localdir,
+        "--install-scripts=" + localdir,
+        "--install-data=" + localdir,
+        "--install-headers=" + localdir]
+
+elif len(sys.argv) == 2:
     if sys.argv[1] == 'test':
         module_path = get_module_path()
         python_path = os.getenv('PYTHONPATH')
