@@ -156,7 +156,7 @@ Makefile symtable.c ndtypes.h symtable.h
 
 check:\
 Makefile default
-	cd tests && copy /y Makefile.vc Makefile && nmake
+	cd tests && copy /y Makefile.vc Makefile && nmake /nologo
 	.\tests\runtest.exe
 	.\tests\runtest_shared.exe
 
