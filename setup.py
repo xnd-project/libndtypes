@@ -61,6 +61,7 @@ if len(sys.argv) == 3 and sys.argv[1] == "install" and \
     sys.argv[2].startswith("--local"):
     localdir = sys.argv[2].split("=")[1]
     sys.argv = sys.argv[:2] + [
+        "--prefix=",
         "--install-base=" + localdir,
         "--install-purelib=" + localdir,
         "--install-platlib=" + localdir,
