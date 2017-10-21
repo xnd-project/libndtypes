@@ -8,19 +8,19 @@ os: Visual Studio 2015
 environment:
   matrix:
     - PLATFORM: "x64"
+      VCBUILD: "vcbuild64.bat"
+      RUNTEST: "runtest64.bat"
       PYTHON: "C:\\Python35-x64"
     - PLATFORM: "x86"
+      VCBUILD: "vcbuild32.bat"
+      RUNTEST: "runtest32.bat"
       PYTHON: "C:\\Python35"
 
-
-before_build:
-  "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %PLATFORM%"
-
 build_script:
-  - cd libndtypes
-  - copy /y Makefile.vc Makefile
-  - nmake check
-  - cd ..
+  - cd vcbuild
+  - "%VCBUILD%"
+  - "%RUNTEST%"
+  - "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %PLATFORM%"
   - "%PYTHON%\\python.exe setup.py build"
   - "%PYTHON%\\python.exe setup.py test"
 
