@@ -16,7 +16,7 @@ libndtypes build instructions for Visual Studio
    ------------
 
       Run vcbuild64.bat. If successful, the static library, the dynamic
-      library, the common header file and an executable for running the
+      library, the common header file and two executables for running the
       unit tests should be in the dist64 directory.
 
 
@@ -24,7 +24,7 @@ libndtypes build instructions for Visual Studio
    ------------
 
       Run vcbuild32.bat. If successful, the static library, the dynamic
-      library, the common header file and an executable for running the
+      library, the common header file and two executables for running the
       unit tests should be in the dist32 directory.
 
 
