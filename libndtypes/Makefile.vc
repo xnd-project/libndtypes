@@ -47,7 +47,7 @@ $(LIBSHARED):\
 Makefile $(SHARED_OBJS)
 	-@if exist $@ del $(LIBSHARED)
 	link /nologo /DLL /MANIFEST /out:$(LIBSHARED) /implib:$(LIBIMPORT) $(SHARED_OBJS)
-	mt -manifest $(LIBSHARED).manifest -outputresource:$(LIBSHARED);2
+	mt /nologo -manifest $(LIBSHARED).manifest -outputresource:$(LIBSHARED);2
 
 alloc.obj:\
 Makefile alloc.c ndtypes.h
