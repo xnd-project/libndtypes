@@ -1,4 +1,5 @@
 @ECHO OFF
+echo.
 <nul (set /p x="Running static library tests ... ")
 echo.
 echo.

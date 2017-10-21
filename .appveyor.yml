@@ -20,6 +20,7 @@ build_script:
   - cd vcbuild
   - "%VCBUILD%"
   - "%RUNTEST%"
+  - cd ..
   - "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %PLATFORM%"
   - "%PYTHON%\\python.exe setup.py build"
   - "%PYTHON%\\python.exe setup.py test"
