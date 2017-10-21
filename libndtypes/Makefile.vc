@@ -179,10 +179,14 @@ Makefile indent.c ndtypes.h $(LIBSTATIC)
 	$(CC) $(CFLAGS) /Feindent tools\indent.c $(LIBSTATIC)
 
 
-clean: FORCE
-	del /Q /F *.obj bench.exe indent.exe print_ast.exe tests\runtest.exe $(LIBSTATIC)
-
-
 FORCE:
+
+clean: FORCE
+	del /q /f *.exe *.obj *.lib *.dll *.exp *.manifest 2>NUL
+	cd .objs && del /q /f *.obj 2>NUL
+	cd ..\python\ndtypes && del *.lib *.dll *.pyd 2>NUL
+
+distclean: clean
+	del Makefile 2>NUL
 
 
