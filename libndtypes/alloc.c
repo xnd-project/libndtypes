@@ -46,8 +46,14 @@
 void *(* ndt_mallocfunc)(size_t size) = malloc;
 void *(* ndt_callocfunc)(size_t nmemb, size_t size) = calloc;
 void *(* ndt_reallocfunc)(void *ptr, size_t size) = realloc;
-void (* ndt_free)(void *ptr) = free;
+void (* ndt_freefunc)(void *ptr) = free;
 
+
+void
+ndt_free(void *ptr)
+{
+    ndt_freefunc(ptr);
+}
 
 /* malloc with overflow checking */
 void *
