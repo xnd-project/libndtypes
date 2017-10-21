@@ -41,12 +41,12 @@ SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\display.obj .objs\display_met
 $(LIBSTATIC):\
 Makefile $(OBJS)
 	-@if exist $@ del $(LIBSTATIC)
-	lib /out:$(LIBSTATIC) $(OBJS)
+	lib /nologo /out:$(LIBSTATIC) $(OBJS)
 
 $(LIBSHARED):\
 Makefile $(SHARED_OBJS)
 	-@if exist $@ del $(LIBSHARED)
-	link /DLL /MANIFEST /out:$(LIBSHARED) /implib:$(LIBIMPORT) $(SHARED_OBJS)
+	link /nologo /DLL /MANIFEST /out:$(LIBSHARED) /implib:$(LIBIMPORT) $(SHARED_OBJS)
 	mt -manifest $(LIBSHARED).manifest -outputresource:$(LIBSHARED);2
 
 alloc.obj:\
