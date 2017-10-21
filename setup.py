@@ -31,11 +31,11 @@
 #
 
 from distutils.core import setup, Extension
-from distutils.cmd import Command
 from glob import glob
 import sys, os
 import subprocess
 import shutil
+import sysconfig
 
 
 DESCRIPTION = \
@@ -57,6 +57,8 @@ def copy_ext():
         shutil.copy2(pathlist[0], "python/ndtypes")
 
 
+BUILD_ALL = True
+
 if len(sys.argv) == 3 and sys.argv[1] == "install" and \
     sys.argv[2].startswith("--local"):
     localdir = sys.argv[2].split("=")[1]
@@ -72,6 +74,9 @@ if len(sys.argv) == 3 and sys.argv[1] == "install" and \
         sys.argv.append("--prefix=")
 
 elif len(sys.argv) == 2:
+    if sys.argv[1] == 'module':
+       sys.argv[1] = 'build'
+       BUILD_ALL = False
     if sys.argv[1] == 'test':
         module_path = get_module_path()
         python_path = os.getenv('PYTHONPATH')
@@ -86,6 +91,9 @@ elif len(sys.argv) == 2:
         shutil.rmtree("__pycache__", ignore_errors=True)
         for f in glob("_ndtypes*.so"):
             os.remove(f)
+        sys.exit(0)
+    elif sys.argv[1] == 'distclean':
+        subprocess.call(["make", "distclean"])
         sys.exit(0)
     else:
         pass
@@ -111,6 +119,11 @@ def ndtypes_ext():
         else:
             extra_link_args = []
             runtime_library_dirs = ["$ORIGIN"]
+
+        if BUILD_ALL:
+            cc = sysconfig.get_config_var('CC')
+            subprocess.call(["./configure", "CC=%s" % cc])
+            subprocess.call(["make"])
 
     return Extension (
       "ndtypes._ndtypes",

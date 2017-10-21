@@ -1,0 +1,72 @@
+
+
+libndtypes build instructions for Unix
+=======================================
+
+# Build
+./configure
+make
+
+# Test
+make check
+
+# Install
+make install
+
+# Clean
+make clean
+
+# Distclean
+make distclean
+
+
+Python module build instructions
+================================
+
+To avoid shared library mismatches, the Python module builds with an rpath
+and ships the library inside the package.
+
+Unless you are a distributor with tight control over the system libraries,
+it is not recommended to install the library.
+
+
+Build all
+---------
+
+# Build libndtypes and the module (libndtypes is copied into the package)
+python3 setup.py build
+
+# Test
+python3 setup.py test
+
+# Install
+python3 setup.py install
+
+# Clean libndtypes and the module
+python3 setup.py distclean
+
+
+Build the module only (for developing)
+--------------------------------------
+
+First, build libndtypes as above. This also copies the shared library into
+the package.  Then, to avoid rebuilding the library repeatedly, use:
+
+# Build the module
+python3 setup.py module
+
+# Clean the module
+python3 setup.py clean
+
+
+Alternative install (for developing)
+------------------------------------
+
+# Install the package into a local directory using a relative path.
+# The following line installs the package into directory 'foo' outside
+# the ndtypes directory. This is mainly useful for developing xnd or
+# gufuncs.
+python3 setup.py install --local=../foo
+
+
+
