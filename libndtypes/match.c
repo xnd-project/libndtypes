@@ -132,7 +132,7 @@ match_dimensions(const ndt_t *p[], int pshape,
                             v.DimListEntry.dims[abs(k-j)] = c[j];
                             break;
                         default:
-                            ndt_free(v.DimListEntry.dims);
+                            ndt_free((void *)v.DimListEntry.dims);
                             return 0;
                         }
                     }
