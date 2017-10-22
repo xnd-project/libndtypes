@@ -36,7 +36,6 @@ import platform
 import sys, os
 import subprocess
 import shutil
-import sysconfig
 
 
 DESCRIPTION = \
@@ -138,9 +137,7 @@ def ndtypes_ext():
             runtime_library_dirs = ["$ORIGIN"]
 
         if BUILD_ALL:
-            cc = sysconfig.get_config_var('CC')
-            subprocess.call(["./configure", "CC=%s" % cc])
-            subprocess.call(["make"])
+            os.system("./configure && make")
 
     return Extension (
       "ndtypes._ndtypes",
