@@ -70,7 +70,7 @@ typedef struct __attribute__((aligned(2))) {
 
 typedef struct {
     char u1 __attribute__((aligned(16)));   // align >= 16
-    int64_t i1 __attribute__((aligned(1))); // align >= max(1, alignof(int64_t))
+    int64_t i1 __attribute__((aligned(8))); // align >= max(1, alignof(int64_t))
     char u2;
 } aligned_t;
 
@@ -85,7 +85,7 @@ test_struct_align_pack(void)
     static const char *s2 =
        "{u1: uint8, i1: int64 |pack=1|, u2: uint8, i2: int64 |pack=1|, u3: uint8, align=2}";
     static const char *s3 =
-       "{u1: uint8 |align=16|, i1: int64 |align=1|, u2 : uint8}";
+       "{u1: uint8 |align=16|, i1: int64 |align=8|, u2 : uint8}";
     packed_no_trailing_padding_t packed_no_trail;
     packed_with_trailing_padding_t packed_with_trail;
     aligned_t aligned;
