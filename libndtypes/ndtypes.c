@@ -1227,7 +1227,7 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
         if (i > 0) {
             size_t n = offset;
             offset = round_up(offset, align[i]);
-            pad[i-1] = offset - n;
+            pad[i-1] = (uint16_t)(offset - n);
         }
 
         offsets[i] = offset;
@@ -1237,7 +1237,8 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
     size = round_up(offset, maxalign);
 
     if (shape > 0) {
-        pad[shape-1] = (size - offsets[shape-1]) - fields[shape-1].type->data_size;
+        size_t n = (size - offsets[shape-1]) - fields[shape-1].type->data_size;
+        pad[shape-1] = (uint16_t)n;
     }
 
     assert(t->access == Concrete);
