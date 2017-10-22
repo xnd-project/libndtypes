@@ -1,7 +1,7 @@
 
 
-libndtypes build instructions for Unix
-=======================================
+Unix: libndtypes build instructions
+===================================
 
 # Build
 ./configure
@@ -20,14 +20,22 @@ make clean
 make distclean
 
 
-Python module build instructions
-================================
+Windows: libndtypes build instructions
+======================================
+
+See vcbuild/INSTALL.txt.
+
+
+
+Unix/Windows: Python module build instructions
+==============================================
 
 To avoid shared library mismatches, the Python module builds with an rpath
 and ships the library inside the package.
 
-Unless you are a distributor with tight control over the system libraries,
-it is not recommended to install the library.
+Unless you are a distributor with tight control over the system library
+versions, it is not recommended to install the library for the Python
+module.
 
 
 Build all

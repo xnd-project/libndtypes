@@ -3,36 +3,39 @@
 libndtypes build instructions for Visual Studio
 ===============================================
 
+Requirements
+------------
 
-   Requirements
-   ------------
-
-      - Visual Studio 2015 or later.
-
-      - The path to vcvarsall.bat is hardcoded for VS 2015 in the scripts.
+  - Visual Studio 2015 or later
 
 
-   64-bit build
-   ------------
+64-bit build
+------------
 
-      Run vcbuild64.bat. If successful, the static library, the dynamic
-      library, the common header file and two executables for running the
-      unit tests should be in the dist64 directory.
+# Set the build environment
+vcvarsall.bat x64
 
+# Build:  If successful, the static library, the dynamic library, the
+# common header file and two executables for running the unit tests
+# should be in the dist64 directory.
+vcbuild64.bat
 
-   32-bit build
-   ------------
-
-      Run vcbuild32.bat. If successful, the static library, the dynamic
-      library, the common header file and two executables for running the
-      unit tests should be in the dist32 directory.
-
-
-   Run the unit tests
-   ------------------
-
-      Depending on the build, run runtest64.bat or runtest32.bat.
+# Test
+runtest64.bat
 
 
+32-bit build
+------------
+
+# Set the build environment
+vcvarsall.bat x86
+
+# Build:  If successful, the static library, the dynamic library, the
+# common header file and two executables for running the unit tests
+# should be in the dist32 directory.
+vcbuild32.bat
+
+# Test
+runtest32.bat
 
 
