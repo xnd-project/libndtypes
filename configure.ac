@@ -62,21 +62,15 @@ AC_SUBST(INSTALL)
 # Compiler dependent settings:
 NDT_WARN=
 NDT_OPT="-O2"
-NDT_PGEN=
-NDT_PUSE=
 case $CC in
     *gcc*)
         NDT_WARN="-Wall -Wextra -std=c11 -pedantic"
         NDT_OPT="-O2"
-        NDT_PGEN="-fprofile-generate -fprofile-values"
-        NDT_PUSE="-fprofile-use -freorder-blocks"
         ;;
     *icc*)
         AR=xiar
         NDT_WARN="-Wall"
         NDT_OPT="-O2"
-        NDT_PGEN="-wd11505 -prof-gen"
-        NDT_PUSE="-wd11505 -prof-use"
         ;;
     *clang*)
         NDT_WARN="-Wall -Wextra -std=c11 -pedantic"
@@ -94,8 +88,6 @@ AC_SUBST(AR)
 AC_SUBST(NDT_WARN)
 AC_SUBST(NDT_OPT)
 
-AC_SUBST(NDT_PGEN)
-AC_SUBST(NDT_PUSE)
 
 if test -z "$CFLAGS"; then
     CONFIGURE_CFLAGS="$NDT_WARN $NDT_CONFIG $NDT_OPT"

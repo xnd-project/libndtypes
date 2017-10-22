@@ -589,8 +589,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 CONFIGURE_LDFLAGS
 CONFIGURE_CFLAGS
-NDT_PUSE
-NDT_PGEN
 NDT_OPT
 NDT_WARN
 LD
@@ -3453,21 +3451,15 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 # Compiler dependent settings:
 NDT_WARN=
 NDT_OPT="-O2"
-NDT_PGEN=
-NDT_PUSE=
 case $CC in
     *gcc*)
         NDT_WARN="-Wall -Wextra -std=c11 -pedantic"
         NDT_OPT="-O2"
-        NDT_PGEN="-fprofile-generate -fprofile-values"
-        NDT_PUSE="-fprofile-use -freorder-blocks"
         ;;
     *icc*)
         AR=xiar
         NDT_WARN="-Wall"
         NDT_OPT="-O2"
-        NDT_PGEN="-wd11505 -prof-gen"
-        NDT_PUSE="-wd11505 -prof-use"
         ;;
     *clang*)
         NDT_WARN="-Wall -Wextra -std=c11 -pedantic"
@@ -3480,8 +3472,6 @@ esac
 if test -z "$LD"; then
     LD="$CC"
 fi
-
-
 
 
 

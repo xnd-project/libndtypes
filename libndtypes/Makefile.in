@@ -13,28 +13,17 @@ CC = @CC@
 LD = @LD@
 AR = @AR@
 RANLIB = @RANLIB@
-NDT_PGEN = @NDT_PGEN@
-NDT_PUSE = @NDT_PUSE@
 
 CONFIGURE_CFLAGS = @CONFIGURE_CFLAGS@
 NDT_CFLAGS = $(strip $(CONFIGURE_CFLAGS) $(CFLAGS))
+NDT_CFLAGS_SHARED = $(NDT_CFLAGS) -fPIC
 
 CONFIGURE_LDFLAGS = @CONFIGURE_LDFLAGS@
 NDT_LDFLAGS = $(strip $(CONFIGURE_LDFLAGS) $(LDFLAGS))
 
-ifeq ($(MAKECMDGOALS), profile_gen)
-  NDT_CFLAGS += $(NDT_PGEN)
-  NDT_LDFLAGS += $(NDT_PGEN)
-endif
-ifeq ($(MAKECMDGOALS), profile_use)
-  NDT_CFLAGS += $(NDT_PUSE)
-  NDT_LDFLAGS += $(NDT_PUSE)
-endif
-
-NDT_CFLAGS_SHARED = $(NDT_CFLAGS) -fPIC
-
 
 default: $(LIBSTATIC) $(LIBSHARED)
+
 
 OBJS = alloc.o attr.o display.o display_meta.o equal.o grammar.o lexer.o \
        match.o ndtypes.o parsefuncs.o parser.o seq.o symtable.o
