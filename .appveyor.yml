@@ -16,16 +16,16 @@ environment:
       RUNTEST: "runtest32.bat"
       PYTHON: "C:\\Python35"
 
+before_build:
+  "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %PLATFORM%"
+
 build_script:
   - cd vcbuild
   - "%VCBUILD%"
   - "%RUNTEST%"
   - cd ..
-  - "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" %PLATFORM%"
   - "%PYTHON%\\python.exe setup.py module"
   - "%PYTHON%\\python.exe setup.py test"
-  - "%PYTHON%\\python.exe setup.py clean"
-  - cd vcbuild
-  - vcdistclean.bat
+  - "%PYTHON%\\python.exe setup.py distclean"
 
 
