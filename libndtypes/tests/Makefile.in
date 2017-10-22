@@ -2,17 +2,12 @@
 SRCDIR = ..
 
 CC = @CC@
-LD = @CC@
-AR = @AR@
 
 LIBSTATIC = @LIBSTATIC@
 LIBSHARED = @LIBSHARED@
 
-NDT_WARN = @NDT_WARN@
-NDT_CONFIG = @NDT_CONFIG@
-
 CONFIGURE_CFLAGS = @CONFIGURE_CFLAGS@
-CFLAGS ?= $(CONFIGURE_CFLAGS)
+NDT_CFLAGS = $(strip $(CONFIGURE_CFLAGS) $(CFLAGS))
 
 
 default: runtest runtest_shared
@@ -22,7 +17,7 @@ runtest:\
 Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
 test_indent.c test_typedef.c test_match.c test_record.c test.h alloc_fail.h \
 $(SRCDIR)/ndtypes.h $(SRCDIR)/$(LIBSTATIC)
-	$(CC) -I$(SRCDIR) -Wno-gnu $(CFLAGS) -DTEST_ALLOC -o runtest runtest.c \
+	$(CC) -I$(SRCDIR) -Wno-gnu $(NDT_CFLAGS) -DTEST_ALLOC -o runtest runtest.c \
             alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
             test_indent.c test_typedef.c test_match.c test_typecheck.c \
             test_record.c test_array.c $(SRCDIR)/$(LIBSTATIC)
@@ -31,7 +26,7 @@ runtest_shared:\
 Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
 test_indent.c test_typedef.c test_match.c test_record.c test.h alloc_fail.h \
 $(SRCDIR)/ndtypes.h $(SRCDIR)/$(LIBSHARED)
-	$(CC) -I$(SRCDIR) -L$(SRCDIR) -Wno-gnu $(CFLAGS) -DTEST_ALLOC -o runtest_shared runtest.c \
+	$(CC) -I$(SRCDIR) -L$(SRCDIR) -Wno-gnu $(NDT_CFLAGS) -DTEST_ALLOC -o runtest_shared runtest.c \
             alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
             test_indent.c test_typedef.c test_match.c test_typecheck.c \
             test_record.c test_array.c -lndtypes
@@ -43,8 +38,7 @@ clean: FORCE
 	rm -f *.o *.gch *.gcda *.gcno *.gcov *.dyn *.dpi *.lock
 	rm -f runtest runtest_shared
 
-distclean: FORCE
-	$(MAKE) clean
+distclean: clean
 	rm -rf Makefile
 
 
