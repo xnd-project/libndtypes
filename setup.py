@@ -32,6 +32,7 @@
 
 from distutils.core import setup, Extension
 from glob import glob
+import platform
 import sys, os
 import subprocess
 import shutil
@@ -40,6 +41,9 @@ import sysconfig
 
 DESCRIPTION = \
     """Dynamic types for data description and in-memory computations"""
+
+ARCH = platform.architecture()[0]
+BUILD_ALL = True
 
 
 def get_module_path():
@@ -56,8 +60,6 @@ def copy_ext():
     if pathlist:
         shutil.copy2(pathlist[0], "python/ndtypes")
 
-
-BUILD_ALL = True
 
 if len(sys.argv) == 3 and sys.argv[1] == "install" and \
     sys.argv[2].startswith("--local"):
@@ -93,7 +95,11 @@ elif len(sys.argv) == 2:
             os.remove(f)
         sys.exit(0)
     elif sys.argv[1] == 'distclean':
-        subprocess.call(["make", "distclean"])
+        if sys.platform == "win32":
+            os.chdir("vcbuild")
+            os.system("vcdistclean.bat")
+        else:
+            os.system("make distclean")
         sys.exit(0)
     else:
         pass
@@ -116,6 +122,17 @@ def ndtypes_ext():
         if sys.platform == "darwin":
             extra_link_args = ["-Wl,-rpath,@loader_path"]
             runtime_library_dirs = []
+
+        if BUILD_ALL:
+            from distutils.msvc9compiler import MSVCCompiler
+            MSVCCompiler().initialize()
+            os.chdir("vcbuild")
+            if ARCH == "64bit":
+                  os.system("vcbuild64.bat")
+            else:
+                  os.system("vcbuild32.bat")
+            os.chdir("..")
+
         else:
             extra_link_args = []
             runtime_library_dirs = ["$ORIGIN"]
