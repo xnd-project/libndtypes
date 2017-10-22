@@ -113,7 +113,7 @@ mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
     if (attrs) {
         ndt_t *t;
         int32_t *offsets = NULL;
-        int64_t noffsets = 0;
+        size_t noffsets = 0;
         int ret;
 
         ret = ndt_parse_attr(VarDim, ctx, attrs, &offsets, &noffsets);
@@ -123,7 +123,14 @@ mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
             return NULL;
         }
 
-        t = ndt_var_dim(type, true, noffsets, offsets, ctx);
+        if (noffsets > INT32_MAX) {
+            ndt_err_format(ctx, NDT_ValueError, "too many offsets");
+            ndt_del(type);
+            ndt_free(offsets);
+            return NULL;
+        }
+
+        t = ndt_var_dim(type, true, (int32_t)noffsets, offsets, ctx);
         ndt_free(offsets);
         return t;
 

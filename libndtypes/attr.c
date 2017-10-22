@@ -206,7 +206,7 @@ ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
             *(int32_t **)ptr = values;
 
             ptr = va_arg(ap, void *);
-            *(int32_t *)ptr = v[i]->AttrList.len;
+            *(size_t *)ptr = v[i]->AttrList.len;
             i++;
             break;
         }
