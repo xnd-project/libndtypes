@@ -826,7 +826,7 @@ ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offset
 {
     ndt_t *t;
     enum ndt_access access = Abstract;
-    int64_t extra = 0;
+    size_t extra = 0;
 
     if (type->ndim > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
@@ -851,6 +851,12 @@ ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offset
 
         access = Concrete;
         if (copy_meta) {
+            if ((size_t)noffsets > SIZE_MAX / sizeof(int32_t)) {
+                ndt_err_format(ctx, NDT_ValueError, "too many offsets");
+                ndt_del(type);
+                return NULL;
+            }
+
             extra = noffsets * sizeof(int32_t);
         }
     }
