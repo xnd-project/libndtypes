@@ -506,7 +506,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
     t->hash = -1;
 
     t->data_size = -1;
-    t->data_align = -1;
+    t->data_align = UINT16_MAX;
     t->meta_size = -1;
 
     return t;
@@ -528,7 +528,7 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
     t->hash = -1;
 
     t->data_size = -1;
-    t->data_align = -1;
+    t->data_align = UINT16_MAX;
     t->meta_size = -1;
 
     return t;
