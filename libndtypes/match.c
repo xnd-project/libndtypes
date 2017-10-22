@@ -265,7 +265,7 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     const ndt_t *cdims[NDT_MAX_DIM];
     const ndt_t *pdtype;
     const ndt_t *cdtype;
-    size_t pn, cn;
+    int pn, cn;
     int n;
 
     switch (p->tag) {
