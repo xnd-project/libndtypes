@@ -116,12 +116,6 @@ def ndtypes_ext():
         extra_compile_args = ["/DIMPORT"]
         extra_link_args = []
         runtime_library_dirs = []
-    else:
-        libraries = ["ndtypes"]
-        extra_compile_args = ["-Wextra", "-Wno-missing-field-initializers", "-std=c11"]
-        if sys.platform == "darwin":
-            extra_link_args = ["-Wl,-rpath,@loader_path"]
-            runtime_library_dirs = []
 
         if BUILD_ALL:
             from distutils.msvc9compiler import MSVCCompiler
@@ -133,6 +127,12 @@ def ndtypes_ext():
                   os.system("vcbuild32.bat")
             os.chdir("..")
 
+    else:
+        libraries = ["ndtypes"]
+        extra_compile_args = ["-Wextra", "-Wno-missing-field-initializers", "-std=c11"]
+        if sys.platform == "darwin":
+            extra_link_args = ["-Wl,-rpath,@loader_path"]
+            runtime_library_dirs = []
         else:
             extra_link_args = []
             runtime_library_dirs = ["$ORIGIN"]
