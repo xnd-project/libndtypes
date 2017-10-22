@@ -41,7 +41,7 @@
 
 enum symtable_entry {
   Unbound,
-  SizeEntry,
+  ShapeEntry,
   SymbolEntry,
   TypeEntry,
   DimListEntry
@@ -55,7 +55,7 @@ typedef struct {
 typedef struct {
   enum symtable_entry tag;
   union {
-    size_t SizeEntry;
+    int64_t ShapeEntry;
     const char *SymbolEntry;
     const ndt_t *TypeEntry;
     dim_list_t DimListEntry;

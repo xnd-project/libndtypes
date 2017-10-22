@@ -51,8 +51,8 @@ symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
                      ndt_context_t *ctx)
 {
     switch (v->tag) {
-    case SizeEntry:
-        return w->tag == SizeEntry && v->SizeEntry == w->SizeEntry;
+    case ShapeEntry:
+        return w->tag == ShapeEntry && v->ShapeEntry == w->ShapeEntry;
     case SymbolEntry:
         return w->tag == SymbolEntry && strcmp(v->SymbolEntry, w->SymbolEntry) == 0;
     case TypeEntry:
@@ -156,8 +156,8 @@ match_dimensions(const ndt_t *p[], int pshape,
         case SymbolicDim:
             switch (c[k]->tag) {
             case FixedDim:
-                v.tag = SizeEntry;
-                v.SizeEntry = c[k]->FixedDim.shape;
+                v.tag = ShapeEntry;
+                v.ShapeEntry = c[k]->FixedDim.shape;
                 break;
             case SymbolicDim:
                 v.tag = SymbolEntry;
@@ -416,7 +416,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
         v = symtable_find(tbl, t->SymbolicDim.name);
 
         switch (v.tag) {
-        case SizeEntry:
+        case ShapeEntry:
             u = ndt_substitute(t->SymbolicDim.type, tbl, ctx);
             if (u == NULL) {
                 return NULL;
@@ -424,7 +424,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
             assert(ndt_is_concrete(u));
 
-            return ndt_fixed_dim(v.SizeEntry, u, ndt_order(u), ctx);
+            return ndt_fixed_dim(v.ShapeEntry, u, ndt_order(u), ctx);
 
         default:
             ndt_err_format(ctx, NDT_ValueError,
