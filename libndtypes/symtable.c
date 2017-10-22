@@ -236,7 +236,7 @@ symtable_free_entry(symtable_entry_t entry)
 {
     switch(entry.tag) {
     case DimListEntry:
-       ndt_free(entry.DimListEntry.dims);
+       ndt_free((void *)entry.DimListEntry.dims);
        break;
     default:
        break;
