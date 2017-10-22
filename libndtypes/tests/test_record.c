@@ -42,6 +42,11 @@
 #include "test.h"
 
 
+#ifdef __clang__
+  #pragma clang diagnostic ignored "-Wgnu-alignof-expression"
+#endif
+
+
 /*********************************************************************/
 /*                 struct packing and alignment                      */
 /*********************************************************************/
