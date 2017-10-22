@@ -666,21 +666,6 @@ ndt_any_kind(ndt_context_t *ctx)
 }
 
 uint32_t
-ndt_dim_stride(const ndt_t *t)
-{
-    assert(ndt_is_concrete(t));
-
-    switch (t->tag) {
-    case FixedDim:
-        return t->Concrete.FixedDim.stride;
-    case VarDim:
-        return t->data_size;
-    default:
-        return t->data_size;
-    }
-}
-
-uint32_t
 ndt_dim_flags(const ndt_t *t)
 {
     switch (t->tag) {
