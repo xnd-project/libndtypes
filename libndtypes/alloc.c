@@ -43,8 +43,14 @@
 
 
 /* Custom allocation and free functions */
-void *(* ndt_mallocfunc)(size_t size) = malloc;
+#if defined(_MSC_VER)
+static void *_aligned_alloc(size_t alignment, size_t size) { return _aligned_malloc(size, alignment); }
+void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = _aligned_alloc;
+#else
 void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = aligned_alloc;
+#endif
+
+void *(* ndt_mallocfunc)(size_t size) = malloc;
 void *(* ndt_callocfunc)(size_t nmemb, size_t size) = calloc;
 void *(* ndt_reallocfunc)(void *ptr, size_t size) = realloc;
 void (* ndt_freefunc)(void *ptr) = free;
