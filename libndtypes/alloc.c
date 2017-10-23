@@ -44,6 +44,7 @@
 
 /* Custom allocation and free functions */
 void *(* ndt_mallocfunc)(size_t size) = malloc;
+void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = aligned_alloc;
 void *(* ndt_callocfunc)(size_t nmemb, size_t size) = calloc;
 void *(* ndt_reallocfunc)(void *ptr, size_t size) = realloc;
 void (* ndt_freefunc)(void *ptr) = free;
@@ -64,6 +65,17 @@ ndt_alloc(size_t nmemb, size_t size)
     }
 
     return ndt_mallocfunc(nmemb * size);
+}
+
+/* aligned malloc with overflow checking */
+void *
+ndt_aligned_alloc(size_t alignment, size_t nmemb, size_t size)
+{
+    if (size > SIZE_MAX / nmemb) {
+        return NULL;
+    }
+
+    return ndt_alignedallocfunc(alignment, nmemb * size);
 }
 
 /* calloc */
