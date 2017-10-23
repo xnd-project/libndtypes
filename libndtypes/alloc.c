@@ -30,6 +30,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(__APPLE__)
+  #define _POSIX_C_SOURCE 200112L
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,13 +47,27 @@
 
 /* Custom allocation and free functions */
 #if defined(_MSC_VER)
-static void *_aligned_alloc(size_t alignment, size_t size) { return _aligned_malloc(size, alignment); }
-void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = _aligned_alloc;
-#else
-void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = aligned_alloc;
+static void *
+aligned_alloc(size_t alignment, size_t size)
+{
+    return _aligned_malloc(size, alignment);
+}
+#elif defined(__APPLE__)
+static void *
+aligned_alloc(size_t alignment, size_t size)
+{
+    void *ptr;
+
+    if (posix_memalign(&ptr, alignment, size) != 0) {
+        return NULL;
+    }
+
+    return ptr;
+}
 #endif
 
 void *(* ndt_mallocfunc)(size_t size) = malloc;
+void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = aligned_alloc;
 void *(* ndt_callocfunc)(size_t nmemb, size_t size) = calloc;
 void *(* ndt_reallocfunc)(void *ptr, size_t size) = realloc;
 void (* ndt_freefunc)(void *ptr) = free;
