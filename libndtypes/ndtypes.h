@@ -688,23 +688,9 @@ NDTYPES_API void ndt_aligned_free(void *ptr);
 /******************************************************************************/
 
 typedef struct {
-    char *data;
-} ndt_fixed_dim_t;
-
-typedef struct {
-    int64_t shape;
-    char *data;
-} ndt_var_dim_t;
-
-typedef struct {
     size_t size;
     char *data;
 } ndt_bytes_t;
-
-typedef struct {
-    size_t size;
-    char *data;
-} ndt_sized_string_t;
 
 typedef struct {
     char *data;

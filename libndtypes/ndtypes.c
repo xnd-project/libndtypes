@@ -1660,8 +1660,8 @@ ndt_string(ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = sizeof(ndt_sized_string_t);
-    t->data_align = alignof(ndt_sized_string_t);
+    t->data_size = sizeof(char *);
+    t->data_align = alignof(char *);
 
     return t;
 }
