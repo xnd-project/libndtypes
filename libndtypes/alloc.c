@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__APPLE__)
+#if !defined(_MSC_VER)
   #define _POSIX_C_SOURCE 200112L
 #endif
 
@@ -46,17 +46,29 @@
 
 
 /* Custom allocation and free functions */
+void *(* ndt_mallocfunc)(size_t size) = malloc;
+void *(* ndt_callocfunc)(size_t nmemb, size_t size) = calloc;
+void *(* ndt_reallocfunc)(void *ptr, size_t size) = realloc;
+void (* ndt_freefunc)(void *ptr) = free;
+
 #if defined(_MSC_VER)
+#include <malloc.h>
 static void *
-aligned_alloc(size_t alignment, size_t size)
+_aligned_alloc(size_t alignment, size_t size)
 {
     return _aligned_malloc(size, alignment);
 }
-#elif defined(__APPLE__)
+void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = _aligned_alloc;
+void (* ndt_alignedfreefunc)(void *ptr) = _aligned_free;
+#else
 static void *
-aligned_alloc(size_t alignment, size_t size)
+_aligned_alloc(size_t alignment, size_t size)
 {
     void *ptr;
+
+    if (alignment < sizeof(void *)) {
+        return ndt_mallocfunc(size);
+    }
 
     if (posix_memalign(&ptr, alignment, size) != 0) {
         return NULL;
@@ -64,13 +76,9 @@ aligned_alloc(size_t alignment, size_t size)
 
     return ptr;
 }
+void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = _aligned_alloc;
+void (* ndt_alignedfreefunc)(void *ptr) = free;
 #endif
-
-void *(* ndt_mallocfunc)(size_t size) = malloc;
-void *(* ndt_alignedallocfunc)(size_t alignment, size_t size) = aligned_alloc;
-void *(* ndt_callocfunc)(size_t nmemb, size_t size) = calloc;
-void *(* ndt_reallocfunc)(void *ptr, size_t size) = realloc;
-void (* ndt_freefunc)(void *ptr) = free;
 
 
 void
@@ -90,17 +98,6 @@ ndt_alloc(size_t nmemb, size_t size)
     return ndt_mallocfunc(nmemb * size);
 }
 
-/* aligned malloc with overflow checking */
-void *
-ndt_aligned_alloc(size_t alignment, size_t nmemb, size_t size)
-{
-    if (size > SIZE_MAX / nmemb) {
-        return NULL;
-    }
-
-    return ndt_alignedallocfunc(alignment, nmemb * size);
-}
-
 /* calloc */
 void *
 ndt_calloc(size_t nmemb, size_t size)
@@ -117,4 +114,15 @@ ndt_realloc(void *ptr, size_t nmemb, size_t size)
     }
 
     return ndt_reallocfunc(ptr, nmemb * size);
+}
+
+/* aligned malloc with overflow checking */
+void *
+ndt_aligned_alloc(size_t alignment, size_t nmemb, size_t size)
+{
+    if (size > SIZE_MAX / nmemb) {
+        return NULL;
+    }
+
+    return ndt_alignedallocfunc(alignment, nmemb * size);
 }
