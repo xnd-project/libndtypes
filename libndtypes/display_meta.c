@@ -801,7 +801,8 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
         case Bytes:
             assert(ndt_is_concrete(t));
 
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Bytes(target_align=%,\n", t->Bytes.target_align);
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d,
+                    "Bytes(target_align=%" PRIu16 ",\n", t->Bytes.target_align);
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);
