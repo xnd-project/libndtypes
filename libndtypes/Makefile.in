@@ -175,19 +175,19 @@ Makefile clean runtest
 # Benchmark
 bench:\
 Makefile tools/bench.c ndtypes.h $(LIBSTATIC)
-	$(CC) -I. $(CFLAGS) -o bench tools/bench.c $(LIBSTATIC)
+	$(CC) -I. $(NDT_CFLAGS) -o bench tools/bench.c $(LIBSTATIC)
 
 
 # Print the AST
 print_ast:\
 Makefile tools/print_ast.c ndtypes.h $(LIBSTATIC)
-	$(CC) -I. $(CFLAGS) -o print_ast tools/print_ast.c $(LIBSTATIC)
+	$(CC) -I. $(NDT_CFLAGS) -o print_ast tools/print_ast.c $(LIBSTATIC)
 
 
 # Indent a file that contains a datashape type
 indent:\
 Makefile tools/indent.c ndtypes.h $(LIBSTATIC)
-	$(CC) -I. $(CFLAGS) -o indent tools/indent.c $(LIBSTATIC)
+	$(CC) -I. $(NDT_CFLAGS) -o indent tools/indent.c $(LIBSTATIC)
 
 
 FORCE:
