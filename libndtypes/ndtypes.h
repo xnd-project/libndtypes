@@ -692,9 +692,5 @@ typedef struct {
     char *data;
 } ndt_bytes_t;
 
-typedef struct {
-    char *data;
-} ndt_pointer_t;
-
 
 #endif /* NDTYPES_H */
