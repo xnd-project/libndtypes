@@ -127,7 +127,7 @@ typedef union {
 } ndt_value_t;
 
 
-/* Typed memory (could be extended to a memoryview) */
+/* Typed memory */
 typedef struct {
     ndt_t *t;
     ndt_value_t v;
