@@ -109,9 +109,6 @@
 /* Types: ndt_t */
 typedef struct _ndt ndt_t;
 
-/* Metadata: ndt_meta_t */
-typedef struct _ndt_meta ndt_meta_t;
-
 /* Values: ndt_value_t */
 typedef union {
   bool Bool;
@@ -326,7 +323,6 @@ struct _ndt {
     /* Undefined if the type is abstract */
     int64_t data_size;
     uint16_t data_align;
-    int64_t meta_size;
 
     /* Abstract */
     union {
@@ -461,45 +457,6 @@ struct _ndt {
 
 
 /*****************************************************************************/
-/*                                   Metadata                                */
-/*****************************************************************************/
-
-typedef struct {
-    int64_t itemsize;
-    int64_t stride;
-} ndt_fixed_dim_meta_t;
-
-typedef struct {
-    int64_t suboffset;
-    int64_t itemsize;
-    int64_t stride;
-    int64_t nshapes;
-    const int32_t *shapes;
-    const int32_t *offsets;
-    const uint8_t *bitmap;
-} ndt_var_dim_meta_t;
-
-typedef struct {
-    int64_t *offset;
-    uint16_t *align;
-    uint16_t *pad;
-} ndt_record_meta_t;
-
-struct _ndt_meta {
-    enum ndt tag;
-
-    union {
-        ndt_fixed_dim_meta_t FixedDim;
-        ndt_var_dim_meta_t VarDim;
-        ndt_record_meta_t Tuple;
-        ndt_record_meta_t Record;
-    };
-
-    alignas(MAX_ALIGN) char extra[];
-};
-
-
-/*****************************************************************************/
 /*                        Context and  error handling                        */
 /*****************************************************************************/
 
@@ -624,7 +581,7 @@ NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offsets, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 
 NDTYPES_API ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);

@@ -507,7 +507,6 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
 
     t->data_size = -1;
     t->data_align = UINT16_MAX;
-    t->meta_size = -1;
 
     return t;
 }
@@ -529,7 +528,6 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
 
     t->data_size = -1;
     t->data_align = UINT16_MAX;
-    t->meta_size = -1;
 
     return t;
 }
@@ -776,7 +774,6 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx)
         t->Concrete.FixedDim.stride = type->data_size;
         t->data_size = shape * type->data_size;
         t->data_align = type->data_align;
-        t->meta_size = sizeof(ndt_fixed_dim_meta_t);
     }
 
     return t;
@@ -821,7 +818,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
  * len(bitmap) == (nshapes + 7) / 8
  */
 ndt_t *
-ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offsets,
+ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets,
             ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -834,23 +831,23 @@ ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offset
         return NULL;
     }
 
-    if (noffsets != 0) {
+    if (!!noffsets != !!offsets) {
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+            "var dimension: invalid noffsets or offsets");
+        ndt_del(type);
+        return NULL;
+    }
+
+    if (noffsets) {
         if (ndt_is_abstract(type)) {
             ndt_err_format(ctx, NDT_InvalidArgumentError,
-                           "var dimension: metadata given for abstract type");
-            ndt_del(type);
-            return NULL;
-        }
-
-        if (offsets == NULL) {
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                           "incomplete meta information");
+                "var dimension: offsets given for abstract type");
             ndt_del(type);
             return NULL;
         }
 
         access = Concrete;
-        if (copy_meta) {
+        if (copy_offsets) {
             if ((size_t)noffsets > SIZE_MAX / sizeof(int32_t)) {
                 ndt_err_format(ctx, NDT_ValueError, "too many offsets");
                 ndt_del(type);
@@ -875,7 +872,7 @@ ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offset
     /* concrete access */
     if (access == Concrete) {
         t->Concrete.VarDim.nshapes = noffsets-1;
-        if (copy_meta) {
+        if (copy_offsets) {
             int32_t *_offsets = (int32_t *)t->extra;
             int32_t i;
 
@@ -909,7 +906,6 @@ ndt_var_dim(ndt_t *type, bool copy_meta, int32_t noffsets, const int32_t *offset
             break;
         }
         t->data_align = type->data_align;
-        t->meta_size = sizeof(ndt_var_dim_meta_t) + extra;
     }
 
     return t;
@@ -1022,7 +1018,6 @@ ndt_item_option(ndt_t *type, ndt_context_t *ctx)
         if (t->access == Concrete) {
             t->data_size = type->data_size;
             t->data_align = type->data_align;
-            t->meta_size = 0;
         }
  
         return t;
@@ -1058,7 +1053,6 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
         if (t->access == Concrete) {
             t->data_size = type->data_size;
             t->data_align = type->data_align;
-            t->meta_size = 0;
         }
  
         return t;
@@ -1151,7 +1145,6 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
     if (t->access == Concrete) {
         t->data_size = type->data_size;
         t->data_align = type->data_align;
-        t->meta_size = 0;
     }
 
     return t;
@@ -1178,7 +1171,6 @@ ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
     if (t->access == Concrete) {
         t->data_size = type->data_size;
         t->data_align = type->data_align;
-        t->meta_size = 0;
     }
 
     return t;
@@ -1589,8 +1581,6 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
         return NULL;
     }
 
-    t->meta_size = 0;
-
     return t;
 }
 
@@ -1653,7 +1643,6 @@ ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
     t->access = Concrete;
     t->data_size = ndt_sizeof_encoding(encoding);
     t->data_align = ndt_alignof_encoding(encoding);
-    t->meta_size = 0;
 
     return t;
 }
@@ -1673,7 +1662,6 @@ ndt_string(ndt_context_t *ctx)
     t->access = Concrete;
     t->data_size = sizeof(ndt_sized_string_t);
     t->data_align = alignof(ndt_sized_string_t);
-    t->meta_size = 0;
 
     return t;
 }
@@ -1695,7 +1683,6 @@ ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
     t->access = Concrete;
     t->data_size = ndt_sizeof_encoding(encoding) * size;
     t->data_align = ndt_alignof_encoding(encoding);
-    t->meta_size = 0;
 
     return t;
 }
@@ -1722,7 +1709,6 @@ ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx)
     t->access = Concrete;
     t->data_size = sizeof(ndt_bytes_t);
     t->data_align = alignof(ndt_bytes_t);
-    t->meta_size = 0;
 
     return t;
 }
@@ -1750,7 +1736,6 @@ ndt_fixed_bytes(size_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
     t->access = Concrete;
     t->data_size = size;
     t->data_align = align;
-    t->meta_size = 0;
 
     return t;
 }
@@ -1797,7 +1782,6 @@ ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx)
     t->access = Concrete;
     t->data_size = sizeof(ndt_memory_t);
     t->data_align = alignof(ndt_memory_t);
-    t->meta_size = 0;
 
     return t;
 }
@@ -1819,7 +1803,6 @@ ndt_pointer(ndt_t *type, ndt_context_t *ctx)
     t->access = Concrete;
     t->data_size = sizeof(void *);
     t->data_align = alignof(void *);
-    t->meta_size = 0;
 
     return t;
 }
