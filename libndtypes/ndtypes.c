@@ -181,21 +181,21 @@ ndt_strdup(const char *s, ndt_context_t *ctx)
 /******************************************************************************/
 
 void
-ndt_memory_del(ndt_memory_t *mem)
+ndt_value_del(ndt_value_t *mem)
 {
     if (mem == NULL) {
         return;
     }
 
-    if (mem->t->tag == String) {
-        ndt_free(mem->v.String);
+    if (mem->tag == ValString) {
+        ndt_free(mem->ValString);
     }
-    ndt_del(mem->t);
+
     ndt_free(mem);
 }
 
 void
-ndt_memory_array_del(ndt_memory_t *mem, size_t ntypes)
+ndt_value_array_del(ndt_value_t *mem, size_t ntypes)
 {
     size_t i;
 
@@ -204,10 +204,9 @@ ndt_memory_array_del(ndt_memory_t *mem, size_t ntypes)
     }
 
     for (i = 0; i < ntypes; i++) {
-        if (mem[i].t->tag == String) {
-            ndt_free(mem[i].v.String);
+        if (mem[i].tag == ValString) {
+            ndt_free(mem[i].ValString);
         }
-        ndt_del(mem[i].t);
     }
 
     ndt_free(mem);
@@ -591,7 +590,7 @@ ndt_del(ndt_t *t)
         ndt_free(t->Typevar.name);
         break;
     case Categorical:
-        ndt_memory_array_del(t->Categorical.types, t->Categorical.ntypes);
+        ndt_value_array_del(t->Categorical.types, t->Categorical.ntypes);
         break;
     case Pointer:
         ndt_del(t->Pointer.type);
@@ -1744,35 +1743,42 @@ ndt_fixed_bytes(size_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
 static int
 cmp(const void *x, const void *y)
 {
-    const ndt_memory_t *p = (const ndt_memory_t *)x;
-    const ndt_memory_t *q = (const ndt_memory_t *)y;
+    const ndt_value_t *p = (const ndt_value_t *)x;
+    const ndt_value_t *q = (const ndt_value_t *)y;
 
-    if (p->t->tag == q->t->tag) {
-        return ndt_memory_compare(p, q);
-    }
-    return p->t->tag - q->t->tag;
+    return ndt_value_compare(p, q);
 }
 
 ndt_t *
-ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx)
+ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx)
 {
+    ndt_value_t *tmp;
     ndt_t *t;
     size_t i;
 
-    qsort(types, ntypes, sizeof *types, cmp);
+    tmp = ndt_alloc(ntypes, sizeof(ndt_value_t));
+    if (tmp == NULL) {
+        ndt_value_array_del(types, ntypes);
+        return ndt_memory_error(ctx);
+    }
+
+    memcpy(tmp, types, ntypes * sizeof(ndt_value_t));
+    qsort(tmp, ntypes, sizeof *tmp, cmp);
 
     for (i = 0; i+1 < ntypes; i++) {
-        if (ndt_memory_equal(&types[i], &types[i+1])) {
-            ndt_memory_array_del(types, ntypes);
+        if (ndt_value_equal(&tmp[i], &tmp[i+1])) {
+            ndt_free(tmp);
+            ndt_value_array_del(types, ntypes);
             ndt_err_format(ctx, NDT_ValueError, "duplicate category entries");
             return NULL;
         }
     }
+    ndt_free(tmp);
 
     /* abstract type */
     t = ndt_new(Categorical, ctx);
     if (t == NULL) {
-        ndt_memory_array_del(types, ntypes);
+        ndt_value_array_del(types, ntypes);
         return NULL;
     }
     t->Categorical.ntypes = ntypes;
@@ -1780,8 +1786,8 @@ ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = sizeof(ndt_memory_t);
-    t->data_align = alignof(ndt_memory_t);
+    t->data_size = sizeof(ndt_value_t);
+    t->data_align = alignof(ndt_value_t);
 
     return t;
 }
@@ -1976,164 +1982,117 @@ ndt_is_scalar(const ndt_t *t)
 /**********************************************************************/
 
 /* Return a new ndt memory buffer. Input types are restricted. */
-ndt_memory_t *
-ndt_memory_from_number(char *v, ndt_t *t, ndt_context_t *ctx)
+ndt_value_t *
+ndt_value_from_number(enum ndt_value tag, char *v, ndt_context_t *ctx)
 {
-    ndt_memory_t *mem;
-
-    if (v[0] == '-' && ndt_is_unsigned(t)) {
-        ndt_err_format(ctx, NDT_ValueError,
-                       "expected unsigned value, got: '%s'", ndt_tag_as_string(t->tag));
-        ndt_free(v);
-        ndt_del(t);
-        return NULL;
-    }
+    ndt_value_t *mem;
 
     mem = ndt_alloc(1, sizeof *mem);
     if (mem == NULL) {
         ndt_free(v);
-        ndt_del(t);
         return ndt_memory_error(ctx);
     }
+    mem->tag = tag;
 
-    switch (t->tag) {
-    case Bool:
-         mem->v.Bool = ndt_strtobool(v, ctx); break;
-    case Int8:
-        mem->v.Int8 = (int8_t)ndt_strtol(v, INT8_MIN, INT8_MAX, ctx); break;
-    case Int16:
-        mem->v.Int16 = (int16_t)ndt_strtol(v, INT16_MIN, INT16_MAX, ctx); break;
-    case Int32:
-        mem->v.Int32 = (int32_t)ndt_strtol(v, INT32_MIN, INT32_MAX, ctx); break;
-    case Int64:
-        mem->v.Int64 = (int64_t)ndt_strtoll(v, INT64_MIN, INT64_MAX, ctx); break;
-    case Uint8:
-        mem->v.Uint8 = (uint8_t)ndt_strtoul(v, UINT8_MAX, ctx); break;
-    case Uint16:
-        mem->v.Uint16 = (uint16_t)ndt_strtoul(v, UINT16_MAX, ctx); break;
-    case Uint32:
-        mem->v.Uint32 = (uint32_t)ndt_strtoul(v, UINT32_MAX, ctx); break;
-    case Uint64:
-        mem->v.Uint64 = (uint64_t)ndt_strtoull(v, UINT64_MAX, ctx); break;
-    case Float32:
-        mem->v.Float32 = ndt_strtof(v, ctx); break;
-    case Float64:
-        mem->v.Float64 = ndt_strtod(v, ctx); break;
+    switch (tag) {
+    case ValBool:
+        mem->ValBool = ndt_strtobool(v, ctx); break;
+    case ValInt64:
+        mem->ValInt64 = (int64_t)ndt_strtoll(v, INT64_MIN, INT64_MAX, ctx); break;
+    case ValFloat64:
+        mem->ValFloat64 = ndt_strtod(v, ctx); break;
     default:
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "expected number type, got: '%s'", ndt_tag_as_string(t->tag));
+        ndt_err_format(ctx, NDT_InvalidArgumentError, "expected number tag");
         break;
     }
 
     ndt_free(v);
     if (ctx->err != NDT_Success) {
         ndt_free(mem);
-        ndt_del(t);
         return NULL;
     }
-    mem->t = t;
 
     return mem;
 }
 
 /* Return a new ndt memory buffer. The input type is 'string'. */
-ndt_memory_t *
-ndt_memory_from_string(char *v, ndt_t *t, ndt_context_t *ctx)
+ndt_value_t *
+ndt_value_from_string(char *v, ndt_context_t *ctx)
 {
-    ndt_memory_t *mem;
-
-    if (t->tag != String) {
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "expected string type, got: '%s'", ndt_tag_as_string(t->tag));
-        ndt_free(v);
-        ndt_del(t);
-        return NULL;
-    }
+    ndt_value_t *mem;
 
     mem = ndt_alloc(1, sizeof *mem);
     if (mem == NULL) {
         ndt_free(v);
-        ndt_del(t);
         return ndt_memory_error(ctx);
     }
 
     /* XXX: check utf8 */
-    mem->v.String = v;
-    mem->t = t;
+    mem->tag = ValString;
+    mem->ValString = v;
+
+    return mem;
+}
+
+/* Return a new ndt memory buffer. The input type is 'NA'. */
+ndt_value_t *
+ndt_value_na(ndt_context_t *ctx)
+{
+    ndt_value_t *mem;
+
+    mem = ndt_alloc(1, sizeof *mem);
+    if (mem == NULL) {
+        return ndt_memory_error(ctx);
+    }
+    mem->tag = ValNA;
 
     return mem;
 }
 
 int
-ndt_memory_equal(const ndt_memory_t *x, const ndt_memory_t *y)
+ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y)
 {
-    if (x->t->tag != y->t->tag) {
+    if (x->tag != y->tag) {
         return 0;
     }
 
-    switch(x->t->tag) {
-    case Bool:
-        return x->v.Bool == y->v.Bool;
-    case Int8:
-        return x->v.Int8 == y->v.Int8;
-    case Int16:
-        return x->v.Int16 == y->v.Int16;
-    case Int32:
-        return x->v.Int32 == y->v.Int32;
-    case Int64:
-        return x->v.Int64 == y->v.Int64;
-    case Uint8:
-        return x->v.Uint8 == y->v.Uint8;
-    case Uint16:
-        return x->v.Uint16 == y->v.Uint16;
-    case Uint32:
-        return x->v.Uint32 == y->v.Uint32;
-    case Uint64:
-        return x->v.Uint64 == y->v.Uint64;
-    case Float32:
-        return x->v.Float32 == y->v.Float32;
-    case Float64:
-        return x->v.Float64 == y->v.Float64;
-    case String:
-        return strcmp(x->v.String, y->v.String) == 0;
-    default:
-        return 0;
+    switch(x->tag) {
+    case ValBool:
+        return x->ValBool == y->ValBool;
+    case ValInt64:
+        return x->ValInt64 == y->ValInt64;
+    case ValFloat64:
+        return x->ValFloat64 == y->ValFloat64;
+    case ValString:
+        return strcmp(x->ValString, y->ValString) == 0;
+    case ValNA:
+        return 1;
     }
+
+    abort(); /* NOT REACHED: tags are exhaustive. */
 }
 
 int
-ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y)
+ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y)
 {
-    assert(x->t->tag == y->t->tag);
-
-    switch(x->t->tag) {
-    case Bool:
-        return x->v.Bool < y->v.Bool ? -1 : x->v.Bool != y->v.Bool;
-    case Int8:
-        return x->v.Int8 < y->v.Int8 ? -1 : x->v.Int8 != y->v.Int8;
-    case Int16:
-        return x->v.Int16 < y->v.Int16 ? -1 : x->v.Int16 != y->v.Int16;
-    case Int32:
-        return x->v.Int32 < y->v.Int32 ? -1 : x->v.Int32 != y->v.Int32;
-    case Int64:
-        return x->v.Int64 < y->v.Int64 ? -1 : x->v.Int64 != y->v.Int64;
-    case Uint8:
-        return x->v.Uint8 < y->v.Uint8 ? -1 : x->v.Uint8 != y->v.Uint8;
-    case Uint16:
-        return x->v.Uint16 < y->v.Uint16 ? -1 : x->v.Uint16 != y->v.Uint16;
-    case Uint32:
-        return x->v.Uint32 < y->v.Uint32 ? -1 : x->v.Uint32 != y->v.Uint32;
-    case Uint64:
-        return x->v.Uint64 < y->v.Uint64 ? -1 : x->v.Uint64 != y->v.Uint64;
-    case Float32:
-        return x->v.Float32 < y->v.Float32 ? -1 : x->v.Float32 != y->v.Float32;
-    case Float64:
-        return x->v.Float64 < y->v.Float64 ? -1 : x->v.Float64 != y->v.Float64;
-    case String:
-        return strcmp(x->v.String, y->v.String);
-    default:
-        abort(); /* NOT REACHED */
+    if (x->tag != y->tag) {
+        return x->tag - y->tag;
     }
+
+    switch(x->tag) {
+    case ValBool:
+        return x->ValBool < y->ValBool ? -1 : x->ValBool != y->ValBool;
+    case ValInt64:
+        return x->ValInt64 < y->ValInt64 ? -1 : x->ValInt64 != y->ValInt64;
+    case ValFloat64:
+        return x->ValFloat64 < y->ValFloat64 ? -1 : x->ValFloat64 != y->ValFloat64;
+    case ValString:
+        return strcmp(x->ValString, y->ValString);
+    case ValNA: /* XXX */
+        return 0;
+    }
+
+    abort(); /* NOT REACHED: tags are exhaustive. */
 }
 
 

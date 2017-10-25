@@ -342,11 +342,11 @@ mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx)
 }
 
 ndt_t *
-mk_categorical(ndt_memory_seq_t *seq, ndt_context_t *ctx)
+mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    seq = ndt_memory_seq_finalize(seq);
+    seq = ndt_value_seq_finalize(seq);
     t = ndt_categorical(seq->ptr, seq->len, ctx);
 
     ndt_free(seq);

@@ -238,8 +238,8 @@ match_record_fields(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
 }
 
 static int
-match_categorical(ndt_memory_t *p, size_t plen,
-                  ndt_memory_t *c, size_t clen)
+match_categorical(ndt_value_t *p, size_t plen,
+                  ndt_value_t *c, size_t clen)
 {
     size_t i;
 
@@ -248,7 +248,7 @@ match_categorical(ndt_memory_t *p, size_t plen,
     }
 
     for (i = 0; i < plen; i++) {
-        if (!ndt_memory_equal(&p[i], &c[i])) {
+        if (!ndt_value_equal(&p[i], &c[i])) {
             return 0;
         }
     }

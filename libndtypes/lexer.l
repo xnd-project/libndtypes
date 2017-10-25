@@ -184,6 +184,7 @@ yycolumn = 1;
 "fixed_bytes"  { return FIXED_BYTES; }
 
 "categorical"  { return CATEGORICAL; }
+"NA"           { return NA; }
 
 "pointer"      { return POINTER; }
 

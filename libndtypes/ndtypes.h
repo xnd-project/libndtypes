@@ -109,30 +109,6 @@
 /* Types: ndt_t */
 typedef struct _ndt ndt_t;
 
-/* Values: ndt_value_t */
-typedef union {
-  bool Bool;
-  char Char;
-  int8_t Int8;
-  int16_t Int16;
-  int32_t Int32;
-  int64_t Int64;
-  uint8_t Uint8;
-  uint16_t Uint16;
-  uint32_t Uint32;
-  uint64_t Uint64;
-  float Float32;
-  double Float64;
-  char *String;
-} ndt_value_t;
-
-
-/* Typed memory */
-typedef struct {
-    ndt_t *t;
-    ndt_value_t v;
-} ndt_memory_t;
-
 /* Internal option type */
 enum ndt_option {
   None,
@@ -313,6 +289,25 @@ typedef struct {
   } Concrete;
 } ndt_field_t;
 
+/* Selected values for the categorical type. */
+enum ndt_value {
+  ValBool,
+  ValInt64,
+  ValFloat64,
+  ValString,
+  ValNA,
+};
+
+typedef struct {
+    enum ndt_value tag;
+    union {
+        bool ValBool;
+        int64_t ValInt64;
+        double ValFloat64;
+        char *ValString;
+    };
+} ndt_value_t;
+
 /* Datashape type */
 struct _ndt {
     /* Always defined */
@@ -414,7 +409,7 @@ struct _ndt {
 
         struct {
             size_t ntypes;
-            ndt_memory_t *types;
+            ndt_value_t *types;
         } Categorical;
 
         struct {
@@ -554,8 +549,8 @@ NDTYPES_API double ndt_strtod(const char *v, ndt_context_t *ctx);
 
 
 /*** Sequence elements ***/
-NDTYPES_API void ndt_memory_del(ndt_memory_t *mem);
-NDTYPES_API void ndt_memory_array_del(ndt_memory_t *types, size_t ntypes);
+NDTYPES_API void ndt_value_del(ndt_value_t *mem);
+NDTYPES_API void ndt_value_array_del(ndt_value_t *types, size_t ntypes);
 
 NDTYPES_API void ndt_attr_del(ndt_attr_t *attr);
 NDTYPES_API void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
@@ -623,15 +618,16 @@ NDTYPES_API ndt_t *ndt_string(ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_bytes(size_t size, uint16_opt_t align, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_categorical(ndt_memory_t *types, size_t ntypes, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_pointer(ndt_t *type, ndt_context_t *ctx);
 
 
 /* Typed values */
-NDTYPES_API ndt_memory_t *ndt_memory_from_number(char *v, ndt_t *t, ndt_context_t *ctx);
-NDTYPES_API ndt_memory_t *ndt_memory_from_string(char *v, ndt_t *t, ndt_context_t *ctx);
-NDTYPES_API int ndt_memory_equal(const ndt_memory_t *x, const ndt_memory_t *y);
-NDTYPES_API int ndt_memory_compare(const ndt_memory_t *x, const ndt_memory_t *y);
+NDTYPES_API ndt_value_t *ndt_value_from_number(enum ndt_value tag, char *v, ndt_context_t *ctx);
+NDTYPES_API ndt_value_t *ndt_value_from_string(char *v, ndt_context_t *ctx);
+NDTYPES_API ndt_value_t *ndt_value_na(ndt_context_t *ctx);
+NDTYPES_API int ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y);
+NDTYPES_API int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
 
 
 /******************************************************************************/

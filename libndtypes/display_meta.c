@@ -302,42 +302,28 @@ comma_variadic_flag(buf_t *buf, enum ndt_variadic flag, int d, ndt_context_t *ct
 }
 
 static int
-value(buf_t *buf, const ndt_memory_t *mem, ndt_context_t *ctx)
+value(buf_t *buf, const ndt_value_t *mem, ndt_context_t *ctx)
 {
-    switch (mem->t->tag) {
-    case Bool:
-        return ndt_snprintf(ctx, buf, mem->v.Bool ? "true" : "false");
-    case Int8:
-        return ndt_snprintf(ctx, buf, "%" PRIi8, mem->v.Int8);
-    case Int16:
-        return ndt_snprintf(ctx, buf, "%" PRIi16, mem->v.Int16);
-    case Int32:
-        return ndt_snprintf(ctx, buf, "%" PRIi32, mem->v.Int32);
-    case Int64:
-        return ndt_snprintf(ctx, buf, "%" PRIi64, mem->v.Int64);
-    case Uint8:
-        return ndt_snprintf(ctx, buf, "%" PRIu8, mem->v.Uint8);
-    case Uint16:
-        return ndt_snprintf(ctx, buf, "%" PRIu16, mem->v.Uint16);
-    case Uint32:
-        return ndt_snprintf(ctx, buf, "%" PRIu32, mem->v.Uint32);
-    case Uint64:
-        return ndt_snprintf(ctx, buf, "%" PRIu64, mem->v.Uint64);
-    case Float32:
-        return ndt_snprintf(ctx, buf, "%g", mem->v.Float32);
-    case Float64:
-        return ndt_snprintf(ctx, buf, "%g", mem->v.Float64);
-    case String:
-        return ndt_snprintf(ctx, buf, "'%s'", mem->v.String);
-    default:
-        ndt_err_format(ctx, NDT_NotImplementedError,
-                       "unsupported type: '%s'", ndt_tag_as_string(mem->t->tag));
-        return 0;
+    switch (mem->tag) {
+    case ValBool:
+        return ndt_snprintf(ctx, buf, mem->ValBool ? "true" : "false");
+    case ValInt64:
+        return ndt_snprintf(ctx, buf, "%" PRIi64, mem->ValInt64);
+    case ValFloat64:
+        return ndt_snprintf(ctx, buf, "%g", mem->ValFloat64);
+    case ValString:
+        return ndt_snprintf(ctx, buf, "'%s'", mem->ValString);
+    case ValNA:
+        return ndt_snprintf(ctx, buf, "NA");
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_err_format(ctx, NDT_RuntimeError, "invalid value tag");
+    return 0;
 }
 
 static int
-categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *ctx)
+categorical(buf_t *buf, ndt_value_t *mem, size_t ntypes, ndt_context_t *ctx)
 {
     size_t i;
     int n;
@@ -349,12 +335,6 @@ categorical(buf_t *buf, ndt_memory_t *mem, size_t ntypes, int d, ndt_context_t *
         }
 
         n = value(buf, &mem[i], ctx);
-        if (n < 0) return -1;
-
-        n = ndt_snprintf(ctx, buf, " : ");
-        if (n < 0) return -1;
-
-        n = datashape(buf, mem[i].t, d, 1, ctx);
         if (n < 0) return -1;
     }
 
@@ -816,7 +796,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Categorical(");
             if (n < 0) return -1;
 
-            n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, d, ctx);
+            n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, ctx);
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);

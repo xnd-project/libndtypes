@@ -48,8 +48,8 @@ typedef struct {
 typedef struct {
     size_t len;
     size_t reserved;
-    ndt_memory_t *ptr;
-} ndt_memory_seq_t;
+    ndt_value_t *ptr;
+} ndt_value_seq_t;
 
 typedef struct {
     size_t len;
@@ -69,10 +69,10 @@ void ndt_field_seq_del(ndt_field_seq_t *);
 ndt_field_seq_t *ndt_field_seq_append(ndt_field_seq_t *, ndt_field_t *, ndt_context_t *ctx);
 ndt_field_seq_t *ndt_field_seq_finalize(ndt_field_seq_t *);
 
-ndt_memory_seq_t *ndt_memory_seq_new(ndt_memory_t *, ndt_context_t *ctx);
-void ndt_memory_seq_del(ndt_memory_seq_t *);
-ndt_memory_seq_t *ndt_memory_seq_append(ndt_memory_seq_t *, ndt_memory_t *, ndt_context_t *ctx);
-ndt_memory_seq_t *ndt_memory_seq_finalize(ndt_memory_seq_t *);
+ndt_value_seq_t *ndt_value_seq_new(ndt_value_t *, ndt_context_t *ctx);
+void ndt_value_seq_del(ndt_value_seq_t *);
+ndt_value_seq_t *ndt_value_seq_append(ndt_value_seq_t *, ndt_value_t *, ndt_context_t *ctx);
+ndt_value_seq_t *ndt_value_seq_finalize(ndt_value_seq_t *);
 
 ndt_attr_seq_t *ndt_attr_seq_new(ndt_attr_t *, ndt_context_t *ctx);
 void ndt_attr_seq_del(ndt_attr_seq_t *);

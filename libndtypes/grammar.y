@@ -88,8 +88,8 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
     ndt_t *ndt;
     ndt_field_t *field;
     ndt_field_seq_t *field_seq;
-    ndt_memory_t *typed_value;
-    ndt_memory_seq_t *typed_value_seq;
+    ndt_value_t *typed_value;
+    ndt_value_seq_t *typed_value_seq;
     ndt_attr_t *attribute;
     ndt_attr_seq_t *attribute_seq;
     enum ndt_variadic variadic_flag;
@@ -155,7 +155,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    UNSIGNED_KIND UINT8 UINT16 UINT32 UINT64
    FLOAT_KIND FLOAT16 FLOAT32 FLOAT64
    COMPLEX_KIND COMPLEX32 COMPLEX64 COMPLEX128
-   CATEGORICAL
+   CATEGORICAL NA
    INTPTR UINTPTR SIZE
    CHAR
    STRING FIXED_STRING_KIND FIXED_STRING
@@ -177,8 +177,8 @@ ERRTOKEN
 %destructor { ndt_del($$); } <ndt>
 %destructor { ndt_field_del($$); } <field>
 %destructor { ndt_field_seq_del($$); } <field_seq>
-%destructor { ndt_memory_del($$); } <typed_value>
-%destructor { ndt_memory_seq_del($$); } <typed_value_seq>
+%destructor { ndt_value_del($$); } <typed_value>
+%destructor { ndt_value_seq_del($$); } <typed_value_seq>
 %destructor { ndt_attr_del($$); } <attribute>
 %destructor { ndt_attr_seq_del($$); } <attribute_seq>
 %destructor { ndt_free($$); } <string>
@@ -308,13 +308,14 @@ categorical:
   CATEGORICAL LPAREN typed_value_seq RPAREN { $$ = mk_categorical($3, ctx); if ($$ == NULL) YYABORT; }
 
 typed_value_seq:
-  typed_value                       { $$ = ndt_memory_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
-| typed_value_seq COMMA typed_value { $$ = ndt_memory_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  typed_value                       { $$ = ndt_value_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
+| typed_value_seq COMMA typed_value { $$ = ndt_value_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 typed_value:
-  INTEGER COLON datashape     { $$ = ndt_memory_from_number($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| FLOATNUMBER COLON datashape { $$ = ndt_memory_from_number($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| STRINGLIT COLON datashape   { $$ = ndt_memory_from_string($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  INTEGER     { $$ = ndt_value_from_number(ValInt64, $1, ctx); if ($$ == NULL) YYABORT; }
+| FLOATNUMBER { $$ = ndt_value_from_number(ValFloat64, $1, ctx); if ($$ == NULL) YYABORT; }
+| STRINGLIT   { $$ = ndt_value_from_string($1, ctx); if ($$ == NULL) YYABORT; }
+| NA          { $$ = ndt_value_na(ctx); if ($$ == NULL) YYABORT; }
 
 variadic_flag:
   %empty   { $$ = Nonvariadic; }

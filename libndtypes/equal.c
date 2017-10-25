@@ -96,8 +96,8 @@ record_fields_equal(const ndt_t *p, const ndt_t *c)
 }
 
 static int
-categorical_equal(ndt_memory_t *p, size_t plen,
-                  ndt_memory_t *c, size_t clen)
+categorical_equal(ndt_value_t *p, size_t plen,
+                  ndt_value_t *c, size_t clen)
 {
     size_t i;
 
@@ -106,7 +106,7 @@ categorical_equal(ndt_memory_t *p, size_t plen,
     }
 
     for (i = 0; i < plen; i++) {
-        if (!ndt_memory_equal(&p[i], &c[i])) {
+        if (!ndt_value_equal(&p[i], &c[i])) {
             return 0;
         }
     }

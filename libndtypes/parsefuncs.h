@@ -67,7 +67,7 @@ ndt_t *mk_function(ndt_t *ret,
                    enum ndt_variadic rflag, ndt_field_seq_t *rseq,
                    ndt_context_t *ctx);
 ndt_t *mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx);
-ndt_t *mk_categorical(ndt_memory_seq_t *seq, ndt_context_t *ctx);
+ndt_t *mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx);
 ndt_attr_t *mk_attr(char *name, char *value, ndt_context_t *ctx);
 ndt_t *mk_var_dim_offsets(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
 
