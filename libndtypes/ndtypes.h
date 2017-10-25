@@ -688,5 +688,7 @@ typedef struct {
     char *data;
 } ndt_bytes_t;
 
+typedef size_t ndt_categorical_t;
+
 
 #endif /* NDTYPES_H */

@@ -1786,8 +1786,8 @@ ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = sizeof(ndt_value_t);
-    t->data_align = alignof(ndt_value_t);
+    t->data_size = sizeof(ndt_categorical_t);
+    t->data_align = alignof(ndt_categorical_t);
 
     return t;
 }
