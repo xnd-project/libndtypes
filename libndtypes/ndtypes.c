@@ -818,7 +818,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
  */
 ndt_t *
 ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets,
-            ndt_context_t *ctx)
+            int64_t start, int64_t stop, int64_t step, ndt_context_t *ctx)
 {
     ndt_t *t;
     enum ndt_access access = Abstract;
@@ -870,7 +870,7 @@ ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *off
 
     /* concrete access */
     if (access == Concrete) {
-        t->Concrete.VarDim.nshapes = noffsets-1;
+        t->Concrete.VarDim.noffsets = noffsets;
         if (copy_offsets) {
             int32_t *_offsets = (int32_t *)t->extra;
             int32_t i;
@@ -885,14 +885,15 @@ ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *off
             t->Concrete.VarDim.offsets = offsets;
         }
 
-        t->Concrete.VarDim.suboffset = 0;
-        t->Concrete.VarDim.stride = 0;
+        t->Concrete.VarDim.start = start;
+        t->Concrete.VarDim.stop = stop;
+        t->Concrete.VarDim.step = step;
 
         switch (type->tag) {
         case VarDim:
-            if (offsets[noffsets-1] != type->Concrete.VarDim.nshapes) {
+            if (offsets[noffsets-1] != type->Concrete.VarDim.noffsets-1) {
                 ndt_err_format(ctx, NDT_ValueError,
-                    "missing or invalid number of var-dim shape arguments");
+                    "missing or invalid number of var-dim offset arguments");
                 ndt_del(t);
                 return NULL;
             }

@@ -426,10 +426,11 @@ struct _ndt {
             } FixedDim;
 
             struct {
-                int64_t suboffset;
                 int64_t itemsize;
-                int64_t stride;
-                int64_t nshapes;
+                int64_t start;
+                int64_t stop;
+                int64_t step;
+                int64_t noffsets;
                 const int32_t *offsets;
             } VarDim;
 
@@ -576,7 +577,8 @@ NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets,
+                               int64_t start, int64_t stop, int64_t step, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 
 NDTYPES_API ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);

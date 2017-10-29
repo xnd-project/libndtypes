@@ -111,12 +111,16 @@ ndt_t *
 mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 {
     if (attrs) {
-        ndt_t *t;
         int32_t *offsets = NULL;
         size_t noffsets = 0;
+        int64_opt_t start = {None, 0};
+        int64_opt_t stop = {None, 0};
+        int64_opt_t step = {None, 0};
+        ndt_t *t;
         int ret;
 
-        ret = ndt_parse_attr(VarDim, ctx, attrs, &offsets, &noffsets);
+        ret = ndt_parse_attr(VarDim, ctx, attrs, &offsets, &noffsets,
+                             &start, &stop, &step);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             ndt_del(type);
@@ -130,13 +134,29 @@ mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
             return NULL;
         }
 
-        t = ndt_var_dim(type, true, (int32_t)noffsets, offsets, ctx);
+        if (start.tag == None) {
+            start.tag = Some;
+            start.Some = 0;
+        }
+
+        if (stop.tag == None) {
+            stop.tag = Some;
+            stop.Some = INT64_MAX;
+        }
+
+        if (step.tag == None) {
+            step.tag = Some;
+            step.Some = 1;
+        }
+
+        t = ndt_var_dim(type, true, (int32_t)noffsets, offsets, start.Some,
+                        stop.Some, step.Some, ctx);
         ndt_free(offsets);
         return t;
 
     }
     else {
-        return ndt_var_dim(type, false, 0, NULL, ctx);
+        return ndt_var_dim(type, false, 0, NULL, 0, INT64_MAX, 1, ctx);
     }
 }
 
