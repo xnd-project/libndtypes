@@ -446,9 +446,15 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case FixedString:
-            n = ndt_snprintf(ctx, buf, "fixed_string(%zu, %s)",
-                          t->FixedString.size,
-                          ndt_encoding_as_string(t->FixedString.encoding));
+            if (t->FixedString.encoding == Utf8) {
+                n = ndt_snprintf(ctx, buf, "fixed_string(%zu)",
+                                 t->FixedString.size);
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, "fixed_string(%zu, %s)",
+                                 t->FixedString.size,
+                                 ndt_encoding_as_string(t->FixedString.encoding));
+            }
             return n;
 
         case Char:
@@ -457,12 +463,23 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case Bytes:
-            n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
+            if (t->Bytes.target_align == 1) {
+                n = ndt_snprintf(ctx, buf, "bytes()");
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
+            }
             return n;
 
         case FixedBytes:
-            n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu, align=%" PRIu8 ")",
-                          t->FixedBytes.size, t->FixedBytes.align);
+            if (t->FixedBytes.align == 1) {
+                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu)",
+                                 t->FixedBytes.size);
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu, align=%" PRIu8 ")",
+                                 t->FixedBytes.size, t->FixedBytes.align);
+            }
             return n;
 
         case Categorical:

@@ -73,7 +73,7 @@ const indent_testcase_t indent_tests[] = {
     SF : ?int32,\n\
     GIDP : ?int32,\n\
     AString : fixed_string(100, 'utf32'),\n\
-    BString : fixed_string(100, 'utf8'),\n\
+    BString : fixed_string(100),\n\
     CBytes : bytes(align=16),\n\
     DBytes : fixed_bytes(size=1600, align=16)\n\
   },\n\
