@@ -27,7 +27,7 @@ matrix:
       before_script:
         - export CC=gcc-4.9
       script:
-        - ./configure
+        - ./configure --with-valgrind
         - make memcheck
         - python3 setup.py module
         - python3 setup.py test

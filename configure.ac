@@ -58,6 +58,18 @@ AC_HEADER_STDC
 AC_PROG_INSTALL
 AC_SUBST(INSTALL)
 
+# Exact memcheck:
+AC_MSG_CHECKING([for --with-valgrind])
+AC_ARG_WITH([valgrind],
+  AS_HELP_STRING([--with-valgrind], [enable exact memcheck]),,
+  with_valgrind=no)
+AC_MSG_RESULT([$with_valgrind])
+if test "$with_valgrind" != no; then
+    AC_CHECK_HEADER([valgrind/memcheck.h],
+      [AC_DEFINE([WITH_VALGRIND], 1, [required for exact memcheck])],
+      [AC_MSG_ERROR([exact memcheck requested but headers not available])]
+    )
+fi
 
 # Compiler dependent settings:
 NDT_WARN=
@@ -90,9 +102,9 @@ AC_SUBST(NDT_OPT)
 
 
 if test -z "$CFLAGS"; then
-    CONFIGURE_CFLAGS="$NDT_WARN $NDT_CONFIG $NDT_OPT"
+    CONFIGURE_CFLAGS="-I.. $NDT_WARN $NDT_CONFIG $NDT_OPT"
 else
-    CONFIGURE_CFLAGS="$NDT_WARN $NDT_CONFIG $NDT_OPT $CFLAGS"
+    CONFIGURE_CFLAGS="-I.. $NDT_WARN $NDT_CONFIG $NDT_OPT $CFLAGS"
 fi
 
 if test -n "$LDFLAGS"; then

@@ -668,16 +668,12 @@ NDTYPES_API extern void *(* ndt_callocfunc)(size_t nmemb, size_t size);
 NDTYPES_API extern void *(* ndt_reallocfunc)(void *ptr, size_t size);
 NDTYPES_API extern void (* ndt_freefunc)(void *ptr);
 
-NDTYPES_API extern void *(* ndt_alignedallocfunc)(size_t alignment, size_t size);
-NDTYPES_API extern void (* ndt_alignedfreefunc)(void *ptr);
-
-
 NDTYPES_API void *ndt_alloc(size_t nmemb, size_t size);
 NDTYPES_API void *ndt_calloc(size_t nmemb, size_t size);
 NDTYPES_API void *ndt_realloc(void *ptr, size_t nmemb, size_t size);
 NDTYPES_API void ndt_free(void *ptr);
 
-NDTYPES_API void * ndt_aligned_alloc(size_t alignment, size_t nmemb, size_t size);
+NDTYPES_API void * ndt_aligned_calloc(size_t alignment, size_t size);
 NDTYPES_API void ndt_aligned_free(void *ptr);
 
 
