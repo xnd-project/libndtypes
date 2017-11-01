@@ -276,7 +276,13 @@ Ndtype_ArrayBoolFunc(ndt_is_f_contiguous)
 static PyObject *
 ndtype_richcompare(PyObject *v, PyObject *w, int op)
 {
-    int r = ndt_equal(NDT(v), NDT(w));
+    int r = 0;
+
+    assert(Ndt_Check(v));
+
+    if (Ndt_Check(w)) {
+        r = ndt_equal(NDT(v), NDT(w));
+    }
 
     switch (op) {
     case Py_EQ:
@@ -284,9 +290,7 @@ ndtype_richcompare(PyObject *v, PyObject *w, int op)
     case Py_NE:
         return PyBool_FromLong(!r);
     default:
-        PyErr_Format(PyExc_TypeError,
-            "unorderable type: '%.200s'", Py_TYPE(v)->tp_name);
-        return NULL;
+        Py_RETURN_NOTIMPLEMENTED;
     }
 }
 
