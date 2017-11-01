@@ -36,15 +36,15 @@
 #include <stdint.h>
 #include <limits.h>
 #include "ndtypes.h"
-#include "config.h"
-
-#ifdef WITH_VALGRIND
-#include <valgrind/memcheck.h>
-#endif
 
 
 #if defined(_MSC_VER)
   #pragma warning(disable : 4232)
+#else
+  #include "config.h"
+  #ifdef WITH_VALGRIND
+    #include <valgrind/memcheck.h>
+  #endif
 #endif
 
 #if SIZE_MAX > UINTPTR_MAX
@@ -170,5 +170,5 @@ ndt_aligned_free(void *aligned)
 #endif
 
     uintptr = *((uintptr_t *)aligned - 1);
-    free((void *)uintptr);
+    ndt_freefunc((void *)uintptr);
 }
