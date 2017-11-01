@@ -114,8 +114,8 @@ ndt_aligned_calloc(size_t alignment, size_t size)
         return NULL;
     }
 
-    if (alignment < alignof(max_align_t)) {
-        alignment = alignof(max_align_t);
+    if (alignment < MAX_ALIGN) {
+        alignment = MAX_ALIGN;
     }
 
     extra = alignment - 1;
