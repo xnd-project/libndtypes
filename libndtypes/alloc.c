@@ -157,7 +157,7 @@ ndt_aligned_calloc(size_t alignment, size_t size)
 }
 
 void
-aligned_free(void *aligned)
+ndt_aligned_free(void *aligned)
 {
     uintptr_t uintptr;
 
