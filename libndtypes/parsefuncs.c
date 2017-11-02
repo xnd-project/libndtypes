@@ -113,9 +113,9 @@ mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
     if (attrs) {
         int32_t *offsets = NULL;
         size_t noffsets = 0;
-        int64_opt_t start = {None, 0};
-        int64_opt_t stop = {None, 0};
-        int64_opt_t step = {None, 0};
+        int32_t start = 0;
+        int32_t stop = INT32_MAX;
+        int32_t step = 1;
         ndt_t *t;
         int ret;
 
@@ -134,29 +134,22 @@ mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
             return NULL;
         }
 
-        if (start.tag == None) {
-            start.tag = Some;
-            start.Some = 0;
+        if (start < 0 || stop < 0 || step < 0) {
+            ndt_err_format(ctx, NDT_ValueError,
+                           "start, stop, step must be zero or positive");
+            ndt_del(type);
+            ndt_free(offsets);
+            return NULL;
         }
 
-        if (stop.tag == None) {
-            stop.tag = Some;
-            stop.Some = INT64_MAX;
-        }
+        t = ndt_var_dim(type, true, (int32_t)noffsets, offsets,
+                        start, stop, step, ctx);
 
-        if (step.tag == None) {
-            step.tag = Some;
-            step.Some = 1;
-        }
-
-        t = ndt_var_dim(type, true, (int32_t)noffsets, offsets, start.Some,
-                        stop.Some, step.Some, ctx);
         ndt_free(offsets);
         return t;
-
     }
     else {
-        return ndt_var_dim(type, false, 0, NULL, 0, INT64_MAX, 1, ctx);
+        return ndt_var_dim(type, false, 0, NULL, 0, INT32_MAX, 1, ctx);
     }
 }
 

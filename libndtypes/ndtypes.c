@@ -818,7 +818,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
  */
 ndt_t *
 ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets,
-            int64_t start, int64_t stop, int64_t step, ndt_context_t *ctx)
+            int32_t start, int32_t stop, int32_t step, ndt_context_t *ctx)
 {
     ndt_t *t;
     enum ndt_access access = Abstract;
