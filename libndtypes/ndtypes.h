@@ -683,7 +683,7 @@ NDTYPES_API void ndt_aligned_free(void *ptr);
 
 typedef struct {
     size_t size;
-    char *data;
+    uint8_t *data;
 } ndt_bytes_t;
 
 typedef size_t ndt_categorical_t;
