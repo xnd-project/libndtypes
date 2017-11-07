@@ -489,6 +489,54 @@ ndt_alignof_encoding(enum ndt_encoding encoding)
 /*                                 Datashape                                  */
 /******************************************************************************/
 
+/* Invariants for all types except for var dimensions. */
+static int
+check_type_invariants(const ndt_t *type, ndt_context_t *ctx)
+{
+    if (type->tag == Module) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "nested module types are not supported");
+        return 0;
+    }
+
+    if (type->tag == VarDim) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "nested or non-uniform var dimensions are not supported");
+        return 0;
+    }
+
+    if (type->ndim > NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Invariants for var dimensions. */
+static int
+check_var_invariants(const ndt_t *type, ndt_context_t *ctx)
+{
+    if (type->tag == Module) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "nested module types are not supported");
+        return 0;
+    }
+
+    if (type->tag == FixedDim || type->tag == SymbolicDim) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "mixed fixed and var dim are not supported");
+        return 0;
+    }
+
+    if (type->ndim > NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+        return 0;
+    }
+
+    return 1;
+}
+
 ndt_t *
 ndt_new(enum ndt tag, ndt_context_t *ctx)
 {
@@ -682,16 +730,16 @@ ndt_dim_flags(const ndt_t *t)
 uint32_t
 ndt_common_flags(const ndt_t *t)
 {
-    return ndt_dim_flags(t) & ~NDT_Dim_option;
+    return ndt_dim_flags(t) & ~NDT_DIM_OPTION;
 }
 
 char
 ndt_order(const ndt_t *t)
 {
-    if (ndt_dim_flags(t) & NDT_C_contiguous) {
+    if (ndt_dim_flags(t) & NDT_C_CONTIGUOUS) {
         return 'C';
     }
-    if (ndt_dim_flags(t) & NDT_F_contiguous) {
+    if (ndt_dim_flags(t) & NDT_F_CONTIGUOUS) {
         return 'F';
     }
 
@@ -703,7 +751,7 @@ ndt_is_ndarray(const ndt_t *t)
 {
     switch (t->tag) {
     case FixedDim:
-        return t->FixedDim.flags & NDT_Ndarray;
+        return 1;
     default:
         return 0;
     }
@@ -715,15 +763,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx)
     ndt_t *t;
     uint32_t flags;
 
-    if (type->tag == VarDim) {
-        ndt_err_format(ctx, NDT_ValueError,
-                       "fixed dimensions cannot contain variable dimensions");
-        ndt_del(type);
-        return NULL;
-    }
-
-    if (type->ndim > NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+    if (!check_type_invariants(type, ctx)) {
         ndt_del(type);
         return NULL;
     }
@@ -731,7 +771,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx)
     flags = ndt_common_flags(type);
     switch (order) {
     case 'C':
-        if (flags & NDT_F_contiguous) {
+        if (flags & NDT_F_CONTIGUOUS) {
             ndt_err_format(ctx, NDT_ValueError, "mixed C and Fortran order");
             ndt_del(type);
             return NULL;
@@ -739,7 +779,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx)
         break;
 
     case 'F':
-        if (flags & NDT_C_contiguous) {
+        if (flags & NDT_C_CONTIGUOUS) {
             ndt_err_format(ctx, NDT_ValueError, "mixed C and Fortran order");
             ndt_del(type);
             return NULL;
@@ -783,15 +823,8 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    if (type->tag == VarDim) {
-        ndt_err_format(ctx, NDT_ValueError,
-                       "symbolic dimensions cannot contain variable dimensions");
-        ndt_del(type);
-        return NULL;
-    }
-
-    if (type->ndim > NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+    if (!check_type_invariants(type, ctx)) {
+        ndt_free(name);
         ndt_del(type);
         return NULL;
     }
@@ -814,7 +847,6 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 /*
  * len(shapes) == nshapes &&
  * len(offsets) == nshapes+1 &&
- * len(bitmap) == (nshapes + 7) / 8
  */
 ndt_t *
 ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets,
@@ -824,8 +856,7 @@ ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *off
     enum ndt_access access = Abstract;
     size_t extra = 0;
 
-    if (type->ndim > NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+    if (!check_var_invariants(type, ctx)) {
         ndt_del(type);
         return NULL;
     }
@@ -917,22 +948,16 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     ndt_t *t;
     uint32_t flags;
 
-    if (type->tag == VarDim) {
-        ndt_err_format(ctx, NDT_ValueError,
-                       "ellipsis dimensions cannot contain variable dimensions");
-        ndt_del(type);
-        return NULL;
-    }
-
-    if (type->ndim > NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+    if (!check_type_invariants(type, ctx)) {
+        ndt_free(name);
         ndt_del(type);
         return NULL;
     }
 
     flags = ndt_common_flags(type);
-    if (flags & NDT_Dim_ellipsis) {
+    if (flags & NDT_ELLIPSIS) {
         ndt_err_format(ctx, NDT_ValueError, "more than one ellipsis");
+        ndt_free(name);
         ndt_del(type);
         return NULL;
     }
@@ -940,10 +965,11 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     /* abstract type */
     t = ndt_new(EllipsisDim, ctx);
     if (t == NULL) {
+        ndt_free(name);
         ndt_del(type);
         return NULL;
     }
-    t->EllipsisDim.flags = flags | NDT_Dim_ellipsis;
+    t->EllipsisDim.flags = flags | NDT_ELLIPSIS;
     t->EllipsisDim.name = name;
     t->EllipsisDim.type = type;
     t->ndim = type->ndim + 1;
@@ -970,7 +996,7 @@ ndt_dim_option(ndt_t *type, ndt_context_t *ctx)
 {
     switch (type->tag) {
     case VarDim:
-        type->VarDim.flags |= NDT_Dim_option;
+        type->VarDim.flags |= NDT_DIM_OPTION;
         return type;
     case FixedDim: case SymbolicDim:
         ndt_err_format(ctx, NDT_NotImplementedError,
@@ -1064,13 +1090,13 @@ ndt_is_optional(const ndt_t *t)
 {
     switch (t->tag) {
     case FixedDim:
-        return t->FixedDim.flags & NDT_Dim_option;
+        return t->FixedDim.flags & NDT_DIM_OPTION;
     case VarDim:
-        return t->VarDim.flags & NDT_Dim_option;
+        return t->VarDim.flags & NDT_DIM_OPTION;
     case SymbolicDim:
-        return t->SymbolicDim.flags & NDT_Dim_option;
+        return t->SymbolicDim.flags & NDT_DIM_OPTION;
     case EllipsisDim:
-        return t->EllipsisDim.flags & NDT_Dim_option;
+        return t->EllipsisDim.flags & NDT_DIM_OPTION;
     case Option: case OptionItem:
         return 1;
     default:
@@ -1154,6 +1180,12 @@ ndt_t *
 ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
+
+    if (!check_type_invariants(type, ctx)) {
+        ndt_free(name);
+        ndt_del(type);
+        return NULL;
+    }
 
     t = ndt_new(Constr, ctx);
     if (t == NULL) {
@@ -1259,6 +1291,13 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
 
     assert((fields == NULL) == (shape == 0));
 
+    for (i = 0; i < shape; i++) {
+        if (!check_type_invariants(fields[i].type, ctx)) {
+            ndt_field_array_del(fields, shape);
+            return NULL;
+        }
+    }
+
     offset_offset = round_up(shape * sizeof(ndt_t *), alignof(int64_t));
     align_offset = offset_offset + shape * sizeof(int64_t);
     pad_offset = align_offset + shape * sizeof(uint16_t);
@@ -1337,6 +1376,13 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
     int64_t i;
 
     assert((fields == NULL) == (shape == 0));
+
+    for (i = 0; i < shape; i++) {
+        if (!check_type_invariants(fields[i].type, ctx)) {
+            ndt_field_array_del(fields, shape);
+            return NULL;
+        }
+    }
 
     types_offset = round_up(shape * sizeof(char *), alignof(ndt_t *));
     offset_offset = types_offset + round_up(shape * sizeof(ndt_t *), alignof(int64_t));
@@ -1797,6 +1843,11 @@ ndt_t *
 ndt_pointer(ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
+
+    if (!check_type_invariants(type, ctx)) {
+        ndt_del(type);
+        return NULL;
+    }
 
     /* abstract type */
     t = ndt_new(Pointer, ctx);

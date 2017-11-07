@@ -139,28 +139,23 @@ dim_flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
     bool cont = 0;
     int n;
 
-    if (flags & NDT_Ndarray) {
-        n = ndt_snprintf(ctx, buf, "Ndarray");
+    if (flags & NDT_C_CONTIGUOUS) {
+        n = ndt_snprintf(ctx, buf, "%sC_CONTIG", cont ? ", " : "");
         if (n > 0) return -1;
         cont = 1;
     }
-    if (flags & NDT_C_contiguous) {
-        n = ndt_snprintf(ctx, buf, "%sC_contig", cont ? ", " : "");
+    if (flags & NDT_F_CONTIGUOUS) {
+        n = ndt_snprintf(ctx, buf, "%sF_CONTIG", cont ? ", " : "");
         if (n > 0) return -1;
         cont = 1;
     }
-    if (flags & NDT_F_contiguous) {
-        n = ndt_snprintf(ctx, buf, "%sF_contig", cont ? ", " : "");
+    if (flags & NDT_DIM_OPTION) {
+        n = ndt_snprintf(ctx, buf, "%sOPTION", cont ? ", " : "");
         if (n > 0) return -1;
         cont = 1;
     }
-    if (flags & NDT_Dim_option) {
-        n = ndt_snprintf(ctx, buf, "%sOption", cont ? ", " : "");
-        if (n > 0) return -1;
-        cont = 1;
-    }
-    if (flags & NDT_Dim_ellipsis) {
-        n = ndt_snprintf(ctx, buf, "%sEllipsis", cont ? ", " : "");
+    if (flags & NDT_ELLIPSIS) {
+        n = ndt_snprintf(ctx, buf, "%sELLIPSIS", cont ? ", " : "");
         if (n > 0) return -1;
         cont = 1;
     }

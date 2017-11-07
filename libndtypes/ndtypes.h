@@ -80,30 +80,13 @@
 
 #define NDT_MAX_DIM 128
 
-/*** Dimension flags ***/
-
-/* Flags that are propagated through all dimensions */
-#define NDT_Dim_uint8        0x00000001U
-#define NDT_Dim_uint16       0x00000002U
-#define NDT_Dim_uint32       0x00000004U
-#define NDT_Dim_int64        0x00000008U
-#define NDT_Dim_ellipsis     0x00000010U
-
-/* Flags for individual dimensions */
-#define NDT_Dim_option       0x00000020U
-
-/* Array flags */
-#define NDT_C_contiguous     0x00000040U
-#define NDT_F_contiguous     0x00000080U
-#define NDT_Ndarray          0x00000100U
-
-
-#define NDT_Dim_size (NDT_Dim_uint8  \
-                     |NDT_Dim_uint16 \
-                     |NDT_Dim_uint32 \
-                     |NDT_Dim_int64)
-
-#define NDT_Contiguous (NDT_C_contiguous|NDT_F_contiguous)
+#define NDT_FIXED        0x00000001U
+#define NDT_VAR          0x00000002U
+#define NDT_ELLIPSIS     0x00000004U
+#define NDT_DIM_OPTION   0x00000010U
+#define NDT_C_CONTIGUOUS 0x00000020U
+#define NDT_F_CONTIGUOUS 0x00000040U
+#define NDT_CONTIGUOUS   (NDT_C_CONTIGUOUS|NDT_F_CONTIGUOUS)
 
 
 /* Types: ndt_t */
