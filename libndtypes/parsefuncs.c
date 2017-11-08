@@ -145,7 +145,6 @@ mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
         t = ndt_var_dim(type, OwnOffsets, (int32_t)noffsets, offsets,
                         start, stop, step, ctx);
 
-        ndt_free(offsets);
         return t;
     }
     else {
