@@ -183,3 +183,41 @@ ndt_from_string(const char *input, ndt_context_t *ctx)
     }
 }
 
+ndt_t *
+ndt_from_offsets_dtype(enum ndt_offsets flag, int ndim,
+                       int32_t noffsets[], int32_t *offsets[],
+                       const char *dtype, ndt_context_t *ctx)
+{
+    ndt_t *t, *type;
+    int i;
+
+    if (flag == NoOffsets) {
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+            "'flag' must be OwnOffsets or ExternalOffsets");
+        return NULL;
+    }
+
+    type = ndt_from_string(dtype, ctx);
+    if (type == NULL) {
+        return NULL;
+    }
+
+    if (ndt_is_abstract(type)) {
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+            "cannot create abstract type with offsets");
+        ndt_del(type);
+        return NULL;
+    }
+
+    for (i=ndim-1, t=type; i >= 0; i--, type=t) {
+        t = ndt_var_dim(type, flag, noffsets[i], offsets[i], 0, INT32_MAX, 1, ctx);
+        if (t == NULL) {
+            for (i = i-1; i >= 0; i--) {
+                ndt_free(offsets[i]);
+            }
+            return NULL;
+        }
+    }
+
+    return t;
+}

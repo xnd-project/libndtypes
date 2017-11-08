@@ -159,6 +159,14 @@ enum ndt_variadic {
 };
 
 
+/* Ownership flag (experimental) for var dim offsets */
+enum ndt_offsets {
+  OwnOffsets,
+  ExternalOffsets,
+  NoOffsets,
+};
+
+
 /* Encoding for characters and strings */
 enum ndt_encoding {
   Ascii,
@@ -169,15 +177,6 @@ enum ndt_encoding {
   ErrorEncoding
 };
 
-/* Dimension data types */
-enum ndt_dim {
-  DimNone,
-  DimUint8,
-  DimUint16,
-  DimUint32,
-  DimInt32,
-  DimInt64
-};
 
 /* Datashape kinds */
 enum ndt {
@@ -407,6 +406,7 @@ struct _ndt {
             } FixedDim;
 
             struct {
+                enum ndt_offsets flag;
                 int64_t itemsize;
                 int32_t start;
                 int32_t stop;
@@ -490,8 +490,6 @@ NDTYPES_API void *ndt_memory_error(ndt_context_t *ctx);
 NDTYPES_API char *ndt_strdup(const char *s, ndt_context_t *ctx);
 NDTYPES_API char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
 NDTYPES_API const char *ndt_tag_as_string(enum ndt tag);
-NDTYPES_API enum ndt_dim ndt_dim_type(const ndt_t *t);
-NDTYPES_API const char *ndt_dim_type_as_string(enum ndt_dim tag);
 NDTYPES_API enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 NDTYPES_API const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 NDTYPES_API uint32_t ndt_dim_flags(const ndt_t *t);
@@ -558,7 +556,7 @@ NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets,
+NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type, enum ndt_offsets flag, int32_t noffsets, const int32_t *offsets,
                                int32_t start, int32_t stop, int32_t step, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 
@@ -619,6 +617,7 @@ NDTYPES_API int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
 
 NDTYPES_API ndt_t *ndt_from_file(const char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_from_offsets_dtype(enum ndt_offsets flag, int ndim, int32_t noffsets[], int32_t *offsets[], const char *dtype, ndt_context_t *ctx);
 
 
 /******************************************************************************/

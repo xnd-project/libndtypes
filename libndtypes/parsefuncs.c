@@ -142,14 +142,14 @@ mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
             return NULL;
         }
 
-        t = ndt_var_dim(type, true, (int32_t)noffsets, offsets,
+        t = ndt_var_dim(type, OwnOffsets, (int32_t)noffsets, offsets,
                         start, stop, step, ctx);
 
         ndt_free(offsets);
         return t;
     }
     else {
-        return ndt_var_dim(type, false, 0, NULL, 0, INT32_MAX, 1, ctx);
+        return ndt_var_dim(type, NoOffsets, 0, NULL, 0, INT32_MAX, 1, ctx);
     }
 }
 

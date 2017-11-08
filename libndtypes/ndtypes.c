@@ -592,6 +592,11 @@ ndt_del(ndt_t *t)
         break;
     case VarDim:
         ndt_del(t->VarDim.type);
+        if (ndt_is_concrete(t)) {
+            if (t->Concrete.VarDim.flag == OwnOffsets) {
+                ndt_free((int32_t *)t->Concrete.VarDim.offsets);
+            }
+        }
         break;
     case SymbolicDim:
         ndt_free(t->SymbolicDim.name);
@@ -844,81 +849,54 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
-/*
- * len(shapes) == nshapes &&
- * len(offsets) == nshapes+1 &&
- */
 ndt_t *
-ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *offsets,
+ndt_var_dim(ndt_t *type, enum ndt_offsets flag, int32_t noffsets, const int32_t *offsets,
             int32_t start, int32_t stop, int32_t step, ndt_context_t *ctx)
 {
-    ndt_t *t;
     enum ndt_access access = Abstract;
-    size_t extra = 0;
+    ndt_t *t;
 
     if (!check_var_invariants(type, ctx)) {
-        ndt_del(type);
-        return NULL;
+        goto error;
+
     }
 
     if (!!noffsets != !!offsets) {
         ndt_err_format(ctx, NDT_InvalidArgumentError,
-            "var dimension: invalid noffsets or offsets");
-        ndt_del(type);
-        return NULL;
+                       "var dimension: invalid noffsets or offsets");
+        goto error;
     }
 
     if (noffsets) {
         if (ndt_is_abstract(type)) {
             ndt_err_format(ctx, NDT_InvalidArgumentError,
                 "var dimension: offsets given for abstract type");
-            ndt_del(type);
-            return NULL;
+            goto error;
         }
-
         access = Concrete;
-        if (copy_offsets) {
-            if ((size_t)noffsets > SIZE_MAX / sizeof(int32_t)) {
-                ndt_err_format(ctx, NDT_ValueError, "too many offsets");
-                ndt_del(type);
-                return NULL;
-            }
-
-            extra = noffsets * sizeof(int32_t);
-        }
     }
 
     /* abstract type */
-    t = ndt_new_extra(VarDim, extra, ctx);
+    t = ndt_new(VarDim, ctx);
     if (t == NULL) {
-        ndt_del(type);
-        return NULL;
+        goto error;
     }
     t->VarDim.flags = ndt_common_flags(type);
     t->VarDim.type = type;
     t->ndim = type->ndim + 1;
     t->access = access;
+    t->data_size = 0;
+    t->data_align = 0;
 
     /* concrete access */
     if (access == Concrete) {
-        t->Concrete.VarDim.noffsets = noffsets;
-        if (copy_offsets) {
-            int32_t *_offsets = (int32_t *)t->extra;
-            int32_t i;
-
-            for (i = 0; i < noffsets; i++) {
-                _offsets[i] = offsets[i];
-            }
-
-            t->Concrete.VarDim.offsets = _offsets;
-        }
-        else {
-            t->Concrete.VarDim.offsets = offsets;
-        }
-
+        t->Concrete.VarDim.flag = flag;
+        t->Concrete.VarDim.start = start;
         t->Concrete.VarDim.start = start;
         t->Concrete.VarDim.stop = stop;
         t->Concrete.VarDim.step = step;
+        t->Concrete.VarDim.noffsets = noffsets;
+        t->Concrete.VarDim.offsets = offsets;
 
         switch (type->tag) {
         case VarDim:
@@ -936,10 +914,18 @@ ndt_var_dim(ndt_t *type, bool copy_offsets, int32_t noffsets, const int32_t *off
             t->data_size = offsets[noffsets-1] * type->data_size;
             break;
         }
+
         t->data_align = type->data_align;
     }
 
     return t;
+
+error:
+    ndt_del(type);
+    if (flag == OwnOffsets) {
+        ndt_free((int32_t *)offsets);
+    }
+    return NULL;
 }
 
 ndt_t *

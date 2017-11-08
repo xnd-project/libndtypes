@@ -65,22 +65,45 @@ ispower2(size_t n)
     return n != 0 && (n & (n-1)) == 0;
 }
 
+static inline size_t
+mul_size_t_overflow(size_t nmemb, size_t size, int *overflow)
+{
+    *overflow = 0;
+
+    if (nmemb == 0 || size == 0) {
+        return 1;
+    }
+
+    if (nmemb > SIZE_MAX / size) {
+        *overflow = 1;
+        return SIZE_MAX;
+    }
+
+    return nmemb * size;
+}
 
 /* malloc with overflow checking */
 void *
 ndt_alloc(size_t nmemb, size_t size)
 {
-    if (size > SIZE_MAX / nmemb) {
+    size_t req;
+    int overflow;
+
+    req = mul_size_t_overflow(nmemb, size, &overflow);
+    if (overflow) {
         return NULL;
     }
 
-    return ndt_mallocfunc(nmemb * size);
+    return ndt_mallocfunc(req);
 }
 
 /* calloc */
 void *
 ndt_calloc(size_t nmemb, size_t size)
 {
+    nmemb = nmemb == 0 ? 1 : nmemb;
+    size = size == 0 ? 1 : size;
+
     return ndt_callocfunc(nmemb, size);
 }
 
@@ -88,11 +111,15 @@ ndt_calloc(size_t nmemb, size_t size)
 void *
 ndt_realloc(void *ptr, size_t nmemb, size_t size)
 {
-    if (size > SIZE_MAX / nmemb) {
+    size_t req;
+    int overflow;
+
+    req = mul_size_t_overflow(nmemb, size, &overflow);
+    if (overflow) {
         return NULL;
     }
 
-    return ndt_reallocfunc(ptr, nmemb * size);
+    return ndt_reallocfunc(ptr, req);
 }
 
 /* free */
@@ -116,6 +143,10 @@ ndt_aligned_calloc(size_t alignment, size_t size)
 
     if (alignment < MAX_ALIGN) {
         alignment = MAX_ALIGN;
+    }
+
+    if (size == 0) {
+        size = 1;
     }
 
     extra = alignment - 1;

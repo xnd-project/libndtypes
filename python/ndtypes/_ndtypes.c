@@ -51,6 +51,7 @@
 
 typedef struct {
     PyObject_HEAD
+    PyObject *master;
     ndt_t *ndt;
 } NdtObject;
 
@@ -58,6 +59,7 @@ typedef struct {
 static PyTypeObject Ndt_Type;
 #define Ndt_CheckExact(v) (Py_TYPE(v) == &Ndt_Type)
 #define Ndt_Check(v) PyObject_TypeCheck(v, &Ndt_Type)
+#define MASTER(v) (((NdtObject *)v)->master)
 #define NDT(v) (((NdtObject *)v)->ndt)
 
 
@@ -119,6 +121,7 @@ ndtype_alloc(PyTypeObject *type)
         return NULL;
     }
  
+    MASTER(t) = NULL;
     NDT(t) = NULL;
     return (PyObject *)t;
 }
@@ -126,23 +129,97 @@ ndtype_alloc(PyTypeObject *type)
 static void
 ndtype_dealloc(PyObject *t)
 {
-    ndt_del(NDT(t));
+    if (MASTER(t) == NULL) {
+        ndt_del(NDT(t));
+    }
+
     Py_TYPE(t)->tp_free(t);
 }
 
-static PyObject *
-ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds UNUSED)
+static int
+offsets_from_list(int *ndim, int32_t noffsets[NDT_MAX_DIM], int32_t *a[NDT_MAX_DIM],
+                  PyObject *offsets)
 {
-    NDT_STATIC_CONTEXT(ctx);
-    PyObject *t;
-    PyObject *v;
-    const char *cp;
+    Py_ssize_t i, n, k = 0;
 
-    if (!PyArg_ParseTuple(args, "O", &v)) {
+    if (!PyList_Check(offsets)) {
+        PyErr_SetString(PyExc_TypeError,
+            "'offsets' argument must be a list of offset lists");
+        return -1;
+    }
+
+    n = PyList_GET_SIZE(offsets);
+    if (n < 1 || n > NDT_MAX_DIM) {
+        PyErr_Format(PyExc_ValueError,
+            "number of dimensions must be in [1, %d]", NDT_MAX_DIM);
+        return -1;
+    }
+
+    for (i = 0; i < n; i++) {
+        PyObject *lst = PyList_GET_ITEM(offsets, i);
+        if (!PyList_Check(lst)) {
+            PyErr_SetString(PyExc_TypeError,
+                "'offsets' argument must be a list of offset lists");
+            goto error;
+        }
+
+        if (PyList_GET_SIZE(lst) < 2 || PyList_GET_SIZE(lst) > INT32_MAX) {
+            PyErr_SetString(PyExc_ValueError,
+                "length of a single offset list must be in [2, INT32_MAX]");
+            goto error;
+        }
+
+        a[i] = ndt_alloc(PyList_GET_SIZE(lst), sizeof(int32_t));
+        if (a[i] == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        for (k = 0; k < PyList_GET_SIZE(lst); k++) {
+            long x = PyLong_AsLong(PyList_GET_ITEM(lst, k));
+            if (x == -1 && PyErr_Occurred()) {
+                goto error;
+            }
+
+            if (x < 0 || x > INT32_MAX) {
+                PyErr_SetString(PyExc_ValueError, "offset out of range");
+                goto error;
+            }
+
+            a[i][k] = x;
+        }
+
+        noffsets[i] = k;
+    }
+
+    *ndim = (int)n;
+    return 0;
+
+error:
+    for (i = 0; i < k; i++) {
+        ndt_free(a[i]);
+    }
+    return -1;
+}
+
+static PyObject *
+ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"type", "offsets", NULL};
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *offsets = Py_None;
+    int32_t *a[NDT_MAX_DIM] = {NULL};
+    int32_t noffsets[NDT_MAX_DIM] = {0};
+    PyObject *t;
+    PyObject *s;
+    const char *cp;
+    int ndim;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist, &s, &offsets)) {
         return NULL;
     }
 
-    cp = PyUnicode_AsUTF8(v);
+    cp = PyUnicode_AsUTF8(s);
     if (cp == NULL) {
         return NULL;
     }
@@ -152,7 +229,17 @@ ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds UNUSED)
         return NULL;
     }
 
-    NDT(t) = ndt_from_string(cp, &ctx);
+    if (offsets == Py_None) {
+        NDT(t) = ndt_from_string(cp, &ctx);
+    }
+    else {
+        if (offsets_from_list(&ndim, noffsets, a, offsets) < 0) {
+            Py_DECREF(t);
+            return NULL;
+        }
+        NDT(t) = ndt_from_offsets_dtype(OwnOffsets, ndim, noffsets, a, cp, &ctx);
+    }
+
     if (NDT(t) == NULL) {
         Py_DECREF(t);
         return seterr(&ctx);
