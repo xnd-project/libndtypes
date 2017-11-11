@@ -34,6 +34,7 @@
 #include <Python.h>
 #include <stdlib.h>
 #include "ndtypes.h"
+#include "pyndtypes.h"
 
 
 #ifdef _MSC_VER
@@ -266,22 +267,10 @@ seterr(ndt_context_t *ctx)
 /*                                 ndt object                               */
 /****************************************************************************/
 
-typedef struct {
-    PyObject_HEAD
-    PyObject *rbuf; /* resource buffer */
-    ndt_t *ndt;     /* type */
-} NdtObject;
-
-static PyTypeObject Ndt_Type;
-
-#define Ndt_CheckExact(v) (Py_TYPE(v) == &Ndt_Type)
-#define Ndt_Check(v) PyObject_TypeCheck(v, &Ndt_Type)
 #define RBUF(v) (((NdtObject *)v)->rbuf)
 #define RBUF_NUM_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offset_arrays)
 #define RBUF_NUM_OFFSETS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offsets)
 #define RBUF_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->offset_arrays)
-#define NDT(v) (((NdtObject *)v)->ndt)
-
 
 static PyObject *
 ndtype_alloc(PyTypeObject *type)
@@ -596,7 +585,7 @@ static PyMethodDef ndtype_methods [] =
 
 };
 
-static PyTypeObject Ndt_Type =
+PyTypeObject Ndt_Type =
 {
     PyVarObject_HEAD_INIT(NULL, 0)
     "ndtypes.ndt",                          /* tp_name */
