@@ -78,15 +78,21 @@ case $CC in
     *gcc*)
         NDT_WARN="-Wall -Wextra -std=c11 -pedantic"
         NDT_OPT="-O2"
+        NDT_COV_CFLAGS="-O0 -fno-inline -fprofile-arcs -ftest-coverage"
+        NDT_COV_LDFLAGS="-fprofile-arcs"
         ;;
     *icc*)
         AR=xiar
         NDT_WARN="-Wall"
         NDT_OPT="-O2"
+        NDT_COV_CFLAGS=""
+        NDT_COV_LDFLAGS=""
         ;;
     *clang*)
         NDT_WARN="-Wall -Wextra -std=c11 -pedantic"
         NDT_OPT="-O2"
+        NDT_COV_CFLAGS="-O0 -fno-inline -fprofile-arcs -ftest-coverage"
+        NDT_COV_LDFLAGS="-fprofile-arcs"
         ;;
 esac
 
@@ -102,17 +108,24 @@ AC_SUBST(NDT_OPT)
 
 
 if test -z "$CFLAGS"; then
-    CONFIGURE_CFLAGS="-I.. $NDT_WARN $NDT_CONFIG $NDT_OPT"
+    CONFIGURE_CFLAGS="-I.. $NDT_WARN $NDT_OPT"
+    CONFIGURE_COV_CFLAGS="-I.. $NDT_WARN $NDT_COV_CFLAGS"
 else
-    CONFIGURE_CFLAGS="-I.. $NDT_WARN $NDT_CONFIG $NDT_OPT $CFLAGS"
+    CONFIGURE_CFLAGS="-I.. $NDT_WARN $NDT_OPT $CFLAGS"
+    CONFIGURE_COV_CFLAGS="-I.. $NDT_WARN $NDT_COV_CFLAGS $CFLAGS"
 fi
 
+CONFIGURE_COV_LDFLAGS="$CONFIGURE_LDFLAGS $NDT_COV_LDFLAGS"
 if test -n "$LDFLAGS"; then
     CONFIGURE_LDFLAGS="$CONFIGURE_LDFLAGS $LDFLAGS"
+    CONFIGURE_COV_LDFLAGS="$CONFIGURE_COV_LDFLAGS $LDFLAGS"
 fi
 
 AC_SUBST(CONFIGURE_CFLAGS)
 AC_SUBST(CONFIGURE_LDFLAGS)
+
+AC_SUBST(CONFIGURE_COV_CFLAGS)
+AC_SUBST(CONFIGURE_COV_LDFLAGS)
 
 AC_OUTPUT
 

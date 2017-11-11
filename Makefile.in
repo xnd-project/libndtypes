@@ -38,7 +38,8 @@ memcheck: runtest
 
 coverage: FORCE
 	cd libndtypes && $(MAKE) coverage
-	cd libndtypes/tests && ./runtest
+	cd libndtypes/tests && $(MAKE) coverage
+	cd libndtypes/tests && @LIBRARY_PATH@=.. ./runtest
 	cd libndtypes && for file in *.c; do gcov -l "$$file" > /dev/null 2>&1; done
 
 
