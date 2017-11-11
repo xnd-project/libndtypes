@@ -267,10 +267,23 @@ seterr(ndt_context_t *ctx)
 /*                                 ndt object                               */
 /****************************************************************************/
 
+typedef struct {
+    PyObject_HEAD
+    PyObject *rbuf; /* resource buffer */
+    ndt_t *ndt;     /* type */
+} NdtObject;
+
+static PyTypeObject Ndt_Type;
+
+#define Ndt_CheckExact(v) (Py_TYPE(v) == &Ndt_Type)
+#define Ndt_Check(v) PyObject_TypeCheck(v, &Ndt_Type)
+#define NDT(v) (((NdtObject *)v)->ndt)
+
 #define RBUF(v) (((NdtObject *)v)->rbuf)
 #define RBUF_NUM_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offset_arrays)
 #define RBUF_NUM_OFFSETS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offsets)
 #define RBUF_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->offset_arrays)
+
 
 static PyObject *
 ndtype_alloc(PyTypeObject *type)
@@ -585,7 +598,7 @@ static PyMethodDef ndtype_methods [] =
 
 };
 
-PyTypeObject Ndt_Type =
+static PyTypeObject Ndt_Type =
 {
     PyVarObject_HEAD_INIT(NULL, 0)
     "ndtypes.ndt",                          /* tp_name */
@@ -628,6 +641,35 @@ PyTypeObject Ndt_Type =
     ndtype_new,                             /* tp_new */
     PyObject_Del,                           /* tp_free */
 };
+
+
+/****************************************************************************/
+/*                                   C-API                                  */
+/****************************************************************************/
+
+int
+pyndt_check_exact(PyObject *v)
+{
+    return Ndt_CheckExact(v);
+}
+
+int
+pyndt_check(PyObject *v)
+{
+    return Ndt_Check(v);
+}
+
+ndt_t *
+pyndt_get_ndt(PyObject *v)
+{
+    assert(Ndt_Check(v));
+    return NDT(v);
+}
+
+
+/****************************************************************************/
+/*                                  Module                                  */
+/****************************************************************************/
 
 static int num_modules = 0;
 

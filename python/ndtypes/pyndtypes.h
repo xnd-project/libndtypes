@@ -1,16 +1,12 @@
 #ifndef PYNDTYPES_H
 #define PYNDTYPES_H
 
-typedef struct {
-    PyObject_HEAD
-    PyObject *rbuf; /* resource buffer */
-    ndt_t *ndt;     /* type */
-} NdtObject;
 
-PyTypeObject Ndt_Type;
+#include "ndtypes.h"
 
-#define Ndt_CheckExact(v) (Py_TYPE(v) == &Ndt_Type)
-#define Ndt_Check(v) PyObject_TypeCheck(v, &Ndt_Type)
-#define NDT(v) (((NdtObject *)v)->ndt)
+int pyndt_check_exact(PyObject *);
+int pyndt_check(PyObject *);
+ndt_t *pyndt_get_ndt(PyObject *);
 
-#endif
+
+#endif /* PYNDTYPES_H */
