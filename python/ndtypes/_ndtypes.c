@@ -49,21 +49,176 @@
 #endif
 
 
+/****************************************************************************/
+/*                           Resource Buffer Object                         */
+/****************************************************************************/
+
+/* This object handles resources like offsets that are shared by several
+   ndt objects. It is never exposed to the Python level.
+
+   At a later stage, the object will need to communicate with Arrow
+   or other formats to store external resources. */
+
 typedef struct {
     PyObject_HEAD
-    PyObject *master;
-    ndt_t *ndt;
-} NdtObject;
+    uint32_t flags;
+    int32_t num_offset_arrays;           /* number of offset arrays */
+    int32_t num_offsets[NDT_MAX_DIM];    /* lengths of the offset arrays */
+    int32_t *offset_arrays[NDT_MAX_DIM]; /* offset arrays (NULL or valid pointer) */
+} ResourceBufferObject;
 
-#undef NDT
-static PyTypeObject Ndt_Type;
-#define Ndt_CheckExact(v) (Py_TYPE(v) == &Ndt_Type)
-#define Ndt_Check(v) PyObject_TypeCheck(v, &Ndt_Type)
-#define MASTER(v) (((NdtObject *)v)->master)
-#define NDT(v) (((NdtObject *)v)->ndt)
+static PyTypeObject ResourceBuffer_Type;
 
+#define RBUF_OWN_OFFSETS      0x00000001U
+#define RBUF_EXTERNAL_OFFSETS 0x00000002U
+
+static PyObject *
+rbuf_alloc(uint32_t flags)
+{
+    ResourceBufferObject *self;
+    int i;
+
+    self = PyObject_New(ResourceBufferObject, &ResourceBuffer_Type);
+    if (self == NULL) {
+        return NULL;
+    }
+ 
+    self->flags = flags;
+    self->num_offset_arrays = 0;
+
+    for (i = 0; i < NDT_MAX_DIM; i++) {
+        self->num_offsets[i] = 0;
+        self->offset_arrays[i] = NULL;
+    }
+
+    return (PyObject *)self;
+}
+
+static void
+rbuf_dealloc(ResourceBufferObject *self)
+{
+    int i;
+
+    if (self->flags & RBUF_OWN_OFFSETS) {
+        for (i = 0; i < NDT_MAX_DIM; i++) {
+            ndt_free(self->offset_arrays[i]);
+            self->offset_arrays[i] = NULL;
+        }
+    }
+
+    PyObject_Del(self);
+}
+
+static int
+rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
+{
+    PyObject *lst;
+    Py_ssize_t i, k;
+
+    if (!PyList_Check(list)) {
+        PyErr_SetString(PyExc_TypeError, "expected a list of offset lists");
+        return -1;
+    }
+
+    rbuf->num_offset_arrays = PyList_GET_SIZE(list);
+    if (rbuf->num_offset_arrays < 1 || rbuf->num_offset_arrays > NDT_MAX_DIM) {
+        PyErr_Format(PyExc_ValueError,
+            "number of offset lists must be in [1, %d]", NDT_MAX_DIM);
+        return -1;
+    }
+
+    for (i = 0; i < rbuf->num_offset_arrays; i++) {
+        lst = PyList_GET_ITEM(list, i);
+        if (!PyList_Check(lst)) {
+            PyErr_SetString(PyExc_TypeError,
+                "expected a list of offset lists");
+            return -1;
+        }
+
+        rbuf->num_offsets[i] = PyList_GET_SIZE(lst);
+        if (rbuf->num_offsets[i] < 2 || rbuf->num_offsets[i] > INT32_MAX) {
+            PyErr_SetString(PyExc_ValueError,
+                "length of a single offset list must be in [2, INT32_MAX]");
+            return -1;
+        }
+
+        rbuf->offset_arrays[i] = ndt_alloc(rbuf->num_offsets[i], sizeof(int32_t));
+        if (rbuf->offset_arrays[i] == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+
+        for (k = 0; k < rbuf->num_offsets[i]; k++) {
+            long x = PyLong_AsLong(PyList_GET_ITEM(lst, k));
+            if (x == -1 && PyErr_Occurred()) {
+                return -1;
+            }
+
+            if (x < 0 || x > INT32_MAX) {
+                PyErr_SetString(PyExc_ValueError,
+                    "offset must be in [0, INT32_MAX]");
+                return -1;
+            }
+
+            rbuf->offset_arrays[i][k] = x;
+        }
+    }
+
+    return 0;
+}
+
+static PyObject *
+rbuf_from_offset_lists(PyObject *list)
+{
+    PyObject *rbuf;
+
+    rbuf = rbuf_alloc(RBUF_OWN_OFFSETS);
+    if (rbuf == NULL) {
+        return NULL;
+    }
+
+    if (rbuf_init_from_offset_list((ResourceBufferObject *)rbuf, list) < 0) {
+        Py_DECREF(rbuf);
+        return NULL;
+    }
+
+    return rbuf;
+}
+
+static PyTypeObject ResourceBuffer_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "ndtypes.resource",
+    sizeof(ResourceBufferObject),
+    0,
+    (destructor)rbuf_dealloc,     /* tp_dealloc */
+    0,                            /* tp_print */
+    0,                            /* tp_getattr */
+    0,                            /* tp_setattr */
+    0,                            /* tp_reserved */
+    0,                            /* tp_repr */
+    0,                            /* tp_as_number */
+    0,                            /* tp_as_sequence */
+    0,                            /* tp_as_mapping */
+    0,                            /* tp_hash */
+    0,                            /* tp_call */
+    0,                            /* tp_str */
+    PyObject_GenericGetAttr,      /* tp_getattro */
+    0,                            /* tp_setattro */
+    0,                            /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,           /* tp_flags */
+};
+
+
+/****************************************************************************/
+/*                               Cached objects                             */
+/****************************************************************************/
 
 static PyTypeObject *ApplySpec = NULL;
+
+
+/****************************************************************************/
+/*                               Error handling                             */
+/****************************************************************************/
 
 static PyObject *
 seterr(ndt_context_t *ctx)
@@ -106,100 +261,54 @@ seterr(ndt_context_t *ctx)
     return NULL;
 };
 
+
+/****************************************************************************/
+/*                                 ndt object                               */
+/****************************************************************************/
+
+typedef struct {
+    PyObject_HEAD
+    PyObject *rbuf; /* resource buffer */
+    ndt_t *ndt;     /* type */
+} NdtObject;
+
+static PyTypeObject Ndt_Type;
+
+#define Ndt_CheckExact(v) (Py_TYPE(v) == &Ndt_Type)
+#define Ndt_Check(v) PyObject_TypeCheck(v, &Ndt_Type)
+#define RBUF(v) (((NdtObject *)v)->rbuf)
+#define RBUF_NUM_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offset_arrays)
+#define RBUF_NUM_OFFSETS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offsets)
+#define RBUF_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->offset_arrays)
+#define NDT(v) (((NdtObject *)v)->ndt)
+
+
 static PyObject *
 ndtype_alloc(PyTypeObject *type)
 {
-    NdtObject *t;
+    NdtObject *self;
 
     if (type == &Ndt_Type) {
-        t = PyObject_New(NdtObject, &Ndt_Type);
+        self = PyObject_New(NdtObject, &Ndt_Type);
     }
     else {
-        t = (NdtObject *)type->tp_alloc(type, 0);
+        self = (NdtObject *)type->tp_alloc(type, 0);
     }
-    if (t == NULL) {
+    if (self == NULL) {
         return NULL;
     }
  
-    MASTER(t) = NULL;
-    NDT(t) = NULL;
-    return (PyObject *)t;
+    RBUF(self) = NULL;
+    NDT(self) = NULL;
+    return (PyObject *)self;
 }
 
 static void
-ndtype_dealloc(PyObject *t)
+ndtype_dealloc(PyObject *self)
 {
-    if (MASTER(t) == NULL) {
-        ndt_del(NDT(t));
-    }
-
-    Py_TYPE(t)->tp_free(t);
-}
-
-static int
-offsets_from_list(int *ndim, int32_t noffsets[NDT_MAX_DIM], int32_t *a[NDT_MAX_DIM],
-                  PyObject *offsets)
-{
-    Py_ssize_t i, n, k = 0;
-
-    if (!PyList_Check(offsets)) {
-        PyErr_SetString(PyExc_TypeError,
-            "'offsets' argument must be a list of offset lists");
-        return -1;
-    }
-
-    n = PyList_GET_SIZE(offsets);
-    if (n < 1 || n > NDT_MAX_DIM) {
-        PyErr_Format(PyExc_ValueError,
-            "number of dimensions must be in [1, %d]", NDT_MAX_DIM);
-        return -1;
-    }
-
-    for (i = 0; i < n; i++) {
-        PyObject *lst = PyList_GET_ITEM(offsets, i);
-        if (!PyList_Check(lst)) {
-            PyErr_SetString(PyExc_TypeError,
-                "'offsets' argument must be a list of offset lists");
-            goto error;
-        }
-
-        if (PyList_GET_SIZE(lst) < 2 || PyList_GET_SIZE(lst) > INT32_MAX) {
-            PyErr_SetString(PyExc_ValueError,
-                "length of a single offset list must be in [2, INT32_MAX]");
-            goto error;
-        }
-
-        a[i] = ndt_alloc(PyList_GET_SIZE(lst), sizeof(int32_t));
-        if (a[i] == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
-
-        for (k = 0; k < PyList_GET_SIZE(lst); k++) {
-            long x = PyLong_AsLong(PyList_GET_ITEM(lst, k));
-            if (x == -1 && PyErr_Occurred()) {
-                goto error;
-            }
-
-            if (x < 0 || x > INT32_MAX) {
-                PyErr_SetString(PyExc_ValueError, "offset out of range");
-                goto error;
-            }
-
-            a[i][k] = x;
-        }
-
-        noffsets[i] = k;
-    }
-
-    *ndim = (int)n;
-    return 0;
-
-error:
-    for (i = 0; i < k; i++) {
-        ndt_free(a[i]);
-    }
-    return -1;
+    Py_CLEAR(RBUF(self));
+    ndt_del(NDT(self));
+    Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject *
@@ -208,12 +317,8 @@ ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"type", "offsets", NULL};
     NDT_STATIC_CONTEXT(ctx);
     PyObject *offsets = Py_None;
-    int32_t *a[NDT_MAX_DIM] = {NULL};
-    int32_t noffsets[NDT_MAX_DIM] = {0};
-    PyObject *t;
-    PyObject *s;
+    PyObject *self, *s;
     const char *cp;
-    int ndim;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist, &s, &offsets)) {
         return NULL;
@@ -224,38 +329,50 @@ ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    t = ndtype_alloc(type);
-    if (t == NULL) {
+    self = ndtype_alloc(type);
+    if (self == NULL) {
         return NULL;
     }
 
     if (offsets == Py_None) {
-        NDT(t) = ndt_from_string(cp, &ctx);
-    }
-    else {
-        if (offsets_from_list(&ndim, noffsets, a, offsets) < 0) {
-            Py_DECREF(t);
-            return NULL;
+        NDT(self) = ndt_from_string(cp, &ctx);
+        if (NDT(self) == NULL) {
+            Py_DECREF(self);
+            return seterr(&ctx);
         }
-        NDT(t) = ndt_from_offsets_dtype(OwnOffsets, ndim, noffsets, a, cp, &ctx);
+        return self;
     }
 
-    if (NDT(t) == NULL) {
-        Py_DECREF(t);
+    RBUF(self) = rbuf_from_offset_lists(offsets);
+    if (RBUF(self) == NULL) {
+        Py_DECREF(self);
+        return NULL;
+    }
+
+    NDT(self) = ndt_from_offsets_dtype(
+                    ExternalOffsets,
+                    RBUF_NUM_OFFSET_ARRAYS(self),
+                    RBUF_NUM_OFFSETS(self),
+                    RBUF_OFFSET_ARRAYS(self),
+                    cp,
+                    &ctx);
+
+    if (NDT(self) == NULL) {
+        Py_DECREF(self);
         return seterr(&ctx);
     }
 
-    return t;
+    return self;
 }
 
 static PyObject *
-ndtype_str(PyObject *t)
+ndtype_str(PyObject *self)
 {
     NDT_STATIC_CONTEXT(ctx);
     PyObject *res;
     char *cp;
 
-    cp = ndt_as_string(NDT(t), &ctx);
+    cp = ndt_as_string(NDT(self), &ctx);
     if (cp == NULL) {
         return seterr(&ctx);
     }
@@ -266,13 +383,13 @@ ndtype_str(PyObject *t)
 }
 
 static PyObject *
-ndtype_repr(PyObject *t)
+ndtype_repr(PyObject *self)
 {
     NDT_STATIC_CONTEXT(ctx);
     PyObject *res;
     char *cp;
 
-    cp = ndt_as_string(NDT(t), &ctx);
+    cp = ndt_as_string(NDT(self), &ctx);
     if (cp == NULL) {
         return seterr(&ctx);
     }
@@ -283,13 +400,13 @@ ndtype_repr(PyObject *t)
 }
 
 static PyObject *
-ndtype_indent(PyObject *t, PyObject *args UNUSED)
+ndtype_indent(PyObject *self, PyObject *args UNUSED)
 {
     NDT_STATIC_CONTEXT(ctx);
     PyObject *res;
     char *cp;
 
-    cp = ndt_indent(NDT(t), &ctx);
+    cp = ndt_indent(NDT(self), &ctx);
     if (cp == NULL) {
         return seterr(&ctx);
     }
@@ -300,13 +417,13 @@ ndtype_indent(PyObject *t, PyObject *args UNUSED)
 }
 
 static PyObject *
-ndtype_ast_repr(PyObject *t, PyObject *args UNUSED)
+ndtype_ast_repr(PyObject *self, PyObject *args UNUSED)
 {
     NDT_STATIC_CONTEXT(ctx);
     PyObject *res;
     char *cp;
 
-    cp = ndt_as_string_with_meta(NDT(t), &ctx);
+    cp = ndt_as_string_with_meta(NDT(self), &ctx);
     if (cp == NULL) {
         return seterr(&ctx);
     }
@@ -361,14 +478,14 @@ Ndtype_ArrayBoolFunc(ndt_is_c_contiguous)
 Ndtype_ArrayBoolFunc(ndt_is_f_contiguous)
 
 static PyObject *
-ndtype_richcompare(PyObject *v, PyObject *w, int op)
+ndtype_richcompare(PyObject *self, PyObject *other, int op)
 {
     int r = 0;
 
-    assert(Ndt_Check(v));
+    assert(Ndt_Check(self));
 
-    if (Ndt_Check(w)) {
-        r = ndt_equal(NDT(v), NDT(w));
+    if (Ndt_Check(other)) {
+        r = ndt_equal(NDT(self), NDT(other));
     }
 
     switch (op) {
