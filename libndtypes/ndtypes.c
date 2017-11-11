@@ -690,25 +690,6 @@ ndt_hash(ndt_t *t, ndt_context_t *ctx)
     return x;
 }
 
-/* XXX Unoptimized copy function for experimenting. Slow and broken for
-   some concrete types. */
-ndt_t *
-ndt_copy(const ndt_t *t, ndt_context_t *ctx)
-{
-    ndt_t *u;
-    char *s;
-
-    s = ndt_as_string((ndt_t *)t, ctx); /* XXX make arg const */
-    if (s == NULL) {
-        return NULL;
-    }
-
-    u = ndt_from_string(s, ctx);
-    ndt_free(s);
-
-    return u;
-}
-
 ndt_t *
 ndt_any_kind(ndt_context_t *ctx)
 {

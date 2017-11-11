@@ -994,7 +994,7 @@ test_copy(void)
     ndt_t *t, *u;
     int count = 0;
 
-    for (c = parse_roundtrip_tests; *c != NULL; c++) {
+    for (c = parse_tests; *c != NULL; c++) {
         ndt_err_clear(&ctx);
 
         t = ndt_from_string(*c, &ctx);

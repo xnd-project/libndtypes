@@ -36,6 +36,11 @@ memcheck: runtest
 	@printf "\n\n"
 	cd libndtypes/tests && @LIBRARY_PATH@=.. valgrind --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp ./runtest_shared
 
+coverage: FORCE
+	cd libndtypes && $(MAKE) coverage
+	cd libndtypes/tests && ./runtest
+	cd libndtypes && for file in *.c; do gcov -l "$$file" > /dev/null 2>&1; done
+
 
 install: FORCE
 	$(INSTALL) -d -m 755 $(DESTDIR)$(includedir)

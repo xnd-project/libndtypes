@@ -21,14 +21,19 @@ NDT_CFLAGS_SHARED = $(NDT_CFLAGS) -fPIC
 CONFIGURE_LDFLAGS = @CONFIGURE_LDFLAGS@
 NDT_LDFLAGS = $(strip $(CONFIGURE_LDFLAGS) $(LDFLAGS))
 
+ifeq ($(MAKECMDGOALS), coverage)
+  NDT_CLFLAGS = -Wall -Wextra -std=c11 -pedantic -O0 -g -fno-inline -fprofile-arcs -ftest-coverage -fpic
+  NDT_LDFLAGS = -fprofile-arcs
+endif
+
 
 default: $(LIBSTATIC) $(LIBSHARED)
 
 
-OBJS = alloc.o attr.o display.o display_meta.o equal.o grammar.o lexer.o \
+OBJS = alloc.o attr.o copy.o display.o display_meta.o equal.o grammar.o lexer.o \
        match.o ndtypes.o parsefuncs.o parser.o seq.o symtable.o
 
-SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/display.o .objs/display_meta.o \
+SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/copy.o .objs/display.o .objs/display_meta.o \
               .objs/equal.o .objs/grammar.o .objs/lexer.o .objs/match.o \
               .objs/ndtypes.o .objs/parsefuncs.o .objs/parser.o .objs/seq.o \
               .objs/symtable.o
@@ -59,6 +64,14 @@ Makefile attr.c attr.h ndtypes.h
 .objs/attr.o:\
 Makefile attr.c attr.h ndtypes.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c attr.c -o .objs/attr.o
+
+copy.o:\
+Makefile copy.c ndtypes.h
+	$(CC) $(NDT_CFLAGS) -c copy.c
+
+.objs/copy.o:\
+Makefile copy.c ndtypes.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c copy.c -o .objs/copy.o
 
 display.o:\
 Makefile display.c ndtypes.h
@@ -168,9 +181,8 @@ Makefile grammar.y ndtypes.h parsefuncs.h ndtypes.h
 
 # Coverage
 coverage:\
-Makefile clean runtest
-	./tests/runtest
-	for file in *.c; do gcov -l "$$file" > /dev/null 2>&1; done
+Makefile clean $(LIBSTATIC) $(LIBSHARED)
+
 
 # Benchmark
 bench:\
