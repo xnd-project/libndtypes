@@ -995,22 +995,38 @@ test_copy(void)
     int count = 0;
 
     for (c = parse_tests; *c != NULL; c++) {
-        ndt_err_clear(&ctx);
-
         t = ndt_from_string(*c, &ctx);
         if (t == NULL) {
-            fprintf(stderr, "test_hash: FAIL: from_string: \"%s\"\n", *c);
-            fprintf(stderr, "test_hash: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_copy: FAIL: from_string: \"%s\"\n", *c);
+            fprintf(stderr, "test_copy: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
             ndt_context_del(&ctx);
             return -1;
         }
 
-        u = ndt_copy(t, &ctx);
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(&ctx);
+
+            ndt_set_alloc_fail();
+            u = ndt_copy(t, &ctx);
+            ndt_set_alloc();
+
+            if (ctx.err != NDT_MemoryError) {
+                break;
+            }
+
+            if (u != NULL) {
+                fprintf(stderr, "test_copy: FAIL: unexpected success: \"%s\"\n", *c);
+                ndt_del(u);
+                ndt_del(t);
+                ndt_context_del(&ctx);
+                return -1;
+            }
+        }
         if (u == NULL) {
-            fprintf(stderr, "test_hash: FAIL: copy: \"%s\"\n", *c);
-            fprintf(stderr, "test_hash: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_copy: FAIL: copying failed: \"%s\"\n", *c);
+            fprintf(stderr, "test_copy: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
             ndt_del(t);
@@ -1026,8 +1042,8 @@ test_copy(void)
             return -1;
         }
 
-        ndt_del(t);
         ndt_del(u);
+        ndt_del(t);
         count++;
     }
 

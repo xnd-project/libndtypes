@@ -105,31 +105,39 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 
         types = ndt_alloc(ntypes, sizeof(ndt_value_t));
         if (types == NULL) {
-            return NULL;
+            return ndt_memory_error(ctx);
         }
 
         for (i = 0; i < ntypes; i++) {
             types[i] = t->Categorical.types[i];
             switch (types[i].tag) {
+            case ValNA: case ValBool: case ValInt64: case ValFloat64:
+                break;
             case ValString:
                 types[i].ValString = ndt_strdup(t->Categorical.types[i].ValString, ctx);
-                if (types[i].ValString == NULL) goto err_categorical;
+                if (types[i].ValString == NULL) {
+                    goto err_categorical;
+                }
                 break;
-            case ValNA: case ValBool: case ValInt64: case ValFloat64: break;
             }
+
+            continue;
+
+        err_categorical:
+            for (k = 0; k < i; k++) {
+                switch (types[k].tag) {
+                case ValNA: case ValBool: case ValInt64: case ValFloat64:
+                    break;
+                case ValString:
+                    ndt_free(types[k].ValString);
+                    break;
+                }
+            }
+            ndt_free(types);
+            return NULL;
         }
 
         return ndt_categorical(types, ntypes, ctx);
-
-    err_categorical:
-        for (k = 0; k < i; k++) {
-            switch (types[i].tag) {
-            case ValString: ndt_free(types[i].ValString); break;
-            case ValNA: case ValBool: case ValInt64: case ValFloat64: break;
-            }
-        }
-        ndt_free(types);
-        return NULL;
     }
 
     case Pointer: {
@@ -145,6 +153,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
         /* XXX: order unused */
         type = ndt_copy(t->FixedDim.type, ctx);
         if (type == NULL) {
+            assert(ctx->err != NDT_Success);
             return NULL;
         }
 
@@ -225,17 +234,22 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             fields[i].name = NULL;
             fields[i].type = ndt_copy(t->Tuple.types[i], ctx);
             if (fields[i].type == NULL) {
-                for (k = 0; k < i; k++) {
-                    ndt_del(fields[i].type);
-                }
-                ndt_free(fields);
-                return NULL;
+                goto err_tuple;
             }
             fields[i].access = t->Tuple.types[i]->access;
             if (fields[i].access == Concrete) {
                 fields[i].Concrete.data_align = t->Tuple.types[i]->data_align;
                 fields[i].Concrete.explicit_align = false;
             }
+
+            continue;
+
+        err_tuple:
+            for (k = 0; k < i; k++) {
+                ndt_del(fields[k].type);
+            }
+            ndt_free(fields);
+            return NULL;
        }
 
        return ndt_tuple(t->Tuple.flag, fields, shape, align, pack, ctx);
@@ -260,13 +274,13 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
         for (i = 0; i < shape; i++) {
             fields[i].name = ndt_strdup(t->Record.names[i], ctx);
             if (fields[i].name == NULL) {
-                goto error;
+                goto err_record;
             }
 
             fields[i].type = ndt_copy(t->Record.types[i], ctx);
             if (fields[i].type == NULL) {
                 ndt_free(fields[i].name);
-                goto error;
+                goto err_record;
             }
 
             fields[i].access = t->Record.types[i]->access;
@@ -277,9 +291,10 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 
             continue;
 
-        error:
+        err_record:
             for (k = 0; k < i; k++) {
-                ndt_del(fields[i].type);
+                ndt_free(fields[k].name);
+                ndt_del(fields[k].type);
             }
             ndt_free(fields);
             return NULL;
