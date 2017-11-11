@@ -69,7 +69,7 @@ copy.obj:\
 Makefile copy.c ndtypes.h
 	$(CC) $(CFLAGS) -c copy.c
 
-.objs\attr.obj:\
+.objs\copy.obj:\
 Makefile copy.c ndtypes.h
 	$(CC) $(CFLAGS_SHARED) -c copy.c
 
