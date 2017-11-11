@@ -115,7 +115,7 @@ elif len(sys.argv) == 2:
 def ndtypes_ext():
     include_dirs = ["libndtypes"]
     library_dirs = ["libndtypes"]
-    depends = ["libndtypes/ndtypes.h"]
+    depends = ["libndtypes/ndtypes.h", "python/ndtypes/pyndtypes.h"]
     sources = ["python/ndtypes/_ndtypes.c"]
 
     if sys.platform == "win32":
