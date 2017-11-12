@@ -34,6 +34,8 @@
 #include <Python.h>
 #include <stdlib.h>
 #include "ndtypes.h"
+
+#define NDTYPES_MODULE
 #include "pyndtypes.h"
 
 
@@ -188,7 +190,7 @@ rbuf_from_offset_lists(PyObject *list)
 
 static PyTypeObject ResourceBuffer_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "ndtypes.resource",
+    "_ndtypes.resource",
     sizeof(ResourceBufferObject),
     0,
     (destructor)rbuf_dealloc,     /* tp_dealloc */
@@ -275,10 +277,7 @@ typedef struct {
 
 static PyTypeObject Ndt_Type;
 
-#define Ndt_CheckExact(v) (Py_TYPE(v) == &Ndt_Type)
-#define Ndt_Check(v) PyObject_TypeCheck(v, &Ndt_Type)
 #define NDT(v) (((NdtObject *)v)->ndt)
-
 #define RBUF(v) (((NdtObject *)v)->rbuf)
 #define RBUF_NUM_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offset_arrays)
 #define RBUF_NUM_OFFSETS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offsets)
@@ -647,39 +646,41 @@ static PyTypeObject Ndt_Type =
 /*                                   C-API                                  */
 /****************************************************************************/
 
-int
-pyndt_check_exact(PyObject *v)
+static void **ndtypes_api[NDTYPES_MAX_API];
+
+static int
+Ndt_CheckExact(const PyObject *v)
 {
-    return Ndt_CheckExact(v);
+    return Py_TYPE(v) == &Ndt_Type;
 }
 
-int
-pyndt_check(PyObject *v)
+static int
+Ndt_Check(const PyObject *v)
 {
-    return Ndt_Check(v);
+    return PyObject_TypeCheck(v, &Ndt_Type);
 }
 
-ndt_t *
-pyndt_get_ndt(PyObject *v)
+static const ndt_t *
+CONST_NDT(const PyObject *v)
 {
     assert(Ndt_Check(v));
-    return NDT(v);
+    return ((NdtObject *)v)->ndt;
+}
+
+static PyObject *
+init_api(void)
+{
+    ndtypes_api[Ndt_CheckExact_INDEX] = (void *)Ndt_CheckExact;
+    ndtypes_api[Ndt_Check_INDEX] = (void *)Ndt_Check;
+    ndtypes_api[CONST_NDT_INDEX] = (void *)CONST_NDT;
+
+    return PyCapsule_New(ndtypes_api, "ndtypes._ndtypes._API", NULL);
 }
 
 
 /****************************************************************************/
 /*                                  Module                                  */
 /****************************************************************************/
-
-static int num_modules = 0;
-
-static void
-ndtypes_module_free(PyObject *m UNUSED)
-{
-    if (--num_modules == 0) {
-        ndt_finalize();
-    }
-}
 
 static struct PyModuleDef ndtypes_module = {
     PyModuleDef_HEAD_INIT,        /* m_base */
@@ -690,7 +691,7 @@ static struct PyModuleDef ndtypes_module = {
     NULL,                         /* m_slots */
     NULL,                         /* m_traverse */
     NULL,                         /* m_clear */
-    (freefunc)ndtypes_module_free /* m_free */
+    NULL                          /* m_free */
 };
 
 
@@ -701,11 +702,22 @@ PyInit__ndtypes(void)
     PyObject *m = NULL;
     PyObject *collections = NULL;
     PyObject *obj = NULL;
+    static PyObject *capsule = NULL;
+    static int initialized = 0;
 
-    if (num_modules == 0) {
+    if (!initialized) {
+        capsule = init_api();
+        if (capsule == NULL) {
+            return NULL;
+        }
         if (ndt_init(&ctx) < 0) {
             return seterr(&ctx);
         }
+        initialized = 1;
+    }
+
+    if (PyType_Ready(&ResourceBuffer_Type) < 0) {
+        goto error;
     }
 
     Ndt_Type.tp_base = &PyBaseObject_Type;
@@ -756,11 +768,16 @@ PyInit__ndtypes(void)
         goto error;
     }
 
-    num_modules++;
+    Py_INCREF(capsule);
+    if (PyModule_AddObject(m, "_API", capsule) < 0) {
+        goto error;
+    }
+
+
     return m;
 
+
 error:
-    ndt_finalize();
     Py_CLEAR(m);
     return NULL;
 }

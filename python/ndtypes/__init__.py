@@ -10,7 +10,5 @@ ApplySpec(
 
 from . import _ndtypes
 _ndtypes.ApplySpec.__repr__ = pretty_repr
-del _ndtypes
-
 from ._ndtypes import *
 
