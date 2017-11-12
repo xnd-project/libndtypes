@@ -617,7 +617,9 @@ NDTYPES_API int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
 
 NDTYPES_API ndt_t *ndt_from_file(const char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_from_offsets_dtype(enum ndt_offsets flag, int ndim, int32_t noffsets[], int32_t *offsets[], const char *dtype, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_from_external_offsets_and_dtype(
+                       int num_offset_arrays, const int32_t noffsets[], const int32_t *offset_arrays[],
+                       const char *dtype, ndt_context_t *ctx);
 
 
 /******************************************************************************/

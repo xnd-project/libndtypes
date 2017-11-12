@@ -494,19 +494,19 @@ static int
 check_type_invariants(const ndt_t *type, ndt_context_t *ctx)
 {
     if (type->tag == Module) {
-        ndt_err_format(ctx, NDT_ValueError,
+        ndt_err_format(ctx, NDT_TypeError,
             "nested module types are not supported");
         return 0;
     }
 
     if (type->tag == VarDim) {
-        ndt_err_format(ctx, NDT_ValueError,
+        ndt_err_format(ctx, NDT_TypeError,
             "nested or non-uniform var dimensions are not supported");
         return 0;
     }
 
-    if (type->ndim > NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+    if (type->ndim >= NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %u", NDT_MAX_DIM);
         return 0;
     }
 
@@ -515,22 +515,39 @@ check_type_invariants(const ndt_t *type, ndt_context_t *ctx)
 
 /* Invariants for var dimensions. */
 static int
-check_var_invariants(const ndt_t *type, ndt_context_t *ctx)
+check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ctx)
 {
     if (type->tag == Module) {
-        ndt_err_format(ctx, NDT_ValueError,
+        ndt_err_format(ctx, NDT_TypeError,
             "nested module types are not supported");
         return 0;
     }
 
     if (type->tag == FixedDim || type->tag == SymbolicDim) {
-        ndt_err_format(ctx, NDT_ValueError,
+        ndt_err_format(ctx, NDT_TypeError,
             "mixed fixed and var dim are not supported");
         return 0;
     }
 
-    if (type->ndim > NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_ValueError, "ndim > %u", NDT_MAX_DIM);
+    if (type->tag == VarDim) {
+        if (ndt_is_abstract(type)) {
+            if (flag != NoOffsets) {
+                ndt_err_format(ctx, NDT_TypeError,
+                    "offsets given for abstract type");
+                return 0;
+            }
+        }
+        else {
+            if (flag == NoOffsets || flag != type->Concrete.VarDim.flag) {
+                ndt_err_format(ctx, NDT_TypeError,
+                    "mixing internal and external offsets is not allowed");
+                return 0;
+            }
+        }
+    }
+
+    if (type->ndim >= NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %u", NDT_MAX_DIM);
         return 0;
     }
 
@@ -837,7 +854,7 @@ ndt_var_dim(ndt_t *type, enum ndt_offsets flag, int32_t noffsets, const int32_t 
     enum ndt_access access = Abstract;
     ndt_t *t;
 
-    if (!check_var_invariants(type, ctx)) {
+    if (!check_var_invariants(flag, type, ctx)) {
         goto error;
 
     }

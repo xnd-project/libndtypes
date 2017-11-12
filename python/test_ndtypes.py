@@ -32,6 +32,7 @@
 
 import unittest
 from ndtypes import ndt
+from ndtypes import MAX_DIM
 
 
 class ErrorTest(unittest.TestCase):
@@ -41,6 +42,58 @@ class ErrorTest(unittest.TestCase):
         self.assertRaises(ValueError, ndt, "")
         self.assertRaises(ValueError, ndt, "xyz")
         self.assertRaises(ValueError, ndt, "var() * int64")
+
+class VarDimTest(unittest.TestCase):
+
+    def test_var_invariants(self):
+        # Mixing var and fixed is disallowed.
+        self.assertRaises(TypeError, ndt, "10 * var * int64")
+        self.assertRaises(TypeError, ndt, "var * 10 * int64")
+        self.assertRaises(TypeError, ndt, "10 * var * 10 * int64")
+        self.assertRaises(TypeError, ndt, "var * 10 * var * int64")
+        self.assertRaises(TypeError, ndt, "N * var * int64")
+        self.assertRaises(TypeError, ndt, "var * N * int64")
+        self.assertRaises(TypeError, ndt, "N * var * N * int64")
+        self.assertRaises(TypeError, ndt, "var * N * var * int64")
+
+        # Too many dimensions.
+        self.assertRaises(TypeError, ndt, "var * " * (MAX_DIM + 1) + "float64")
+
+        # Nested var is disallowed.
+        self.assertRaises(TypeError, ndt, "2 * {a: var * complex128}")
+        self.assertRaises(TypeError, ndt, "var * {a: var * complex128}")
+        self.assertRaises(TypeError, ndt, "var * pointer(var * string)")
+        self.assertRaises(TypeError, ndt, "var * SomeConstr(var * string)")
+
+    def test_external_offsets(self):
+        # Invalid offsets.
+        self.assertRaises(TypeError, ndt, "int8", [""])
+        self.assertRaises(TypeError, ndt, "int8", [0])
+        self.assertRaises(TypeError, ndt, "int8", [0, 2])
+        self.assertRaises(TypeError, ndt, "int8", {})
+        self.assertRaises(TypeError, ndt, "int8", ())
+        self.assertRaises(TypeError, ndt, "int8", [(), ()])
+
+        self.assertRaises(ValueError, ndt, "int8", [])
+        self.assertRaises(ValueError, ndt, "int8", [[0]])
+        self.assertRaises(ValueError, ndt, "int8", [[0], [0]])
+
+        self.assertRaises(ValueError, ndt, "int8", [[-1, 2]])
+        self.assertRaises(ValueError, ndt, "int8", [[0, 2147483648]])
+
+        # Invalid combinations.
+        self.assertRaises(ValueError, ndt, "int8", [[0, 2], [0, 10]])
+        self.assertRaises(ValueError, ndt, "int8", [[0, 2], [0, 10, 30, 40]])
+
+        # Implicit mixing of var and fixed.
+        self.assertRaises(TypeError, ndt, "10 * int8", [[0, 2], [0, 10, 20]])
+
+        # Abstract dtype.
+        self.assertRaises(ValueError, ndt, "N * int8", [[0, 2], [0, 10, 20]])
+        self.assertRaises(ValueError, ndt, "var * int8", [[0, 2], [0, 10, 20]])
+
+        # Mixing external and internal offsets.
+        self.assertRaises(TypeError, ndt, "var(offsets=[0,2,10]) * int8", [[0, 1], [0, 2]])
 
 class ConstructionTest(unittest.TestCase):
 

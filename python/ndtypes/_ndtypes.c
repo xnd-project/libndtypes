@@ -281,7 +281,7 @@ static PyTypeObject Ndt_Type;
 #define RBUF(v) (((NdtObject *)v)->rbuf)
 #define RBUF_NUM_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offset_arrays)
 #define RBUF_NUM_OFFSETS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offsets)
-#define RBUF_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->offset_arrays)
+#define RBUF_OFFSET_ARRAYS(v) ((const int32_t **)(((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->offset_arrays))
 
 
 static PyObject *
@@ -350,8 +350,7 @@ ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    NDT(self) = ndt_from_offsets_dtype(
-                    ExternalOffsets,
+    NDT(self) = ndt_from_external_offsets_and_dtype(
                     RBUF_NUM_OFFSET_ARRAYS(self),
                     RBUF_NUM_OFFSETS(self),
                     RBUF_OFFSET_ARRAYS(self),
