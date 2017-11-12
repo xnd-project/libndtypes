@@ -152,7 +152,7 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
         }
 
         for (k = 0; k < rbuf->num_offsets[i]; k++) {
-            long x = PyLong_AsLong(PyList_GET_ITEM(lst, k));
+            long long x = PyLong_AsLongLong(PyList_GET_ITEM(lst, k));
             if (x == -1 && PyErr_Occurred()) {
                 return -1;
             }
@@ -163,7 +163,7 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
                 return -1;
             }
 
-            rbuf->offset_arrays[i][k] = x;
+            rbuf->offset_arrays[i][k] = (int32_t)x;
         }
     }
 
