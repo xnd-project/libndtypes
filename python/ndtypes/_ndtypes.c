@@ -668,11 +668,18 @@ CONST_NDT(const PyObject *v)
 }
 
 static PyObject *
+Ndt_SetError(ndt_context_t *ctx)
+{
+    return seterr(ctx);
+}
+
+static PyObject *
 init_api(void)
 {
     ndtypes_api[Ndt_CheckExact_INDEX] = (void *)Ndt_CheckExact;
     ndtypes_api[Ndt_Check_INDEX] = (void *)Ndt_Check;
     ndtypes_api[CONST_NDT_INDEX] = (void *)CONST_NDT;
+    ndtypes_api[Ndt_SetError_INDEX] = (void *)Ndt_SetError;
 
     return PyCapsule_New(ndtypes_api, "ndtypes._ndtypes._API", NULL);
 }
