@@ -30,7 +30,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import unittest
+import unittest, gc
+from copy import copy
 from ndtypes import ndt
 from ndtypes import MAX_DIM
 
@@ -94,6 +95,22 @@ class VarDimTest(unittest.TestCase):
 
         # Mixing external and internal offsets.
         self.assertRaises(TypeError, ndt, "var(offsets=[0,2,10]) * int8", [[0, 1], [0, 2]])
+
+    def test_copy(self):
+        x = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * int8")
+        y = copy(x)
+        del x
+        gc.collect()
+        del y
+        gc.collect()
+
+        x = ndt("{z: 10 * int8}", [[0, 2], [0, 10, 20]])
+        y = copy(x)
+        del x
+        gc.collect()
+        del y
+        gc.collect()
+
 
 class ConstructionTest(unittest.TestCase):
 

@@ -424,6 +424,15 @@ ndtype_ast_repr(PyObject *self, PyObject *args UNUSED)
     return res;
 }
 
+static PyObject *
+ndtype_copy(PyObject *self, PyObject *args UNUSED)
+{
+    Py_XINCREF(RBUF(self));
+    Py_INCREF(self);
+    return self;
+}
+
+
 /******************************************************************************/
 /*                                 Ndt methods                                */
 /******************************************************************************/
@@ -583,8 +592,11 @@ static PyMethodDef ndtype_methods [] =
   { "pretty", (PyCFunction)ndtype_indent, METH_NOARGS, NULL },
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, NULL },
 
-  { NULL, NULL, 1 }
+  /* Special methods */
+  { "__copy__", ndtype_copy, METH_NOARGS, NULL },
+  { "__deepcopy__", ndtype_copy, METH_O, NULL },
 
+  { NULL, NULL, 1 }
 };
 
 static PyTypeObject Ndt_Type =
