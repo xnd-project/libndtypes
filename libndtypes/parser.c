@@ -64,7 +64,7 @@ jmp_buf ndt_lexerror;
 
 
 static ndt_t *
-_ndt_from_file(FILE *fp, ndt_context_t *ctx)
+_ndt_from_fp(ndt_meta_t *m, FILE *fp, ndt_context_t *ctx)
 {
     volatile yyscan_t scanner;
     ndt_t *ast = NULL;
@@ -80,7 +80,7 @@ _ndt_from_file(FILE *fp, ndt_context_t *ctx)
             yyset_in(fp, scanner);
         }
 
-        ret = yyparse(scanner, &ast, ctx);
+        ret = yyparse(scanner, &ast, m, ctx);
         yylex_destroy(scanner);
 
         if (ret == 2) {
@@ -99,8 +99,8 @@ _ndt_from_file(FILE *fp, ndt_context_t *ctx)
     }
 }
 
-ndt_t *
-ndt_from_file(const char *name, ndt_context_t *ctx)
+static ndt_t *
+_ndt_from_file(ndt_meta_t *m, const char *name, ndt_context_t *ctx)
 {
     FILE *fp;
     ndt_t *t;
@@ -116,15 +116,26 @@ ndt_from_file(const char *name, ndt_context_t *ctx)
         }
     }
 
-    t = _ndt_from_file(fp, ctx);
+    t = _ndt_from_fp(m, fp, ctx);
     fclose(fp);
 
     return t;
 }
 
+ndt_t *
+ndt_from_file(const char *name, ndt_context_t *ctx)
+{
+    return _ndt_from_file(NULL, name, ctx);
+}
 
 ndt_t *
-ndt_from_string(const char *input, ndt_context_t *ctx)
+ndt_from_file_fill_meta(ndt_meta_t *m, const char *name, ndt_context_t *ctx)
+{
+    return _ndt_from_file(m, name, ctx);
+}
+
+static ndt_t *
+_ndt_from_string(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
 {
     volatile yyscan_t scanner = NULL;
     volatile YY_BUFFER_STATE state = NULL;
@@ -159,7 +170,7 @@ ndt_from_string(const char *input, ndt_context_t *ctx)
         state->yy_bs_lineno = 1;
         state->yy_bs_column = 1;
 
-        ret = yyparse(scanner, &ast, ctx);
+        ret = yyparse(scanner, &ast, m, ctx);
         yy_delete_buffer(state, scanner);
         yylex_destroy(scanner);
         ndt_free(buffer);
@@ -184,11 +195,19 @@ ndt_from_string(const char *input, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_from_external_offsets_and_dtype(int num_offset_arrays,
-                                    const int32_t noffsets[],
-                                    const int32_t *offset_arrays[],
-                                    const char *dtype,
-                                    ndt_context_t *ctx)
+ndt_from_string(const char *input, ndt_context_t *ctx)
+{
+    return _ndt_from_string(NULL, input, ctx);
+}
+
+ndt_t *
+ndt_from_string_fill_meta(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
+{
+    return _ndt_from_string(m, input, ctx);
+}
+
+ndt_t *
+ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_t *ctx)
 {
     ndt_t *t, *type;
     int i;
@@ -205,8 +224,8 @@ ndt_from_external_offsets_and_dtype(int num_offset_arrays,
         return NULL;
     }
 
-    for (i=num_offset_arrays-1, t=type; i >= 0; i--, type=t) {
-        t = ndt_var_dim(type, ExternalOffsets, noffsets[i], offset_arrays[i],
+    for (i=m->num_offset_arrays-1, t=type; i >= 0; i--, type=t) {
+        t = ndt_var_dim(type, ExternalOffsets, m->num_offsets[i], m->offset_arrays[i],
                         0, INT32_MAX, 1, ctx);
         if (t == NULL) {
             return NULL;

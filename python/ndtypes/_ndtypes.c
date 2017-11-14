@@ -65,9 +65,7 @@
 typedef struct {
     PyObject_HEAD
     uint32_t flags;
-    int32_t num_offset_arrays;           /* number of offset arrays */
-    int32_t num_offsets[NDT_MAX_DIM];    /* lengths of the offset arrays */
-    int32_t *offset_arrays[NDT_MAX_DIM]; /* offset arrays (NULL or valid pointer) */
+    ndt_meta_t m;
 } ResourceBufferObject;
 
 static PyTypeObject ResourceBuffer_Type;
@@ -87,11 +85,11 @@ rbuf_alloc(uint32_t flags)
     }
  
     self->flags = flags;
-    self->num_offset_arrays = 0;
+    self->m.num_offset_arrays = 0;
 
     for (i = 0; i < NDT_MAX_DIM; i++) {
-        self->num_offsets[i] = 0;
-        self->offset_arrays[i] = NULL;
+        self->m.num_offsets[i] = 0;
+        self->m.offset_arrays[i] = NULL;
     }
 
     return (PyObject *)self;
@@ -104,8 +102,8 @@ rbuf_dealloc(ResourceBufferObject *self)
 
     if (self->flags & RBUF_OWN_OFFSETS) {
         for (i = 0; i < NDT_MAX_DIM; i++) {
-            ndt_free(self->offset_arrays[i]);
-            self->offset_arrays[i] = NULL;
+            ndt_free(self->m.offset_arrays[i]);
+            self->m.offset_arrays[i] = NULL;
         }
     }
 
@@ -123,14 +121,14 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
         return -1;
     }
 
-    rbuf->num_offset_arrays = PyList_GET_SIZE(list);
-    if (rbuf->num_offset_arrays < 1 || rbuf->num_offset_arrays > NDT_MAX_DIM) {
+    rbuf->m.num_offset_arrays = PyList_GET_SIZE(list);
+    if (rbuf->m.num_offset_arrays < 1 || rbuf->m.num_offset_arrays > NDT_MAX_DIM) {
         PyErr_Format(PyExc_ValueError,
             "number of offset lists must be in [1, %d]", NDT_MAX_DIM);
         return -1;
     }
 
-    for (i = 0; i < rbuf->num_offset_arrays; i++) {
+    for (i = 0; i < rbuf->m.num_offset_arrays; i++) {
         lst = PyList_GET_ITEM(list, i);
         if (!PyList_Check(lst)) {
             PyErr_SetString(PyExc_TypeError,
@@ -138,20 +136,20 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
             return -1;
         }
 
-        rbuf->num_offsets[i] = PyList_GET_SIZE(lst);
-        if (rbuf->num_offsets[i] < 2 || rbuf->num_offsets[i] > INT32_MAX) {
+        rbuf->m.num_offsets[i] = PyList_GET_SIZE(lst);
+        if (rbuf->m.num_offsets[i] < 2 || rbuf->m.num_offsets[i] > INT32_MAX) {
             PyErr_SetString(PyExc_ValueError,
                 "length of a single offset list must be in [2, INT32_MAX]");
             return -1;
         }
 
-        rbuf->offset_arrays[i] = ndt_alloc(rbuf->num_offsets[i], sizeof(int32_t));
-        if (rbuf->offset_arrays[i] == NULL) {
+        rbuf->m.offset_arrays[i] = ndt_alloc(rbuf->m.num_offsets[i], sizeof(int32_t));
+        if (rbuf->m.offset_arrays[i] == NULL) {
             PyErr_NoMemory();
             return -1;
         }
 
-        for (k = 0; k < rbuf->num_offsets[i]; k++) {
+        for (k = 0; k < rbuf->m.num_offsets[i]; k++) {
             long long x = PyLong_AsLongLong(PyList_GET_ITEM(lst, k));
             if (x == -1 && PyErr_Occurred()) {
                 return -1;
@@ -163,7 +161,7 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
                 return -1;
             }
 
-            rbuf->offset_arrays[i][k] = (int32_t)x;
+            rbuf->m.offset_arrays[i][k] = (int32_t)x;
         }
     }
 
@@ -279,9 +277,7 @@ static PyTypeObject Ndt_Type;
 
 #define NDT(v) (((NdtObject *)v)->ndt)
 #define RBUF(v) (((NdtObject *)v)->rbuf)
-#define RBUF_NUM_OFFSET_ARRAYS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offset_arrays)
-#define RBUF_NUM_OFFSETS(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->num_offsets)
-#define RBUF_OFFSET_ARRAYS(v) ((const int32_t **)(((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->offset_arrays))
+#define RBUF_NDT_META(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->m)
 
 
 static PyObject *
@@ -350,12 +346,7 @@ ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    NDT(self) = ndt_from_external_offsets_and_dtype(
-                    RBUF_NUM_OFFSET_ARRAYS(self),
-                    RBUF_NUM_OFFSETS(self),
-                    RBUF_OFFSET_ARRAYS(self),
-                    cp,
-                    &ctx);
+    NDT(self) = ndt_from_metadata_and_dtype(&RBUF_NDT_META(self), cp, &ctx);
 
     if (NDT(self) == NULL) {
         Py_DECREF(self);
@@ -673,12 +664,40 @@ Ndt_SetError(ndt_context_t *ctx)
 }
 
 static PyObject *
+Ndt_CopySubtree(const PyObject *src, const ndt_t *t)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *dest;
+
+    if (!Ndt_Check(src)) {
+        PyErr_SetString(PyExc_TypeError, "expected ndt object");
+        return NULL;
+    }
+
+    dest = ndtype_alloc(Py_TYPE(src));
+    if (dest == NULL) {
+        return NULL;
+    }
+
+    NDT(dest) = ndt_copy(t, &ctx);
+    if (NDT(dest) == NULL) {
+        return seterr(&ctx);
+    }
+
+    RBUF(dest) = RBUF(src);
+    Py_XINCREF(RBUF(dest));
+
+    return dest;
+}
+
+static PyObject *
 init_api(void)
 {
     ndtypes_api[Ndt_CheckExact_INDEX] = (void *)Ndt_CheckExact;
     ndtypes_api[Ndt_Check_INDEX] = (void *)Ndt_Check;
     ndtypes_api[CONST_NDT_INDEX] = (void *)CONST_NDT;
     ndtypes_api[Ndt_SetError_INDEX] = (void *)Ndt_SetError;
+    ndtypes_api[Ndt_CopySubtree_INDEX] = (void *)Ndt_CopySubtree;
 
     return PyCapsule_New(ndtypes_api, "ndtypes._ndtypes._API", NULL);
 }

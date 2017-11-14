@@ -40,10 +40,12 @@
 #undef yylex
 
 void
-yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg)
+yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta,
+        ndt_context_t *ctx, const char *msg)
 {
     (void)scanner;
     (void)ast;
+    (void)meta;
 
     ndt_err_format(ctx, NDT_ParseError, "%d:%d: %s\n", loc->first_line,
                    loc->first_column, msg);
@@ -67,7 +69,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %code provides {
   #define YY_DECL extern int lexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
-  void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
+  void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx, const char *msg);
 }
 
 %pure-parser
@@ -82,7 +84,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 }
 
 %lex-param   {yyscan_t scanner} {ndt_context_t *ctx}
-%parse-param {yyscan_t scanner} {ndt_t **ast} {ndt_context_t *ctx}
+%parse-param {yyscan_t scanner} {ndt_t **ast} {ndt_meta_t *meta} {ndt_context_t *ctx}
 
 %union {
     ndt_t *ndt;
@@ -208,7 +210,7 @@ dimensions_nooption:
   INTEGER STAR dimensions_tail                            { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | FIXED LPAREN attribute_seq RPAREN STAR dimensions_tail  { $$ = mk_fixed_dim_from_attrs($3, $6, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER STAR dimensions_tail                         { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| VAR arguments_opt STAR dimensions_tail                  { $$ = mk_var_dim($2, $4, ctx); if ($$ == NULL) YYABORT; }
+| VAR arguments_opt STAR dimensions_tail                  { $$ = mk_var_dim(meta, $2, $4, ctx); if ($$ == NULL) YYABORT; }
 | ELLIPSIS STAR dimensions_tail                           { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER ELLIPSIS STAR dimensions_tail                { $$ = ndt_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
 

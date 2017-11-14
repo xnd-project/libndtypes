@@ -108,7 +108,7 @@ mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 }
 
 ndt_t *
-mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
+mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 {
     if (attrs) {
         int32_t *offsets = NULL;
@@ -142,8 +142,26 @@ mk_var_dim(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
             return NULL;
         }
 
-        t = ndt_var_dim(type, OwnOffsets, (int32_t)noffsets, offsets,
-                        start, stop, step, ctx);
+        if (m == NULL) {
+            t = ndt_var_dim(type, OwnOffsets, (int32_t)noffsets, offsets,
+                            start, stop, step, ctx);
+        }
+        else {
+            int i = m->num_offset_arrays;
+            if (i >= NDT_MAX_DIM) {
+                ndt_err_format(ctx, NDT_RuntimeError,
+                               "too many offsets arrays");
+                ndt_del(type);
+                ndt_free(offsets);
+                return NULL;
+            }
+            m->num_offsets[i] = (int32_t)noffsets;
+            m->offset_arrays[i] = offsets;
+            m->num_offset_arrays++;
+
+            t = ndt_var_dim(type, ExternalOffsets, (int32_t)noffsets, offsets,
+                            start, stop, step, ctx);
+        }
 
         return t;
     }

@@ -166,6 +166,15 @@ enum ndt_offsets {
   NoOffsets,
 };
 
+/*
+ * Collect offsets during parsing for transferring ownership to an external
+ * resource manager later.
+ */
+typedef struct {
+    int num_offset_arrays;               /* number of offset arrays */
+    int32_t num_offsets[NDT_MAX_DIM];    /* lengths of the offset arrays */
+    int32_t *offset_arrays[NDT_MAX_DIM]; /* offset arrays (NULL or valid pointer) */
+} ndt_meta_t;
 
 /* Encoding for characters and strings */
 enum ndt_encoding {
@@ -615,11 +624,25 @@ NDTYPES_API int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
 /*                                  Parsing                                   */
 /******************************************************************************/
 
+/* Metadata is currently limited to var-dimension offsets. */
+
+/*
+ * Metadata is read from the type string and managed by the type. This is
+ * convenient but can waste a lot of space when offset arrays are large.
+ */
 NDTYPES_API ndt_t *ndt_from_file(const char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_from_external_offsets_and_dtype(
-                       int num_offset_arrays, const int32_t noffsets[], const int32_t *offset_arrays[],
-                       const char *dtype, ndt_context_t *ctx);
+
+/*
+ * Metadata is read from the type string and extracted for external management.
+ * The type still has pointers to the metadata.  This scheme is used for sharing
+ * offsets between copies or subtypes of a type.
+ */
+NDTYPES_API ndt_t *ndt_from_file_fill_meta(ndt_meta_t *m, const char *name, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_from_string_fill_meta(ndt_meta_t *m, const char *input, ndt_context_t *ctx);
+
+/* Metadata is provided and managed by an external source. */
+NDTYPES_API ndt_t *ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_t *ctx);
 
 
 /******************************************************************************/

@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 59 "grammar.y" /* yacc.c:1909  */
+#line 61 "grammar.y" /* yacc.c:1909  */
 
   #include "ndtypes.h"
   #include "seq.h"
@@ -123,7 +123,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 87 "grammar.y" /* yacc.c:1909  */
+#line 89 "grammar.y" /* yacc.c:1909  */
 
     ndt_t *ndt;
     ndt_field_t *field;
@@ -159,13 +159,13 @@ struct YYLTYPE
 
 
 
-int yyparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
+int yyparse (yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
-#line 67 "grammar.y" /* yacc.c:1909  */
+#line 69 "grammar.y" /* yacc.c:1909  */
 
   #define YY_DECL extern int lexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
-  void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
+  void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx, const char *msg);
 
 #line 171 "grammar.h" /* yacc.c:1909  */
 

@@ -17,7 +17,7 @@
    match-leak-kinds: indirect
    ...
    fun:yy_scan_buffer
-   fun:ndt_from_string
+   fun:_ndt_from_string
 }
 
 {
@@ -26,7 +26,7 @@
    match-leak-kinds: possible
    ...
    fun:yy_scan_buffer
-   fun:ndt_from_string
+   fun:_ndt_from_string
 }
 
 {
@@ -35,5 +35,5 @@
    match-leak-kinds: definite
    ...
    fun:yy_scan_buffer
-   fun:ndt_from_string
+   fun:_ndt_from_string
 }
