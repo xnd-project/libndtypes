@@ -250,9 +250,7 @@ enum ndt {
         Categorical,
         Pointer,
 
-        Field /* used internally */
-
-        /* User1, User2, ... tags for a limited number of user-defined types */
+        Field /* XXX used internally (will be removed) */
 };
 
 enum ndt_alias {
