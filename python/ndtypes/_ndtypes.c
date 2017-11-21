@@ -285,26 +285,37 @@ ndtype_alloc(PyTypeObject *type)
 {
     NdtObject *self;
 
-    if (type == &Ndt_Type) {
-        self = PyObject_New(NdtObject, &Ndt_Type);
-    }
-    else {
-        self = (NdtObject *)type->tp_alloc(type, 0);
-    }
+    self = (NdtObject *)type->tp_alloc(type, 0);
     if (self == NULL) {
         return NULL;
     }
  
     RBUF(self) = NULL;
     NDT(self) = NULL;
+
     return (PyObject *)self;
 }
 
-static void
-ndtype_dealloc(PyObject *self)
+static int
+ndtype_traverse(NdtObject *self, visitproc visit, void *arg)
 {
-    Py_CLEAR(RBUF(self));
+    Py_VISIT(self->rbuf);
+    return 0;
+}
+
+static int
+ndtype_clear(NdtObject *self)
+{
+    Py_CLEAR(self->rbuf);
     ndt_del(NDT(self));
+    return 0;
+}
+
+static void
+ndtype_dealloc(NdtObject *self)
+{
+    PyObject_GC_UnTrack(self);
+    ndtype_clear(self);
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -621,10 +632,11 @@ static PyTypeObject Ndt_Type =
     (setattrofunc) 0,                       /* tp_setattro */
     (PyBufferProcs *) 0,                    /* tp_as_buffer */
     (Py_TPFLAGS_DEFAULT|
-     Py_TPFLAGS_BASETYPE),                  /* tp_flags */
-    0, // ndtypes_doc,                      /* tp_doc */
-    0,                                      /* tp_traverse */
-    0,                                      /* tp_clear */
+     Py_TPFLAGS_BASETYPE|
+     Py_TPFLAGS_HAVE_GC),                   /* tp_flags */
+    0,                                      /* tp_doc */
+    (traverseproc)ndtype_traverse,          /* tp_traverse */
+    (inquiry)ndtype_clear,                  /* tp_clear */
     ndtype_richcompare,                     /* tp_richcompare */
     0,                                      /* tp_weaklistoffset */
     0,                                      /* tp_iter */
@@ -638,9 +650,9 @@ static PyTypeObject Ndt_Type =
     0,                                      /* tp_descr_set */
     0,                                      /* tp_dictoffset */
     0,                                      /* tp_init */
-    0,                                      /* tp_alloc */
+    PyType_GenericAlloc,                    /* tp_alloc */
     ndtype_new,                             /* tp_new */
-    PyObject_Del,                           /* tp_free */
+    PyObject_GC_Del,                        /* tp_free */
 };
 
 
