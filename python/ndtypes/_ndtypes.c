@@ -303,19 +303,12 @@ ndtype_traverse(NdtObject *self, visitproc visit, void *arg)
     return 0;
 }
 
-static int
-ndtype_clear(NdtObject *self)
-{
-    Py_CLEAR(self->rbuf);
-    ndt_del(NDT(self));
-    return 0;
-}
-
 static void
 ndtype_dealloc(NdtObject *self)
 {
     PyObject_GC_UnTrack(self);
-    ndtype_clear(self);
+    ndt_del(NDT(self));
+    Py_CLEAR(self->rbuf);
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -636,7 +629,7 @@ static PyTypeObject Ndt_Type =
      Py_TPFLAGS_HAVE_GC),                   /* tp_flags */
     0,                                      /* tp_doc */
     (traverseproc)ndtype_traverse,          /* tp_traverse */
-    (inquiry)ndtype_clear,                  /* tp_clear */
+    NULL,                                   /* tp_clear */
     ndtype_richcompare,                     /* tp_richcompare */
     0,                                      /* tp_weaklistoffset */
     0,                                      /* tp_iter */
