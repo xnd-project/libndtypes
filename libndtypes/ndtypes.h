@@ -561,7 +561,7 @@ NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Any */
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, char order, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type, enum ndt_offsets flag, int32_t noffsets, const int32_t *offsets,
                                int32_t start, int32_t stop, int32_t step, ndt_context_t *ctx);

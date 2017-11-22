@@ -86,14 +86,14 @@ mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    return ndt_fixed_dim(shape, type, 'C', ctx);
+    return ndt_fixed_dim(type, shape, INT64_MAX, 'C', ctx);
 }
 
 ndt_t *
 mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 {
     int64_t shape;
-    int64_t stride = -1;
+    int64_t stride = INT64_MAX;
     char order = 'C';
     int ret;
 
@@ -104,7 +104,7 @@ mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    return ndt_fixed_dim(shape, type, order, ctx);
+    return ndt_fixed_dim(type, shape, stride, order, ctx);
 }
 
 ndt_t *

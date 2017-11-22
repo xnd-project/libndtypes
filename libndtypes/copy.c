@@ -150,14 +150,20 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     }
 
     case FixedDim: {
-        /* XXX: order unused */
         type = ndt_copy(t->FixedDim.type, ctx);
         if (type == NULL) {
             assert(ctx->err != NDT_Success);
             return NULL;
         }
 
-        return ndt_fixed_dim(t->FixedDim.shape, type, 'C', ctx);
+        if (ndt_is_abstract(t)) {
+            return ndt_fixed_dim(type, t->FixedDim.shape, INT64_MAX,
+                                 ndt_order(t), ctx);
+        }
+        else {
+            return ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.stride,
+                                 ndt_order(t), ctx);
+        }
     }
 
     case SymbolicDim: {

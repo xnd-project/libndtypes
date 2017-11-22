@@ -761,7 +761,8 @@ ndt_is_ndarray(const ndt_t *t)
 }
 
 ndt_t *
-ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx)
+ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, char order,
+              ndt_context_t *ctx)
 {
     ndt_t *t;
     uint32_t flags;
@@ -813,7 +814,7 @@ ndt_fixed_dim(int64_t shape, ndt_t *type, char order, ndt_context_t *ctx)
     t->access = type->access;
     if (t->access == Concrete) {
         t->Concrete.FixedDim.itemsize = type->data_size;
-        t->Concrete.FixedDim.stride = type->data_size;
+        t->Concrete.FixedDim.stride = stride == INT64_MAX ? type->data_size : stride;
         t->data_size = shape * type->data_size;
         t->data_align = type->data_align;
     }
