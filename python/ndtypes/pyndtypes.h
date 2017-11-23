@@ -28,7 +28,11 @@ extern "C" {
 #define Ndt_CopySubtree_RETURN PyObject *
 #define Ndt_CopySubtree_ARGS (const PyObject *, const ndt_t *)
 
-#define NDTYPES_MAX_API 5
+#define Ndt_MoveSubtree_INDEX 5
+#define Ndt_MoveSubtree_RETURN PyObject *
+#define Ndt_MoveSubtree_ARGS (const PyObject *, ndt_t *)
+
+#define NDTYPES_MAX_API 6
 
 
 #ifdef NDTYPES_MODULE
@@ -37,6 +41,7 @@ static Ndt_Check_RETURN Ndt_Check Ndt_Check_ARGS;
 static CONST_NDT_RETURN CONST_NDT CONST_NDT_ARGS;
 static Ndt_SetError_RETURN Ndt_SetError Ndt_SetError_ARGS;
 static Ndt_CopySubtree_RETURN Ndt_CopySubtree Ndt_CopySubtree_ARGS;
+static Ndt_MoveSubtree_RETURN Ndt_MoveSubtree Ndt_MoveSubtree_ARGS;
 #else
 static void **_ndtypes_api;
 
@@ -54,6 +59,9 @@ static void **_ndtypes_api;
 
 #define Ndt_CopySubtree \
     (*(Ndt_CopySubtree_RETURN (*)Ndt_CopySubtree_ARGS) _ndtypes_api[Ndt_CopySubtree_INDEX])
+
+#define Ndt_MoveSubtree \
+    (*(Ndt_MoveSubtree_RETURN (*)Ndt_MoveSubtree_ARGS) _ndtypes_api[Ndt_MoveSubtree_INDEX])
 
 static int
 import_ndtypes(void)
