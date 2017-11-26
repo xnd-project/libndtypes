@@ -46,6 +46,7 @@ PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
 ARCH = platform.architecture()[0]
 BUILD_ALL = True
+WITH_VALGRIND = False
 
 
 if PY_MAJOR < 3:
@@ -66,6 +67,11 @@ def copy_ext():
         pathlist = glob("build/lib.*/ndtypes/_ndtypes.*.so")
     if pathlist:
         shutil.copy2(pathlist[0], "python/ndtypes")
+
+
+if "--with-valgrind" in sys.argv:
+    WITH_VALGRIND = True
+    sys.argv.remove("--with-valgrind")
 
 
 if len(sys.argv) == 3 and sys.argv[1] == "install" and \
@@ -145,7 +151,10 @@ def ndtypes_ext():
             runtime_library_dirs = ["$ORIGIN"]
 
         if BUILD_ALL:
-            os.system("./configure && make")
+            if WITH_VALGRIND:
+                os.system("./configure --with-valgrind && make")
+            else:
+                os.system("./configure && make")
 
     return Extension (
       "ndtypes._ndtypes",
