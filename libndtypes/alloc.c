@@ -196,7 +196,7 @@ ndt_aligned_free(void *aligned)
         return;
     }
 
-#ifdef HAVE_VALGRIND
+#ifdef WITH_VALGRIND
     VALGRIND_MAKE_MEM_DEFINED((uintptr_t *)aligned - 1, sizeof(uintptr_t));
 #endif
 
