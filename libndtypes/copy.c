@@ -188,16 +188,25 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
         }
 
         if (ndt_is_abstract(t))  {
-            return ndt_var_dim(type, NoOffsets, 0, NULL, 0, INT32_MAX, 1, ctx);
+            return ndt_var_dim(type, NoOffsets, 0, NULL, 0, NULL, ctx);
         }
         else {
             int32_t noffsets = t->Concrete.VarDim.noffsets;
             const int32_t *offsets = t->Concrete.VarDim.offsets;
-            int32_t start = t->Concrete.VarDim.start;
-            int32_t stop = t->Concrete.VarDim.stop;
-            int32_t step = t->Concrete.VarDim.step;
+            int32_t nslices = t->Concrete.VarDim.nslices;
+            ndt_slice_t *slices = NULL;
+
+            if (nslices > 0) {
+                slices = ndt_alloc(nslices, sizeof *slices);
+                if (slices == NULL) {
+                    return ndt_memory_error(ctx);
+                }
+                memcpy(slices, t->Concrete.VarDim.slices,
+                       nslices * (sizeof *slices));
+            }
+
             return ndt_var_dim(type, ExternalOffsets, noffsets, offsets,
-                               start, stop, step, ctx);
+                               nslices, slices, ctx);
         }
     }
 

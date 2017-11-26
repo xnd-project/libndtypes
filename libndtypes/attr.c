@@ -51,9 +51,7 @@ typedef struct {
 static const attr_spec fixed_dim_attr = {1, 3,
     {"shape", "stride", "order"},
     {AttrInt64, AttrInt64, AttrChar}};
-static const attr_spec var_dim_attr = {1, 5,
-    {"offsets", "_noffsets", "start", "stop", "step"},
-    {AttrInt32List, AttrSize, AttrInt32, AttrInt32, AttrInt32}};
+static const attr_spec var_dim_attr = {1, 2, {"offsets", "_noffsets"}, {AttrInt32List, AttrSize}};
 
 static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
 static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};

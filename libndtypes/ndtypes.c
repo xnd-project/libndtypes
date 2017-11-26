@@ -613,6 +613,7 @@ ndt_del(ndt_t *t)
             if (t->Concrete.VarDim.flag == OwnOffsets) {
                 ndt_free((int32_t *)t->Concrete.VarDim.offsets);
             }
+            ndt_free(t->Concrete.VarDim.slices);
         }
         break;
     case SymbolicDim:
@@ -849,8 +850,10 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_var_dim(ndt_t *type, enum ndt_offsets flag, int32_t noffsets, const int32_t *offsets,
-            int32_t start, int32_t stop, int32_t step, ndt_context_t *ctx)
+ndt_var_dim(ndt_t *type,
+            enum ndt_offsets flag, int32_t noffsets, const int32_t *offsets,
+            int32_t nslices, ndt_slice_t *slices,
+            ndt_context_t *ctx)
 {
     enum ndt_access access = Abstract;
     ndt_t *t;
@@ -863,6 +866,12 @@ ndt_var_dim(ndt_t *type, enum ndt_offsets flag, int32_t noffsets, const int32_t 
     if (!!noffsets != !!offsets) {
         ndt_err_format(ctx, NDT_InvalidArgumentError,
                        "var dimension: invalid noffsets or offsets");
+        goto error;
+    }
+
+    if (!!nslices != !!slices) {
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+                       "var dimension: invalid nslices or slices");
         goto error;
     }
 
@@ -890,12 +899,10 @@ ndt_var_dim(ndt_t *type, enum ndt_offsets flag, int32_t noffsets, const int32_t 
     /* concrete access */
     if (access == Concrete) {
         t->Concrete.VarDim.flag = flag;
-        t->Concrete.VarDim.start = start;
-        t->Concrete.VarDim.start = start;
-        t->Concrete.VarDim.stop = stop;
-        t->Concrete.VarDim.step = step;
         t->Concrete.VarDim.noffsets = noffsets;
         t->Concrete.VarDim.offsets = offsets;
+        t->Concrete.VarDim.nslices = nslices;
+        t->Concrete.VarDim.slices = slices;
 
         switch (type->tag) {
         case VarDim:

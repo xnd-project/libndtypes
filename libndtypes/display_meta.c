@@ -510,10 +510,23 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                 n = ndt_snprintf(ctx, buf, "],\n");
                 if (n < 0) return -1;
 
+                n = ndt_snprintf_d(ctx, buf, d+2, "slices=[");
+                if (n < 0) return -1;
+
+                for (i = 0; i < t->Concrete.VarDim.nslices; i++) {
+                    n = ndt_snprintf(ctx, buf, "%" PRIi64 ":%" PRIi64 ":%" PRIi64 "%s",
+                                     t->Concrete.VarDim.slices[i].start,
+                                     t->Concrete.VarDim.slices[i].stop,
+                                     t->Concrete.VarDim.slices[i].step,
+                                     i==t->Concrete.VarDim.nslices-1 ? "" : ", ");
+                    if (n < 0) return -1;
+                }
+
+                n = ndt_snprintf(ctx, buf, "],\n");
+                if (n < 0) return -1;
+
                 n = ndt_snprintf_d(ctx, buf, d+2,
-                    "itemsize=%" PRIi64 ", start=%" PRIi64 ", stop: %" PRIi64 ", step=%zu,\n",
-                     t->Concrete.VarDim.itemsize, t->Concrete.VarDim.start,
-                     t->Concrete.VarDim.stop, t->Concrete.VarDim.step);
+                    "itemsize=%" PRIi64 ",\n", t->Concrete.VarDim.itemsize);
                 if (n < 0) return -1;
             }
 

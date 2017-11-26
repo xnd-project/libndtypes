@@ -226,7 +226,7 @@ ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_
 
     for (i=m->num_offset_arrays-1, t=type; i >= 0; i--, type=t) {
         t = ndt_var_dim(type, ExternalOffsets, m->num_offsets[i], m->offset_arrays[i],
-                        0, INT32_MAX, 1, ctx);
+                        0, NULL, ctx);
         if (t == NULL) {
             return NULL;
         }

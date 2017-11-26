@@ -113,14 +113,10 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
     if (attrs) {
         int32_t *offsets = NULL;
         size_t noffsets = 0;
-        int32_t start = 0;
-        int32_t stop = INT32_MAX;
-        int32_t step = 1;
         ndt_t *t;
         int ret;
 
-        ret = ndt_parse_attr(VarDim, ctx, attrs, &offsets, &noffsets,
-                             &start, &stop, &step);
+        ret = ndt_parse_attr(VarDim, ctx, attrs, &offsets, &noffsets);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             ndt_del(type);
@@ -134,17 +130,8 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
             return NULL;
         }
 
-        if (start < 0 || stop < 0 || step < 0) {
-            ndt_err_format(ctx, NDT_ValueError,
-                           "start, stop, step must be zero or positive");
-            ndt_del(type);
-            ndt_free(offsets);
-            return NULL;
-        }
-
         if (m == NULL) {
-            t = ndt_var_dim(type, OwnOffsets, (int32_t)noffsets, offsets,
-                            start, stop, step, ctx);
+            t = ndt_var_dim(type, OwnOffsets, (int32_t)noffsets, offsets, 0, NULL, ctx);
         }
         else {
             int i = m->num_offset_arrays;
@@ -159,14 +146,13 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
             m->offset_arrays[i] = offsets;
             m->num_offset_arrays++;
 
-            t = ndt_var_dim(type, ExternalOffsets, (int32_t)noffsets, offsets,
-                            start, stop, step, ctx);
+            t = ndt_var_dim(type, ExternalOffsets, (int32_t)noffsets, offsets, 0, NULL, ctx);
         }
 
         return t;
     }
     else {
-        return ndt_var_dim(type, NoOffsets, 0, NULL, 0, INT32_MAX, 1, ctx);
+        return ndt_var_dim(type, NoOffsets, 0, NULL, 0, NULL, ctx);
     }
 }
 
