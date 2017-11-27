@@ -61,8 +61,8 @@ Datashape offers a number of fixed-size scalars. Here's how to construct a simpl
 
 .. code-block:: py
 
-   >>> ndt.type('int64')
-   ndt.type('int64')
+   >>> ndt('int64')
+   ndt("int64")
 
 
 All fixed-size scalars:
@@ -70,15 +70,13 @@ All fixed-size scalars:
    +-----------+-----------------+------------+--------------+---------------+-----------------------+
    |   void    |     boolean     | signed int | unsigned int |  float [#f2]_ |        complex        |
    +===========+=================+============+==============+===============+=======================+
-   | ``void``  | ``bool`` [#f1]_ |   ``int8`` |   ``uint8``  |  ``float16``  | ``complex64`` [#f3]_  |
+   | ``void``  | ``bool`` [#f1]_ |   ``int8`` |   ``uint8``  |  ``float16``  | ``complex32``         |
    +-----------+-----------------+------------+--------------+---------------+-----------------------+
-   |           |                 |  ``int16`` |  ``uint16``  |  ``float32``  | ``complex128`` [#f4]_ |
+   |           |                 |  ``int16`` |  ``uint16``  |  ``float32``  | ``complex64`` [#f3]_  |
    +-----------+-----------------+------------+--------------+---------------+-----------------------+
-   |           |                 |  ``int32`` |  ``uint32``  |  ``float64``  |                       |
+   |           |                 |  ``int32`` |  ``uint32``  |  ``float64``  | ``complex128`` [#f4]_ |
    +-----------+-----------------+------------+--------------+---------------+-----------------------+
-   |           |                 |  ``int64`` |  ``uint64``  | ``float128``  |                       |
-   +-----------+-----------------+------------+--------------+---------------+-----------------------+
-   |           |                 | ``int128`` | ``uint128``  |               |                       |
+   |           |                 |  ``int64`` |  ``uint64``  |               |                       |
    +-----------+-----------------+------------+--------------+---------------+-----------------------+
 
    .. [#f1] implemented as :c:type:`char`
@@ -92,55 +90,20 @@ Aliases
 
 Datashape has a number of aliases for scalars, which are internally mapped
 to their corresponding platform specific fixed-size types. This is how to
-construct a :c:type:`size_t`:
+construct an :c:type:`intptr_t`:
 
 .. code-block:: py
 
-   >>> ndt.type('size')
-   ndt.type('uint64')
-
+   >>> ndt('intptr')
+   ndt("int64")
 
 Machine dependent aliases:
 
    +-----------------+----------+------------------+
    | ``intptr``      | :c:type:`intptr_t`          |
    +-----------------+----------+------------------+
-   | ``size``        | :c:type:`size_t`            |
-   +-----------------+-----------------------------+
    | ``uintptr``     | :c:type:`uintptr_t`         |
    +-----------------+-----------------------------+
-
-Machine independent aliases:
-
-   +--------------+------------------------------+
-   | ``int``      | :c:type:`int32_t`            |
-   +--------------+------------------------------+
-   | ``complex``  | :c:type:`complex\<float64\>` |
-   +--------------+------------------------------+
-
-Since IEEE 754-2008 is required, ``sizeof(double) == 8`` and ``double`` maps
-to ``float64``.
-
-
-Complex
--------
-
-Even though complex numbers are scalars, datashape provides a type constructor
-syntax for them:
-
-.. code-block:: py
-
-   >>> ndt.type("complex[float32]")
-   ndt.type('complex[float32]')
-
-   >>> ndt.type("complex64")
-   ndt.type('complex[float32]')
-
-   >>> ndt.type("complex[float64]")
-   ndt.type('complex[float64]')
-
-   >>> ndt.type("complex[float64]")
-   ndt.type('complex[float64]')
 
 
 =====================
@@ -172,38 +135,37 @@ As seen in the table, encodings must be given in string form:
 
 .. code-block:: py
 
-   >>> ndt.type("char['ucs2']")
-   ndt.type("char['ucs2']")
+   >>> ndt("char('utf16')")
+   ndt("char('utf16')")
 
 
 Chars
 -----
 
 The ``char`` constructor accepts ``'ascii'``, ``'ucs2'`` and ``'utf32'`` encoding
-arguments.  ``char`` without arguments is equivalent to ``char[utf32]``.
+arguments.  ``char`` without arguments is equivalent to ``char(utf32)``.
 
 .. code-block:: py
 
-   >>> ndt.type("char['ascii']")
-   ndt.type("char['ascii']")
+   >>> ndt("char('ascii')")
+   ndt("char('ascii')")
 
-   >>> ndt.type("char['utf32']")
-   ndt.type('char')
+   >>> ndt("char('utf32')")
+   ndt("char('utf32')")
 
    >>> ndt.type("char")
-   ndt.type('char')
+   ndt("char('utf32')")
 
 
 UTF-8 strings
 -------------
 
-The ``string`` type is a variable length UTF-8 string:
+The ``string`` type is a variable length NUL-terminated UTF-8 string:
 
 .. code-block:: py
 
-   >>> t = ndt.type("string")
-   >>> t.encoding
-   'utf8'
+   >>> ndt("string")
+   ndt("string")
 
 
 .. _fixed-string:
@@ -215,17 +177,11 @@ The ``fixed_string`` type takes a length and an optional encoding argument:
 
 .. code-block:: py
 
-   >>> t = ndt.type("fixed_string[1729]")
-   >>> t.data_size     
-   1729
-   >>> t.encoding 
-   'utf8'
+   >>> ndt("fixed_string(1729)")
+   ndt("fixed_string(1729)")
 
-   >>> t = ndt.type("fixed_string[1729, 'utf16']")
-   >>> t.data_size
-   3458
-   >>> t.encoding
-   'utf16'
+   >>> ndt("fixed_string(1729, 'utf16')")
+   ndt("fixed_string(1729, 'utf16')")
 
 
 Bytes
@@ -236,17 +192,11 @@ Valid values are powers of two in the range ``[1, 16]``.
 
 .. code-block:: py
 
-   >>> t = ndt.type("bytes")
-   >>> t.data_alignment
-   8
-   >>> t.target_alignment
-   1
+   >>> ndt("bytes")
+   ndt("bytes()")
 
-   >>> t = ndt.type("bytes[align=2]")
-   >>> t.data_alignment
-   8
-   >>> t.target_alignment
-   2
+   >>> ndt("bytes(align=2)")
+   ndt("bytes(align=2)")
 
 
 .. _fixed-bytes:
@@ -260,17 +210,11 @@ the two integer arguments:
 
 .. code-block:: py
 
-   >>> t = ndt.type("fixed_bytes[32]")
-   >>> t.data_size
-   32
-   >>> t.data_alignment
-   1
+   >>> ndt("fixed_bytes(size=32)")
+   ndt("fixed_bytes(size=32)")
 
-   >>> t = ndt.type("fixed_bytes[128, align=8]")
-   >>> t.data_size
-   128
-   >>> t.data_alignment
-   8
+   >>> ndt("fixed_bytes(size=128, align=8)")
+   ndt("fixed_bytes(size=128, align=8)")
 
 
 ========
@@ -282,11 +226,11 @@ complexity:
 
 .. code-block:: py
 
-   >>> ndt.type("pointer[int64]")
-   ndt.type('pointer[int64]')
+   >>> ndt("pointer(int64)")
+   ndt("pointer(int64)")
 
-   >>> ndt.type("pointer[10 * {a: int, b: 10 * float64}]")
-   ndt.type('pointer[10 * {a: int32, b: 10 * float64}]')
+   >>> ndt("pointer(10 * {a: int64, b: 10 * float64})")
+   ndt("pointer(10 * {a : int64, b : 10 * float64})")
 
 
 ================
@@ -294,16 +238,22 @@ Categorical type
 ================
 
 The categorical type allows to specify subsets of types. This is implemented
-as a set of typed values. Currently all signed and unsigned, float, complex
-and the string type are supported:
+as a set of typed values. Types are inferred and interpreted as int64, float64
+or strings. The *NA* keyword creates a category for missing values.
 
 .. code-block:: py
 
-   >>> ndt.type("categorical[1 : int64, 10 : int64]")
-   ndt.type("categorical[1 : int64, 10 : int64]")
+   >>> ndt("categorical(1, 10)")
+   ndt("categorical(1, 10)")
 
-   >>> ndt.type("categorical[1 : int64, "this" : string]")
-   ndt.type("categorical[1 : int64, 10 : int64]")
+   >>> ndt("categorical(1.2, 100.0)")
+   ndt("categorical(1.2, 100)")
+
+   >>> ndt("categorical('January', 'August')")
+   ndt("categorical('January', 'August')")
+
+   >>> ndt("categorical('January', 'August', NA)")
+   ndt("categorical('January', 'August', NA)")
 
 
 ===========
@@ -317,11 +267,8 @@ Two equivalent notations exist:
 
 .. code-block:: py
 
-   >>> ndt.type("option[complex]")
-   ndt.type('?complex[float64]')
-
-   >>> ndt.type('?complex[float64]')
-   ndt.type('?complex[float64]')
+   >>> ndt("?complex64")
+   ndt("?complex64")
 
 
 .. _dtype-variables:
@@ -335,11 +282,11 @@ The range of a variable extends over the entire type term.
 
 .. code-block:: py
 
-   >>> ndt.type("T")
-   ndt.type('T')
+   >>> ndt("T")
+   ndt("T")
 
-   >>> ndt.type("10 * 16 * T")
-   ndt.type('10 * 16 * T')
+   >>> ndt("10 * 16 * T")
+   ndt('10 * 16 * T')
 
 
 .. _symbolic-constructors:
@@ -353,8 +300,8 @@ argument. Used in pattern matching.
 
 .. code-block:: py
 
-   >>> ndt.type("T[int32]")
-   ndt.type('T[int32]')
+   >>> ndt("Coulomb(float64)")
+   ndt("Coulomb(float64)")
 
 
 .. _type-kinds:
@@ -400,16 +347,16 @@ As usual, the tuple type is the product type of a fixed number of types:
 
 .. code-block:: py
 
-   >>> ndt.type("(int64, float32, string)")
-   ndt.type('(int64, float32, string)')
+   >>> ndt("(int64, float32, string)")
+   ndt("(int64, float32, string)")
 
 
 Tuples can be nested:
 
 .. code-block:: py
 
-   >>> ndt.type("(bytes, (int8, fixed_string[10]))")
-   ndt.type('(bytes, (int8, fixed_string[10]))')
+   >>> ndt("(bytes, (int8, fixed_string(10)))")
+   ndt("(bytes(), (int8, fixed_string(10)))")
 
 
 Records
@@ -419,8 +366,8 @@ Records are equivalent to tuples with named fields:
 
 .. code-block:: py
 
-   >>> ndt.type("{a: float32, b: float64}")
-   ndt.type('{a: float32, b: float64}')
+   >>> ndt("{a: float32, b: float64}")
+   ndt("{a : float32, b : float64}")
 
 
 Functions
@@ -439,16 +386,16 @@ an ``int32``:
 
 .. code-block:: py
 
-  >>> ndt.type("(int32) -> int32")
-  ndt.type('(int32) -> int32')
+  >>> ndt("(int32) -> int32")
+  ndt("(int32) -> int32")
 
 
 This is a function type with three positional arguments:
 
 .. code-block:: py
 
-   >>> ndt.type("(int32, complex128, string) -> float64")
-   ndt.type('(int32, complex[float64], string) -> float64')
+   >>> ndt("(int32, complex128, string) -> float64")
+   ndt("(int32, complex128, string) -> float64")
 
 
 Positional-variadic
@@ -459,8 +406,8 @@ followed by any number of additional positional arguments:
 
 .. code-block:: py
 
-   >>> ndt.type("(int32, ...) -> int32")
-   ndt.type('(int32, ...) -> int32')
+   >>> ndt("(int32, ...) -> int32")
+   ndt("(int32, ...) -> int32")
 
 
 Keyword-only
@@ -470,8 +417,8 @@ Keywords are specified inline:
 
 .. code-block:: py
 
-   >>> ndt.type("(distance: float32, velocity: float32) -> float32")
-   ndt.type('(distance: float32, velocity: float32) -> float32')
+   >>> ndt("(distance: float32, velocity: float32) -> float32")
+   ndt("(distance : float32, velocity : float32) -> float32")
 
 
 Keyword-variadic
@@ -482,8 +429,8 @@ followed by any number of additional keyword arguments:
 
 .. code-block:: py
 
-   >>> ndt.type("(sum: float64, ...) -> float64")
-   ndt.type('(sum: float64, ...) -> float64')
+   >>> ndt("(sum: float64, ...) -> float64")
+   ndt("(sum : float64, ...) -> float64")
 
  
 Mixed
@@ -494,8 +441,8 @@ must precede the latter:
 
 .. code-block:: py
 
-   >>> ndt.type("(uint32, uint32, product: float64) -> float64")
-   ndt.type('(uint32, uint32, product: float64) -> float64')
+   >>> ndt("(uint32, uint32, product: float64) -> float64")
+   ndt("(uint32, uint32, product : float64) -> float64")
 
  
 Mixed-variadic
@@ -508,22 +455,22 @@ arguments:
 
 .. code-block:: py
 
-   >>> ndt.type("(uint64, ..., scale: uint8) -> uint64")
-   ndt.type('(uint64, ..., scale: uint8) -> uint64')
+   >>> ndt("(uint64, ..., scale: uint8) -> uint64")
+   ndt("(uint64, ..., scale : uint8) -> uint64")
 
 Positional arguments, followed by keyword-variadic arguments:
 
 .. code-block:: py
 
-   >>> ndt.type("(uint64, scale: uint8, ...) -> uint64")
-   ndt.type('(uint64, scale: uint8, ...) -> uint64')
+   >>> ndt("(uint64, scale: uint8, ...) -> uint64")
+   ndt("(uint64, scale : uint8, ...) -> uint64")
 
 Positional-variadic and keyword-variadic:
 
 .. code-block:: py
 
-   >>> ndt.type("(..., color: uint32, ...) -> uint64")
-   ndt.type('(..., color: uint32, ...) -> uint64')
+   >>> ndt("(..., color: uint32, ...) -> uint64")
+   ndt("(..., color : uint32, ...) -> uint64")
 
 
 .. _arrays:
@@ -547,13 +494,13 @@ a specific type.  The type can be written in two ways:
 
 .. code-block:: py
 
-   >>> ndt.type("fixed[10] * uint64")
-   ndt.type('10 * uint64')
+   >>> ndt("fixed(shape=10) * uint64")
+   ndt("10 * uint64")
 
-   >>> ndt.type("10 * uint64")
-   ndt.type('10 * uint64')
+   >>> ndt("10 * uint64")
+   ndt("10 * uint64")
 
-Formally, ``fixed[10]`` is a dimension constructor, not a type constructor.
+Formally, ``fixed(shape=10)`` is a dimension constructor, not a type constructor.
 The ``*`` is the array type constructor in infix notation, taking as arguments
 a dimension and an element type.
 
@@ -566,8 +513,8 @@ right associative:
 
 .. code-block:: py
 
-   >>> ndt.type("10 * 25 * float64")
-   ndt.type('10 * 25 * float64')
+   >>> ndt("10 * 25 * float64")
+   ndt("10 * 25 * float64")
 
 
 Again, it may help to view this type as ``array[10] of (array[25] of float64)``.
@@ -580,8 +527,8 @@ contains another array:
 
 .. code-block:: py
 
-   >>> ndt.type("120 * {size: int32, items: 10 * int8}")
-   ndt.type('120 * {size: int32, items: 10 * int8}')
+   >>> ndt("120 * {size: int32, items: 10 * int8}")
+   ndt("120 * {size : int32, items : 10 * int8}")
 
 
 .. _variable-dimension:
@@ -595,23 +542,13 @@ of elements of a specific type:
 
 .. code-block:: py
 
-   >>> ndt.type("var * float32")
-   ndt.type('var * float32')
+   >>> ndt("var * float32")
+   ndt("var * float32")
 
 In this case, ``var`` is the dimension constructor and the ``*`` fulfils the
 same role as above. Many managed languages have variable sized arrays, so this
 type could be viewed as ``array of float32``. In a sense, fixed size arrays
 are just a special case of variable sized arrays.
-
-
-Dimension kinds can be mixed freely:
-
-.. code-block:: py
-
-   >>> ndt.type("10 * var * char")
-   ndt.type('10 * var * char')
-
-Which corresponds to ``array[10] of (array of char)``.
 
 
 .. _symbolic-dim:
@@ -621,15 +558,15 @@ Symbolic Dimension
 ==================
 
 Datashape supports symbolic dimensions, which are used in pattern matching. A
-symbolic dimension is an uppercase variable that stands for a fixed dimension [#f7]_.
+symbolic dimension is an uppercase variable that stands for a fixed dimension.
 
 In this manner entire sets of array types can be specified.  The following type
 describes the set of all ``M * N`` matrices with a ``float32`` dtype: 
 
 .. code-block:: py
 
-   >>> ndt.type("M * N * float32")
-   ndt.type('M * N * float32')
+   >>> ndt("M * N * float32")
+   ndt("M * N * float32")
 
 
 The next type describes a function that performs matrix multiplication on any
@@ -637,18 +574,18 @@ permissible pair of input matrices with dtype ``T``:
 
 .. code-block:: py
 
-   >>> ndt.type("(M * N * T, N * P * T) -> M * P * T")
-   ndt.type('(M * N * T, N * P * T) -> M * P * T')
+   >>> ndt("(M * N * T, N * P * T) -> M * P * T")
+   ndt("(M * N * T, N * P * T) -> M * P * T")
 
 In this case, we have used both symbolic dimensions and the type variable ``T``.
 
 
-Symbolic dimensions can be mixed with other dimension kinds:
+Symbolic dimensions can be mixed fixed dimensions:
 
 .. code-block:: py
 
-   >>> ndt.type("10 * N * var * float64")
-   ndt.type('10 * N * var * float64')
+   >>> ndt("10 * N * float64")
+   ndt("10 * N * float64")
 
 
 .. _ellipsis-dim:
@@ -662,50 +599,21 @@ Datashape supports both named and unnamed ellipses:
 
 .. code-block:: py
 
-   >>> ndt.type("... * float32")
-   ndt.type('M * N * float32')
+   >>> ndt("... * float32")
+   ndt("... * float32")
 
 
 Named form:
 
 .. code-block:: py
 
-   >>> ndt.type("Dim... * float32")
-   ndt.type('Dim... * float32')
+   >>> ndt("Dim... * float32")
+   ndt('Dim... * float32')
 
 Ellipsis dimensions play an important role in broadcasting, more on the topic
 in the section on pattern matching.
-
-
-.. _power-dim:
-
-===============
-Power Dimension
-===============
-
-Power dimensions are syntactic sugar for repeated dimension kinds:
-
-.. code-block:: py
-
-   >>> ndt.type("128**2 * float32")
-   ndt.type('128 * 128 * float32')
-
-   >>> ndt.type("var**3 * (complex, complex)")
-   ndt.type('var * var * var * (complex[float64], complex[float64])')
-
-   >>> ndt.type("N**3 * {a: int32, b: int64}")
-   ndt.type('N * N * N * {a: int32, b: int64}')
-
-Ellipsis dimensions cannot be repeated.
-
-
 
 |
 |
 
 .. [#f6] In the whole text *dimension kind* and *dimension* are synonymous.
-
-.. [#f7] It is currently under debate if symbolic dimensions should be
-         restricted to match fixed dimensions only.
-
-
