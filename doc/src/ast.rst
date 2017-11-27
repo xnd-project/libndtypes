@@ -11,8 +11,7 @@ Abstract Syntax Tree
 ====================
 
 An abstract syntax tree provides an excellent insight into the datashape
-tree structure. Internally, `libndtypes <https://github.com/blaze/libndtypes>`_
-uses an object tree that closely mirrors this presentation.
+tree structure.
 
 
 AST

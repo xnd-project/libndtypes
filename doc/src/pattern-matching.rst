@@ -11,9 +11,6 @@
 Pattern matching
 ################
 
-.. warning::
-   This section uses Python bindings that still need to be written.
-
 The libndtypes implementation of datashape is dynamically typed with strict type
 checking. Static type checking of datashape would be far more complex, since
 datashape allows dependent types [#f1]_, i.e. types depending on values.
@@ -22,9 +19,9 @@ Dynamic pattern matching is used for checking function arguments, return
 values, broadcasting and general array functions.
 
 Again, we will be using the :py:mod:`ndtypes` module included in
-`ndtypes-python <https://github.com/blaze/ndtypes-python>`_ to demonstrate
+`ndtypes <https://github.com/plures/ndtypes>`_ to demonstrate
 datashape pattern matching. The rest of this document assumes that the
-:py:mod:`ndt` module has been imported:
+:py:mod:`ndtypes` module has been imported:
 
 .. code-block:: py
 

@@ -12,13 +12,10 @@
 Datashape
 #########
 
-.. warning::
-   This section uses Python bindings that still need to be written.
-
-In this section we will be using the :py:mod:`ndt` module (See:
-`ndtypes-python <https://github.com/blaze/ndtypes-python>`_) to demonstrate the
-capabilities of datashape. The rest of this document assumes that the :py:mod:`ndt`
-module has been imported:
+In this section we will be using the :py:mod:`ndtypes` module (See:
+`ndtypes <https://github.com/plures/ndtypes>`_) to demonstrate the
+capabilities of datashape. The rest of this document assumes that the
+:py:mod:`ndtypes` module has been imported:
 
 .. code-block:: py
 
