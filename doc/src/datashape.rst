@@ -217,20 +217,20 @@ the two integer arguments:
    ndt("fixed_bytes(size=128, align=8)")
 
 
-========
-Pointers
-========
+==========
+References
+==========
 
-Datashape pointers are fully general and can point to types of arbitrary
+Datashape references are fully general and can point to types of arbitrary
 complexity:
 
 .. code-block:: py
 
-   >>> ndt("pointer(int64)")
-   ndt("pointer(int64)")
+   >>> ndt("ref(int64)")
+   ndt("ref(int64)")
 
-   >>> ndt("pointer(10 * {a: int64, b: 10 * float64})")
-   ndt("pointer(10 * {a : int64, b : 10 * float64})")
+   >>> ndt("ref(10 * {a: int64, b: 10 * float64})")
+   ndt("ref(10 * {a : int64, b : 10 * float64})")
 
 
 ================

@@ -59,7 +59,7 @@ init_tests(void)
         return -1;
     }
 
-    t = ndt_from_string("{a: size_t, b: pointer(string)}", ctx);
+    t = ndt_from_string("{a: size_t, b: ref(string)}", ctx);
     if (t == NULL) {
         ndt_err_fprint(stderr, ctx);
         ndt_context_del(ctx);
@@ -420,7 +420,7 @@ test_typedef(void)
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
 
-            t = ndt_from_string("10 * 20 * {a : int64, b : pointer(float64)}", ctx);
+            t = ndt_from_string("10 * 20 * {a : int64, b : ref(float64)}", ctx);
 
             ndt_set_alloc_fail();
             (void)ndt_typedef(*c, t, ctx);
@@ -474,7 +474,7 @@ test_typedef_duplicates(void)
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
 
-            t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
+            t = ndt_from_string("10 * 20 * {a : int64, b : ref(float64)}", ctx);
 
             ndt_set_alloc_fail();
             (void)ndt_typedef(*c, t, ctx);
@@ -526,7 +526,7 @@ test_typedef_error(void)
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
 
-            t = ndt_from_string("10 * 20 * {a : int64, b : pointer[float64]}", ctx);
+            t = ndt_from_string("10 * 20 * {a : int64, b : ref(float64)}", ctx);
 
             ndt_set_alloc_fail();
             (void)ndt_typedef(*c, t, ctx);

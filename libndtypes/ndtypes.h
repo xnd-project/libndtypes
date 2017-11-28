@@ -248,7 +248,7 @@ enum ndt {
         Bytes,
 
         Categorical,
-        Pointer,
+        Ref,
 
         Field /* XXX used internally (will be removed) */
 };
@@ -408,7 +408,7 @@ struct _ndt {
 
         struct {
             ndt_t *type;
-        } Pointer;
+        } Ref;
     };
 
     /* Concrete */
@@ -615,7 +615,7 @@ NDTYPES_API ndt_t *ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt
 NDTYPES_API ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_bytes(size_t size, uint16_opt_t align, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_pointer(ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_ref(ndt_t *type, ndt_context_t *ctx);
 
 
 /* Typed values */

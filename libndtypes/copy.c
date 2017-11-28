@@ -140,13 +140,13 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
         return ndt_categorical(types, ntypes, ctx);
     }
 
-    case Pointer: {
-        type = ndt_copy(t->Pointer.type, ctx);
+    case Ref: {
+        type = ndt_copy(t->Ref.type, ctx);
         if (type == NULL) {
             return NULL;
         }
 
-        return ndt_pointer(type, ctx);
+        return ndt_ref(type, ctx);
     }
 
     case FixedDim: {

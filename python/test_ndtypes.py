@@ -63,7 +63,7 @@ class VarDimTest(unittest.TestCase):
         # Nested var is disallowed.
         self.assertRaises(TypeError, ndt, "2 * {a: var * complex128}")
         self.assertRaises(TypeError, ndt, "var * {a: var * complex128}")
-        self.assertRaises(TypeError, ndt, "var * pointer(var * string)")
+        self.assertRaises(TypeError, ndt, "var * ref(var * string)")
         self.assertRaises(TypeError, ndt, "var * SomeConstr(var * string)")
 
     def test_external_offsets(self):

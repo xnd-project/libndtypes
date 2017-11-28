@@ -69,7 +69,7 @@ form, here we use a very similar OCaml data type:
      | Bytes of alignment
      | FixedBytes of size * alignment
 
-     | Pointer of datashape
+     | Ref of datashape
      | Option of datashape
 
      | Constr of string * datashape (* general type constructor *)

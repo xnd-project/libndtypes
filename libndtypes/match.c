@@ -320,9 +320,9 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         return c->tag == Categorical &&
                match_categorical(p->Categorical.types, p->Categorical.ntypes,
                                  c->Categorical.types, c->Categorical.ntypes);
-    case Pointer:
-        if (c->tag != Pointer) return 0;
-        return match_datashape(p->Pointer.type, c->Pointer.type, tbl, ctx);
+    case Ref:
+        if (c->tag != Ref) return 0;
+        return match_datashape(p->Ref.type, c->Ref.type, tbl, ctx);
     case Tuple:
         if (c->tag != Tuple) return 0;
         return match_tuple_fields(p, c, tbl, ctx);
@@ -491,13 +491,13 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
             return NULL;
         }
 
-    case Pointer:
-        u = ndt_substitute(t->Pointer.type, tbl, ctx);
+    case Ref:
+        u = ndt_substitute(t->Ref.type, tbl, ctx);
         if (u == NULL) {
             return NULL;
         }
 
-        return ndt_pointer(u, ctx);
+        return ndt_ref(u, ctx);
 
     case Int64: case Float32: case Float64:
         return ndt_primitive(t->tag, 'L', ctx);
@@ -556,7 +556,7 @@ ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t 
 
     if (return_type != NULL) {
         t = f->Function.ret;
-        if (t->tag == Pointer) t = t->Pointer.type;
+        if (t->tag == Ref) t = t->Ref.type;
 
         if (t->tag == EllipsisDim) {
             const char *name = t->EllipsisDim.name;

@@ -186,7 +186,7 @@ yycolumn = 1;
 "categorical"  { return CATEGORICAL; }
 "NA"           { return NA; }
 
-"pointer"      { return POINTER; }
+"ref"          { return REF; }
 
 "fixed"        { return FIXED; }
 "var"          { return VAR; }
@@ -205,6 +205,7 @@ yycolumn = 1;
 "*"            { return STAR; }
 "="            { return EQUAL; }
 "?"            { return QUESTIONMARK; }
+"&"            { return AMPERSAND; }
 "|"            { return BAR; }
 
 {name_lower}   { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_LOWER; }

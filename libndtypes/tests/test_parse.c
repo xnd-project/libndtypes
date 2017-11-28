@@ -197,8 +197,8 @@ const char *parse_tests[] = {
   "categorical(\"\")",
   "10 * categorical(10, \"\")",
   "10 * categorical(\"\", 10)",
-  "10 * pointer(Any)",
-  "pointer(Any)",
+  "10 * ref(Any)",
+  "ref(Any)",
   "10 * (...)",
   "(...)",
   "10 * (Any)",
@@ -334,7 +334,7 @@ const char *parse_tests[] = {
   "fixed_bytes(size=1882259764, align=16)",
   "categorical(-136747211.015, -58, -83)",
   "3739637665 * 1476113530 * 1701021063 * IKd * 450514382 * WXn",
-  "pointer(AilcKv4su1(FixedBytesKind))",
+  "ref(AilcKv4su1(FixedBytesKind))",
   "var * ... * complex128",
   "var * R8KFFEabJ",
   "var * QoFb",
@@ -417,6 +417,8 @@ const char *parse_tests[] = {
 
   "var(offsets=[0,10]) * var(offsets=[0,1,3,6,10,15,21,28,36,45,55]) * float64",
   "var(offsets=[0,2]) * var(offsets=[0,3,7]) * var(offsets=[0,5,11,18,26,35,45,56]) * float64",
+
+  "&float64",
 
 #if 0
   "[10 * var(1,2,3,4,5,6,7,8,9,10) * float64, offsets=[0,32]]",

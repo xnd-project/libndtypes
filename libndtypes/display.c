@@ -492,11 +492,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ")");
             return n;
 
-        case Pointer:
-            n = ndt_snprintf(ctx, buf, "pointer(");
+        case Ref:
+            n = ndt_snprintf(ctx, buf, "ref(");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Pointer.type, d, ctx);
+            n = datashape(buf, t->Ref.type, d, ctx);
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, ")");

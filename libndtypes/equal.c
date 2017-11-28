@@ -149,9 +149,9 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
         return c->tag == Categorical &&
                categorical_equal(p->Categorical.types, p->Categorical.ntypes,
                                  c->Categorical.types, c->Categorical.ntypes);
-    case Pointer:
-        if (c->tag != Pointer) return 0;
-        return ndt_equal(p->Pointer.type, c->Pointer.type);
+    case Ref:
+        if (c->tag != Ref) return 0;
+        return ndt_equal(p->Ref.type, c->Ref.type);
     case FixedDim:
         return c->tag == FixedDim &&
                ndt_is_optional(c) == ndt_is_optional(p) &&

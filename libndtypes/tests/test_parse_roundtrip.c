@@ -231,8 +231,8 @@ const char *parse_roundtrip_tests[] = {
   "categorical('xyz')",
   "10 * categorical(10, 'xyz')",
   "categorical(10, 'xyz')",
-  "10 * pointer(Any)",
-  "pointer(Any)",
+  "10 * ref(Any)",
+  "ref(Any)",
   "10 * (...)",
   "10 * (Any)",
   "(Any)",
@@ -335,7 +335,7 @@ const char *parse_roundtrip_tests[] = {
   "fixed_bytes(size=1882259764, align=16)",
   "categorical(-83, -58, 1.2e-32)",
   "3739637665 * 1476113530 * 1701021063 * IKd * 450514382 * WXn",
-  "pointer(AilcKv4su1(FixedBytesKind))",
+  "ref(AilcKv4su1(FixedBytesKind))",
   "var * ... * complex128",
   "var * ... * R8KFFEabJ",
   "var * QoFb",
@@ -382,12 +382,12 @@ const char *parse_roundtrip_tests[] = {
   "10 * defined_t",
   "defined_t",
   "(int32, float32, ..., scale : defined_t, color : float64, ...) -> defined_t",
-  "(a : pointer({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
+  "(a : ref({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
 
   "10 * foo_t",
   "foo_t",
   "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
-  "(a : pointer({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
+  "(a : ref({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
   /* END MANUALLY GENERATED */
 
   NULL

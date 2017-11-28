@@ -395,7 +395,7 @@ tag_as_constr(enum ndt tag)
     case FixedBytes: return "FixedBytes";
 
     case Categorical: return "Categorical";
-    case Pointer: return "Pointer";
+    case Ref: return "Ref";
 
     default: return "unknown tag";
     }
@@ -814,11 +814,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ")");
             return n;
 
-        case Pointer:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Pointer(\n");
+        case Ref:
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Ref(\n");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Pointer.type, d+2, 0, ctx);
+            n = datashape(buf, t->Ref.type, d+2, 0, ctx);
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, ",\n");

@@ -98,7 +98,7 @@ Lexeme/Token Table
 
    "nominal" -> NOMINAL
 
-   "pointer" -> POINTER
+   "ref" -> REF
 
    "option" -> OPTION
 
@@ -210,7 +210,7 @@ This is the actual grammar in BNF form:
    | FIXED_BYTES_KIND
    | fixed_bytes
    | categorical
-   | pointer
+   | ref
    
    signed:
      INT8
@@ -260,8 +260,8 @@ This is the actual grammar in BNF form:
    fixed_bytes:
      FIXED_BYTES LBRACK INTEGER COMMA ALIGN EQUAL INTEGER RBRACK
    
-   pointer:
-     POINTER LBRACK datashape RBRACK 
+   ref
+     REF LBRACK datashape RBRACK 
    
    categorical:
      CATEGORICAL LBRACK typed_value_seq RBRACK

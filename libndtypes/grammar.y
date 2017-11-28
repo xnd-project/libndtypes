@@ -119,7 +119,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> fixed_string
 %type <ndt> bytes
 %type <ndt> fixed_bytes
-%type <ndt> pointer
+%type <ndt> ref
 
 %type <ndt> tuple_type
 %type <field> tuple_field
@@ -162,12 +162,12 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    CHAR
    STRING FIXED_STRING_KIND FIXED_STRING
    BYTES FIXED_BYTES_KIND FIXED_BYTES
-   POINTER
+   REF
 
 FIXED VAR
 
 COMMA DOT COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
-RARROW EQUAL QUESTIONMARK BAR
+RARROW EQUAL QUESTIONMARK AMPERSAND BAR
 ERRTOKEN
 
 %token <string>
@@ -253,7 +253,7 @@ scalar:
 | FIXED_BYTES_KIND   { $$ = ndt_fixed_bytes_kind(ctx); if ($$ == NULL) YYABORT; }
 | fixed_bytes        { $$ = $1; }
 | categorical        { $$ = $1; }
-| pointer            { $$ = $1; }
+| ref                { $$ = $1; }
 
 signed:
   INT8 arguments_opt  { $$ = mk_primitive(Int8, $2, ctx); if ($$ == NULL) YYABORT; }
@@ -303,8 +303,9 @@ bytes:
 fixed_bytes:
   FIXED_BYTES LPAREN attribute_seq RPAREN { $$ = mk_fixed_bytes($3, ctx); if ($$ == NULL) YYABORT; }
 
-pointer:
-  POINTER LPAREN datashape RPAREN { $$ = ndt_pointer($3, ctx); if ($$ == NULL) YYABORT; }
+ref:
+  REF LPAREN datashape RPAREN { $$ = ndt_ref($3, ctx); if ($$ == NULL) YYABORT; }
+| AMPERSAND datashape         { $$ = ndt_ref($2, ctx); if ($$ == NULL) YYABORT; }
 
 categorical:
   CATEGORICAL LPAREN typed_value_seq RPAREN { $$ = mk_categorical($3, ctx); if ($$ == NULL) YYABORT; }

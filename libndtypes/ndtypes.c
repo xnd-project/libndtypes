@@ -402,7 +402,7 @@ ndt_tag_as_string(enum ndt tag)
     case FixedBytes: return "FixedBytes";
 
     case Categorical: return "categorical";
-    case Pointer: return "pointer";
+    case Ref: return "ref";
 
     default: return "unknown tag";
     }
@@ -663,8 +663,8 @@ ndt_del(ndt_t *t)
     case Categorical:
         ndt_value_array_del(t->Categorical.types, t->Categorical.ntypes);
         break;
-    case Pointer:
-        ndt_del(t->Pointer.type);
+    case Ref:
+        ndt_del(t->Ref.type);
         break;
     default:
         break;
@@ -1832,7 +1832,7 @@ ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_pointer(ndt_t *type, ndt_context_t *ctx)
+ndt_ref(ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
@@ -1842,12 +1842,12 @@ ndt_pointer(ndt_t *type, ndt_context_t *ctx)
     }
 
     /* abstract type */
-    t = ndt_new(Pointer, ctx);
+    t = ndt_new(Ref, ctx);
     if (t == NULL) {
         ndt_del(type);
         return NULL;
     }
-    t->Pointer.type = type;
+    t->Ref.type = type;
 
     /* concrete access */
     t->access = Concrete;
@@ -2001,7 +2001,7 @@ ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const 
 }
 
 /* XXX: Semantics are not clear: Anything that is not a compound type?
-        What about pointers? Should it be application specific? */
+        What about refs? Should it be application specific? */
 int
 ndt_is_scalar(const ndt_t *t)
 {

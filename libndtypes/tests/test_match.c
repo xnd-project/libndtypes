@@ -1660,16 +1660,16 @@ const match_testcase_t match_tests[] = {
     "?categorical(10, 20, 'xyz')",
     1 },
 
-  { "10 * pointer(Any)",
-    "10 * pointer(Any)",
+  { "10 * ref(Any)",
+    "10 * ref(Any)",
     1 },
 
-  { "pointer(Any)",
-    "pointer(Any)",
+  { "ref(Any)",
+    "ref(Any)",
     1 },
 
-  { "?pointer(Any)",
-    "?pointer(Any)",
+  { "?ref(Any)",
+    "?ref(Any)",
     1 },
 
   { "10 * (...)",
@@ -2290,8 +2290,8 @@ const match_testcase_t match_tests[] = {
     "fixed_bytes(size=1342281638, align=8)",
     1 },
 
-  { "?pointer(fixed_string(3865363101, 'ucs2'))",
-    "?pointer(fixed_string(3865363101, 'ucs2'))",
+  { "?ref(fixed_string(3865363101, 'ucs2'))",
+    "?ref(fixed_string(3865363101, 'ucs2'))",
     1 },
 
   { "var * var * var * (...)",
@@ -2418,8 +2418,8 @@ const match_testcase_t match_tests[] = {
     "3739637665 * 1476113530 * 1701021063 * IKd * 450514382 * WXn",
     1 },
 
-  { "pointer(AilcKv4su1(FixedBytes))",
-    "pointer(AilcKv4su1(FixedBytes))",
+  { "ref(AilcKv4su1(FixedBytes))",
+    "ref(AilcKv4su1(FixedBytes))",
     1 },
 
   { "var * ... * complex128",
@@ -2627,8 +2627,8 @@ const match_testcase_t match_tests[] = {
     "(int32, float32, ..., scale : defined_t, color : float64, ...) -> defined_t",
     1 },
 
-  { "(a : pointer({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
-    "(a : pointer({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
+  { "(a : ref({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
+    "(a : ref({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
     1 },
 
 
@@ -2652,8 +2652,8 @@ const match_testcase_t match_tests[] = {
     "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
     1 },
 
-  { "(a : pointer({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
-    "(a : pointer({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
+  { "(a : ref({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
+    "(a : ref({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
     1 },
 
   { "10 * foo_t",
