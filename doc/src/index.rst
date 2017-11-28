@@ -1,7 +1,7 @@
 .. meta::
    :robots: index, follow
-   :description: libndtypes2 datashape documentation
-   :keywords: datashape, libndtypes2, C, Python, array computing
+   :description: libndtypes datashape documentation
+   :keywords: datashape, libndtypes, C, Python, array computing
 
 .. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 

@@ -1,7 +1,7 @@
 .. meta::
    :robots: index,follow
-   :description: libndtypes2 datashape specification
-   :keywords: libndtypes2, datashape, specification
+   :description: libndtypes datashape specification
+   :keywords: libndtypes, datashape, specification
 
 .. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 
@@ -153,7 +153,7 @@ arguments.  ``char`` without arguments is equivalent to ``char(utf32)``.
    >>> ndt("char('utf32')")
    ndt("char('utf32')")
 
-   >>> ndt.type("char")
+   >>> ndt("char")
    ndt("char('utf32')")
 
 
