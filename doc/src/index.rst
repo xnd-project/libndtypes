@@ -28,6 +28,5 @@ human-readable way.
    datashape.rst
    pattern-matching.rst
    grammar.rst
-   ast.rst
 
 
