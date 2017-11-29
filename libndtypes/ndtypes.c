@@ -762,8 +762,7 @@ ndt_is_ndarray(const ndt_t *t)
 }
 
 ndt_t *
-ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, char order,
-              ndt_context_t *ctx)
+ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
 {
     ndt_t *t;
     uint32_t flags;
@@ -774,31 +773,6 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, char order,
     }
 
     flags = ndt_common_flags(type);
-    switch (order) {
-    case 'C':
-        if (flags & NDT_F_CONTIGUOUS) {
-            ndt_err_format(ctx, NDT_ValueError, "mixed C and Fortran order");
-            ndt_del(type);
-            return NULL;
-        }
-        break;
-
-    case 'F':
-        if (flags & NDT_C_CONTIGUOUS) {
-            ndt_err_format(ctx, NDT_ValueError, "mixed C and Fortran order");
-            ndt_del(type);
-            return NULL;
-        }
-        break;
-
-    case 'A':
-        break;
-
-    default:
-        ndt_err_format(ctx, NDT_ValueError, "order must be 'C', 'F' or 'A'");
-        ndt_del(type);
-        return NULL;
-    }
 
     /* abstract type */
     t = ndt_new(FixedDim, ctx);

@@ -52,6 +52,7 @@ char *mk_stringlit(const char *src, ndt_context_t *ctx);
 
 ndt_t *mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx);
 ndt_t *mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx);
+ndt_t *mk_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 ndt_t *mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
 ndt_attr_t *mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx);

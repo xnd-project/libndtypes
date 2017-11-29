@@ -157,12 +157,10 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
         }
 
         if (ndt_is_abstract(t)) {
-            return ndt_fixed_dim(type, t->FixedDim.shape, INT64_MAX,
-                                 ndt_order(t), ctx);
+            return ndt_fixed_dim(type, t->FixedDim.shape, INT64_MAX, ctx);
         }
         else {
-            return ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.stride,
-                                 ndt_order(t), ctx);
+            return ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.stride, ctx);
         }
     }
 

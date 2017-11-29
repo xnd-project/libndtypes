@@ -394,56 +394,18 @@ const char *parse_tests[] = {
   "10 * Matrix(3 * 2 * float64)",
 
   /* Attributes and metadata */
-  "fixed(shape=10, order='C') * int32",
-  "fixed(shape=10, order='F') * int32",
-  "(fixed(shape=10, order='F') * int32, float32)",
-  "(fixed(shape=10, order='F') * int32, float32 |pack=2|, uint8)",
-  "(fixed(shape=10, order='F') * int32, float32, uint8, pack=2)",
+  "fixed(shape=10) * int32",
+  "fixed(shape=10) * int32",
+  "(fixed(shape=10) * int32, float32)",
+  "(fixed(shape=10) * int32, float32 |pack=2|, uint8)",
+  "(fixed(shape=10) * int32, float32, uint8, pack=2)",
   "{x : float32 |align=16|, y : float64}",
 
-#if 0
-  "[2 * 3 * int64, strides=[-8, -16]]",
-  "[2 * 3 * int64, strides=[-8, -16], order='F']",
-  "[10 * complex128, strides=[32]]",
-#endif
-  "fixed(shape=10, order='F') * complex128",
-
-#if 0
-  "[2 * 3 * int64, strides=[-8, -16], offsets=[8,0]]",
-  "[2 * 3 * int64, strides=[-8, -16], offsets=[0,8], order='F']",
-  "[10 * complex128, strides=[32], offsets=[64]]",
-  "[10 * complex128, offsets=[128], order='F']",
-#endif
+  "fixed(shape=10) * complex128",
 
   "var(offsets=[0,10]) * var(offsets=[0,1,3,6,10,15,21,28,36,45,55]) * float64",
   "var(offsets=[0,2]) * var(offsets=[0,3,7]) * var(offsets=[0,5,11,18,26,35,45,56]) * float64",
-
   "&float64",
-
-#if 0
-  "[10 * var(1,2,3,4,5,6,7,8,9,10) * float64, offsets=[0,32]]",
-  "[var(2) * var(3,4) * var(5,6,7,8,9,10,11) * float64, offsets=[8,0,16]]",
-#endif
-
-  /* Ndarray */
-#if 0
-XXX
-  "[10 * int32, order='C', style='ndarray']",
-  "[10 * int32, order='F', style='ndarray']",
-  "([10 * int32, order='F', style='ndarray'], float32)",
-  "([10 * int32, order='F', style='ndarray'], float32 |pack=2|, uint8)",
-  "([10 * int32, order='F', style='ndarray'], float32, uint8, pack=2)",
-
-  "[2 * 3 * int64, strides=[-8, -16], offset=40, style='ndarray']",
-  "[2 * 3 * int64, strides=[-8, -16], offset=40, order='F', style='ndarray']",
-  "[10 * complex128, strides=[32], style='ndarray']",
-  "[10 * complex128, order='F', style='ndarray']",
-
-  "[2 * N * int64, style='ndarray']",
-  "[N * 2 * int64, style='ndarray']",
-  "[P * N * int64, style='ndarray']",
-  "[P * N * {a: N * float64}, style='ndarray']",
-#endif
 
   /* END MANUALLY GENERATED */
 

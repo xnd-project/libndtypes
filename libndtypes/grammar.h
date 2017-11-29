@@ -115,7 +115,8 @@ extern int yydebug;
     STRINGLIT = 314,
     NAME_LOWER = 315,
     NAME_UPPER = 316,
-    NAME_OTHER = 317
+    NAME_OTHER = 317,
+    NAMED_ELLIPSIS = 318
   };
 #endif
 
@@ -138,7 +139,7 @@ union YYSTYPE
     char *string;
     ndt_string_seq_t *string_seq;
 
-#line 142 "grammar.h" /* yacc.c:1909  */
+#line 143 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -168,6 +169,6 @@ int yyparse (yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx, const char *msg);
 
-#line 172 "grammar.h" /* yacc.c:1909  */
+#line 173 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */

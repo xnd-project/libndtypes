@@ -411,7 +411,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
         assert(ndt_is_concrete(u));
 
         return ndt_fixed_dim(u, t->FixedDim.shape, t->Concrete.FixedDim.stride,
-                             ndt_order(u), ctx);
+                             ctx);
 
     case SymbolicDim:
         v = symtable_find(tbl, t->SymbolicDim.name);
@@ -425,7 +425,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
             assert(ndt_is_concrete(u));
 
-            return ndt_fixed_dim(u, v.ShapeEntry, INT64_MAX, ndt_order(u), ctx);
+            return ndt_fixed_dim(u, v.ShapeEntry, INT64_MAX, ctx);
 
         default:
             ndt_err_format(ctx, NDT_ValueError,
@@ -457,7 +457,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
                     assert(ndt_is_concrete(w));
 
                     u = ndt_fixed_dim(u, w->FixedDim.shape, w->Concrete.FixedDim.stride,
-                                      ndt_order(w), ctx);
+                                      ctx);
                     if (u == NULL) {
                         return NULL;
                     }
