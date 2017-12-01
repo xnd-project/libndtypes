@@ -167,12 +167,12 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 FIXED VAR
 
 COMMA DOT COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
-RARROW EQUAL QUESTIONMARK AMPERSAND BAR
+RARROW EQUAL QUESTIONMARK BANG AMPERSAND BAR
 ERRTOKEN
 
 %token <string>
   INTEGER FLOATNUMBER STRINGLIT
-  NAME_LOWER NAME_UPPER NAME_OTHER NAMED_ELLIPSIS
+  NAME_LOWER NAME_UPPER NAME_OTHER
 
 %token ENDMARKER 0 "end of file"
 
@@ -193,27 +193,27 @@ input:
 
 /* types (optionally with module qualifier) */
 datashape_or_module:
-  datashape                              { $$ = $1; }
-| NAME_UPPER DOT LPAREN datashape RPAREN { $$ = ndt_module($1, $4, ctx); if ($$ == NULL) YYABORT; }
+  datashape                        { $$ = $1; }
+| NAME_UPPER COLON COLON datashape { $$ = ndt_module($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 /* types */
 datashape:
-  dimensions            { $$ = $1; }
-| dtype                 { $$ = $1; }
-/* | NAME_UPPER dimensions { $$ = NULL; if ($$ == NULL) YYABORT; XXX } */
-| QUESTIONMARK dtype    { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
+  dimensions                        { $$ = $1; }
+| BANG dimensions                   { $$ = mk_fortran($2, ctx); if ($$ == NULL) YYABORT; }
+| dtype                             { $$ = $1; }
+| QUESTIONMARK dtype                { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions:
   dimensions_nooption              { $$ = $1; }
 | QUESTIONMARK dimensions_nooption { $$ = ndt_dim_option($2, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_nooption:
-  INTEGER STAR dimensions_tail                            { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| FIXED LPAREN attribute_seq RPAREN STAR dimensions_tail  { $$ = mk_fixed_dim_from_attrs($3, $6, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER STAR dimensions_tail                         { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| VAR arguments_opt STAR dimensions_tail                  { $$ = mk_var_dim(meta, $2, $4, ctx); if ($$ == NULL) YYABORT; }
-| ELLIPSIS STAR dimensions_tail                           { $$ = mk_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAMED_ELLIPSIS STAR dimensions_tail                     { $$ = mk_ellipsis_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  INTEGER STAR dimensions_tail                           { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| FIXED LPAREN attribute_seq RPAREN STAR dimensions_tail { $$ = mk_fixed_dim_from_attrs($3, $6, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER STAR dimensions_tail                        { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| VAR arguments_opt STAR dimensions_tail                 { $$ = mk_var_dim(meta, $2, $4, ctx); if ($$ == NULL) YYABORT; }
+| ELLIPSIS STAR dimensions_tail                          { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER ELLIPSIS STAR dimensions_tail               { $$ = ndt_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_tail:
   dtype              { $$ = $1; }

@@ -27820,6 +27820,12 @@ const char *parse_error_tests[] = {
   "?2 * 3 * 10 * int64",
   "2 * ?N * 10 * int64",
 
+  "2 * !3 * 10 * int64",
+  "2 * 3 * !10 * int64",
+  "2 * 3 * !10 * !int64",
+  "!!2 * 3 * 10 * !int64",
+  "!N * 3 * 10 * int64",
+
   /* END MANUALLY GENERATED */
 
   NULL

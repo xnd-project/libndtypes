@@ -107,16 +107,16 @@ extern int yydebug;
     RARROW = 306,
     EQUAL = 307,
     QUESTIONMARK = 308,
-    AMPERSAND = 309,
-    BAR = 310,
-    ERRTOKEN = 311,
-    INTEGER = 312,
-    FLOATNUMBER = 313,
-    STRINGLIT = 314,
-    NAME_LOWER = 315,
-    NAME_UPPER = 316,
-    NAME_OTHER = 317,
-    NAMED_ELLIPSIS = 318
+    BANG = 309,
+    AMPERSAND = 310,
+    BAR = 311,
+    ERRTOKEN = 312,
+    INTEGER = 313,
+    FLOATNUMBER = 314,
+    STRINGLIT = 315,
+    NAME_LOWER = 316,
+    NAME_UPPER = 317,
+    NAME_OTHER = 318
   };
 #endif
 

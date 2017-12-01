@@ -477,7 +477,6 @@ Ndtype_BoolFunc(ndt_is_scalar)
 Ndtype_BoolFunc(ndt_is_array)
 Ndtype_BoolFunc(ndt_is_optional)
 
-Ndtype_ArrayBoolFunc(ndt_is_contiguous)
 Ndtype_ArrayBoolFunc(ndt_is_c_contiguous)
 Ndtype_ArrayBoolFunc(ndt_is_f_contiguous)
 
@@ -584,7 +583,6 @@ static PyMethodDef ndtype_methods [] =
   { "is_optional", (PyCFunction)ndtype_ndt_is_optional, METH_NOARGS, NULL },
 
   /* Boolean functions on array types */
-  { "is_contiguous", (PyCFunction)ndtype_ndt_is_contiguous, METH_NOARGS, NULL },
   { "is_c_contiguous", (PyCFunction)ndtype_ndt_is_c_contiguous, METH_NOARGS, NULL },
   { "is_f_contiguous", (PyCFunction)ndtype_ndt_is_f_contiguous, METH_NOARGS, NULL },
 

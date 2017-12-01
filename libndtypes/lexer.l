@@ -126,7 +126,6 @@ floatnumber    -?({pointfloat}|{exponentfloat})
 name_lower     [a-z][a-zA-Z0-9_]*
 name_upper     [A-Z][a-zA-Z0-9_]*
 name_other     _[a-zA-Z0-9_]*
-named_ellipsis {name_upper}\.\.\.
 
 
 %%
@@ -206,13 +205,13 @@ yycolumn = 1;
 "*"            { return STAR; }
 "="            { return EQUAL; }
 "?"            { return QUESTIONMARK; }
+"!"            { return BANG; }
 "&"            { return AMPERSAND; }
 "|"            { return BAR; }
 
 {name_lower}     { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_LOWER; }
 {name_upper}     { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_UPPER; }
 {name_other}     { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_OTHER; }
-{named_ellipsis} { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAMED_ELLIPSIS; }
 
 {stringlit}      { yylval->string = mk_stringlit(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return STRINGLIT; }
 {integer}        { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return INTEGER; }

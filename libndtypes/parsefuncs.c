@@ -74,6 +74,15 @@ mk_stringlit(const char *lexeme, ndt_context_t *ctx)
 /*****************************************************************************/
 
 ndt_t *
+mk_fortran(ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t = ndt_to_fortran(type, ctx);
+
+    ndt_del(type);
+    return t;
+}
+
+ndt_t *
 mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx)
 {
     int64_t shape;
@@ -104,28 +113,6 @@ mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
     }
 
     return ndt_fixed_dim(type, shape, stride, ctx);
-}
-
-ndt_t *
-mk_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
-{
-    if (name != NULL) {
-        /* A named ellipsis (Dims...) is a separate token to avoid a
-           reduce/reduce conflict.  We only want the name part. */
-        size_t len = strlen(name);
-
-        if (len < 4 || strcmp(name+len-3, "...") != 0) {
-            ndt_err_format(ctx, NDT_RuntimeError,
-                "internal parse error, invalid ellipsis variable");
-            ndt_free(name);
-            ndt_del(type);
-            return NULL;
-        }
-
-        name[len-3] = '\0';
-    }
-
-    return ndt_ellipsis_dim(name, type, ctx);
 }
 
 ndt_t *

@@ -274,7 +274,6 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
         if (!ndt_is_array(c)) return 0;
         if (ndt_is_optional(c) != ndt_is_optional(p)) return 0;
-        if (ndt_is_column_major(c) != ndt_is_column_major(p)) return 0;
 
         pn = ndt_const_dims_dtype(pdims, &pdtype, p);
         cn = ndt_const_dims_dtype(cdims, &cdtype, c);

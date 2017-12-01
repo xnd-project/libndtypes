@@ -405,7 +405,17 @@ const char *parse_tests[] = {
 
   "var(offsets=[0,10]) * var(offsets=[0,1,3,6,10,15,21,28,36,45,55]) * float64",
   "var(offsets=[0,2]) * var(offsets=[0,3,7]) * var(offsets=[0,5,11,18,26,35,45,56]) * float64",
+
+  /* Short ref notation */
   "&float64",
+  "&2 * 10 * {a: (&int64, &float64)}",
+
+  /* Fortran types */
+  "!2 * 10 * float16",
+  "!2 * 10 * {a: !2 * 10 * float16}",
+  "!2 * 10 * {a: !2 * 10 * float16}",
+  "!2 * 10 * {a: !2 * 10 * (int64, string)}",
+
 
   /* END MANUALLY GENERATED */
 

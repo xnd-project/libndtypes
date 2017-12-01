@@ -762,6 +762,42 @@ ndt_is_ndarray(const ndt_t *t)
 }
 
 ndt_t *
+_ndt_to_fortran(const ndt_t *t, int64_t stride, ndt_context_t *ctx)
+{
+    ndt_t *dt;
+
+    assert(ndt_is_concrete(t));
+    if (t->ndim == 0) {
+        return ndt_copy(t, ctx);
+    }
+
+    assert(t->tag == FixedDim);
+    dt = _ndt_to_fortran(t->FixedDim.type, stride * t->FixedDim.shape, ctx);
+    if (dt == NULL) {
+        return NULL;
+    }
+
+    return ndt_fixed_dim(dt, t->FixedDim.shape, stride, ctx);
+}
+
+/* Return a copy of a C-contiguous array in Fortran order. */
+ndt_t *
+ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
+{
+    if (!ndt_is_ndarray(t)) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "ndt_to_fortran: function expects an ndarray");
+        return NULL;
+    }
+
+    if (ndt_is_abstract(t)) {
+        return ndt_copy(t, ctx);
+    }
+
+    return _ndt_to_fortran(t, t->Concrete.FixedDim.itemsize, ctx);
+}
+
+ndt_t *
 ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -788,7 +824,7 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
     /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {
-        t->Concrete.FixedDim.itemsize = type->data_size;
+        t->Concrete.FixedDim.itemsize = type->ndim == 0 ? type->data_size : type->Concrete.FixedDim.itemsize;
         t->Concrete.FixedDim.stride = stride == INT64_MAX ? type->data_size : stride;
         t->data_size = shape * type->data_size;
         t->data_align = type->data_align;
@@ -1909,33 +1945,61 @@ ndt_is_concrete_array(const ndt_t *t)
     }
 }
 
-/* XXX */
-int
-ndt_is_column_major(const ndt_t *t)
-{
-    (void)t;
-    return 0;
-}
-
-int
-ndt_is_contiguous(const ndt_t *t)
-{
-    (void)t;
-    return 1;
-}
-
 int
 ndt_is_c_contiguous(const ndt_t *t)
 {
-    (void)t;
+    const ndt_t *dims[NDT_MAX_DIM];
+    const ndt_t *dtype;
+    int64_t shape, data_size;
+    int ndim, i;
+
+    if (!ndt_is_ndarray(t)) {
+        return 0;
+    }
+    if (!ndt_is_concrete(t)) {
+        return 0;
+    }
+
+    ndim = ndt_const_dims_dtype(dims, &dtype, t);
+
+    data_size = t->Concrete.FixedDim.itemsize;
+    for (i = ndim-1; i >= 0; i--) {
+        shape = t->FixedDim.shape;
+        if (shape > 1 && dims[i]->Concrete.FixedDim.stride != data_size) {
+            return 0;
+        }
+        data_size *= shape;
+    }
+
     return 1;
 }
 
 int
 ndt_is_f_contiguous(const ndt_t *t)
 {
-    (void)t;
-    return 0;
+    const ndt_t *dims[NDT_MAX_DIM];
+    const ndt_t *dtype;
+    int64_t shape, data_size;
+    int ndim, i;
+
+    if (!ndt_is_ndarray(t)) {
+        return 0;
+    }
+    if (!ndt_is_concrete(t)) {
+        return 0;
+    }
+
+    ndim = ndt_const_dims_dtype(dims, &dtype, t);
+    data_size = t->Concrete.FixedDim.itemsize;
+    for (i = 0; i < ndim; i++) {
+        shape = t->FixedDim.shape;
+        if (shape > 1 && dims[i]->Concrete.FixedDim.stride != data_size) {
+            return 0;
+        }
+        data_size *= shape;
+    }
+
+    return 1;
 }
 
 int

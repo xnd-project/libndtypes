@@ -506,7 +506,8 @@ NDTYPES_API const char *ndt_tag_as_string(enum ndt tag);
 NDTYPES_API enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 NDTYPES_API const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 NDTYPES_API uint32_t ndt_dim_flags(const ndt_t *t);
-NDTYPES_API char ndt_order(const ndt_t *t);
+NDTYPES_API ndt_t *ndt_to_fortran(const ndt_t *type, ndt_context_t *ctx);
+
 
 NDTYPES_API int ndt_is_abstract(const ndt_t *t);
 NDTYPES_API int ndt_is_concrete(const ndt_t *t);
@@ -516,8 +517,6 @@ NDTYPES_API int ndt_is_float(const ndt_t *t);
 NDTYPES_API int ndt_is_complex(const ndt_t *t);
 NDTYPES_API int ndt_is_scalar(const ndt_t *t);
 NDTYPES_API int ndt_is_array(const ndt_t *t);
-NDTYPES_API int ndt_is_column_major(const ndt_t *t);
-NDTYPES_API int ndt_is_contiguous(const ndt_t *t);
 NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);
 NDTYPES_API int ndt_is_f_contiguous(const ndt_t *t);
 NDTYPES_API int ndt_is_optional(const ndt_t *t);
@@ -580,7 +579,6 @@ NDTYPES_API ndt_t *ndt_dim_option(ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_item_option(ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
-
 
 /* Dtypes */
 NDTYPES_API ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
