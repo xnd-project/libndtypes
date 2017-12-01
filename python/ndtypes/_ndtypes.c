@@ -93,7 +93,7 @@ rbuf_alloc(uint32_t flags)
         self->m.offset_arrays[i] = NULL;
     }
 
-    _PyObject_GC_TRACK(self);
+    PyObject_GC_Track(self);
     return (PyObject *)self;
 }
 
