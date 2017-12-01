@@ -79,7 +79,8 @@ rbuf_alloc(uint32_t flags)
     ResourceBufferObject *self;
     int i;
 
-    self = PyObject_New(ResourceBufferObject, &ResourceBuffer_Type);
+    self = (ResourceBufferObject *)
+        PyObject_GC_New(ResourceBufferObject, &ResourceBuffer_Type);
     if (self == NULL) {
         return NULL;
     }
@@ -92,7 +93,15 @@ rbuf_alloc(uint32_t flags)
         self->m.offset_arrays[i] = NULL;
     }
 
+    _PyObject_GC_TRACK(self);
     return (PyObject *)self;
+}
+
+static int
+rbuf_traverse(ResourceBufferObject *self UNUSED, visitproc visit UNUSED,
+              void *arg UNUSED)
+{
+    return 0;
 }
 
 static void
@@ -107,7 +116,8 @@ rbuf_dealloc(ResourceBufferObject *self)
         }
     }
 
-    PyObject_Del(self);
+    PyObject_GC_UnTrack(self);
+    PyObject_GC_Del(self);
 }
 
 static int
@@ -206,7 +216,10 @@ static PyTypeObject ResourceBuffer_Type = {
     PyObject_GenericGetAttr,      /* tp_getattro */
     0,                            /* tp_setattro */
     0,                            /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,           /* tp_flags */
+    (Py_TPFLAGS_DEFAULT|
+     Py_TPFLAGS_HAVE_GC),         /* tp_flags */
+    0,                            /* tp_doc */
+    (traverseproc)rbuf_traverse,  /* tp_traverse */
 };
 
 
