@@ -569,6 +569,108 @@ ndtype_apply(PyObject *self, PyObject *other)
                                         return_type, outer_dims, NULL);
 }
 
+static PyObject *
+tuple_from_int64(int64_t x[NDT_MAX_DIM], int ndim)
+{
+    PyObject *tuple;
+    int i;
+
+    tuple = PyTuple_New(ndim);
+    if (tuple == NULL) {
+        return NULL;
+    }
+
+    for (i = 0; i < ndim; i++) {
+        PyObject *v = PyLong_FromLongLong(x[i]);
+        if (v == NULL) {
+            Py_DECREF(tuple);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(tuple, i, v);
+   }
+
+   return tuple;
+}
+
+static PyObject *
+ndtype_ndim(PyObject *self, PyObject *args UNUSED)
+{
+    return PyLong_FromLong(NDT(self)->ndim);
+}
+
+static PyObject *
+ndtype_itemsize(PyObject *self, PyObject *args UNUSED)
+{
+    ndt_t *t = NDT(self);
+
+    if (ndt_is_abstract(t)) {
+        PyErr_SetString(PyExc_ValueError,
+            "abstract type has no itemsize");
+        return NULL;
+    }
+
+    switch (t->tag) {
+    case FixedDim:
+        return PyLong_FromLongLong(t->Concrete.FixedDim.itemsize);
+    case VarDim:
+        return PyLong_FromLongLong(t->Concrete.VarDim.itemsize);
+    default:
+        if (t->ndim == 0) {
+            return PyLong_FromLongLong(t->data_size);
+        }
+        PyErr_SetString(PyExc_ValueError, "type has no itemsize");
+        return NULL;
+    }
+}
+
+static PyObject *
+ndtype_shape(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    ndt_ndarray_t x;
+
+    if (ndt_as_ndarray(&x, NDT(self), &ctx) < 0) {
+        return seterr(&ctx);
+    }
+
+    return tuple_from_int64(x.shape, x.ndim);
+}
+
+static PyObject *
+ndtype_strides(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    ndt_ndarray_t x;
+
+    if (ndt_as_ndarray(&x, NDT(self), &ctx) < 0) {
+        return seterr(&ctx);
+    }
+
+    return tuple_from_int64(x.strides, x.ndim);
+}
+
+static PyObject *
+ndtype_align(PyObject *self, PyObject *args UNUSED)
+{
+    if (ndt_is_abstract(NDT(self))) {
+        PyErr_SetString(PyExc_ValueError,
+            "abstract type has no alignment");
+        return NULL;
+    }
+
+    return PyLong_FromLong(NDT(self)->data_align);
+}
+
+static PyGetSetDef ndtype_getsets [] =
+{
+  { "ndim", (getter)ndtype_ndim, NULL, NULL, NULL},
+  { "itemsize", (getter)ndtype_itemsize, NULL, NULL, NULL},
+  { "shape", (getter)ndtype_shape, NULL, NULL, NULL},
+  { "strides", (getter)ndtype_strides, NULL, NULL, NULL},
+  { "align", (getter)ndtype_align, NULL, NULL, NULL},
+  {NULL}
+};
+
 static PyMethodDef ndtype_methods [] =
 {
   /* Boolean functions */
@@ -634,7 +736,7 @@ static PyTypeObject Ndt_Type =
     0,                                      /* tp_iternext */
     ndtype_methods,                         /* tp_methods */
     0,                                      /* tp_members */
-    0,                                      /* tp_getset */
+    ndtype_getsets,                         /* tp_getset */
     0,                                      /* tp_base */
     0,                                      /* tp_dict */
     0,                                      /* tp_descr_get */

@@ -32,8 +32,8 @@
 
 import unittest, gc
 from copy import copy
-from ndtypes import ndt
-from ndtypes import MAX_DIM
+from ndtypes import ndt, MAX_DIM
+from randtype import *
 
 
 class ErrorTest(unittest.TestCase):
@@ -43,6 +43,112 @@ class ErrorTest(unittest.TestCase):
         self.assertRaises(ValueError, ndt, "")
         self.assertRaises(ValueError, ndt, "xyz")
         self.assertRaises(ValueError, ndt, "var() * int64")
+
+
+class TestFixedDim(unittest.TestCase):
+
+    def test_fixed_invariants(self):
+        # Mixing var and fixed is disallowed.
+        self.assertRaises(TypeError, ndt, "10 * var * int8")
+        self.assertRaises(TypeError, ndt, "var * 10 * int16")
+        self.assertRaises(TypeError, ndt, "10 * var * 10 * int32")
+        self.assertRaises(TypeError, ndt, "var * 10 * var * int64")
+
+    def test_ndarray(self):
+        for dtype, mem in NDARRAY_TEST_CASES:
+            t = ndt(dtype)
+            self.assertEqual(t.ndim, 0)
+            self.assertEqual(t.itemsize, mem.itemsize)
+            self.assertEqual(t.shape, ())
+            self.assertEqual(t.strides, ())
+            self.assertEqual(t.align, mem.align)
+
+            for i in range(10):
+                t = ndt("%d * %s" % (i, dtype))
+                shape = (i,)
+                strides = (mem.itemsize,)
+
+                self.assertEqual(t.ndim, 1)
+                self.assertEqual(t.itemsize, mem.itemsize)
+                self.assertEqual(t.shape, shape)
+                self.assertEqual(t.strides, strides)
+                self.assertEqual(t.align, mem.align)
+
+            for i in range(10):
+                for j in range(10):
+                    t = ndt("%d * %d * %s" % (i, j, dtype))
+                    shape = (i, j)
+                    strides = (j * mem.itemsize, mem.itemsize)
+
+                    self.assertEqual(t.ndim, 2)
+                    self.assertEqual(t.itemsize, mem.itemsize)
+                    self.assertEqual(t.shape, shape)
+                    self.assertEqual(t.strides, strides)
+                    self.assertEqual(t.align, mem.align)
+
+            for i in range(5):
+                for j in range(5):
+                    for k in range(5):
+                        t = ndt("%d * %d * %d * %s" % (i, j, k, dtype))
+                        shape = (i, j, k)
+                        strides = (j * k * mem.itemsize, k * mem.itemsize, mem.itemsize)
+
+                        self.assertEqual(t.ndim, 3)
+                        self.assertEqual(t.itemsize, mem.itemsize)
+                        self.assertEqual(t.shape, shape)
+                        self.assertEqual(t.strides, strides)
+                        self.assertEqual(t.align, mem.align)
+
+    def test_fortran(self):
+        for dtype, mem in NDARRAY_TEST_CASES:
+            t = ndt(dtype)
+            self.assertEqual(t.ndim, 0)
+            self.assertEqual(t.itemsize, mem.itemsize)
+            self.assertEqual(t.shape, ())
+            self.assertEqual(t.strides, ())
+            self.assertEqual(t.align, mem.align)
+
+            for i in range(10):
+                t = ndt("!%d * %s" % (i, dtype))
+                shape = (i,)
+                strides = (mem.itemsize,)
+
+                self.assertEqual(t.ndim, 1)
+                try:
+                    self.assertEqual(t.itemsize, mem.itemsize)
+                except AssertionError:
+                    print(i, dtype)
+                    raise
+
+                self.assertEqual(t.shape, shape)
+                self.assertEqual(t.strides, strides)
+                self.assertEqual(t.align, mem.align)
+
+            for i in range(10):
+                for j in range(10):
+                    t = ndt("!%d * %d * %s" % (i, j, dtype))
+                    shape = (i, j)
+                    strides = (mem.itemsize, i * mem.itemsize)
+
+                    self.assertEqual(t.ndim, 2)
+                    self.assertEqual(t.itemsize, mem.itemsize)
+                    self.assertEqual(t.shape, shape)
+                    self.assertEqual(t.strides, strides)
+                    self.assertEqual(t.align, mem.align)
+
+            for i in range(5):
+                for j in range(5):
+                    for k in range(5):
+                        t = ndt("!%d * %d * %d * %s" % (i, j, k, dtype))
+                        shape = (i, j, k)
+                        strides = (mem.itemsize, i * mem.itemsize, i * j * mem.itemsize)
+
+                        self.assertEqual(t.ndim, 3)
+                        self.assertEqual(t.itemsize, mem.itemsize)
+                        self.assertEqual(t.shape, shape)
+                        self.assertEqual(t.strides, strides)
+                        self.assertEqual(t.align, mem.align)
+
 
 class VarDimTest(unittest.TestCase):
 
@@ -96,7 +202,17 @@ class VarDimTest(unittest.TestCase):
         # Mixing external and internal offsets.
         self.assertRaises(TypeError, ndt, "var(offsets=[0,2,10]) * int8", [[0, 1], [0, 2]])
 
+
+class TestCopy(unittest.TestCase):
+
     def test_copy(self):
+        for dtype, mem in NDARRAY_TEST_CASES:
+            t = ndt(dtype)
+            u = copy(t)
+            self.assertEqual(u, t)
+            self.assertEqual(u.ast_repr(), t.ast_repr())
+
+    def test_copy_gc(self):
         x = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * int8")
         y = copy(x)
         del x
