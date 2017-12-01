@@ -41,6 +41,83 @@
 #include "ndtypes.h"
 
 
+static inline void
+copy_common(ndt_t *u, const ndt_t *t)
+{
+    assert(u->tag = t->tag);
+    u->access = t->access;
+    u->ndim = t->ndim;
+    u->hash = t->hash;
+    u->data_size = t->data_size;
+    u->data_align = t->data_align;
+}
+
+static ndt_t *
+ndt_copy_tuple(const ndt_t *t, ndt_context_t *ctx)
+{
+    ndt_t *u;
+    int64_t i;
+
+    assert(t->tag == Tuple);
+
+    u = ndt_tuple_alloc(t->Tuple.flag, t->Tuple.shape, ctx);
+    if (u == NULL) {
+        return NULL;
+    }
+
+    copy_common(u, t);
+
+    for (i = 0; i < t->Tuple.shape; i++) {
+        u->Tuple.types[i] = ndt_copy(t->Tuple.types[i], ctx);
+        if (u->Tuple.types[i] == NULL) {
+            ndt_del(u);
+            return NULL;
+        }
+
+        u->Concrete.Tuple.offset[i] = t->Concrete.Tuple.offset[i];
+        u->Concrete.Tuple.align[i] = t->Concrete.Tuple.align[i];
+        u->Concrete.Tuple.pad[i] = t->Concrete.Tuple.pad[i];
+    }
+
+    return u;
+}
+
+static ndt_t *
+ndt_copy_record(const ndt_t *t, ndt_context_t *ctx)
+{
+    ndt_t *u;
+    int64_t i;
+
+    assert(t->tag == Record);
+
+    u = ndt_record_alloc(t->Record.flag, t->Record.shape, ctx);
+    if (u == NULL) {
+        return NULL;
+    }
+
+    copy_common(u, t);
+
+    for (i = 0; i < t->Record.shape; i++) {
+        u->Record.names[i] = ndt_strdup(t->Record.names[i], ctx);
+        if (u->Record.names[i] == NULL) {
+            ndt_del(u);
+            return NULL;
+        }
+
+        u->Record.types[i] = ndt_copy(t->Record.types[i], ctx);
+        if (u->Record.types[i] == NULL) {
+            ndt_del(u);
+            return NULL;
+        }
+
+        u->Concrete.Record.offset[i] = t->Concrete.Record.offset[i];
+        u->Concrete.Record.align[i] = t->Concrete.Record.align[i];
+        u->Concrete.Record.pad[i] = t->Concrete.Record.pad[i];
+    }
+
+    return u;
+}
+
 ndt_t *
 ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 {
@@ -228,92 +305,11 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     }
 
     case Tuple: {
-        int64_t shape = t->Tuple.shape;
-        uint16_opt_t align = {None, 0};
-        uint16_opt_t pack = {None, 0};
-        ndt_field_t *fields = NULL;
-        int64_t i, k;
-
-        if (shape == 0) {
-            return ndt_tuple(t->Tuple.flag, NULL, 0, align, pack, ctx);
-        }
-
-        fields = ndt_alloc(shape, sizeof(ndt_field_t));
-        if (fields == NULL) {
-            return ndt_memory_error(ctx);
-        }
-
-        for (i = 0; i < shape; i++) {
-            fields[i].name = NULL;
-            fields[i].type = ndt_copy(t->Tuple.types[i], ctx);
-            if (fields[i].type == NULL) {
-                goto err_tuple;
-            }
-            fields[i].access = t->Tuple.types[i]->access;
-            if (fields[i].access == Concrete) {
-                fields[i].Concrete.data_align = t->Tuple.types[i]->data_align;
-                fields[i].Concrete.explicit_align = false;
-            }
-
-            continue;
-
-        err_tuple:
-            for (k = 0; k < i; k++) {
-                ndt_del(fields[k].type);
-            }
-            ndt_free(fields);
-            return NULL;
-       }
-
-       return ndt_tuple(t->Tuple.flag, fields, shape, align, pack, ctx);
+        return ndt_copy_tuple(t, ctx);
     }
 
     case Record: {
-        int64_t shape = t->Record.shape;
-        uint16_opt_t align = {None, 0};
-        uint16_opt_t pack = {None, 0};
-        ndt_field_t *fields;
-        int64_t i, k;
-
-        if (shape == 0) {
-            return ndt_record(t->Record.flag, NULL, 0, align, pack, ctx);
-        }
-
-        fields = ndt_alloc(shape, sizeof(ndt_field_t));
-        if (fields == NULL) {
-            return ndt_memory_error(ctx);
-        }
-
-        for (i = 0; i < shape; i++) {
-            fields[i].name = ndt_strdup(t->Record.names[i], ctx);
-            if (fields[i].name == NULL) {
-                goto err_record;
-            }
-
-            fields[i].type = ndt_copy(t->Record.types[i], ctx);
-            if (fields[i].type == NULL) {
-                ndt_free(fields[i].name);
-                goto err_record;
-            }
-
-            fields[i].access = t->Record.types[i]->access;
-            if (fields[i].access == Concrete) {
-                fields[i].Concrete.data_align = t->Record.types[i]->data_align;
-                fields[i].Concrete.explicit_align = false;
-            }
-
-            continue;
-
-        err_record:
-            for (k = 0; k < i; k++) {
-                ndt_free(fields[k].name);
-                ndt_del(fields[k].type);
-            }
-            ndt_free(fields);
-            return NULL;
-       }
-
-       return ndt_record(t->Record.flag, fields, shape, align, pack, ctx);
+        return ndt_copy_record(t, ctx);
     }
 
     case Function: {

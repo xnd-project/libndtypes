@@ -1281,14 +1281,46 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
 }
 
 ndt_t *
-ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
-          uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx)
+ndt_tuple_alloc(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
 {
     ndt_t *t;
     size_t offset_offset;
     size_t align_offset;
     size_t pad_offset;
     size_t extra;
+    int64_t i;
+
+    offset_offset = round_up(shape * sizeof(ndt_t *), alignof(int64_t));
+    align_offset = offset_offset + shape * sizeof(int64_t);
+    pad_offset = align_offset + shape * sizeof(uint16_t);
+    extra = pad_offset + shape * sizeof(uint16_t);
+
+    t = ndt_new_extra(Tuple, extra, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->Tuple.flag = flag;
+    t->Tuple.shape = shape;
+    t->Tuple.types = (ndt_t **)t->extra;
+    t->Concrete.Tuple.offset = (int64_t *)(t->extra + offset_offset);
+    t->Concrete.Tuple.align = (uint16_t *)(t->extra + align_offset);
+    t->Concrete.Tuple.pad = (uint16_t *)(t->extra + pad_offset);
+
+    for (i = 0; i < shape; i++) {
+        t->Tuple.types[i] = NULL;
+        t->Concrete.Tuple.offset[i] = 0;
+        t->Concrete.Tuple.align[i] = 1;
+        t->Concrete.Tuple.pad[i] = 0;
+    }
+
+    return t;
+}
+
+ndt_t *
+ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+          uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx)
+{
+    ndt_t *t;
     int64_t i;
 
     assert((fields == NULL) == (shape == 0));
@@ -1300,20 +1332,12 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         }
     }
 
-    offset_offset = round_up(shape * sizeof(ndt_t *), alignof(int64_t));
-    align_offset = offset_offset + shape * sizeof(int64_t);
-    pad_offset = align_offset + shape * sizeof(uint16_t);
-    extra = pad_offset + shape * sizeof(uint16_t);
-
     /* abstract type */
-    t = ndt_new_extra(Tuple, extra, ctx);
+    t = ndt_tuple_alloc(flag, shape, ctx);
     if (t == NULL) {
         ndt_field_array_del(fields, shape);
         return NULL;
     }
-    t->Tuple.flag = flag;
-    t->Tuple.shape = shape;
-    t->Tuple.types = (ndt_t **)t->extra;
 
     /* check concrete access */
     t->access = (flag == Variadic) ? Abstract : Concrete;
@@ -1343,10 +1367,6 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         return t;
     }
     else {
-        t->Concrete.Tuple.offset = (int64_t *)(t->extra + offset_offset);
-        t->Concrete.Tuple.align = (uint16_t *)(t->extra + align_offset);
-        t->Concrete.Tuple.pad = (uint16_t *)(t->extra + pad_offset);
-
         if (init_concrete_fields(t,
                                  t->Concrete.Tuple.offset,
                                  t->Concrete.Tuple.align,
@@ -1366,8 +1386,7 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
 }
 
 ndt_t *
-ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
-           uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx)
+ndt_record_alloc(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
 {
     ndt_t *t;
     size_t types_offset;
@@ -1375,6 +1394,42 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
     size_t align_offset;
     size_t pad_offset;
     size_t extra;
+    int64_t i;
+
+    types_offset = round_up(shape * sizeof(char *), alignof(ndt_t *));
+    offset_offset = types_offset + round_up(shape * sizeof(ndt_t *), alignof(int64_t));
+    align_offset = offset_offset + shape * sizeof(int64_t);
+    pad_offset = align_offset + shape * sizeof(uint16_t);
+    extra = pad_offset + shape * sizeof(uint16_t);
+
+    t = ndt_new_extra(Record, extra, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->Record.flag = flag;
+    t->Record.shape = shape;
+    t->Record.names = (char **)t->extra;
+    t->Record.types = (ndt_t **)(t->extra + types_offset);
+    t->Concrete.Record.offset = (int64_t *)(t->extra + offset_offset);
+    t->Concrete.Record.align = (uint16_t *)(t->extra + align_offset);
+    t->Concrete.Record.pad = (uint16_t *)(t->extra + pad_offset);
+
+    for (i = 0; i < shape; i++) {
+        t->Record.names[i] = NULL;
+        t->Record.types[i] = NULL;
+        t->Concrete.Record.offset[i] = 0;
+        t->Concrete.Record.align[i] = 1;
+        t->Concrete.Record.pad[i] = 0;
+    }
+
+    return t;
+}
+
+ndt_t *
+ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+           uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx)
+{
+    ndt_t *t;
     int64_t i;
 
     assert((fields == NULL) == (shape == 0));
@@ -1386,22 +1441,12 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         }
     }
 
-    types_offset = round_up(shape * sizeof(char *), alignof(ndt_t *));
-    offset_offset = types_offset + round_up(shape * sizeof(ndt_t *), alignof(int64_t));
-    align_offset = offset_offset + shape * sizeof(int64_t);
-    pad_offset = align_offset + shape * sizeof(uint16_t);
-    extra = pad_offset + shape * sizeof(uint16_t);
-
     /* abstract type */
-    t = ndt_new_extra(Record, extra, ctx);
+    t = ndt_record_alloc(flag, shape, ctx);
     if (t == NULL) {
         ndt_field_array_del(fields, shape);
         return NULL;
     }
-    t->Record.flag = flag;
-    t->Record.shape = shape;
-    t->Record.names = (char **)t->extra;
-    t->Record.types = (ndt_t **)(t->extra + types_offset);
 
     /* check concrete access */
     t->access = (flag == Variadic) ? Abstract : Concrete;
@@ -1432,10 +1477,6 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         return t;
     }
     else {
-        t->Concrete.Record.offset = (int64_t *)(t->extra + offset_offset);
-        t->Concrete.Record.align = (uint16_t *)(t->extra + align_offset);
-        t->Concrete.Record.pad = (uint16_t *)(t->extra + pad_offset);
-
         if (init_concrete_fields(t,
                                  t->Concrete.Record.offset,
                                  t->Concrete.Record.align,
@@ -2000,6 +2041,41 @@ ndt_is_f_contiguous(const ndt_t *t)
     }
 
     return 1;
+}
+
+int
+ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
+{
+    int ndim;
+
+    assert(t->ndim <= NDT_MAX_DIM);
+
+    if (!ndt_is_concrete(t)) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "ndt_as_ndarray: type must be concrete");
+        return -1;
+    }
+
+    if (!ndt_is_ndarray(t)) {
+        if (t->ndim == 0) {
+            a->ndim = t->ndim;
+            a->itemsize = t->data_size;
+            return 0;
+        }
+        ndt_err_format(ctx, NDT_ValueError,
+            "ndt_as_ndarray: type must be an ndarray");
+        return -1;
+    }
+
+    a->ndim = t->ndim;
+    a->itemsize = t->Concrete.FixedDim.itemsize;
+
+    for (ndim=0; t->ndim > 0; ndim++, t=t->FixedDim.type) {
+        a->shape[ndim] = t->FixedDim.shape;
+        a->strides[ndim] = t->Concrete.FixedDim.stride;
+    }
+
+    return 0;
 }
 
 int

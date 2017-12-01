@@ -159,6 +159,17 @@ enum ndt_variadic {
 };
 
 
+/*
+ * Fixed dimensions in ndarray representation.
+ */
+typedef struct {
+    int ndim;
+    int64_t itemsize;
+    int64_t shape[NDT_MAX_DIM];
+    int64_t strides[NDT_MAX_DIM];
+} ndt_ndarray_t;
+
+
 /* Ownership flag (experimental) for var dim offsets */
 enum ndt_offsets {
   OwnOffsets,
@@ -175,6 +186,7 @@ typedef struct {
     int32_t num_offsets[NDT_MAX_DIM];    /* lengths of the offset arrays */
     int32_t *offset_arrays[NDT_MAX_DIM]; /* offset arrays (NULL or valid pointer) */
 } ndt_meta_t;
+
 
 /* Encoding for characters and strings */
 enum ndt_encoding {
@@ -526,6 +538,7 @@ NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_d
 
 NDTYPES_API ndt_t *ndt_next_dim(ndt_t *a);
 NDTYPES_API void ndt_set_next_type(ndt_t *a, ndt_t *type);
+NDTYPES_API int ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API int ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array);
 NDTYPES_API int ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
 
@@ -581,6 +594,8 @@ NDTYPES_API ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Dtypes */
+NDTYPES_API ndt_t *ndt_tuple_alloc(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_record_alloc(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                  uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
