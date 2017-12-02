@@ -763,6 +763,9 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
     t->FixedDim.type = type;
     t->ndim = type->ndim + 1;
 
+    t->Concrete.FixedDim.itemsize = -1;
+    t->Concrete.FixedDim.stride = INT64_MAX;
+
     /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {

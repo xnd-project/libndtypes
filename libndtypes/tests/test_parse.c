@@ -416,6 +416,7 @@ const char *parse_tests[] = {
   "!2 * 10 * {a: !2 * 10 * float16}",
   "!2 * 10 * {a: !2 * 10 * (int64, string)}",
 
+  "2 * N * {a: !2 * 10 * (int64, string)}",
 
   /* END MANUALLY GENERATED */
 
