@@ -112,46 +112,6 @@ typedef struct {
 } uint16_opt_t;
 
 
-enum ndt_attr {
-  AttrBool,
-  AttrChar,
-  AttrInt8,
-  AttrInt16,
-  AttrInt32,
-  AttrInt64,
-  AttrUint8,
-  AttrUint16,
-  AttrUint32,
-  AttrUint64,
-  AttrSize,
-  AttrFloat32,
-  AttrFloat64,
-  AttrString,
-  AttrInt32List,
-  AttrCharOpt,
-  AttrInt64Opt,
-  AttrUint16Opt
-};
-
-enum ndt_attr_tag {
-  AttrValue,
-  AttrList
-};
-
-/* Attribute: name=value or name=[value, value, ...]. */
-typedef struct {
-    enum ndt_attr_tag tag;
-    char *name;
-    union {
-        char *AttrValue;
-        struct {
-            size_t len;
-            char **items;
-        } AttrList;
-    };
-} ndt_attr_t;
-
-
 /* Flag for variadic tuples and records */
 enum ndt_variadic {
   Nonvariadic,
@@ -261,8 +221,6 @@ enum ndt {
 
         Categorical,
         Ref,
-
-        Field /* XXX used internally (will be removed) */
 };
 
 enum ndt_alias {
@@ -556,9 +514,6 @@ NDTYPES_API double ndt_strtod(const char *v, ndt_context_t *ctx);
 /*** Sequence elements ***/
 NDTYPES_API void ndt_value_del(ndt_value_t *mem);
 NDTYPES_API void ndt_value_array_del(ndt_value_t *types, size_t ntypes);
-
-NDTYPES_API void ndt_attr_del(ndt_attr_t *attr);
-NDTYPES_API void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
 
 NDTYPES_API ndt_field_t *ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
 NDTYPES_API void ndt_field_del(ndt_field_t *field);

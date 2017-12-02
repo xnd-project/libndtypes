@@ -40,6 +40,9 @@
 #include "attr.h"
 
 
+int ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...);
+
+
 /*****************************************************************************/
 /*                        Functions used in the lexer                        */
 /*****************************************************************************/
@@ -101,11 +104,12 @@ mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx)
 ndt_t *
 mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {1, 2, {"shape", "stride"}, {AttrInt64, AttrInt64}};
     int64_t shape;
     int64_t stride = INT64_MAX;
     int ret;
 
-    ret = ndt_parse_attr(FixedDim, ctx, attrs, &shape, &stride);
+    ret = ndt_parse_attr(&kwlist, ctx, attrs, &shape, &stride);
     ndt_attr_seq_del(attrs);
     if (ret < 0) {
         ndt_del(type);
@@ -118,13 +122,15 @@ mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 ndt_t *
 mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {1, 2, {"offsets", "_noffsets"}, {AttrInt32List, AttrSize}};
+
     if (attrs) {
         int32_t *offsets = NULL;
         size_t noffsets = 0;
         ndt_t *t;
         int ret;
 
-        ret = ndt_parse_attr(VarDim, ctx, attrs, &offsets, &noffsets);
+        ret = ndt_parse_attr(&kwlist, ctx, attrs, &offsets, &noffsets);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             ndt_del(type);
@@ -167,10 +173,11 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
 ndt_t *
 mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {0, 1, {"endian"}, {AttrChar}};
     char endian = 'L';
 
     if (attrs) {
-        int ret = ndt_parse_attr(tag, ctx, attrs, &endian);
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &endian);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             return NULL;
@@ -183,11 +190,12 @@ mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 ndt_t *
 mk_alias(enum ndt_alias tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {0, 1, {"endian"}, {AttrChar}};
     char endian = 'L';
 
     if (attrs) {
         /* Alias attributes are the same as for Int64. */
-        int ret = ndt_parse_attr(Int64, ctx, attrs, &endian);
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &endian);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             return NULL;
@@ -215,10 +223,11 @@ mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
 ndt_t *
 mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {0, 1, {"align"}, {AttrUint16Opt}};
     uint16_opt_t target_align = {None, 0};
 
     if (attrs) {
-        int ret = ndt_parse_attr(Bytes, ctx, attrs, &target_align);
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &target_align);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             return NULL;
@@ -231,11 +240,12 @@ mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 ndt_t *
 mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrSize, AttrUint16Opt}};
     uint16_opt_t data_align = {None, 0};
     size_t data_size = 0;
 
     if (attrs) {
-        int ret = ndt_parse_attr(FixedBytes, ctx, attrs, &data_size, &data_align);
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &data_size, &data_align);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             return NULL;
@@ -248,11 +258,12 @@ mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 ndt_field_t *
 mk_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
 
     if (attrs) {
-        int ret = ndt_parse_attr(Field, ctx, attrs, &align, &pack);
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &align, &pack);
         ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
@@ -269,6 +280,7 @@ ndt_t *
 mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields,
          ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
     ndt_t *t;
@@ -276,7 +288,7 @@ mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields,
     fields = ndt_field_seq_finalize(fields);
 
     if (attrs) {
-        int ret = ndt_parse_attr(Tuple, ctx, attrs, &align, &pack);
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &align, &pack);
         ndt_attr_seq_del(attrs);
 
         if (ret < 0) {
@@ -298,6 +310,7 @@ ndt_t *
 mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
           ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
+    static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
     ndt_t *t;
@@ -305,7 +318,7 @@ mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
     fields = ndt_field_seq_finalize(fields);
 
     if (attrs) {
-        int ret = ndt_parse_attr(Record, ctx, attrs, &align, &pack);
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &align, &pack);
         ndt_attr_seq_del(attrs);
 
         if (ret < 0) {

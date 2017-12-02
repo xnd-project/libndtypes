@@ -212,64 +212,6 @@ ndt_value_array_del(ndt_value_t *mem, size_t ntypes)
     ndt_free(mem);
 }
 
-void
-ndt_attr_del(ndt_attr_t *attr)
-{
-    size_t i;
-
-    if (attr == NULL) {
-        return;
-    }
-
-    ndt_free(attr->name);
-
-    switch (attr->tag) {
-    case AttrValue:
-        ndt_free(attr->AttrValue);
-        break;
-    case AttrList:
-        for (i = 0; i < attr->AttrList.len; i++) {
-            ndt_free(attr->AttrList.items[i]);
-        }
-        ndt_free(attr->AttrList.items);
-        break;
-    default:
-        abort(); /* NOT REACHED */
-    }
-
-    ndt_free(attr);
-}
-
-void
-ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
-{
-    size_t i, k;
-
-    if (attr == NULL) {
-        return;
-    }
-
-    for (i = 0; i < nattr; i++) {
-        ndt_free(attr[i].name);
-
-        switch (attr[i].tag) {
-        case AttrValue:
-            ndt_free(attr[i].AttrValue);
-            break;
-        case AttrList:
-            for (k = 0; k < attr[i].AttrList.len; k++) {
-                ndt_free(attr[i].AttrList.items[k]);
-            }
-            ndt_free(attr[i].AttrList.items);
-            break;
-        default:
-            abort(); /* NOT REACHED */
-        }
-    }
-
-    ndt_free(attr);
-}
-
 /*
  * align = n: minimum alignment for the field; the resulting alignment is
  * guaranteed to be at least the maximum of n and the natural alignment of

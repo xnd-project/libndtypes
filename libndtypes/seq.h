@@ -35,6 +35,7 @@
 #define SEQ_H
 
 #include "ndtypes.h"
+#include "attr.h"
 
 
 /* Strongly typed sequences (used in the parser). */

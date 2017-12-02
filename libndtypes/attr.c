@@ -32,78 +32,80 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include "ndtypes.h"
 #include "seq.h"
+#include "attr.h"
 
 
-#define MAX_ATTR 8
-
-typedef struct {
-   const size_t min;
-   const size_t max;
-   const char *names[MAX_ATTR];
-   const enum ndt_attr tags[MAX_ATTR];
-} attr_spec;
-
-/* Container attributes */
-static const attr_spec fixed_dim_attr = {1, 2, {"shape", "stride"}, {AttrInt64, AttrInt64}};
-static const attr_spec var_dim_attr = {1, 2, {"offsets", "_noffsets"}, {AttrInt32List, AttrSize}};
-
-static const attr_spec tuple_record_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
-static const attr_spec field_attr = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
-
-/* Type constructor attributes */
-static const attr_spec prim_attr = {0, 1, {"endian"}, {AttrChar}};
-static const attr_spec char_attr = {0, 1, {"encoding"}, {AttrString}};
-static const attr_spec bytes_attr = {0, 1, {"align"}, {AttrUint16Opt}};
-static const attr_spec fixed_bytes_attr = {1, 2, {"size", "align"}, {AttrSize, AttrUint16Opt}};
-
-
-const attr_spec *
-ndt_get_attr_spec(enum ndt tag, ndt_context_t *ctx)
+void
+ndt_attr_del(ndt_attr_t *attr)
 {
-    switch(tag) {
-    case FixedDim:
-        return &fixed_dim_attr;
-    case VarDim:
-        return &var_dim_attr;
-    case Tuple: case Record:
-        return &tuple_record_attr;
-    case Field:
-        return &field_attr;
-    case Int8: case Int16: case Int32: case Int64:
-    case Uint8: case Uint16: case Uint32: case Uint64:
-    case Float16: case Float32: case Float64:
-    case Complex32: case Complex64: case Complex128:
-        return &prim_attr;
-    case Char:
-        return &char_attr;
-    case Bytes:
-        return &bytes_attr;
-    case FixedBytes:
-        return &fixed_bytes_attr;
-    default:
-        ndt_err_format(ctx, NDT_RuntimeError, "'%s' does not take attributes",
-                       ndt_tag_as_string(tag));
-        return NULL;
+    size_t i;
+
+    if (attr == NULL) {
+        return;
     }
+
+    ndt_free(attr->name);
+
+    switch (attr->tag) {
+    case AttrValue:
+        ndt_free(attr->AttrValue);
+        break;
+    case AttrList:
+        for (i = 0; i < attr->AttrList.len; i++) {
+            ndt_free(attr->AttrList.items[i]);
+        }
+        ndt_free(attr->AttrList.items);
+        break;
+    default:
+        abort(); /* NOT REACHED */
+    }
+
+    ndt_free(attr);
+}
+
+void
+ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
+{
+    size_t i, k;
+
+    if (attr == NULL) {
+        return;
+    }
+
+    for (i = 0; i < nattr; i++) {
+        ndt_free(attr[i].name);
+
+        switch (attr[i].tag) {
+        case AttrValue:
+            ndt_free(attr[i].AttrValue);
+            break;
+        case AttrList:
+            for (k = 0; k < attr[i].AttrList.len; k++) {
+                ndt_free(attr[i].AttrList.items[k]);
+            }
+            ndt_free(attr[i].AttrList.items);
+            break;
+        default:
+            abort(); /* NOT REACHED */
+        }
+    }
+
+    ndt_free(attr);
 }
 
 int
-ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...)
+ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,
+               const ndt_attr_seq_t *seq, ...)
 {
     va_list ap;
-    const attr_spec *spec;
     ndt_attr_t const *v[MAX_ATTR] = {NULL};
     int found;
     size_t i, k;
-
-    spec = ndt_get_attr_spec(tag, ctx);
-    if (spec == NULL) {
-        return -1;
-    }
 
     if (seq->len < spec->min || seq->len > spec->max) {
         ndt_err_format(ctx, NDT_InvalidArgumentError,

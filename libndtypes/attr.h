@@ -43,6 +43,45 @@
 
 #define MAX_ATTR 8
 
+enum ndt_attr {
+  AttrBool,
+  AttrChar,
+  AttrInt8,
+  AttrInt16,
+  AttrInt32,
+  AttrInt64,
+  AttrUint8,
+  AttrUint16,
+  AttrUint32,
+  AttrUint64,
+  AttrSize,
+  AttrFloat32,
+  AttrFloat64,
+  AttrString,
+  AttrInt32List,
+  AttrCharOpt,
+  AttrInt64Opt,
+  AttrUint16Opt
+};
+
+enum ndt_attr_tag {
+  AttrValue,
+  AttrList
+};
+
+/* Attribute: name=value or name=[value, value, ...]. */
+typedef struct {
+    enum ndt_attr_tag tag;
+    char *name;
+    union {
+        char *AttrValue;
+        struct {
+            size_t len;
+            char **items;
+        } AttrList;
+    };
+} ndt_attr_t;
+
 typedef struct {
    const size_t min;
    const size_t max;
@@ -50,8 +89,9 @@ typedef struct {
    const enum ndt tags[MAX_ATTR];
 } attr_spec;
 
-const attr_spec *ndt_get_attr_spec(enum ndt tag, ndt_context_t *ctx);
-int ndt_parse_attr(enum ndt tag, ndt_context_t *ctx, ndt_attr_seq_t *seq, ...);
+void ndt_attr_del(ndt_attr_t *attr);
+void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
+
 
 
 #endif
