@@ -34,9 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
 #include <assert.h>
 #include "ndtypes.h"
 
@@ -122,9 +119,94 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     }
 
     switch (p->tag) {
+    case FixedDim:
+        return c->tag == FixedDim &&
+               ndt_is_optional(c) == ndt_is_optional(p) &&
+               c->FixedDim.shape == p->FixedDim.shape &&
+               ndt_equal(c->FixedDim.type, p->FixedDim.type);
+
+    case VarDim:
+        return c->tag == VarDim &&
+               ndt_is_optional(c) == ndt_is_optional(p) &&
+               ndt_equal(c->VarDim.type, p->VarDim.type);
+
+    case SymbolicDim:
+        return c->tag == SymbolicDim &&
+               ndt_is_optional(c) == ndt_is_optional(p) &&
+               strcmp(c->SymbolicDim.name, p->SymbolicDim.name) == 0 &&
+               ndt_equal(c->SymbolicDim.type, p->SymbolicDim.type);
+
+    case EllipsisDim:
+        return c->tag == EllipsisDim &&
+               ndt_is_optional(c) == ndt_is_optional(p) &&
+               ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
+
+    case Tuple:
+        if (c->tag != Tuple || c->Tuple.flag != p->Tuple.flag) return 0;
+        return tuple_fields_equal(p, c);
+
+    case Record:
+        if (c->tag != Record || c->Tuple.flag != p->Tuple.flag) return 0;
+        return record_fields_equal(p, c);
+
+    case Ref:
+        if (c->tag != Ref) return 0;
+        return ndt_equal(p->Ref.type, c->Ref.type);
+
+    case Constr:
+        return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
+               ndt_equal(p->Constr.type, c->Constr.type);
+
+    case Nominal:
+        /* Assume that the type has been created through ndt_nominal(), in
+           which case the name is guaranteed to be unique and present in the
+           typedef table. */
+        return c->tag == Nominal && strcmp(p->Nominal.name, c->Nominal.name) == 0;
+
+    case Categorical:
+        return c->tag == Categorical &&
+               categorical_equal(p->Categorical.types, p->Categorical.ntypes,
+                                 c->Categorical.types, c->Categorical.ntypes);
+
+    case Option:
+        return c->tag == Option && ndt_equal(p->Option.type, c->Option.type);
+
+    case OptionItem:
+        return c->tag == OptionItem && ndt_equal(p->OptionItem.type, c->OptionItem.type);
+
+    case Typevar:
+        return c->tag == Typevar && strcmp(c->Typevar.name, p->Typevar.name) == 0;
+
+    case FixedString:
+        return c->tag == FixedString &&
+               c->FixedString.size == p->FixedString.size &&
+               c->FixedString.encoding == p->FixedString.encoding;
+
+    case FixedBytes:
+        return c->tag == FixedBytes &&
+               c->FixedBytes.size == p->FixedBytes.size &&
+               c->FixedBytes.align == p->FixedBytes.align;
+
+    case Bytes:
+        return c->tag == Bytes && c->Bytes.target_align == p->Bytes.target_align;
+
+    case Char:
+        return c->tag == Char && c->Char.encoding == p->Char.encoding;
+
+    case Function:
+        return c->tag == Function &&
+               ndt_equal(p->Function.ret, c->Function.ret) &&
+               ndt_equal(p->Function.pos, c->Function.pos) &&
+               ndt_equal(p->Function.kwds, c->Function.kwds);
+
+    case Module:
+        return c->tag == Module && strcmp(p->Module.name, c->Module.name) == 0 &&
+               ndt_equal(p->Module.type, c->Module.type);
+
     case AnyKind:
     case ScalarKind:
-    case SignedKind: case UnsignedKind: case FloatKind: case ComplexKind:
+    case SignedKind: case UnsignedKind:
+    case FloatKind: case ComplexKind:
     case FixedStringKind: case FixedBytesKind:
     case Void: case Bool:
     case Int8: case Int16: case Int32: case Int64:
@@ -133,72 +215,7 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case Complex32: case Complex64: case Complex128:
     case String:
         return c->tag == p->tag;
-    case FixedString:
-        return c->tag == FixedString &&
-               c->FixedString.size == p->FixedString.size &&
-               c->FixedString.encoding == p->FixedString.encoding;
-    case FixedBytes:
-        return c->tag == FixedBytes &&
-               c->FixedBytes.size == p->FixedBytes.size &&
-               c->FixedBytes.align == p->FixedBytes.align;
-    case Char:
-        return c->tag == Char && c->Char.encoding == p->Char.encoding;
-    case Bytes:
-        return c->tag == Bytes && c->Bytes.target_align == p->Bytes.target_align;
-    case Categorical:
-        return c->tag == Categorical &&
-               categorical_equal(p->Categorical.types, p->Categorical.ntypes,
-                                 c->Categorical.types, c->Categorical.ntypes);
-    case Ref:
-        if (c->tag != Ref) return 0;
-        return ndt_equal(p->Ref.type, c->Ref.type);
-    case FixedDim:
-        return c->tag == FixedDim &&
-               ndt_is_optional(c) == ndt_is_optional(p) &&
-               c->FixedDim.shape == p->FixedDim.shape &&
-               ndt_equal(c->FixedDim.type, p->FixedDim.type);
-    case SymbolicDim:
-        return c->tag == SymbolicDim &&
-               ndt_is_optional(c) == ndt_is_optional(p) &&
-               strcmp(c->SymbolicDim.name, p->SymbolicDim.name) == 0 &&
-               ndt_equal(c->SymbolicDim.type, p->SymbolicDim.type);
-    case VarDim:
-        return c->tag == VarDim &&
-               ndt_is_optional(c) == ndt_is_optional(p) &&
-               ndt_equal(c->VarDim.type, p->VarDim.type);
-    case EllipsisDim:
-        return c->tag == EllipsisDim &&
-               ndt_is_optional(c) == ndt_is_optional(p) &&
-               ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
-    case Tuple:
-        if (c->tag != Tuple || c->Tuple.flag != p->Tuple.flag) return 0;
-        return tuple_fields_equal(p, c);
-    case Record:
-        if (c->tag != Record || c->Tuple.flag != p->Tuple.flag) return 0;
-        return record_fields_equal(p, c);
-    case Function:
-        return c->tag == Function &&
-               ndt_equal(p->Function.ret, c->Function.ret) &&
-               ndt_equal(p->Function.pos, c->Function.pos) &&
-               ndt_equal(p->Function.kwds, c->Function.kwds);
-    case Typevar:
-        return c->tag == Typevar && strcmp(c->Typevar.name, p->Typevar.name) == 0;
-    case Option:
-        return c->tag == Option && ndt_equal(p->Option.type, c->Option.type);
-    case OptionItem:
-        return c->tag == OptionItem && ndt_equal(p->OptionItem.type, c->OptionItem.type);
-    case Nominal:
-        /* Assume that the type has been created through ndt_nominal(), in
-           which case the name is guaranteed to be unique and present in the
-           typedef table. */
-        return c->tag == Nominal && strcmp(p->Nominal.name, c->Nominal.name) == 0;
-    case Module:
-        return c->tag == Module && strcmp(p->Module.name, c->Module.name) == 0 &&
-               ndt_equal(p->Module.type, c->Module.type);
-    case Constr:
-        return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
-               ndt_equal(p->Constr.type, c->Constr.type);
-    default: /* NOT REACHED */
-        abort();
     }
+
+    abort(); /* NOT REACHED: tags should be exhaustive */
 }
