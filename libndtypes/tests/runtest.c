@@ -1035,7 +1035,7 @@ test_copy(void)
         }
 
         if (!ndt_equal(t, u)) {
-            fprintf(stderr, "test_hash: FAIL: copy: not equal\n\n");
+            fprintf(stderr, "test_copy: FAIL: copy: not equal\n\n");
             ndt_del(t);
             ndt_del(u);
             ndt_context_del(&ctx);

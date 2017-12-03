@@ -43,24 +43,33 @@
 /*****************************************************************************/
 
 static inline int
-ndt_common_equal(const ndt_t *p, const ndt_t *c)
+ndt_common_equal(const ndt_t *t, const ndt_t *u)
 {
-    return c->ndim == p->ndim;
+    return t->tag == u->tag &&
+           t->access == u->access &&
+           t->ndim == u->ndim &&
+           t->datasize == u->datasize &&
+           t->align == u->align;
 }
 
 static int
-tuple_fields_equal(const ndt_t *p, const ndt_t *c)
+tuple_fields_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
 {
     int64_t i;
 
-    assert(p->tag == Tuple && c->tag == Tuple);
+    assert(t->tag == Tuple && u->tag == Tuple);
 
-    if (p->Tuple.shape != c->Tuple.shape) {
+    if (memcmp(t->Concrete.Tuple.offset, u->Concrete.Tuple.offset,
+               shape * (sizeof *t->Concrete.Tuple.offset)) ||
+        memcmp(t->Concrete.Tuple.align, u->Concrete.Tuple.align,
+               shape * (sizeof *t->Concrete.Tuple.align)) ||
+        memcmp(t->Concrete.Tuple.pad, u->Concrete.Tuple.pad,
+               shape * (sizeof *t->Concrete.Tuple.pad))) {
         return 0;
     }
 
-    for (i = 0; i < p->Tuple.shape; i++) {
-        if (!ndt_equal(p->Tuple.types[i], c->Tuple.types[i])) {
+    for (i = 0; i < shape; i++) {
+        if (!ndt_equal(t->Tuple.types[i], u->Tuple.types[i])) {
             return 0;
         }
     }
@@ -69,22 +78,27 @@ tuple_fields_equal(const ndt_t *p, const ndt_t *c)
 }
 
 static int
-record_fields_equal(const ndt_t *p, const ndt_t *c)
+record_fields_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
 {
     int64_t i;
 
-    assert(p->tag == Record && c->tag == Record);
+    assert(t->tag == Record && u->tag == Record);
 
-    if (p->Record.shape != c->Record.shape) {
+    if (memcmp(t->Concrete.Record.offset, u->Concrete.Record.offset,
+               shape * (sizeof *t->Concrete.Record.offset)) ||
+        memcmp(t->Concrete.Record.align, u->Concrete.Record.align,
+               shape * (sizeof *t->Concrete.Record.align)) ||
+        memcmp(t->Concrete.Record.pad, u->Concrete.Record.pad,
+               shape * (sizeof *t->Concrete.Record.pad))) {
         return 0;
     }
 
-    for (i = 0; i < p->Record.shape; i++) {
-        if (strcmp(p->Record.names[i], c->Record.names[i]) != 0) {
+    for (i = 0; i < shape; i++) {
+        if (strcmp(t->Record.names[i], u->Record.names[i]) != 0) {
             return 0;
         }
 
-        if (!ndt_equal(p->Record.types[i], c->Record.types[i])) {
+        if (!ndt_equal(t->Record.types[i], u->Record.types[i])) {
             return 0;
         }
     }
@@ -93,17 +107,12 @@ record_fields_equal(const ndt_t *p, const ndt_t *c)
 }
 
 static int
-categorical_equal(ndt_value_t *p, size_t plen,
-                  ndt_value_t *c, size_t clen)
+categorical_equal(ndt_value_t *t, ndt_value_t *u, size_t shape)
 {
     size_t i;
 
-    if (plen != clen) {
-        return 0;
-    }
-
-    for (i = 0; i < plen; i++) {
-        if (!ndt_value_equal(&p[i], &c[i])) {
+    for (i = 0; i < shape; i++) {
+        if (!ndt_value_equal(t+i, u+i)) {
             return 0;
         }
     }
@@ -112,96 +121,142 @@ categorical_equal(ndt_value_t *p, size_t plen,
 }
 
 int
-ndt_equal(const ndt_t *p, const ndt_t *c)
+ndt_equal(const ndt_t *t, const ndt_t *u)
 {
-    if (!ndt_common_equal(p, c)) {
+    if (!ndt_common_equal(t, u)) {
         return 0;
     }
 
-    switch (p->tag) {
-    case FixedDim:
-        return c->tag == FixedDim &&
-               ndt_is_optional(c) == ndt_is_optional(p) &&
-               c->FixedDim.shape == p->FixedDim.shape &&
-               ndt_equal(c->FixedDim.type, p->FixedDim.type);
+    switch (t->tag) {
+    case FixedDim: {
+        return t->FixedDim.flags == u->FixedDim.flags &&
+               t->FixedDim.shape == u->FixedDim.shape &&
+               t->Concrete.FixedDim.itemsize == u->Concrete.FixedDim.itemsize &&
+               t->Concrete.FixedDim.stride == u->Concrete.FixedDim.stride &&
+               ndt_equal(t->FixedDim.type, u->FixedDim.type);
+    }
 
-    case VarDim:
-        return c->tag == VarDim &&
-               ndt_is_optional(c) == ndt_is_optional(p) &&
-               ndt_equal(c->VarDim.type, p->VarDim.type);
+    case VarDim: {
+        if (t->VarDim.flags != u->VarDim.flags ||
+            t->Concrete.VarDim.itemsize != u->Concrete.VarDim.itemsize ||
+            t->Concrete.VarDim.noffsets != u->Concrete.VarDim.noffsets ||
+            t->Concrete.VarDim.nslices != u->Concrete.VarDim.nslices) {
+            return 0;
+        }
 
-    case SymbolicDim:
-        return c->tag == SymbolicDim &&
-               ndt_is_optional(c) == ndt_is_optional(p) &&
-               strcmp(c->SymbolicDim.name, p->SymbolicDim.name) == 0 &&
-               ndt_equal(c->SymbolicDim.type, p->SymbolicDim.type);
+        if (memcmp(t->Concrete.VarDim.offsets, u->Concrete.VarDim.offsets,
+                   t->Concrete.VarDim.noffsets * (sizeof *t->Concrete.VarDim.offsets)) ||
+            memcmp(t->Concrete.VarDim.slices, u->Concrete.VarDim.slices,
+                   t->Concrete.VarDim.nslices * (sizeof *t->Concrete.VarDim.slices))) {
+            return 0;
+        }
 
-    case EllipsisDim:
-        return c->tag == EllipsisDim &&
-               ndt_is_optional(c) == ndt_is_optional(p) &&
-               ndt_equal(c->EllipsisDim.type, p->EllipsisDim.type);
+        return ndt_equal(t->VarDim.type, u->VarDim.type);
+    }
 
-    case Tuple:
-        if (c->tag != Tuple || c->Tuple.flag != p->Tuple.flag) return 0;
-        return tuple_fields_equal(p, c);
+    case SymbolicDim: {
+        return t->SymbolicDim.flags == u->SymbolicDim.flags &&
+               strcmp(t->SymbolicDim.name, u->SymbolicDim.name) == 0 &&
+               ndt_equal(t->SymbolicDim.type, u->SymbolicDim.type);
+    }
 
-    case Record:
-        if (c->tag != Record || c->Tuple.flag != p->Tuple.flag) return 0;
-        return record_fields_equal(p, c);
+    case EllipsisDim: {
+        if (t->EllipsisDim.flags != u->EllipsisDim.flags ||
+            !!t->EllipsisDim.name != !!u->EllipsisDim.name) {
+            return 0;
+        }
 
-    case Ref:
-        if (c->tag != Ref) return 0;
-        return ndt_equal(p->Ref.type, c->Ref.type);
+        if (t->EllipsisDim.name &&
+            strcmp(t->EllipsisDim.name, u->EllipsisDim.name) != 0) {
+            return 0;
+        }
 
-    case Constr:
-        return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
-               ndt_equal(p->Constr.type, c->Constr.type);
+        return ndt_equal(t->EllipsisDim.type, u->EllipsisDim.type);
+    }
 
-    case Nominal:
+    case Tuple: {
+        if (t->Tuple.flag != u->Tuple.flag ||
+            t->Tuple.shape != u->Tuple.shape) {
+            return 0;
+        }
+
+        return tuple_fields_equal(t, u, t->Tuple.shape);
+    }
+
+    case Record: {
+        if (t->Record.flag != u->Record.flag ||
+            t->Record.shape != u->Record.shape) {
+            return 0;
+        }
+
+        return record_fields_equal(t, u, t->Record.shape);
+    }
+
+    case Ref: {
+        return ndt_equal(t->Ref.type, u->Ref.type);
+    }
+
+    case Constr: {
+        return strcmp(t->Constr.name, u->Constr.name) == 0 &&
+               ndt_equal(t->Constr.type, u->Constr.type);
+    }
+
+    case Nominal: {
         /* Assume that the type has been created through ndt_nominal(), in
            which case the name is guaranteed to be unique and present in the
            typedef table. */
-        return c->tag == Nominal && strcmp(p->Nominal.name, c->Nominal.name) == 0;
+        return strcmp(t->Nominal.name, u->Nominal.name) == 0;
+    }
 
-    case Categorical:
-        return c->tag == Categorical &&
-               categorical_equal(p->Categorical.types, p->Categorical.ntypes,
-                                 c->Categorical.types, c->Categorical.ntypes);
+    case Categorical: {
+        if (t->Categorical.ntypes != u->Categorical.ntypes) {
+            return 0;
+        }
 
-    case Option:
-        return c->tag == Option && ndt_equal(p->Option.type, c->Option.type);
+        return categorical_equal(t->Categorical.types, u->Categorical.types,
+                                 t->Categorical.ntypes);
+    }
 
-    case OptionItem:
-        return c->tag == OptionItem && ndt_equal(p->OptionItem.type, c->OptionItem.type);
+    case Option: {
+        return ndt_equal(t->Option.type, u->Option.type);
+    }
 
-    case Typevar:
-        return c->tag == Typevar && strcmp(c->Typevar.name, p->Typevar.name) == 0;
+    case OptionItem: {
+        return ndt_equal(t->OptionItem.type, u->OptionItem.type);
+    }
 
-    case FixedString:
-        return c->tag == FixedString &&
-               c->FixedString.size == p->FixedString.size &&
-               c->FixedString.encoding == p->FixedString.encoding;
+    case Typevar: {
+        return strcmp(t->Typevar.name, u->Typevar.name) == 0;
+    }
 
-    case FixedBytes:
-        return c->tag == FixedBytes &&
-               c->FixedBytes.size == p->FixedBytes.size &&
-               c->FixedBytes.align == p->FixedBytes.align;
+    case FixedString: {
+        return t->FixedString.size == u->FixedString.size &&
+               t->FixedString.encoding == u->FixedString.encoding;
+    }
 
-    case Bytes:
-        return c->tag == Bytes && c->Bytes.target_align == p->Bytes.target_align;
+    case FixedBytes: {
+        return t->FixedBytes.size == u->FixedBytes.size &&
+               t->FixedBytes.align == u->FixedBytes.align;
+    }
 
-    case Char:
-        return c->tag == Char && c->Char.encoding == p->Char.encoding;
+    case Bytes: {
+        return t->Bytes.target_align == u->Bytes.target_align;
+    }
 
-    case Function:
-        return c->tag == Function &&
-               ndt_equal(p->Function.ret, c->Function.ret) &&
-               ndt_equal(p->Function.pos, c->Function.pos) &&
-               ndt_equal(p->Function.kwds, c->Function.kwds);
+    case Char: {
+        return t->Char.encoding == u->Char.encoding;
+    }
 
-    case Module:
-        return c->tag == Module && strcmp(p->Module.name, c->Module.name) == 0 &&
-               ndt_equal(p->Module.type, c->Module.type);
+    case Function: {
+        return ndt_equal(t->Function.ret, u->Function.ret) &&
+               ndt_equal(t->Function.pos, u->Function.pos) &&
+               ndt_equal(t->Function.kwds, u->Function.kwds);
+    }
+
+    case Module: {
+        return strcmp(t->Module.name, u->Module.name) == 0 &&
+               ndt_equal(t->Module.type, u->Module.type);
+    }
 
     case AnyKind:
     case ScalarKind:
@@ -214,7 +269,7 @@ ndt_equal(const ndt_t *p, const ndt_t *c)
     case Float16: case Float32: case Float64:
     case Complex32: case Complex64: case Complex128:
     case String:
-        return c->tag == p->tag;
+        return 1;
     }
 
     abort(); /* NOT REACHED: tags should be exhaustive */

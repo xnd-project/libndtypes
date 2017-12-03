@@ -944,6 +944,7 @@ ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
     /* concrete access */
     t->access = Abstract;
     t->Concrete.VarDim.flag = ExternalOffsets;
+    t->Concrete.VarDim.itemsize = -1;
     t->Concrete.VarDim.noffsets = 0;
     t->Concrete.VarDim.offsets = NULL;
     t->Concrete.VarDim.nslices = 0;

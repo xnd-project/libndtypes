@@ -455,8 +455,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
                     assert(ndt_is_concrete(w));
 
-                    u = ndt_fixed_dim(u, w->FixedDim.shape, w->Concrete.FixedDim.stride,
-                                      ctx);
+                    u = ndt_fixed_dim(u, w->FixedDim.shape, INT64_MAX, ctx);
                     if (u == NULL) {
                         return NULL;
                     }
