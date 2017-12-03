@@ -145,7 +145,7 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
         }
 
         if (m == NULL) {
-            t = ndt_var_dim(type, OwnOffsets, (int32_t)noffsets, offsets, 0, NULL, ctx);
+            t = ndt_var_dim(type, InternalOffsets, (int32_t)noffsets, offsets, 0, NULL, ctx);
         }
         else {
             int i = m->num_offset_arrays;
@@ -166,7 +166,7 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
         return t;
     }
     else {
-        return ndt_var_dim(type, NoOffsets, 0, NULL, 0, NULL, ctx);
+        return ndt_abstract_var_dim(type, ctx);
     }
 }
 

@@ -63,7 +63,7 @@ ndt_copy_var_dim(const ndt_t *t, ndt_context_t *ctx)
     }
 
     if (ndt_is_abstract(t))  {
-        return ndt_var_dim(type, NoOffsets, 0, NULL, 0, NULL, ctx);
+        return ndt_abstract_var_dim(type, ctx);
     }
 
     slices = NULL;
@@ -93,7 +93,7 @@ ndt_copy_tuple(const ndt_t *t, ndt_context_t *ctx)
 
     assert(t->tag == Tuple);
 
-    u = ndt_tuple_alloc(t->Tuple.flag, t->Tuple.shape, ctx);
+    u = ndt_tuple_new(t->Tuple.flag, t->Tuple.shape, ctx);
     if (u == NULL) {
         return NULL;
     }
@@ -123,7 +123,7 @@ ndt_copy_record(const ndt_t *t, ndt_context_t *ctx)
 
     assert(t->tag == Record);
 
-    u = ndt_record_alloc(t->Record.flag, t->Record.shape, ctx);
+    u = ndt_record_new(t->Record.flag, t->Record.shape, ctx);
     if (u == NULL) {
         return NULL;
     }

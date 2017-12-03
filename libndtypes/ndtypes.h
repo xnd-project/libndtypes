@@ -130,11 +130,10 @@ typedef struct {
 } ndt_ndarray_t;
 
 
-/* Ownership flag (experimental) for var dim offsets */
+/* Ownership flag for var dim offsets */
 enum ndt_offsets {
-  OwnOffsets,
+  InternalOffsets,
   ExternalOffsets,
-  NoOffsets,
 };
 
 /*
@@ -522,6 +521,8 @@ NDTYPES_API void ndt_field_array_del(ndt_field_t *fields, size_t shape);
 
 /*** Datashape ***/
 NDTYPES_API ndt_t *ndt_new(enum ndt tag, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_tuple_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_record_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API void ndt_del(ndt_t *t);
 NDTYPES_API int64_t ndt_hash(ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
@@ -536,6 +537,7 @@ NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type,
                                enum ndt_offsets flag, int32_t noffsets, const int32_t *offsets,
                                int32_t nslices, ndt_slice_t *slices,
@@ -549,8 +551,6 @@ NDTYPES_API ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Dtypes */
-NDTYPES_API ndt_t *ndt_tuple_alloc(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_record_alloc(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                  uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,

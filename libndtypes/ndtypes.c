@@ -455,7 +455,37 @@ check_type_invariants(const ndt_t *type, ndt_context_t *ctx)
     return 1;
 }
 
-/* Invariants for var dimensions. */
+/* Invariants for abstract var dimensions. */
+static int
+check_abstract_var_invariants(const ndt_t *type, ndt_context_t *ctx)
+{
+    if (type->tag == Module) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "nested module types are not supported");
+        return 0;
+    }
+
+    if (type->tag == FixedDim || type->tag == SymbolicDim) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "mixed fixed and var dim are not supported");
+        return 0;
+    }
+
+    if (type->tag == VarDim && ndt_is_concrete(type)) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "mixing abstract and concrete var dimensions is not allowed");
+        return 0;
+    }
+
+    if (type->ndim >= NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %u", NDT_MAX_DIM);
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Invariants for concrete var dimensions. */
 static int
 check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ctx)
 {
@@ -473,18 +503,14 @@ check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ct
 
     if (type->tag == VarDim) {
         if (ndt_is_abstract(type)) {
-            if (flag != NoOffsets) {
-                ndt_err_format(ctx, NDT_TypeError,
-                    "offsets given for abstract type");
-                return 0;
-            }
+            ndt_err_format(ctx, NDT_TypeError,
+                "mixing abstract and concrete var dimensions is not allowed");
+            return 0;
         }
-        else {
-            if (flag == NoOffsets || flag != type->Concrete.VarDim.flag) {
-                ndt_err_format(ctx, NDT_TypeError,
-                    "mixing internal and external offsets is not allowed");
-                return 0;
-            }
+        if (flag != type->Concrete.VarDim.flag) {
+            ndt_err_format(ctx, NDT_TypeError,
+                "mixing internal and external offsets is not allowed");
+            return 0;
         }
     }
 
@@ -538,6 +564,84 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
     return t;
 }
 
+ndt_t *
+ndt_tuple_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
+{
+    ndt_t *t;
+    size_t offset_offset;
+    size_t align_offset;
+    size_t pad_offset;
+    size_t extra;
+    int64_t i;
+
+    offset_offset = round_up(shape * sizeof(ndt_t *), alignof(int64_t));
+    align_offset = offset_offset + shape * sizeof(int64_t);
+    pad_offset = align_offset + shape * sizeof(uint16_t);
+    extra = pad_offset + shape * sizeof(uint16_t);
+
+    t = ndt_new_extra(Tuple, extra, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+
+    t->Tuple.flag = flag;
+    t->Tuple.shape = shape;
+    t->Tuple.types = (ndt_t **)t->extra;
+    t->Concrete.Tuple.offset = (int64_t *)(t->extra + offset_offset);
+    t->Concrete.Tuple.align = (uint16_t *)(t->extra + align_offset);
+    t->Concrete.Tuple.pad = (uint16_t *)(t->extra + pad_offset);
+
+    for (i = 0; i < shape; i++) {
+        t->Tuple.types[i] = NULL;
+        t->Concrete.Tuple.offset[i] = 0;
+        t->Concrete.Tuple.align[i] = 1;
+        t->Concrete.Tuple.pad[i] = 0;
+    }
+
+    return t;
+}
+
+ndt_t *
+ndt_record_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
+{
+    ndt_t *t;
+    size_t types_offset;
+    size_t offset_offset;
+    size_t align_offset;
+    size_t pad_offset;
+    size_t extra;
+    int64_t i;
+
+    types_offset = round_up(shape * sizeof(char *), alignof(ndt_t *));
+    offset_offset = types_offset + round_up(shape * sizeof(ndt_t *), alignof(int64_t));
+    align_offset = offset_offset + shape * sizeof(int64_t);
+    pad_offset = align_offset + shape * sizeof(uint16_t);
+    extra = pad_offset + shape * sizeof(uint16_t);
+
+    t = ndt_new_extra(Record, extra, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+
+    t->Record.flag = flag;
+    t->Record.shape = shape;
+    t->Record.names = (char **)t->extra;
+    t->Record.types = (ndt_t **)(t->extra + types_offset);
+    t->Concrete.Record.offset = (int64_t *)(t->extra + offset_offset);
+    t->Concrete.Record.align = (uint16_t *)(t->extra + align_offset);
+    t->Concrete.Record.pad = (uint16_t *)(t->extra + pad_offset);
+
+    for (i = 0; i < shape; i++) {
+        t->Record.names[i] = NULL;
+        t->Record.types[i] = NULL;
+        t->Concrete.Record.offset[i] = 0;
+        t->Concrete.Record.align[i] = 1;
+        t->Concrete.Record.pad[i] = 0;
+    }
+
+    return t;
+}
+
 void
 ndt_del(ndt_t *t)
 {
@@ -552,7 +656,7 @@ ndt_del(ndt_t *t)
     case VarDim:
         ndt_del(t->VarDim.type);
         if (ndt_is_concrete(t)) {
-            if (t->Concrete.VarDim.flag == OwnOffsets) {
+            if (t->Concrete.VarDim.flag == InternalOffsets) {
                 ndt_free((int32_t *)t->Concrete.VarDim.offsets);
             }
             ndt_free(t->Concrete.VarDim.slices);
@@ -739,6 +843,19 @@ ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
     return _ndt_to_fortran(t, t->Concrete.FixedDim.itemsize, ctx);
 }
 
+int64_t
+ndt_itemsize(ndt_t *t)
+{
+    switch (t->tag) {
+    case FixedDim:
+        return t->Concrete.FixedDim.itemsize;
+    case VarDim:
+        return t->Concrete.VarDim.itemsize;
+    default:
+        return t->data_size;
+    }
+}
+
 ndt_t *
 ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
 {
@@ -769,8 +886,8 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
     /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {
-        t->Concrete.FixedDim.itemsize = type->ndim == 0 ? type->data_size : type->Concrete.FixedDim.itemsize;
-        t->Concrete.FixedDim.stride = stride == INT64_MAX ? type->data_size : stride;
+        t->Concrete.FixedDim.itemsize = ndt_itemsize(type);
+        t->Concrete.FixedDim.stride = stride==INT64_MAX ? type->data_size : stride;
         t->data_size = shape * type->data_size;
         t->data_align = type->data_align;
     }
@@ -805,87 +922,108 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_var_dim(ndt_t *type,
-            enum ndt_offsets flag, int32_t noffsets, const int32_t *offsets,
-            int32_t nslices, ndt_slice_t *slices,
-            ndt_context_t *ctx)
+ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
 {
-    enum ndt_access access = Abstract;
-    ndt_t *t;
+    ndt_t *t = NULL;
 
-    if (!check_var_invariants(flag, type, ctx)) {
-        goto error;
-
-    }
-
-    if (!!noffsets != !!offsets) {
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "var dimension: invalid noffsets or offsets");
-        goto error;
-    }
-
-    if (!!nslices != !!slices) {
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "var dimension: invalid nslices or slices");
-        goto error;
-    }
-
-    if (noffsets) {
-        if (ndt_is_abstract(type)) {
-            ndt_err_format(ctx, NDT_InvalidArgumentError,
-                "var dimension: offsets given for abstract type");
-            goto error;
-        }
-        access = Concrete;
+    if (!check_abstract_var_invariants(type, ctx)) {
+        ndt_del(type);
+        return NULL;
     }
 
     /* abstract type */
     t = ndt_new(VarDim, ctx);
     if (t == NULL) {
-        goto error;
+        ndt_del(type);
+        return NULL;
     }
+    t->ndim = type->ndim+1;
     t->VarDim.flags = ndt_common_flags(type);
     t->VarDim.type = type;
-    t->ndim = type->ndim + 1;
-    t->access = access;
-    t->data_size = 0;
-    t->data_align = 0;
 
     /* concrete access */
-    if (access == Concrete) {
-        t->Concrete.VarDim.flag = flag;
-        t->Concrete.VarDim.noffsets = noffsets;
-        t->Concrete.VarDim.offsets = offsets;
-        t->Concrete.VarDim.nslices = nslices;
-        t->Concrete.VarDim.slices = slices;
+    t->access = Abstract;
+    t->Concrete.VarDim.flag = ExternalOffsets;
+    t->Concrete.VarDim.noffsets = 0;
+    t->Concrete.VarDim.offsets = NULL;
+    t->Concrete.VarDim.nslices = 0;
+    t->Concrete.VarDim.slices = NULL;
 
-        switch (type->tag) {
-        case VarDim:
-            if (offsets[noffsets-1] != type->Concrete.VarDim.noffsets-1) {
-                ndt_err_format(ctx, NDT_ValueError,
-                    "missing or invalid number of var-dim offset arguments");
-                ndt_del(t);
-                return NULL;
-            }
-            t->data_size = type->data_size;
-            t->Concrete.VarDim.itemsize = type->Concrete.VarDim.itemsize;
-            break;
-        default:
-            t->Concrete.VarDim.itemsize = type->data_size;
-            t->data_size = offsets[noffsets-1] * type->data_size;
-            break;
-        }
+    return t;
+}
 
-        t->data_align = type->data_align;
+ndt_t *
+ndt_var_dim(ndt_t *type,
+            enum ndt_offsets flag,
+            int32_t noffsets, const int32_t *offsets,
+            int32_t nslices, ndt_slice_t *slices,
+            ndt_context_t *ctx)
+{
+    ndt_t *t;
+    int64_t itemsize, datasize;
+
+    assert(noffsets >= 2);
+    assert(offsets != NULL);
+    assert(!!nslices == !!slices);
+
+    if (!check_var_invariants(flag, type, ctx)) {
+        ndt_del(type);
+        goto error;
     }
+
+    if (!ndt_is_concrete(type)) {
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+                       "var_dim: expected concrete type");
+        ndt_del(type);
+        goto error;
+    }
+
+    switch (type->tag) {
+    case VarDim:
+        if (offsets[noffsets-1] != type->Concrete.VarDim.noffsets-1) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "var_dim: missing or invalid number of offset arguments");
+            ndt_del(type);
+            goto error;
+        }
+        datasize = type->data_size;
+        itemsize = type->Concrete.VarDim.itemsize;
+        break;
+    default:
+        datasize = offsets[noffsets-1] * type->data_size;
+        itemsize = type->data_size;
+        break;
+    }
+
+    /* abstract type */
+    t = ndt_new(VarDim, ctx);
+    if (t == NULL) {
+        ndt_del(type);
+        goto error;
+    }
+    t->ndim = type->ndim+1;
+    t->VarDim.flags = ndt_common_flags(type);
+    t->VarDim.type = type;
+
+    /* concrete access */
+    t->access = Concrete;
+    t->data_size = datasize;
+    t->data_align = type->data_align;
+    t->Concrete.VarDim.flag = flag;
+    t->Concrete.VarDim.itemsize = itemsize;
+    t->Concrete.VarDim.noffsets = noffsets;
+    t->Concrete.VarDim.offsets = offsets;
+    t->Concrete.VarDim.nslices = nslices;
+    t->Concrete.VarDim.slices = slices;
 
     return t;
 
+
 error:
-    ndt_del(type);
-    if (flag == OwnOffsets) {
+    if (flag == InternalOffsets) {
         ndt_free((int32_t *)offsets);
     }
+    ndt_free(slices);
     return NULL;
 }
 
@@ -1225,41 +1363,6 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
     return 0;
 }
 
-ndt_t *
-ndt_tuple_alloc(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
-{
-    ndt_t *t;
-    size_t offset_offset;
-    size_t align_offset;
-    size_t pad_offset;
-    size_t extra;
-    int64_t i;
-
-    offset_offset = round_up(shape * sizeof(ndt_t *), alignof(int64_t));
-    align_offset = offset_offset + shape * sizeof(int64_t);
-    pad_offset = align_offset + shape * sizeof(uint16_t);
-    extra = pad_offset + shape * sizeof(uint16_t);
-
-    t = ndt_new_extra(Tuple, extra, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    t->Tuple.flag = flag;
-    t->Tuple.shape = shape;
-    t->Tuple.types = (ndt_t **)t->extra;
-    t->Concrete.Tuple.offset = (int64_t *)(t->extra + offset_offset);
-    t->Concrete.Tuple.align = (uint16_t *)(t->extra + align_offset);
-    t->Concrete.Tuple.pad = (uint16_t *)(t->extra + pad_offset);
-
-    for (i = 0; i < shape; i++) {
-        t->Tuple.types[i] = NULL;
-        t->Concrete.Tuple.offset[i] = 0;
-        t->Concrete.Tuple.align[i] = 1;
-        t->Concrete.Tuple.pad[i] = 0;
-    }
-
-    return t;
-}
 
 ndt_t *
 ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
@@ -1278,7 +1381,7 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
     }
 
     /* abstract type */
-    t = ndt_tuple_alloc(flag, shape, ctx);
+    t = ndt_tuple_new(flag, shape, ctx);
     if (t == NULL) {
         ndt_field_array_del(fields, shape);
         return NULL;
@@ -1330,45 +1433,6 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
     }
 }
 
-ndt_t *
-ndt_record_alloc(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
-{
-    ndt_t *t;
-    size_t types_offset;
-    size_t offset_offset;
-    size_t align_offset;
-    size_t pad_offset;
-    size_t extra;
-    int64_t i;
-
-    types_offset = round_up(shape * sizeof(char *), alignof(ndt_t *));
-    offset_offset = types_offset + round_up(shape * sizeof(ndt_t *), alignof(int64_t));
-    align_offset = offset_offset + shape * sizeof(int64_t);
-    pad_offset = align_offset + shape * sizeof(uint16_t);
-    extra = pad_offset + shape * sizeof(uint16_t);
-
-    t = ndt_new_extra(Record, extra, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    t->Record.flag = flag;
-    t->Record.shape = shape;
-    t->Record.names = (char **)t->extra;
-    t->Record.types = (ndt_t **)(t->extra + types_offset);
-    t->Concrete.Record.offset = (int64_t *)(t->extra + offset_offset);
-    t->Concrete.Record.align = (uint16_t *)(t->extra + align_offset);
-    t->Concrete.Record.pad = (uint16_t *)(t->extra + pad_offset);
-
-    for (i = 0; i < shape; i++) {
-        t->Record.names[i] = NULL;
-        t->Record.types[i] = NULL;
-        t->Concrete.Record.offset[i] = 0;
-        t->Concrete.Record.align[i] = 1;
-        t->Concrete.Record.pad[i] = 0;
-    }
-
-    return t;
-}
 
 ndt_t *
 ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
@@ -1387,7 +1451,7 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
     }
 
     /* abstract type */
-    t = ndt_record_alloc(flag, shape, ctx);
+    t = ndt_record_new(flag, shape, ctx);
     if (t == NULL) {
         ndt_field_array_del(fields, shape);
         return NULL;
@@ -1846,7 +1910,7 @@ ndt_ref(ndt_t *type, ndt_context_t *ctx)
     t->Ref.type = type;
 
     /* concrete access */
-    t->access = Concrete;
+    t->access = type->access;
     t->data_size = sizeof(void *);
     t->data_align = alignof(void *);
 
