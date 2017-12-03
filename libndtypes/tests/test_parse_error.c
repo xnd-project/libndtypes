@@ -27826,6 +27826,12 @@ const char *parse_error_tests[] = {
   "!!2 * 3 * 10 * !int64",
   "!N * 3 * 10 * int64",
 
+  "var(offsets=[]) * {a: T}",
+  "var(offsets=[0]) * Some(int64)",
+  "var(offsets=[-1]) * Some(int64)",
+  "var(offsets=[-1, -1]) * Some(int64)",
+  "var(offsets=[0, -1]) * Some(int64)",
+
   /* END MANUALLY GENERATED */
 
   NULL

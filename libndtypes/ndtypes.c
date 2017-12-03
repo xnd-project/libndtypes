@@ -962,11 +962,16 @@ ndt_var_dim(ndt_t *type,
     ndt_t *t;
     int64_t itemsize, datasize;
 
-    assert(noffsets >= 2);
     assert(offsets != NULL);
     assert(!!nslices == !!slices);
 
     if (!check_var_invariants(flag, type, ctx)) {
+        ndt_del(type);
+        goto error;
+    }
+
+    if (noffsets < 2) {
+        ndt_err_format(ctx, NDT_InvalidArgumentError, "var_dim: noffsets < 2");
         ndt_del(type);
         goto error;
     }
