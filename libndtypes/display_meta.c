@@ -171,8 +171,8 @@ common_attributes(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
     }
     else {
         return ndt_snprintf_d(ctx, buf, d,
-                   "abstract=false, ndim=%d, data_size=%" PRIi64 ", data_align=%" PRIu16,
-                   t->ndim, t->data_size, t->data_align);
+                   "abstract=false, ndim=%d, datasize=%" PRIi64 ", align=%" PRIu16,
+                   t->ndim, t->datasize, t->align);
     }
 }
 

@@ -104,7 +104,7 @@ min_field_align(const ndt_t *t, uint16_opt_t align, uint16_opt_t pack,
         if (t->access == Abstract) {
             goto access_error;
         }
-        min_align = max(align.Some, t->data_align);
+        min_align = max(align.Some, t->align);
     }
     else if (pack.tag == Some) {
         if (t->access == Abstract) {
@@ -114,7 +114,7 @@ min_field_align(const ndt_t *t, uint16_opt_t align, uint16_opt_t pack,
     }
     else {
         if (t->access == Concrete) {
-            min_align = t->data_align;
+            min_align = t->align;
         }
     }
 
@@ -253,7 +253,7 @@ ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack,
     /* concrete access */
     field->access = type->access;
     if (field->access == Concrete) {
-        field->Concrete.data_align = min_align;
+        field->Concrete.align = min_align;
         field->Concrete.explicit_align = (align.tag==Some || pack.tag==Some);
     }
 
@@ -537,8 +537,8 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
     t->ndim = 0;
     t->hash = -1;
 
-    t->data_size = -1;
-    t->data_align = UINT16_MAX;
+    t->datasize = -1;
+    t->align = UINT16_MAX;
 
     return t;
 }
@@ -558,8 +558,8 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
     t->ndim = 0;
     t->hash = -1;
 
-    t->data_size = -1;
-    t->data_align = UINT16_MAX;
+    t->datasize = -1;
+    t->align = UINT16_MAX;
 
     return t;
 }
@@ -852,7 +852,7 @@ ndt_itemsize(ndt_t *t)
     case VarDim:
         return t->Concrete.VarDim.itemsize;
     default:
-        return t->data_size;
+        return t->datasize;
     }
 }
 
@@ -887,9 +887,9 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
     t->access = type->access;
     if (t->access == Concrete) {
         t->Concrete.FixedDim.itemsize = ndt_itemsize(type);
-        t->Concrete.FixedDim.stride = stride==INT64_MAX ? type->data_size : stride;
-        t->data_size = shape * type->data_size;
-        t->data_align = type->data_align;
+        t->Concrete.FixedDim.stride = stride==INT64_MAX ? type->datasize : stride;
+        t->datasize = shape * type->datasize;
+        t->align = type->align;
     }
 
     return t;
@@ -991,12 +991,12 @@ ndt_var_dim(ndt_t *type,
             ndt_del(type);
             goto error;
         }
-        datasize = type->data_size;
+        datasize = type->datasize;
         itemsize = type->Concrete.VarDim.itemsize;
         break;
     default:
-        datasize = offsets[noffsets-1] * type->data_size;
-        itemsize = type->data_size;
+        datasize = offsets[noffsets-1] * type->datasize;
+        itemsize = type->datasize;
         break;
     }
 
@@ -1012,8 +1012,8 @@ ndt_var_dim(ndt_t *type,
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = datasize;
-    t->data_align = type->data_align;
+    t->datasize = datasize;
+    t->align = type->align;
     t->Concrete.VarDim.flag = flag;
     t->Concrete.VarDim.itemsize = itemsize;
     t->Concrete.VarDim.noffsets = noffsets;
@@ -1132,8 +1132,8 @@ ndt_item_option(ndt_t *type, ndt_context_t *ctx)
         /* concrete access */
         t->access = type->access;
         if (t->access == Concrete) {
-            t->data_size = type->data_size;
-            t->data_align = type->data_align;
+            t->datasize = type->datasize;
+            t->align = type->align;
         }
  
         return t;
@@ -1167,8 +1167,8 @@ ndt_option(ndt_t *type, ndt_context_t *ctx)
         /* concrete access */
         t->access = type->access;
         if (t->access == Concrete) {
-            t->data_size = type->data_size;
-            t->data_align = type->data_align;
+            t->datasize = type->datasize;
+            t->align = type->align;
         }
  
         return t;
@@ -1234,8 +1234,8 @@ ndt_nominal(char *name, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = type->access;
-    t->data_size = type->data_size;
-    t->data_align = type->data_align;
+    t->datasize = type->datasize;
+    t->align = type->align;
 
     return t;
 }
@@ -1259,8 +1259,8 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
     /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {
-        t->data_size = type->data_size;
-        t->data_align = type->data_align;
+        t->datasize = type->datasize;
+        t->align = type->align;
     }
 
     return t;
@@ -1291,8 +1291,8 @@ ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
     /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {
-        t->data_size = type->data_size;
-        t->data_align = type->data_align;
+        t->datasize = type->datasize;
+        t->align = type->align;
     }
 
     return t;
@@ -1339,7 +1339,7 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
             align[i] = pack.Some;
         }
         else {
-            align[i] = fields[i].Concrete.data_align;
+            align[i] = fields[i].Concrete.align;
         }
 
         maxalign = max(align[i], maxalign);
@@ -1351,19 +1351,19 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
         }
 
         offsets[i] = offset;
-        offset += fields[i].type->data_size;
+        offset += fields[i].type->datasize;
     }
 
     size = round_up(offset, maxalign);
 
     if (shape > 0) {
-        size_t n = (size - offsets[shape-1]) - fields[shape-1].type->data_size;
+        size_t n = (size - offsets[shape-1]) - fields[shape-1].type->datasize;
         pad[shape-1] = (uint16_t)n;
     }
 
     assert(t->access == Concrete);
-    t->data_align = maxalign;
-    t->data_size = size;
+    t->align = maxalign;
+    t->datasize = size;
 
     return 0;
 }
@@ -1614,68 +1614,68 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
 
     switch(tag) {
     case Void:
-        t->data_size = 0;
-        t->data_align = 1;
+        t->datasize = 0;
+        t->align = 1;
         break;
     case Bool:
-        t->data_size = sizeof(bool);
-        t->data_align = alignof(bool);
+        t->datasize = sizeof(bool);
+        t->align = alignof(bool);
         break;
     case Int8:
-        t->data_size = sizeof(int8_t);
-        t->data_align = alignof(int8_t);
+        t->datasize = sizeof(int8_t);
+        t->align = alignof(int8_t);
         break;
     case Int16:
-        t->data_size = sizeof(int16_t);
-        t->data_align = alignof(int16_t);
+        t->datasize = sizeof(int16_t);
+        t->align = alignof(int16_t);
         break;
     case Int32:
-        t->data_size = sizeof(int32_t);
-        t->data_align = alignof(int32_t);
+        t->datasize = sizeof(int32_t);
+        t->align = alignof(int32_t);
         break;
     case Int64:
-        t->data_size = sizeof(int64_t);
-        t->data_align = alignof(int64_t);
+        t->datasize = sizeof(int64_t);
+        t->align = alignof(int64_t);
         break;
     case Uint8:
-        t->data_size = sizeof(uint8_t);
-        t->data_align = alignof(uint8_t);
+        t->datasize = sizeof(uint8_t);
+        t->align = alignof(uint8_t);
         break;
     case Uint16:
-        t->data_size = sizeof(uint16_t);
-        t->data_align = alignof(uint16_t);
+        t->datasize = sizeof(uint16_t);
+        t->align = alignof(uint16_t);
         break;
     case Uint32:
-        t->data_size = sizeof(uint32_t);
-        t->data_align = alignof(uint32_t);
+        t->datasize = sizeof(uint32_t);
+        t->align = alignof(uint32_t);
         break;
     case Uint64:
-        t->data_size = sizeof(uint64_t);
-        t->data_align = alignof(uint64_t);
+        t->datasize = sizeof(uint64_t);
+        t->align = alignof(uint64_t);
         break;
     case Float16:
-        t->data_size = 2;
-        t->data_align = 2;
+        t->datasize = 2;
+        t->align = 2;
         break;
     case Float32:
-        t->data_size = sizeof(float);
-        t->data_align = alignof(float);
+        t->datasize = sizeof(float);
+        t->align = alignof(float);
         break;
     case Float64:
-        t->data_size = sizeof(double);
-        t->data_align = alignof(double);
+        t->datasize = sizeof(double);
+        t->align = alignof(double);
         break;
     case Complex32:
-        t->data_size = 4;
-        t->data_align = 2;
+        t->datasize = 4;
+        t->align = 2;
         break;
     case Complex64:
-        t->data_size = sizeof(ndt_complex64_t);
-        t->data_align = alignof(ndt_complex64_t);
+        t->datasize = sizeof(ndt_complex64_t);
+        t->align = alignof(ndt_complex64_t);
         break;
     case Complex128:
-        t->data_size = sizeof(ndt_complex128_t);
-        t->data_align = alignof(ndt_complex128_t);
+        t->datasize = sizeof(ndt_complex128_t);
+        t->align = alignof(ndt_complex128_t);
         break;
     default:
         ndt_err_format(ctx, NDT_ValueError, "invalid tag: '%s'",
@@ -1744,8 +1744,8 @@ ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = ndt_sizeof_encoding(encoding);
-    t->data_align = ndt_alignof_encoding(encoding);
+    t->datasize = ndt_sizeof_encoding(encoding);
+    t->align = ndt_alignof_encoding(encoding);
 
     return t;
 }
@@ -1763,8 +1763,8 @@ ndt_string(ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = sizeof(char *);
-    t->data_align = alignof(char *);
+    t->datasize = sizeof(char *);
+    t->align = alignof(char *);
 
     return t;
 }
@@ -1784,8 +1784,8 @@ ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = ndt_sizeof_encoding(encoding) * size;
-    t->data_align = ndt_alignof_encoding(encoding);
+    t->datasize = ndt_sizeof_encoding(encoding) * size;
+    t->align = ndt_alignof_encoding(encoding);
 
     return t;
 }
@@ -1810,8 +1810,8 @@ ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = sizeof(ndt_bytes_t);
-    t->data_align = alignof(ndt_bytes_t);
+    t->datasize = sizeof(ndt_bytes_t);
+    t->align = alignof(ndt_bytes_t);
 
     return t;
 }
@@ -1837,8 +1837,8 @@ ndt_fixed_bytes(size_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = size;
-    t->data_align = align;
+    t->datasize = size;
+    t->align = align;
 
     return t;
 }
@@ -1890,8 +1890,8 @@ ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->data_size = sizeof(ndt_categorical_t);
-    t->data_align = alignof(ndt_categorical_t);
+    t->datasize = sizeof(ndt_categorical_t);
+    t->align = alignof(ndt_categorical_t);
 
     return t;
 }
@@ -1916,8 +1916,8 @@ ndt_ref(ndt_t *type, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = type->access;
-    t->data_size = sizeof(void *);
-    t->data_align = alignof(void *);
+    t->datasize = sizeof(void *);
+    t->align = alignof(void *);
 
     return t;
 }
@@ -2005,7 +2005,7 @@ ndt_is_c_contiguous(const ndt_t *t)
 {
     const ndt_t *dims[NDT_MAX_DIM];
     const ndt_t *dtype;
-    int64_t shape, data_size;
+    int64_t shape, datasize;
     int ndim, i;
 
     if (!ndt_is_ndarray(t)) {
@@ -2017,13 +2017,13 @@ ndt_is_c_contiguous(const ndt_t *t)
 
     ndim = ndt_const_dims_dtype(dims, &dtype, t);
 
-    data_size = t->Concrete.FixedDim.itemsize;
+    datasize = t->Concrete.FixedDim.itemsize;
     for (i = ndim-1; i >= 0; i--) {
         shape = t->FixedDim.shape;
-        if (shape > 1 && dims[i]->Concrete.FixedDim.stride != data_size) {
+        if (shape > 1 && dims[i]->Concrete.FixedDim.stride != datasize) {
             return 0;
         }
-        data_size *= shape;
+        datasize *= shape;
     }
 
     return 1;
@@ -2034,7 +2034,7 @@ ndt_is_f_contiguous(const ndt_t *t)
 {
     const ndt_t *dims[NDT_MAX_DIM];
     const ndt_t *dtype;
-    int64_t shape, data_size;
+    int64_t shape, datasize;
     int ndim, i;
 
     if (!ndt_is_ndarray(t)) {
@@ -2045,13 +2045,13 @@ ndt_is_f_contiguous(const ndt_t *t)
     }
 
     ndim = ndt_const_dims_dtype(dims, &dtype, t);
-    data_size = t->Concrete.FixedDim.itemsize;
+    datasize = t->Concrete.FixedDim.itemsize;
     for (i = 0; i < ndim; i++) {
         shape = t->FixedDim.shape;
-        if (shape > 1 && dims[i]->Concrete.FixedDim.stride != data_size) {
+        if (shape > 1 && dims[i]->Concrete.FixedDim.stride != datasize) {
             return 0;
         }
-        data_size *= shape;
+        datasize *= shape;
     }
 
     return 1;
@@ -2073,7 +2073,7 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
     if (!ndt_is_ndarray(t)) {
         if (t->ndim == 0) {
             a->ndim = t->ndim;
-            a->itemsize = t->data_size;
+            a->itemsize = t->datasize;
             return 0;
         }
         ndt_err_format(ctx, NDT_ValueError,

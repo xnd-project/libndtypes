@@ -629,7 +629,7 @@ ndtype_itemsize(PyObject *self, PyObject *args UNUSED)
         return PyLong_FromLongLong(t->Concrete.VarDim.itemsize);
     default:
         if (t->ndim == 0) {
-            return PyLong_FromLongLong(t->data_size);
+            return PyLong_FromLongLong(t->datasize);
         }
         PyErr_SetString(PyExc_ValueError, "type has no itemsize");
         return NULL;
@@ -671,7 +671,7 @@ ndtype_align(PyObject *self, PyObject *args UNUSED)
         return NULL;
     }
 
-    return PyLong_FromLong(NDT(self)->data_align);
+    return PyLong_FromLong(NDT(self)->align);
 }
 
 static PyGetSetDef ndtype_getsets [] =

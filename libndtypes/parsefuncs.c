@@ -241,18 +241,18 @@ ndt_t *
 mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrSize, AttrUint16Opt}};
-    uint16_opt_t data_align = {None, 0};
-    size_t data_size = 0;
+    uint16_opt_t align = {None, 0};
+    size_t datasize = 0;
 
     if (attrs) {
-        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &data_size, &data_align);
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &datasize, &align);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
             return NULL;
         }
     }
 
-    return ndt_fixed_bytes(data_size, data_align, ctx);
+    return ndt_fixed_bytes(datasize, align, ctx);
 }
 
 ndt_field_t *

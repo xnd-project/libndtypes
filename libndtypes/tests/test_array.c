@@ -98,8 +98,8 @@ test_array(void)
     }
 
     (void)array_1;
-    if (t->data_size != sizeof(array_1)) {
-        fprintf(stderr, "test_array: array_1: FAIL: %" PRIi64 " %zu", t->data_size, sizeof(array_1));
+    if (t->datasize != sizeof(array_1)) {
+        fprintf(stderr, "test_array: array_1: FAIL: %" PRIi64 " %zu", t->datasize, sizeof(array_1));
     }
     else {
         fprintf(stderr, "test_array (1 test case)\n");

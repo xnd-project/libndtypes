@@ -44,8 +44,8 @@ copy_common(ndt_t *u, const ndt_t *t)
     u->access = t->access;
     u->ndim = t->ndim;
     u->hash = t->hash;
-    u->data_size = t->data_size;
-    u->data_align = t->data_align;
+    u->datasize = t->datasize;
+    u->align = t->align;
 }
 
 static ndt_t *

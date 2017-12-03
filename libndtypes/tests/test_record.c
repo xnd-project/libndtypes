@@ -112,8 +112,8 @@ test_struct_align_pack(void)
         return -1;
     }
 
-    if (t->data_size != sizeof(packed_no_trail) ||
-        t->data_align != alignof(packed_no_trail) ||
+    if (t->datasize != sizeof(packed_no_trail) ||
+        t->align != alignof(packed_no_trail) ||
         t->Concrete.Record.offset[0] != offsetof(packed_no_trailing_padding_t, u1) ||
         t->Concrete.Record.align[0] !=  alignof(packed_no_trail.u1) ||
         t->Concrete.Record.offset[1] != offsetof(packed_no_trailing_padding_t, i1) ||
@@ -144,8 +144,8 @@ test_struct_align_pack(void)
         return -1;
     }
 
-    if (t->data_size != sizeof(packed_no_trail) ||
-        t->data_align != alignof(packed_no_trail) ||
+    if (t->datasize != sizeof(packed_no_trail) ||
+        t->align != alignof(packed_no_trail) ||
         t->Concrete.Record.offset[0] != offsetof(packed_no_trailing_padding_t, u1) ||
         t->Concrete.Record.align[0] !=  alignof(packed_no_trail.u1) ||
         t->Concrete.Record.offset[1] != offsetof(packed_no_trailing_padding_t, i1) ||
@@ -176,8 +176,8 @@ test_struct_align_pack(void)
         return -1;
     }
 
-    if (t->data_size != sizeof(packed_with_trail) ||
-        t->data_align != alignof(packed_with_trail) ||
+    if (t->datasize != sizeof(packed_with_trail) ||
+        t->align != alignof(packed_with_trail) ||
         t->Concrete.Record.offset[0] != offsetof(packed_with_trailing_padding_t, u1) ||
         t->Concrete.Record.align[0] !=  alignof(packed_with_trail.u1) ||
         t->Concrete.Record.offset[1] != offsetof(packed_with_trailing_padding_t, i1) ||
@@ -208,8 +208,8 @@ test_struct_align_pack(void)
         return -1;
     }
 
-    if (t->data_size != sizeof(aligned) ||
-        t->data_align != alignof(aligned) ||
+    if (t->datasize != sizeof(aligned) ||
+        t->align != alignof(aligned) ||
         t->Concrete.Record.offset[0] != offsetof(aligned_t, u1) ||
         t->Concrete.Record.align[0] !=  alignof(aligned.u1) ||
         t->Concrete.Record.offset[1] != offsetof(aligned_t, i1) ||

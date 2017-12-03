@@ -240,7 +240,7 @@ typedef struct {
   char *name;
   ndt_t *type;
   struct {
-      uint16_t data_align;
+      uint16_t align;
       bool explicit_align;
   } Concrete;
 } ndt_field_t;
@@ -279,8 +279,8 @@ struct _ndt {
     int ndim;
     int64_t hash;
     /* Undefined if the type is abstract */
-    int64_t data_size;
-    uint16_t data_align;
+    int64_t datasize;
+    uint16_t align;
 
     /* Abstract */
     union {
