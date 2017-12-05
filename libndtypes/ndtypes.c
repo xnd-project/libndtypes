@@ -44,6 +44,7 @@
 #include <errno.h>
 #include <assert.h>
 #include "ndtypes.h"
+#include "slice.h"
 
 
 #undef max
@@ -926,6 +927,79 @@ ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
     t->Concrete.VarDim.slices = NULL;
 
     return t;
+}
+
+/*
+ * Compute the current start index, step and shape of a var dimension.
+ * Recomputing the values avoids a potentially very large shape array
+ * per dimension (same size as the offset array).
+ */
+int64_t
+ndt_var_indices(int64_t *res_start, int64_t *res_step, const ndt_t *t,
+                int32_t index)
+{
+    int64_t list_start, list_stop, list_shape;
+    int64_t start, stop, step;
+    int64_t res_shape;
+    const ndt_slice_t *slices;
+    int32_t i;
+
+    assert(ndt_is_concrete(t));
+    assert(t->tag == VarDim);
+    assert(0 <= index && index+1 < t->Concrete.VarDim.noffsets);
+
+    list_start = t->Concrete.VarDim.offsets[index];
+    list_stop = t->Concrete.VarDim.offsets[index+1];
+    list_shape = list_stop - list_start;
+
+    *res_start = 0;
+    *res_step = 1;
+    res_shape = list_shape;
+    slices = t->Concrete.VarDim.slices;
+
+    for (i = 0; i < t->Concrete.VarDim.nslices; i++) {
+        start = slices[i].start;
+        stop = slices[i].stop;
+        step = slices[i].step;
+        res_shape = ndt_slice_adjust_indices(res_shape, &start, &stop, step);
+        *res_start += (start * *res_step);
+        *res_step *= step;
+    }
+
+    *res_start += list_start;
+
+    return res_shape;
+}
+
+ndt_slice_t *
+ndt_var_add_slice(int32_t *nslices, const ndt_t *t, 
+                  int64_t start, int64_t stop, int64_t step,
+                  ndt_context_t *ctx)
+{
+    int n = t->Concrete.VarDim.nslices;
+    ndt_slice_t *slices;
+
+    assert(ndt_is_concrete(t));
+    assert(t->tag == VarDim);
+
+    if (n == INT_MAX) {
+        ndt_err_format(ctx, NDT_RuntimeError, "slice stack overflow");
+        return NULL;
+    }
+
+    slices = ndt_alloc(n+1, sizeof *slices);
+    if (slices == NULL) {
+        return ndt_memory_error(ctx);
+    }
+    memcpy(slices, t->Concrete.VarDim.slices, n * (sizeof *slices));
+
+    slices[n].start = start;
+    slices[n].stop = stop;
+    slices[n].step = step;
+
+    *nslices = n+1;
+
+    return slices;
 }
 
 ndt_t *
