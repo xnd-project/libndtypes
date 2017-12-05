@@ -139,16 +139,6 @@ dim_flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
     bool cont = 0;
     int n;
 
-    if (flags & NDT_C_CONTIGUOUS) {
-        n = ndt_snprintf(ctx, buf, "%sC_CONTIG", cont ? ", " : "");
-        if (n > 0) return -1;
-        cont = 1;
-    }
-    if (flags & NDT_F_CONTIGUOUS) {
-        n = ndt_snprintf(ctx, buf, "%sF_CONTIG", cont ? ", " : "");
-        if (n > 0) return -1;
-        cont = 1;
-    }
     if (flags & NDT_ELLIPSIS) {
         n = ndt_snprintf(ctx, buf, "%sELLIPSIS", cont ? ", " : "");
         if (n > 0) return -1;

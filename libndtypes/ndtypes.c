@@ -771,26 +771,6 @@ ndt_dim_flags(const ndt_t *t)
     }
 }
 
-uint32_t
-ndt_common_flags(const ndt_t *t)
-{
-    /* XXX */
-    return ndt_dim_flags(t);
-}
-
-char
-ndt_order(const ndt_t *t)
-{
-    if (ndt_dim_flags(t) & NDT_C_CONTIGUOUS) {
-        return 'C';
-    }
-    if (ndt_dim_flags(t) & NDT_F_CONTIGUOUS) {
-        return 'F';
-    }
-
-    return 'A';
-}
-
 int
 ndt_is_ndarray(const ndt_t *t)
 {
@@ -862,7 +842,7 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
         return NULL;
     }
 
-    flags = ndt_common_flags(type);
+    flags = ndt_dim_flags(type);
 
     /* abstract type */
     t = ndt_new(FixedDim, ctx);
@@ -908,7 +888,7 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->SymbolicDim.flags = ndt_common_flags(type);
+    t->SymbolicDim.flags = ndt_dim_flags(type);
     t->SymbolicDim.name = name;
     t->SymbolicDim.type = type;
     t->ndim = type->ndim + 1;
@@ -933,7 +913,7 @@ ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
     t->ndim = type->ndim+1;
-    t->VarDim.flags = ndt_common_flags(type);
+    t->VarDim.flags = ndt_dim_flags(type);
     t->VarDim.type = type;
 
     /* concrete access */
@@ -1003,7 +983,7 @@ ndt_var_dim(ndt_t *type,
         goto error;
     }
     t->ndim = type->ndim+1;
-    t->VarDim.flags = ndt_common_flags(type);
+    t->VarDim.flags = ndt_dim_flags(type);
     t->VarDim.type = type;
 
     /* concrete access */
@@ -1040,7 +1020,7 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    flags = ndt_common_flags(type);
+    flags = ndt_dim_flags(type);
     if (flags & NDT_ELLIPSIS) {
         ndt_err_format(ctx, NDT_ValueError, "more than one ellipsis");
         ndt_free(name);

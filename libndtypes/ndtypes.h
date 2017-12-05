@@ -79,11 +79,7 @@
 /*****************************************************************************/
 
 #define NDT_MAX_DIM 128
-
-#define NDT_ELLIPSIS     0x00000001U
-#define NDT_C_CONTIGUOUS 0x00000002U
-#define NDT_F_CONTIGUOUS 0x00000004U
-#define NDT_CONTIGUOUS   (NDT_C_CONTIGUOUS|NDT_F_CONTIGUOUS)
+#define NDT_ELLIPSIS 0x00000001U
 
 
 /* Types: ndt_t */
