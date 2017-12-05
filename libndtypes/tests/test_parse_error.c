@@ -27817,9 +27817,6 @@ const char *parse_error_tests[] = {
   "[2 * 3 * 10 * int64, strides=[-8, -16, x], order='F')",
   "[2 * 3 * 10 * int64, strides=[-8, -16, -32), order='F')",
 
-  "?2 * 3 * 10 * int64",
-  "2 * ?N * 10 * int64",
-
   "2 * !3 * 10 * int64",
   "2 * 3 * !10 * int64",
   "2 * 3 * !10 * !int64",

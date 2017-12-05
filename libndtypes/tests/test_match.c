@@ -140,10 +140,6 @@ const match_testcase_t match_tests[] = {
     "10 * (...) -> int64",
     1 },
 
-  { "Any",
-    "?Any",
-    1 },
-
   { "?Any",
     "?Any",
     1 },

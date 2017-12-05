@@ -47,6 +47,7 @@ ndt_common_equal(const ndt_t *t, const ndt_t *u)
 {
     return t->tag == u->tag &&
            t->access == u->access &&
+           t->option == u->option &&
            t->ndim == u->ndim &&
            t->datasize == u->datasize &&
            t->align == u->align;
@@ -215,14 +216,6 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
 
         return categorical_equal(t->Categorical.types, u->Categorical.types,
                                  t->Categorical.ntypes);
-    }
-
-    case Option: {
-        return ndt_equal(t->Option.type, u->Option.type);
-    }
-
-    case OptionItem: {
-        return ndt_equal(t->OptionItem.type, u->OptionItem.type);
     }
 
     case Typevar: {

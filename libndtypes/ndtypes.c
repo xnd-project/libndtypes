@@ -297,8 +297,6 @@ ndt_tag_as_string(enum ndt tag)
 {
     switch (tag) {
     case AnyKind: return "Any";
-    case Option: return "option";
-    case OptionItem: return "option_item";
     case Nominal: return "nominal";
     case Constr: return "constr";
 
@@ -534,6 +532,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
 
     t->tag = tag;
     t->access = Abstract;
+    t->option = false;
     t->ndim = 0;
     t->hash = -1;
 
@@ -555,6 +554,7 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
 
     t->tag = tag;
     t->access = Abstract;
+    t->option = false;
     t->ndim = 0;
     t->hash = -1;
 
@@ -670,12 +670,6 @@ ndt_del(ndt_t *t)
         ndt_free(t->EllipsisDim.name);
         ndt_del(t->EllipsisDim.type);
         break;
-    case Option:
-        ndt_del(t->Option.type);
-        break;
-    case OptionItem:
-        ndt_del(t->OptionItem.type);
-        break;
     case Nominal:
         ndt_free(t->Nominal.name);
         break;
@@ -780,7 +774,8 @@ ndt_dim_flags(const ndt_t *t)
 uint32_t
 ndt_common_flags(const ndt_t *t)
 {
-    return ndt_dim_flags(t) & ~NDT_DIM_OPTION;
+    /* XXX */
+    return ndt_dim_flags(t);
 }
 
 char
@@ -1083,116 +1078,16 @@ ndt_next_dim(ndt_t *a)
 }
 
 ndt_t *
-ndt_dim_option(ndt_t *type, ndt_context_t *ctx)
+ndt_option(ndt_t *t)
 {
-    switch (type->tag) {
-    case VarDim:
-        type->VarDim.flags |= NDT_DIM_OPTION;
-        return type;
-    case FixedDim: case SymbolicDim:
-        ndt_err_format(ctx, NDT_NotImplementedError,
-            "semantics for optional fixed dimensions need to be defined");
-        ndt_del(type);
-        return NULL;
-    case EllipsisDim:
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-            "ellipsis dimension cannot be optional");
-        ndt_del(type);
-        return NULL;
-    default:
-        ndt_err_format(ctx, NDT_InvalidArgumentError, "not a dimension");
-        ndt_del(type);
-        return NULL;
-    }
-}
-
-ndt_t *
-ndt_item_option(ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    switch (type->tag) {
-    case FixedDim: case VarDim: case SymbolicDim: case EllipsisDim:
-        ndt_err_format(ctx, NDT_InvalidArgumentError, "not an item");
-        ndt_del(type);
-        return NULL;
-    case Option: case OptionItem:
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "cannot create an option option");
-        ndt_del(type);
-        return NULL;
-    default:
-        /* abstract type */
-        t = ndt_new(OptionItem, ctx);
-        if (t == NULL) {
-            ndt_del(type);
-            return NULL;
-        }
-        t->OptionItem.type = type;
-
-        /* concrete access */
-        t->access = type->access;
-        if (t->access == Concrete) {
-            t->datasize = type->datasize;
-            t->align = type->align;
-        }
- 
-        return t;
-    }
-}
-
-ndt_t *
-ndt_option(ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    switch (type->tag) {
-    case FixedDim: case VarDim: case SymbolicDim: case EllipsisDim:
-        ndt_err_format(ctx, NDT_InvalidArgumentError, "not an item");
-        ndt_del(type);
-        return NULL;
-    case Option: case OptionItem:
-        ndt_err_format(ctx, NDT_InvalidArgumentError,
-                       "cannot create an option option");
-        ndt_del(type);
-        return NULL;
-    default:
-        /* abstract type */
-        t = ndt_new(Option, ctx);
-        if (t == NULL) {
-            ndt_del(type);
-            return NULL;
-        }
-        t->Option.type = type;
-
-        /* concrete access */
-        t->access = type->access;
-        if (t->access == Concrete) {
-            t->datasize = type->datasize;
-            t->align = type->align;
-        }
- 
-        return t;
-    }
+    t->option = true;
+    return t;
 }
 
 int
 ndt_is_optional(const ndt_t *t)
 {
-    switch (t->tag) {
-    case FixedDim:
-        return t->FixedDim.flags & NDT_DIM_OPTION;
-    case VarDim:
-        return t->VarDim.flags & NDT_DIM_OPTION;
-    case SymbolicDim:
-        return t->SymbolicDim.flags & NDT_DIM_OPTION;
-    case EllipsisDim:
-        return t->EllipsisDim.flags & NDT_DIM_OPTION;
-    case Option: case OptionItem:
-        return 1;
-    default:
-        return 0;
-    }
+    return t->option;
 }
 
 int

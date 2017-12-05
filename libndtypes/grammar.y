@@ -201,11 +201,11 @@ datashape:
   dimensions                        { $$ = $1; }
 | BANG dimensions                   { $$ = mk_fortran($2, ctx); if ($$ == NULL) YYABORT; }
 | dtype                             { $$ = $1; }
-| QUESTIONMARK dtype                { $$ = ndt_option($2, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK dtype                { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 
 dimensions:
   dimensions_nooption              { $$ = $1; }
-| QUESTIONMARK dimensions_nooption { $$ = ndt_dim_option($2, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK dimensions_nooption { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 
 dimensions_nooption:
   INTEGER STAR dimensions_tail                           { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }
@@ -217,7 +217,7 @@ dimensions_nooption:
 
 dimensions_tail:
   dtype              { $$ = $1; }
-| QUESTIONMARK dtype { $$ = ndt_item_option($2, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK dtype { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 | dimensions         { $$ = $1; }
 
 dtype:

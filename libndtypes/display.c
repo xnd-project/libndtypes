@@ -234,7 +234,7 @@ categorical(buf_t *buf, ndt_value_t *mem, size_t ntypes, ndt_context_t *ctx)
 }
 
 static int
-dim_option(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+option(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 {
     if (ndt_is_optional(t)) {
         return ndt_snprintf(ctx, buf, "?");
@@ -248,11 +248,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
     int n;
 
+    n = option(buf, t, ctx);
+    if (n < 0) return -1;
+
     switch (t->tag) {
         case FixedDim:
-            n = dim_option(buf, t, ctx);
-            if (n < 0) return -1;
-
             n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
             if (n < 0) return -1;
 
@@ -260,9 +260,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case SymbolicDim:
-            n = dim_option(buf, t, ctx);
-            if (n < 0) return -1;
-
             n = ndt_snprintf(ctx, buf, "%s * ", t->SymbolicDim.name);
             if (n < 0) return -1;
 
@@ -270,9 +267,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case VarDim:
-            n = dim_option(buf, t, ctx);
-            if (n < 0) return -1;
-
             n = ndt_snprintf(ctx, buf, "var * ");
             if (n < 0) return -1;
 
@@ -280,28 +274,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
 
         case EllipsisDim:
-            n = dim_option(buf, t, ctx);
-            if (n < 0) return -1;
-
             n = ndt_snprintf(ctx, buf, "%s... * ",
                     t->EllipsisDim.name ? t->EllipsisDim.name : "");
             if (n < 0) return -1;
 
             n = datashape(buf, t->EllipsisDim.type, d, ctx);
-            return n;
-
-        case Option:
-            n = ndt_snprintf(ctx, buf, "?");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->Option.type, d, ctx);
-            return n;
-
-        case OptionItem:
-            n = ndt_snprintf(ctx, buf, "?");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->OptionItem.type, d, ctx);
             return n;
 
         case Nominal:

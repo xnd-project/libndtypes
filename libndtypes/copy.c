@@ -42,6 +42,7 @@ copy_common(ndt_t *u, const ndt_t *t)
 {
     assert(u->tag = t->tag);
     u->access = t->access;
+    u->option = t->option;
     u->ndim = t->ndim;
     u->hash = t->hash;
     u->datasize = t->datasize;
@@ -301,24 +302,6 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 
     case Categorical: {
         return ndt_copy_categorical(t, ctx);
-    }
-
-    case Option: {
-        type = ndt_copy(t->Option.type, ctx);
-        if (type == NULL) {
-            return NULL;
-        }
-
-        return ndt_option(type, ctx);
-    }
-
-    case OptionItem: {
-        type = ndt_copy(t->OptionItem.type, ctx);
-        if (type == NULL) {
-            return NULL;
-        }
-
-        return ndt_item_option(type, ctx);
     }
 
     case Typevar: {

@@ -149,11 +149,6 @@ dim_flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
         if (n > 0) return -1;
         cont = 1;
     }
-    if (flags & NDT_DIM_OPTION) {
-        n = ndt_snprintf(ctx, buf, "%sOPTION", cont ? ", " : "");
-        if (n > 0) return -1;
-        cont = 1;
-    }
     if (flags & NDT_ELLIPSIS) {
         n = ndt_snprintf(ctx, buf, "%sELLIPSIS", cont ? ", " : "");
         if (n > 0) return -1;
@@ -167,12 +162,14 @@ static int
 common_attributes(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
     if (ndt_is_abstract(t)) {
-        return ndt_snprintf_d(ctx, buf, d, "abstract=true, ndim=%d", t->ndim);
+        return ndt_snprintf_d(ctx, buf, d,
+            "access=Abstract, option=%s, ndim=%d",
+            t->option ? "true" : "false", t->ndim);
     }
     else {
         return ndt_snprintf_d(ctx, buf, d,
-                   "abstract=false, ndim=%d, datasize=%" PRIi64 ", align=%" PRIu16,
-                   t->ndim, t->datasize, t->align);
+                   "access=Concrete, option=%s, ndim=%d, datasize=%" PRIi64 ", align=%" PRIu16,
+                   t->option ? "true" : "false", t->ndim, t->datasize, t->align);
     }
 }
 
@@ -347,8 +344,6 @@ tag_as_constr(enum ndt tag)
     case VarDim: return "VarDim";
     case EllipsisDim: return "EllipsisDim";
 
-    case Option: return "Option";
-    case OptionItem: return "OptionItem";
     case Nominal: return "Nominal";
     case Module: return "Module";
     case Constr: return "Constr";
@@ -556,40 +551,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, "],\n");
-            if (n < 0) return -1;
-
-            n = common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-
-        case Option:
-            assert(!ndt_is_optional(t->Option.type));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Option(\n");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->Option.type, d+2, 0, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-
-        case OptionItem:
-            assert(!ndt_is_optional(t->OptionItem.type));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "OptionItem(\n");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->OptionItem.type, d+2, 0, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
             n = common_attributes_with_newline(buf, t, d+2, ctx);

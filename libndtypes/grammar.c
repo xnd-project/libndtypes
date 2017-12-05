@@ -2021,7 +2021,7 @@ yyreduce:
 
   case 8:
 #line 204 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = ndt_option((yyvsp[0].ndt), ctx); if ((yyval.ndt) == NULL) YYABORT; }
+    { (yyval.ndt) = ndt_option((yyvsp[0].ndt)); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2026 "grammar.c" /* yacc.c:1646  */
     break;
 
@@ -2033,7 +2033,7 @@ yyreduce:
 
   case 10:
 #line 208 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = ndt_dim_option((yyvsp[0].ndt), ctx); if ((yyval.ndt) == NULL) YYABORT; }
+    { (yyval.ndt) = ndt_option((yyvsp[0].ndt)); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2038 "grammar.c" /* yacc.c:1646  */
     break;
 
@@ -2081,7 +2081,7 @@ yyreduce:
 
   case 18:
 #line 220 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = ndt_item_option((yyvsp[0].ndt), ctx); if ((yyval.ndt) == NULL) YYABORT; }
+    { (yyval.ndt) = ndt_option((yyvsp[0].ndt)); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2086 "grammar.c" /* yacc.c:1646  */
     break;
 

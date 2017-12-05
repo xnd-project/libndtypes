@@ -81,9 +81,8 @@
 #define NDT_MAX_DIM 128
 
 #define NDT_ELLIPSIS     0x00000001U
-#define NDT_DIM_OPTION   0x00000002U
-#define NDT_C_CONTIGUOUS 0x00000004U
-#define NDT_F_CONTIGUOUS 0x00000008U
+#define NDT_C_CONTIGUOUS 0x00000002U
+#define NDT_F_CONTIGUOUS 0x00000004U
 #define NDT_CONTIGUOUS   (NDT_C_CONTIGUOUS|NDT_F_CONTIGUOUS)
 
 
@@ -170,8 +169,6 @@ enum ndt {
     VarDim,
     EllipsisDim,
 
-    Option,
-    OptionItem,
     Nominal,
     Constr,
 
@@ -276,6 +273,7 @@ struct _ndt {
     /* Always defined */
     enum ndt tag;
     enum ndt_access access;
+    bool option;
     int ndim;
     int64_t hash;
     /* Undefined if the type is abstract */
@@ -311,14 +309,6 @@ struct _ndt {
             char *name;
             ndt_t *type;
         } EllipsisDim;
-
-        struct {
-            ndt_t *type;
-        } Option;
-
-        struct {
-            ndt_t *type;
-        } OptionItem;
 
         struct {
             char *name;
@@ -544,9 +534,7 @@ NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type,
                                ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 
-NDTYPES_API ndt_t *ndt_option(ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_dim_option(ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_item_option(ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_option(ndt_t *type);
 NDTYPES_API ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
 
