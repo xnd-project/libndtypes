@@ -79,7 +79,9 @@
 /*****************************************************************************/
 
 #define NDT_MAX_DIM 128
-#define NDT_ELLIPSIS 0x00000001U
+#define NDT_OPTION         0x00000001U
+#define NDT_SUBTREE_OPTION 0x00000002U
+#define NDT_ELLIPSIS       0x00000004U
 
 
 /* Types: ndt_t */
@@ -269,7 +271,7 @@ struct _ndt {
     /* Always defined */
     enum ndt tag;
     enum ndt_access access;
-    bool option;
+    uint32_t flags;
     int ndim;
     int64_t hash;
     /* Undefined if the type is abstract */
@@ -284,24 +286,20 @@ struct _ndt {
         } Module;
 
         struct {
-            uint32_t flags;
             int64_t shape;
             ndt_t *type;
         } FixedDim;
 
         struct {
-            uint32_t flags;
             char *name;
             ndt_t *type;
         } SymbolicDim;
 
         struct {
-            uint32_t flags;
             ndt_t *type;
         } VarDim;
 
         struct {
-            uint32_t flags;
             char *name;
             ndt_t *type;
         } EllipsisDim;

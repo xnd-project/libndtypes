@@ -42,7 +42,7 @@ copy_common(ndt_t *u, const ndt_t *t)
 {
     assert(u->tag = t->tag);
     u->access = t->access;
-    u->option = t->option;
+    u->flags = t->flags;
     u->ndim = t->ndim;
     u->hash = t->hash;
     u->datasize = t->datasize;

@@ -176,6 +176,24 @@ ndt_strdup(const char *s, ndt_context_t *ctx)
     return cp;
 }
 
+uint32_t
+ndt_subtree_flags(const ndt_t *type)
+{
+    if (type && type->flags & (NDT_OPTION|NDT_SUBTREE_OPTION)) {
+        return NDT_SUBTREE_OPTION;
+    }
+
+    return 0;
+}
+
+uint32_t
+ndt_dim_flags(const ndt_t *type)
+{
+    uint32_t flags = ndt_subtree_flags(type);
+    flags |= (type->flags & NDT_ELLIPSIS);
+    return flags;
+}
+
 
 /******************************************************************************/
 /*                             Sequence elements                              */
@@ -533,7 +551,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
 
     t->tag = tag;
     t->access = Abstract;
-    t->option = false;
+    t->flags = 0;
     t->ndim = 0;
     t->hash = -1;
 
@@ -555,7 +573,7 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
 
     t->tag = tag;
     t->access = Abstract;
-    t->option = false;
+    t->flags = 0;
     t->ndim = 0;
     t->hash = -1;
 
@@ -755,23 +773,6 @@ ndt_any_kind(ndt_context_t *ctx)
     return ndt_new(AnyKind, ctx);
 }
 
-uint32_t
-ndt_dim_flags(const ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim:
-        return t->FixedDim.flags;
-    case VarDim:
-        return t->VarDim.flags;
-    case SymbolicDim:
-        return t->SymbolicDim.flags;
-    case EllipsisDim:
-        return t->EllipsisDim.flags;
-    default:
-        return 0;
-    }
-}
-
 int
 ndt_is_ndarray(const ndt_t *t)
 {
@@ -836,14 +837,11 @@ ndt_t *
 ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
 {
     ndt_t *t;
-    uint32_t flags;
 
     if (!check_type_invariants(type, ctx)) {
         ndt_del(type);
         return NULL;
     }
-
-    flags = ndt_dim_flags(type);
 
     /* abstract type */
     t = ndt_new(FixedDim, ctx);
@@ -851,10 +849,10 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->FixedDim.flags = flags;
     t->FixedDim.shape = shape;
     t->FixedDim.type = type;
     t->ndim = type->ndim + 1;
+    t->flags = ndt_dim_flags(type);
 
     t->Concrete.FixedDim.itemsize = -1;
     t->Concrete.FixedDim.stride = INT64_MAX;
@@ -889,10 +887,10 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->SymbolicDim.flags = ndt_dim_flags(type);
     t->SymbolicDim.name = name;
     t->SymbolicDim.type = type;
     t->ndim = type->ndim + 1;
+    t->flags =  ndt_dim_flags(type);
 
     return t;
 }
@@ -913,9 +911,9 @@ ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->ndim = type->ndim+1;
-    t->VarDim.flags = ndt_dim_flags(type);
     t->VarDim.type = type;
+    t->ndim = type->ndim+1;
+    t->flags = ndt_dim_flags(type);
 
     /* concrete access */
     t->access = Abstract;
@@ -1056,9 +1054,9 @@ ndt_var_dim(ndt_t *type,
         ndt_del(type);
         goto error;
     }
-    t->ndim = type->ndim+1;
-    t->VarDim.flags = ndt_dim_flags(type);
     t->VarDim.type = type;
+    t->ndim = type->ndim+1;
+    t->flags = ndt_dim_flags(type);
 
     /* concrete access */
     t->access = Concrete;
@@ -1109,9 +1107,9 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
-    t->EllipsisDim.flags = flags | NDT_ELLIPSIS;
     t->EllipsisDim.name = name;
     t->EllipsisDim.type = type;
+    t->flags = flags | NDT_ELLIPSIS;
     t->ndim = type->ndim + 1;
 
     return t;
@@ -1134,14 +1132,20 @@ ndt_next_dim(ndt_t *a)
 ndt_t *
 ndt_option(ndt_t *t)
 {
-    t->option = true;
+    t->flags |= NDT_OPTION;
     return t;
 }
 
 int
 ndt_is_optional(const ndt_t *t)
 {
-    return t->option;
+    return t->flags & NDT_OPTION;
+}
+
+int
+ndt_subtree_is_optional(const ndt_t *t)
+{
+    return t->flags & NDT_SUBTREE_OPTION;
 }
 
 int
@@ -1184,6 +1188,7 @@ ndt_nominal(char *name, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = type->access;
+    t->flags = ndt_subtree_flags(type);
     t->datasize = type->datasize;
     t->align = type->align;
 
@@ -1205,6 +1210,7 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
     /* abstract type */
     t->Module.name = name;
     t->Module.type = type;
+    t->flags = ndt_subtree_flags(type);
 
     /* concrete access */
     t->access = type->access;
@@ -1237,6 +1243,7 @@ ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
     /* abstract type */
     t->Constr.name = name;
     t->Constr.type = type;
+    t->flags = ndt_subtree_flags(type);
 
     /* concrete access */
     t->access = type->access;
@@ -1365,6 +1372,7 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         for (i = 0; i < shape; i++) {
             assert(fields[i].name == NULL);
             t->Tuple.types[i] = fields[i].type;
+            t->flags |= ndt_subtree_flags(fields[i].type);
         }
         ndt_free(fields);
         return t;
@@ -1382,6 +1390,7 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         for (i = 0; i < shape; i++) {
             assert(fields[i].name == NULL);
             t->Tuple.types[i] = fields[i].type;
+            t->flags |= ndt_subtree_flags(fields[i].type);
         }
         ndt_free(fields);
         return t;
@@ -1436,6 +1445,7 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         for (i = 0; i < shape; i++) {
             t->Record.names[i] = fields[i].name;
             t->Record.types[i] = fields[i].type;
+            t->flags |= ndt_subtree_flags(fields[i].type);
         }
         ndt_free(fields);
         return t;
@@ -1454,6 +1464,7 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         for (i = 0; i < shape; i++) {
             t->Record.names[i] = fields[i].name;
             t->Record.types[i] = fields[i].type;
+            t->flags |= ndt_subtree_flags(fields[i].type);
         }
         ndt_free(fields);
         return t;
@@ -1476,6 +1487,10 @@ ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx)
     t->Function.ret = ret;
     t->Function.pos = pos;
     t->Function.kwds = kwds;
+
+    t->flags |= ndt_subtree_flags(ret);
+    t->flags |= ndt_subtree_flags(pos);
+    t->flags |= ndt_subtree_flags(kwds);
 
     return t;
 }
@@ -1863,6 +1878,7 @@ ndt_ref(ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
     t->Ref.type = type;
+    t->flags = ndt_subtree_flags(type);
 
     /* concrete access */
     t->access = type->access;

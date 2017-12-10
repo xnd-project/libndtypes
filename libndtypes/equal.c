@@ -47,7 +47,7 @@ ndt_common_equal(const ndt_t *t, const ndt_t *u)
 {
     return t->tag == u->tag &&
            t->access == u->access &&
-           t->option == u->option &&
+           t->flags == u->flags &&
            t->ndim == u->ndim &&
            t->datasize == u->datasize &&
            t->align == u->align;
@@ -130,16 +130,14 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
 
     switch (t->tag) {
     case FixedDim: {
-        return t->FixedDim.flags == u->FixedDim.flags &&
-               t->FixedDim.shape == u->FixedDim.shape &&
+        return t->FixedDim.shape == u->FixedDim.shape &&
                t->Concrete.FixedDim.itemsize == u->Concrete.FixedDim.itemsize &&
                t->Concrete.FixedDim.stride == u->Concrete.FixedDim.stride &&
                ndt_equal(t->FixedDim.type, u->FixedDim.type);
     }
 
     case VarDim: {
-        if (t->VarDim.flags != u->VarDim.flags ||
-            t->Concrete.VarDim.itemsize != u->Concrete.VarDim.itemsize ||
+        if (t->Concrete.VarDim.itemsize != u->Concrete.VarDim.itemsize ||
             t->Concrete.VarDim.noffsets != u->Concrete.VarDim.noffsets ||
             t->Concrete.VarDim.nslices != u->Concrete.VarDim.nslices) {
             return 0;
@@ -156,14 +154,12 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
     }
 
     case SymbolicDim: {
-        return t->SymbolicDim.flags == u->SymbolicDim.flags &&
-               strcmp(t->SymbolicDim.name, u->SymbolicDim.name) == 0 &&
+        return strcmp(t->SymbolicDim.name, u->SymbolicDim.name) == 0 &&
                ndt_equal(t->SymbolicDim.type, u->SymbolicDim.type);
     }
 
     case EllipsisDim: {
-        if (t->EllipsisDim.flags != u->EllipsisDim.flags ||
-            !!t->EllipsisDim.name != !!u->EllipsisDim.name) {
+        if (!!t->EllipsisDim.name != !!u->EllipsisDim.name) {
             return 0;
         }
 
