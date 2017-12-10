@@ -2058,6 +2058,16 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
     return 0;
 }
 
+const ndt_t *
+ndt_dtype(const ndt_t *t)
+{
+    while (t->ndim > 0) {
+        t = ndt_next_dim((ndt_t *)t);
+    }
+
+    return t;
+}
+
 int
 ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array)
 {
