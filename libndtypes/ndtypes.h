@@ -473,6 +473,7 @@ NDTYPES_API int ndt_is_array(const ndt_t *t);
 NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);
 NDTYPES_API int ndt_is_f_contiguous(const ndt_t *t);
 NDTYPES_API int ndt_is_optional(const ndt_t *t);
+NDTYPES_API int ndt_subtree_is_optional(const ndt_t *t);
 NDTYPES_API int ndt_equal(const ndt_t *p, const ndt_t *c);
 NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
