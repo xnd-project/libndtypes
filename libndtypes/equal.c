@@ -132,7 +132,7 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
     case FixedDim: {
         return t->FixedDim.shape == u->FixedDim.shape &&
                t->Concrete.FixedDim.itemsize == u->Concrete.FixedDim.itemsize &&
-               t->Concrete.FixedDim.stride == u->Concrete.FixedDim.stride &&
+               t->Concrete.FixedDim.step == u->Concrete.FixedDim.step &&
                ndt_equal(t->FixedDim.type, u->FixedDim.type);
     }
 

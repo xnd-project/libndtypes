@@ -214,7 +214,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.stride, ctx);
+        return ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.step, ctx);
     }
 
     case VarDim: {

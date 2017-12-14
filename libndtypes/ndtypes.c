@@ -785,7 +785,7 @@ ndt_is_ndarray(const ndt_t *t)
 }
 
 ndt_t *
-_ndt_to_fortran(const ndt_t *t, int64_t stride, ndt_context_t *ctx)
+_ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 {
     ndt_t *dt;
 
@@ -795,12 +795,12 @@ _ndt_to_fortran(const ndt_t *t, int64_t stride, ndt_context_t *ctx)
     }
 
     assert(t->tag == FixedDim);
-    dt = _ndt_to_fortran(t->FixedDim.type, stride * t->FixedDim.shape, ctx);
+    dt = _ndt_to_fortran(t->FixedDim.type, step * t->FixedDim.shape, ctx);
     if (dt == NULL) {
         return NULL;
     }
 
-    return ndt_fixed_dim(dt, t->FixedDim.shape, stride, ctx);
+    return ndt_fixed_dim(dt, t->FixedDim.shape, step, ctx);
 }
 
 /* Return a copy of a C-contiguous array in Fortran order. */
@@ -817,7 +817,7 @@ ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
         return ndt_copy(t, ctx);
     }
 
-    return _ndt_to_fortran(t, t->Concrete.FixedDim.itemsize, ctx);
+    return _ndt_to_fortran(t, 1, ctx);
 }
 
 int64_t
@@ -833,8 +833,21 @@ ndt_itemsize(ndt_t *t)
     }
 }
 
+static int64_t
+fixed_step(ndt_t *type)
+{
+    assert(type->tag != VarDim);
+
+    switch (type->tag) {
+    case FixedDim:
+        return type->FixedDim.shape * type->Concrete.FixedDim.step;
+    default:
+        return 1;
+    }
+}
+
 ndt_t *
-ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
+ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
 {
     ndt_t *t;
 
@@ -855,13 +868,13 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx)
     t->flags = ndt_dim_flags(type);
 
     t->Concrete.FixedDim.itemsize = -1;
-    t->Concrete.FixedDim.stride = INT64_MAX;
+    t->Concrete.FixedDim.step = INT64_MAX;
 
     /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {
         t->Concrete.FixedDim.itemsize = ndt_itemsize(type);
-        t->Concrete.FixedDim.stride = stride==INT64_MAX ? type->datasize : stride;
+        t->Concrete.FixedDim.step = step==INT64_MAX ? fixed_step(type) : step;
         t->datasize = shape * type->datasize;
         t->align = type->align;
     }
@@ -1971,7 +1984,7 @@ ndt_is_c_contiguous(const ndt_t *t)
 {
     const ndt_t *dims[NDT_MAX_DIM];
     const ndt_t *dtype;
-    int64_t shape, datasize;
+    int64_t shape, step;
     int ndim, i;
 
     if (!ndt_is_ndarray(t)) {
@@ -1983,13 +1996,13 @@ ndt_is_c_contiguous(const ndt_t *t)
 
     ndim = ndt_const_dims_dtype(dims, &dtype, t);
 
-    datasize = t->Concrete.FixedDim.itemsize;
+    step = 1;
     for (i = ndim-1; i >= 0; i--) {
         shape = t->FixedDim.shape;
-        if (shape > 1 && dims[i]->Concrete.FixedDim.stride != datasize) {
+        if (shape > 1 && dims[i]->Concrete.FixedDim.step != step) {
             return 0;
         }
-        datasize *= shape;
+        step *= shape;
     }
 
     return 1;
@@ -2000,7 +2013,7 @@ ndt_is_f_contiguous(const ndt_t *t)
 {
     const ndt_t *dims[NDT_MAX_DIM];
     const ndt_t *dtype;
-    int64_t shape, datasize;
+    int64_t shape, step;
     int ndim, i;
 
     if (!ndt_is_ndarray(t)) {
@@ -2011,13 +2024,13 @@ ndt_is_f_contiguous(const ndt_t *t)
     }
 
     ndim = ndt_const_dims_dtype(dims, &dtype, t);
-    datasize = t->Concrete.FixedDim.itemsize;
+    step = 1;
     for (i = 0; i < ndim; i++) {
         shape = t->FixedDim.shape;
-        if (shape > 1 && dims[i]->Concrete.FixedDim.stride != datasize) {
+        if (shape > 1 && dims[i]->Concrete.FixedDim.step != step) {
             return 0;
         }
-        datasize *= shape;
+        step *= shape;
     }
 
     return 1;
@@ -2052,7 +2065,7 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
 
     for (ndim=0; t->ndim > 0; ndim++, t=t->FixedDim.type) {
         a->shape[ndim] = t->FixedDim.shape;
-        a->strides[ndim] = t->Concrete.FixedDim.stride;
+        a->strides[ndim] = t->Concrete.FixedDim.step * a->itemsize;
     }
 
     return 0;

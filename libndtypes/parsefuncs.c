@@ -104,19 +104,19 @@ mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx)
 ndt_t *
 mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 {
-    static const attr_spec kwlist = {1, 2, {"shape", "stride"}, {AttrInt64, AttrInt64}};
+    static const attr_spec kwlist = {1, 2, {"shape", "step"}, {AttrInt64, AttrInt64}};
     int64_t shape;
-    int64_t stride = INT64_MAX;
+    int64_t step = INT64_MAX;
     int ret;
 
-    ret = ndt_parse_attr(&kwlist, ctx, attrs, &shape, &stride);
+    ret = ndt_parse_attr(&kwlist, ctx, attrs, &shape, &step);
     ndt_attr_seq_del(attrs);
     if (ret < 0) {
         ndt_del(type);
         return NULL;
     }
 
-    return ndt_fixed_dim(type, shape, stride, ctx);
+    return ndt_fixed_dim(type, shape, step, ctx);
 }
 
 ndt_t *

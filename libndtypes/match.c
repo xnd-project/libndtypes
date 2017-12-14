@@ -97,14 +97,14 @@ match_dimensions(const ndt_t *p[], int pshape,
                  symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
-    int stride = 1;
+    int step = 1;
     int i, j, k, tmp;
     int n;
 
-    for (i=0, k=0; i!=pshape && k!=cshape; i+=stride, k+=stride) {
+    for (i=0, k=0; i!=pshape && k!=cshape; i+=step, k+=step) {
         switch (p[i]->tag) {
         case EllipsisDim:
-            if (i == pshape-stride) {
+            if (i == pshape-step) {
                 if (p[i]->EllipsisDim.name != NULL) {
                     int size = abs(cshape-k);
 
@@ -126,7 +126,7 @@ match_dimensions(const ndt_t *p[], int pshape,
                         return -1;
                     }
 
-                    for (j = k; j != cshape; j+=stride) {
+                    for (j = k; j != cshape; j+=step) {
                         switch(c[k]->tag) {
                         case FixedDim: case VarDim:
                             v.DimListEntry.dims[abs(k-j)] = c[j];
@@ -146,7 +146,7 @@ match_dimensions(const ndt_t *p[], int pshape,
 
             tmp = pshape; pshape = i-1; i = tmp;
             tmp = cshape; cshape = k-1; k = tmp;
-            stride = -1;
+            step = -1;
             break;
 
         case FixedDim:
@@ -404,7 +404,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
         assert(ndt_is_concrete(u));
 
-        return ndt_fixed_dim(u, t->FixedDim.shape, t->Concrete.FixedDim.stride,
+        return ndt_fixed_dim(u, t->FixedDim.shape, t->Concrete.FixedDim.step,
                              ctx);
 
     case SymbolicDim:

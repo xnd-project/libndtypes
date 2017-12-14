@@ -27804,19 +27804,6 @@ const char *parse_error_tests[] = {
 
   "categorical[-507014936.36, -25910, 'xM3Mys0XqH', 4265882500, -507014936.36]",
 
-  "[10 * int3, order='C']",
-  "[10 * int3, ordr='C']",
-  "[10 * int3, order='X']",
-  "[10 * int32, order='F')",
-  "([10 * int32, order='F'], |pack+3|, float32)",
-  "{x : float32, |pack=x|, y : float64}",
-  "{x : float32, |pack=4|, y :: float64}",
-  "[2 * 3 * int64, strides=[-8, x], order='F']",
-  "[2 * 3 * int64, strides=[-8, -16], order+'F']",
-  "[2 * 3 * int64, strides=[-8, -16], order='F')",
-  "[2 * 3 * 10 * int64, strides=[-8, -16, x], order='F')",
-  "[2 * 3 * 10 * int64, strides=[-8, -16, -32), order='F')",
-
   "2 * !3 * 10 * int64",
   "2 * 3 * !10 * int64",
   "2 * 3 * !10 * !int64",

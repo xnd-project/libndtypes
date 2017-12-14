@@ -431,9 +431,9 @@ datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             }
             else {
                 n = ndt_snprintf(ctx, buf,
-                    ", itemsize=%" PRIi64 ", stride=%zu,\n",
+                    ", itemsize=%" PRIi64 ", step=%zu,\n",
                     t->Concrete.FixedDim.itemsize,
-                    t->Concrete.FixedDim.stride);
+                    t->Concrete.FixedDim.step);
             }
             if (n < 0) return -1;
 

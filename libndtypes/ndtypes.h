@@ -369,7 +369,7 @@ struct _ndt {
         union {
             struct {
                 int64_t itemsize;
-                int64_t stride;
+                int64_t step;
             } FixedDim;
 
             struct {
@@ -521,7 +521,7 @@ NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Any */
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t stride, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API int64_t ndt_var_indices(int64_t *res_start, int64_t *res_step, const ndt_t *t, int32_t index);
