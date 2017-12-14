@@ -93,7 +93,7 @@ mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx)
     shape = ndt_strtoll(v, 0, INT64_MAX, ctx);
     ndt_free(v);
 
-    if (ctx->err != NDT_Success) {
+    if (ndt_err_occurred(ctx)) {
         ndt_del(type);
         return NULL;
     }
@@ -213,7 +213,7 @@ mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
     size = (size_t)ndt_strtoull(v, SIZE_MAX, ctx);
     ndt_free(v);
 
-    if (ctx->err != NDT_Success) {
+    if (ndt_err_occurred(ctx)) {
         return NULL;
     }
 

@@ -2168,7 +2168,7 @@ ndt_value_from_number(enum ndt_value tag, char *v, ndt_context_t *ctx)
     }
 
     ndt_free(v);
-    if (ctx->err != NDT_Success) {
+    if (ndt_err_occurred(ctx)) {
         ndt_free(mem);
         return NULL;
     }
@@ -2544,6 +2544,12 @@ ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
     }
 
     return s;
+}
+
+int
+ndt_err_occurred(const ndt_context_t *ctx)
+{
+    return ctx->err != NDT_Success;
 }
 
 const char *

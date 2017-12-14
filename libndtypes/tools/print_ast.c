@@ -69,23 +69,23 @@ main(int argc, char **argv)
     t = ndt_from_file(argv[1], ctx);
     if (t == NULL) {
         ndt_err_fprint(stderr, ctx);
-        assert(ctx->err != NDT_Success);
+        assert(ndt_err_occurred(ctx));
         ndt_context_del(ctx);
         ndt_finalize();
         return 1;
     }
-    assert(ctx->err == NDT_Success);
+    assert(!ndt_err_occurred(ctx));
 
     s = ndt_as_string_with_meta(t, ctx);
     ndt_del(t);
     if (s == NULL) {
         ndt_err_fprint(stderr, ctx);
-        assert(ctx->err != NDT_Success);
+        assert(ndt_err_occurred(ctx));
         ndt_context_del(ctx);
         ndt_finalize();
         return 1;
     }
-    assert(ctx->err == NDT_Success);
+    assert(!ndt_err_occurred(ctx));
 
     printf("%s\n", s);
     ndt_free(s);

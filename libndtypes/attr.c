@@ -197,7 +197,7 @@ ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,
 
             for (k = 0; k < v[i]->AttrList.len; k++) {
                 values[k] = (int32_t)ndt_strtol(v[i]->AttrList.items[k], 0, INT32_MAX, ctx);
-                if (ctx->err != NDT_Success) {
+                if (ndt_err_occurred(ctx)) {
                     ndt_free(values);
                     return -1;
                 }
@@ -217,7 +217,7 @@ ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,
             break;
         }
 
-        if (ctx->err != NDT_Success) {
+        if (ndt_err_occurred(ctx)) {
             return -1;
         }
     }

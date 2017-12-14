@@ -440,6 +440,7 @@ typedef struct {
 NDTYPES_API ndt_context_t *ndt_context_new(void);
 NDTYPES_API void ndt_context_del(ndt_context_t *ctx);
 
+NDTYPES_API int ndt_err_occurred(const ndt_context_t *ctx);
 NDTYPES_API void ndt_err_clear(ndt_context_t *ctx);
 NDTYPES_API const char *ndt_context_msg(ndt_context_t *ctx);
 NDTYPES_API const char *ndt_err_as_string(enum ndt_error err);
