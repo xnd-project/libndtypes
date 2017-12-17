@@ -204,8 +204,8 @@ ndt_copy_categorical(const ndt_t *t, ndt_context_t *ctx)
 ndt_t *
 ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 {
+    ndt_t *u = NULL;
     ndt_t *type;
-
 
     switch (t->tag) {
     case FixedDim: {
@@ -214,11 +214,13 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.step, ctx);
+        u = ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.step, ctx);
+        goto copy_common_fields;
     }
 
     case VarDim: {
-        return ndt_copy_var_dim(t, ctx);
+        u = ndt_copy_var_dim(t, ctx);
+        goto copy_common_fields;
     }
 
     case SymbolicDim: {
@@ -235,7 +237,8 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_symbolic_dim(name, type, ctx);
+        u = ndt_symbolic_dim(name, type, ctx);
+        goto copy_common_fields;
     }
 
     case EllipsisDim: {
@@ -254,7 +257,8 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             }
         }
 
-        return ndt_ellipsis_dim(name, type, ctx);
+        u = ndt_ellipsis_dim(name, type, ctx);
+        goto copy_common_fields;
     }
 
     case Tuple: {
@@ -271,7 +275,8 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_ref(type, ctx);
+        u = ndt_ref(type, ctx);
+        goto copy_common_fields;
     }
 
     case Constr: {
@@ -286,7 +291,8 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_constr(name, type, ctx);
+        u = ndt_constr(name, type, ctx);
+        goto copy_common_fields;
     }
 
     case Nominal: {
@@ -297,11 +303,13 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_nominal(name, ctx);
+        u = ndt_nominal(name, ctx);
+        goto copy_common_fields;
     }
 
     case Categorical: {
-        return ndt_copy_categorical(t, ctx);
+        u = ndt_copy_categorical(t, ctx);
+        goto copy_common_fields;
     }
 
     case Typevar: {
@@ -312,7 +320,8 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_typevar(name, ctx);
+        u = ndt_typevar(name, ctx);
+        goto copy_common_fields;
     }
 
     case Function: {
@@ -336,7 +345,8 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_function(ret, pos, kwds, ctx);
+        u = ndt_function(ret, pos, kwds, ctx);
+        goto copy_common_fields;
     }
 
     case Module: {
@@ -353,7 +363,8 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_module(name, type, ctx);
+        u = ndt_module(name, type, ctx);
+        goto copy_common_fields;
     }
 
     case AnyKind:
@@ -369,7 +380,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     case FixedString: case FixedBytes:
     case String: case Bytes:
     case Char: {
-        ndt_t *u = ndt_new(t->tag, ctx);
+        u = ndt_new(t->tag, ctx);
         if (u == NULL) {
             return NULL;
         }
@@ -378,6 +389,18 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
       }
     }
 
+    goto invalid_tag;
+
+
+copy_common_fields:
+    if (u == NULL) {
+        return NULL;
+    }
+
+    copy_common(u, t);
+    return u;
+
+invalid_tag:
     /* NOT REACHED: tags should be exhaustive */
     ndt_err_format(ctx, NDT_RuntimeError, "ndt_copy: unexpected tag");
     return NULL;
