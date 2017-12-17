@@ -60,7 +60,7 @@ class TestFixedDim(unittest.TestCase):
         self.assertRaises(TypeError, ndt, "10 * var * 10 * int32")
         self.assertRaises(TypeError, ndt, "var * 10 * var * int64")
 
-    def test_ndarray(self):
+    def test_fixed_dim(self):
         for dtype, mem in NDARRAY_TEST_CASES:
             t = ndt(dtype)
             self.assertEqual(t.ndim, 0)
@@ -104,6 +104,9 @@ class TestFixedDim(unittest.TestCase):
                         self.assertEqual(t.shape, shape)
                         self.assertEqual(t.strides, strides)
                         self.assertEqual(t.align, mem.align)
+
+
+class TestFortran(unittest.TestCase):
 
     def test_fortran(self):
         for dtype, mem in NDARRAY_TEST_CASES:
@@ -278,6 +281,7 @@ class TestApply(unittest.TestCase):
 ALL_TESTS = [
   TestError,
   TestFixedDim,
+  TestFortran,
   TestVarDim,
   TestCopy,
   TestConstruction,
