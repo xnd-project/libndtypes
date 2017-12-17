@@ -166,12 +166,9 @@ enum ndt {
   /* Any */
   AnyKind,
     FixedDim,
-    SymbolicDim,
     VarDim,
+    SymbolicDim,
     EllipsisDim,
-
-      /* Dtype variable */
-      Typevar,
 
       /* Dtype */
       Tuple,
@@ -182,6 +179,19 @@ enum ndt {
 
       /* Scalar */
       ScalarKind,
+        Categorical,
+
+        FixedStringKind,
+          FixedString,
+
+        FixedBytesKind,
+          FixedBytes,
+
+        String,
+        Bytes,
+        Char,
+
+        /* Primitive */
         Void,
         Bool,
 
@@ -207,17 +217,8 @@ enum ndt {
           Complex64,
           Complex128,
 
-        FixedStringKind,
-          FixedString,
-
-        FixedBytesKind,
-          FixedBytes,
-
-        String,
-        Bytes,
-        Char,
-
-        Categorical,
+      /* Dtype variable */
+      Typevar,
 };
 
 enum ndt_alias {
@@ -289,14 +290,15 @@ struct _ndt {
         } Module;
 
         struct {
+            ndt_t *ret;
+            ndt_t *pos;
+            ndt_t *kwds;
+        } Function;
+
+        struct {
             int64_t shape;
             ndt_t *type;
         } FixedDim;
-
-        struct {
-            char *name;
-            ndt_t *type;
-        } SymbolicDim;
 
         struct {
             ndt_t *type;
@@ -305,16 +307,12 @@ struct _ndt {
         struct {
             char *name;
             ndt_t *type;
-        } EllipsisDim;
-
-        struct {
-            char *name;
-        } Nominal;
+        } SymbolicDim;
 
         struct {
             char *name;
             ndt_t *type;
-        } Constr;
+        } EllipsisDim;
 
         struct {
             enum ndt_variadic flag;
@@ -330,22 +328,22 @@ struct _ndt {
         } Record;
 
         struct {
-            ndt_t *ret;
-            ndt_t *pos;
-            ndt_t *kwds;
-        } Function;
+            ndt_t *type;
+        } Ref;
 
         struct {
             char *name;
-        } Typevar;
+            ndt_t *type;
+        } Constr;
 
         struct {
-            enum ndt_encoding encoding;
-        } Char;
+            char *name;
+        } Nominal;
 
         struct {
-            uint16_t target_align;
-        } Bytes;
+            size_t ntypes;
+            ndt_value_t *types;
+        } Categorical;
 
         struct {
             size_t size;
@@ -358,13 +356,16 @@ struct _ndt {
         } FixedBytes;
 
         struct {
-            size_t ntypes;
-            ndt_value_t *types;
-        } Categorical;
+            uint16_t target_align;
+        } Bytes;
 
         struct {
-            ndt_t *type;
-        } Ref;
+            enum ndt_encoding encoding;
+        } Char;
+
+        struct {
+            char *name;
+        } Typevar;
     };
 
     /* Concrete */
