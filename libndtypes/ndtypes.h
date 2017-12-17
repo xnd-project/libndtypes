@@ -160,6 +160,9 @@ enum ndt {
   /* Name space */
   Module,
 
+  /* Function */
+  Function,
+
   /* Any */
   AnyKind,
     FixedDim,
@@ -167,14 +170,15 @@ enum ndt {
     VarDim,
     EllipsisDim,
 
-    Nominal,
-    Constr,
+      /* Dtype variable */
+      Typevar,
 
       /* Dtype */
       Tuple,
       Record,
-      Function,
-      Typevar,
+      Ref,
+      Constr,
+      Nominal,
 
       /* Scalar */
       ScalarKind,
@@ -209,12 +213,11 @@ enum ndt {
         FixedBytesKind,
           FixedBytes,
 
-        Char,
         String,
         Bytes,
+        Char,
 
         Categorical,
-        Ref,
 };
 
 enum ndt_alias {
