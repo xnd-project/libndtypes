@@ -1596,6 +1596,7 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
 
     switch(tag) {
     case Void:
+        t->access = Abstract;
         t->datasize = 0;
         t->align = 1;
         break;
