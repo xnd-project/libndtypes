@@ -30,13 +30,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import unittest, gc
+import unittest, sys, argparse, gc
 from copy import copy
 from ndtypes import ndt, MAX_DIM
 from randtype import *
 
 
-class ErrorTest(unittest.TestCase):
+parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--failfast", action="store_true",
+                    help="stop the test run on first error")
+ARGS = parser.parse_args()
+
+
+class TestError(unittest.TestCase):
 
     def test_exceptions(self):
         self.assertRaises(TypeError, ndt, None)
@@ -150,7 +156,7 @@ class TestFixedDim(unittest.TestCase):
                         self.assertEqual(t.align, mem.align)
 
 
-class VarDimTest(unittest.TestCase):
+class TestVarDim(unittest.TestCase):
 
     def test_var_invariants(self):
         # Mixing var and fixed is disallowed.
@@ -228,7 +234,7 @@ class TestCopy(unittest.TestCase):
         gc.collect()
 
 
-class ConstructionTest(unittest.TestCase):
+class TestConstruction(unittest.TestCase):
 
     def test_roundtrip(self):
         test_cases = [
@@ -239,7 +245,7 @@ class ConstructionTest(unittest.TestCase):
             t = ndt(s)
             self.assertEqual(str(t), s)
 
-class ApplyTest(unittest.TestCase):
+class TestApply(unittest.TestCase):
 
     def test_apply(self):
         # Type checking and return type inference for function applications.
@@ -269,6 +275,25 @@ class ApplyTest(unittest.TestCase):
             self.assertRaises(TypeError, f.apply, args)
 
 
-unittest.main(verbosity=2)
+ALL_TESTS = [
+  TestError,
+  TestFixedDim,
+  TestVarDim,
+  TestCopy,
+  TestConstruction,
+  TestApply,
+]
 
+if __name__ == '__main__':
+    suite = unittest.TestSuite()
+    loader = unittest.TestLoader()
 
+    for case in ALL_TESTS:
+        s = loader.loadTestsFromTestCase(case)
+        suite.addTest(s)
+
+    runner = unittest.TextTestRunner(failfast=ARGS.failfast, verbosity=2)
+    result = runner.run(suite)
+    ret = not result.wasSuccessful()
+
+    sys.exit(ret)
