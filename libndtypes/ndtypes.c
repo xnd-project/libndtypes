@@ -669,6 +669,10 @@ ndt_del(ndt_t *t)
     }
 
     switch (t->tag) {
+    case Module:
+        ndt_free(t->Module.name);
+        ndt_del(t->Module.type);
+        break;
     case FixedDim:
         ndt_del(t->FixedDim.type);
         break;
