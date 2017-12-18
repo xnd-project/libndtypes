@@ -1996,7 +1996,7 @@ ndt_is_c_contiguous(const ndt_t *t)
 
     step = 1;
     for (i = ndim-1; i >= 0; i--) {
-        shape = t->FixedDim.shape;
+        shape = dims[i]->FixedDim.shape;
         if (shape > 1 && dims[i]->Concrete.FixedDim.step != step) {
             return 0;
         }
@@ -2024,7 +2024,7 @@ ndt_is_f_contiguous(const ndt_t *t)
     ndim = ndt_const_dims_dtype(dims, &dtype, t);
     step = 1;
     for (i = 0; i < ndim; i++) {
-        shape = t->FixedDim.shape;
+        shape = dims[i]->FixedDim.shape;
         if (shape > 1 && dims[i]->Concrete.FixedDim.step != step) {
             return 0;
         }

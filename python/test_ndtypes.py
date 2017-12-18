@@ -131,6 +131,29 @@ class TestAny(unittest.TestCase):
 
 class TestFixedDim(unittest.TestCase):
 
+    def test_fixed_dim_predicates(self):
+        t = ndt("10 * 20 * uint8")
+
+        self.assertFalse(t.is_abstract())
+        self.assertTrue(t.is_array())
+        self.assertTrue(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertTrue(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
+        self.assertFalse(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+
+        t = ndt("20 * uint8")
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
+
+        t = ndt("1 * 10 * uint8")
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
+
     def test_fixed_invariants(self):
         # Mixing var and fixed is disallowed.
         self.assertRaises(TypeError, ndt, "10 * var * int8")
