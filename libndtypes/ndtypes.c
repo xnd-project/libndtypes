@@ -2048,9 +2048,8 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
 
     assert(t->ndim <= NDT_MAX_DIM);
 
-    if (!ndt_is_concrete(t)) {
-        ndt_err_format(ctx, NDT_ValueError,
-            "ndt_as_ndarray: type must be concrete");
+    if (ndt_is_abstract(t)) {
+        ndt_err_format(ctx, NDT_TypeError, "type is not an ndarray");
         return -1;
     }
 
@@ -2060,8 +2059,7 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
             a->itemsize = t->datasize;
             return 0;
         }
-        ndt_err_format(ctx, NDT_ValueError,
-            "ndt_as_ndarray: type must be an ndarray");
+        ndt_err_format(ctx, NDT_TypeError, "type is not an ndarray");
         return -1;
     }
 

@@ -42,13 +42,31 @@ parser.add_argument("-f", "--failfast", action="store_true",
 ARGS = parser.parse_args()
 
 
-class TestError(unittest.TestCase):
 
-    def test_exceptions(self):
-        self.assertRaises(TypeError, ndt, None)
-        self.assertRaises(ValueError, ndt, "")
-        self.assertRaises(ValueError, ndt, "xyz")
-        self.assertRaises(ValueError, ndt, "var() * int64")
+class TestAny(unittest.TestCase):
+
+    def test_any(self):
+        t = ndt("Any")
+
+        # Predicates
+        self.assertTrue(t.is_abstract())
+        self.assertFalse(t.is_concrete())
+
+        self.assertFalse(t.is_array())
+        self.assertFalse(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_complex())
+
+        # Common type fields are undefined.
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+
+        # Cannot be represented as an ndarray.
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestFixedDim(unittest.TestCase):
@@ -237,6 +255,15 @@ class TestCopy(unittest.TestCase):
         gc.collect()
 
 
+class TestError(unittest.TestCase):
+
+    def test_exceptions(self):
+        self.assertRaises(TypeError, ndt, None)
+        self.assertRaises(ValueError, ndt, "")
+        self.assertRaises(ValueError, ndt, "xyz")
+        self.assertRaises(ValueError, ndt, "var() * int64")
+
+
 class TestConstruction(unittest.TestCase):
 
     def test_roundtrip(self):
@@ -279,12 +306,13 @@ class TestApply(unittest.TestCase):
 
 
 ALL_TESTS = [
-  TestError,
+  TestAny,
   TestFixedDim,
   TestFortran,
   TestVarDim,
   TestCopy,
   TestConstruction,
+  TestError,
   TestApply,
 ]
 

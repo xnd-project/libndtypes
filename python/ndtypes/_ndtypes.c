@@ -608,32 +608,42 @@ tuple_from_int64(int64_t x[NDT_MAX_DIM], int ndim)
 static PyObject *
 ndtype_ndim(PyObject *self, PyObject *args UNUSED)
 {
-    return PyLong_FromLong(NDT(self)->ndim);
+    const ndt_t *t = NDT(self);
+
+    if (ndt_is_abstract(t)) {
+        PyErr_SetString(PyExc_TypeError,
+            "abstract type has no ndim");
+        return NULL;
+    }
+
+    return PyLong_FromLong(t->ndim);
 }
 
 static PyObject *
 ndtype_itemsize(PyObject *self, PyObject *args UNUSED)
 {
-    ndt_t *t = NDT(self);
+    const ndt_t *t = NDT(self);
+    int64_t size;
 
     if (ndt_is_abstract(t)) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
             "abstract type has no itemsize");
         return NULL;
     }
 
     switch (t->tag) {
     case FixedDim:
-        return PyLong_FromLongLong(t->Concrete.FixedDim.itemsize);
+        size = t->Concrete.FixedDim.itemsize;
+        break;
     case VarDim:
-        return PyLong_FromLongLong(t->Concrete.VarDim.itemsize);
+        size = t->Concrete.VarDim.itemsize;
+        break;
     default:
-        if (t->ndim == 0) {
-            return PyLong_FromLongLong(t->datasize);
-        }
-        PyErr_SetString(PyExc_ValueError, "type has no itemsize");
-        return NULL;
+        size = t->datasize;
+        break;
     }
+
+    return PyLong_FromLongLong(size);
 }
 
 static PyObject *
@@ -666,7 +676,7 @@ static PyObject *
 ndtype_align(PyObject *self, PyObject *args UNUSED)
 {
     if (ndt_is_abstract(NDT(self))) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
             "abstract type has no alignment");
         return NULL;
     }
