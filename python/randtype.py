@@ -46,7 +46,7 @@ Mem = namedtuple("Mem", "itemsize align")
 #                             Typed values
 # ======================================================================
 
-NDARRAY_TEST_CASES = [
+DTYPE_TEST_CASES = [
    # Tuples
    ("()", Mem(itemsize=0, align=1)),
    ("(complex128)", Mem(itemsize=16, align=8)),
