@@ -42,16 +42,46 @@ parser.add_argument("-f", "--failfast", action="store_true",
 ARGS = parser.parse_args()
 
 
+class TestModule(unittest.TestCase):
+
+    def test_module(self):
+        # Namespaces are not yet supported in xnd. One can construct the
+        # types, however.  Modules are for pattern matching only, so they 
+        # are abstract.
+        t = ndt("SomeNamespace:: 2 * 3 * float64")
+ 
+        # Predicates.
+        self.assertTrue(t.is_abstract())
+        self.assertFalse(t.is_concrete())
+
+        self.assertFalse(t.is_optional())
+        self.assertFalse(t.is_array())
+        self.assertFalse(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_complex())
+
+        # Common type fields are undefined.
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+
+        # Cannot be represented as an ndarray.
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
+
 
 class TestAny(unittest.TestCase):
 
     def test_any(self):
         t = ndt("Any")
 
-        # Predicates
+        # Predicates.
         self.assertTrue(t.is_abstract())
         self.assertFalse(t.is_concrete())
 
+        self.assertFalse(t.is_optional())
         self.assertFalse(t.is_array())
         self.assertFalse(t.is_scalar())
         self.assertFalse(t.is_signed())
@@ -306,6 +336,7 @@ class TestApply(unittest.TestCase):
 
 
 ALL_TESTS = [
+  TestModule,
   TestAny,
   TestFixedDim,
   TestFortran,

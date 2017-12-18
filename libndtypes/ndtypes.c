@@ -1229,13 +1229,6 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
     t->Module.type = type;
     t->flags = ndt_subtree_flags(type);
 
-    /* concrete access */
-    t->access = type->access;
-    if (t->access == Concrete) {
-        t->datasize = type->datasize;
-        t->align = type->align;
-    }
-
     return t;
 }
 
