@@ -426,6 +426,36 @@ class TestSymbolicDim(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
+class TestEllipsisDim(unittest.TestCase):
+
+    def test_ellipsis_dim_predicates(self):
+        t = ndt("2 * ... * complex128")
+
+        self.assertTrue(t.is_abstract())
+        self.assertTrue(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertFalse(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
+        self.assertFalse(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+
+    def test_ellipsis_dim_common_fields(self):
+        dt = "{a: complex64, b: string}"
+        t = ndt("... * 2 * %s" % dt)
+        dtype = ndt(dt)
+
+        self.assertRaises(TypeError, t, 'ndim')
+        self.assertRaises(TypeError, t, 'itemsize')
+        self.assertRaises(TypeError, t, 'align')
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -509,6 +539,7 @@ ALL_TESTS = [
   TestFortran,
   TestVarDim,
   TestSymbolicDim,
+  TestEllipsisDim,
   TestCopy,
   TestConstruction,
   TestError,
