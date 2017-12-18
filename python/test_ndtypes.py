@@ -172,7 +172,7 @@ class TestFixedDim(unittest.TestCase):
         self.assertEqual(t.shape, (2, 3))
         self.assertEqual(t.strides, (3 * dtype.itemsize, dtype.itemsize))
 
-    def test_fixed_invariants(self):
+    def test_fixed_dim_invariants(self):
         # Mixing var and fixed is disallowed.
         self.assertRaises(TypeError, ndt, "10 * var * int8")
         self.assertRaises(TypeError, ndt, "var * 10 * int16")
@@ -345,7 +345,7 @@ class TestVarDim(unittest.TestCase):
         self.assertRaises(TypeError, getattr, t, 'shape')
         self.assertRaises(TypeError, getattr, t, 'strides')
 
-    def test_var_invariants(self):
+    def test_var_dim_invariants(self):
         # Mixing var and fixed is disallowed.
         self.assertRaises(TypeError, ndt, "10 * var * int64")
         self.assertRaises(TypeError, ndt, "var * 10 * int64")
@@ -365,7 +365,7 @@ class TestVarDim(unittest.TestCase):
         self.assertRaises(TypeError, ndt, "var * ref(var * string)")
         self.assertRaises(TypeError, ndt, "var * SomeConstr(var * string)")
 
-    def test_external_offsets(self):
+    def test_var_dim_external_offsets(self):
         # Invalid offsets.
         self.assertRaises(TypeError, ndt, "int8", [""])
         self.assertRaises(TypeError, ndt, "int8", [0])
@@ -394,6 +394,36 @@ class TestVarDim(unittest.TestCase):
 
         # Mixing external and internal offsets.
         self.assertRaises(TypeError, ndt, "var(offsets=[0,2,10]) * int8", [[0, 1], [0, 2]])
+
+
+class TestSymbolicDim(unittest.TestCase):
+
+    def test_symbolic_dim_predicates(self):
+        t = ndt("N * M * complex128")
+
+        self.assertTrue(t.is_abstract())
+        self.assertTrue(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertFalse(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
+        self.assertFalse(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+
+    def test_symbolic_dim_common_fields(self):
+        dt = "{a: complex64, b: string}"
+        t = ndt("N * M * %s" % dt)
+        dtype = ndt(dt)
+
+        self.assertRaises(TypeError, t, 'ndim')
+        self.assertRaises(TypeError, t, 'itemsize')
+        self.assertRaises(TypeError, t, 'align')
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
 
 
 class TestCopy(unittest.TestCase):
@@ -478,6 +508,7 @@ ALL_TESTS = [
   TestFixedDim,
   TestFortran,
   TestVarDim,
+  TestSymbolicDim,
   TestCopy,
   TestConstruction,
   TestError,
