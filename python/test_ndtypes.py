@@ -44,16 +44,14 @@ ARGS = parser.parse_args()
 
 class TestModule(unittest.TestCase):
 
-    def test_module(self):
+    def test_module_predicates(self):
         # Namespaces are not yet supported in xnd. One can construct the
         # types, however.  Modules are for pattern matching only, so they 
         # are abstract.
         t = ndt("SomeNamespace:: 2 * 3 * float64")
- 
-        # Predicates.
+
         self.assertTrue(t.is_abstract())
         self.assertFalse(t.is_concrete())
-
         self.assertFalse(t.is_optional())
         self.assertFalse(t.is_array())
         self.assertFalse(t.is_scalar())
@@ -61,6 +59,9 @@ class TestModule(unittest.TestCase):
         self.assertFalse(t.is_unsigned())
         self.assertFalse(t.is_float())
         self.assertFalse(t.is_complex())
+
+    def test_module_common_fields(self):
+        t = ndt("SomeNamespace:: 2 * 3 * float64")
 
         # Common type fields are undefined.
         self.assertRaises(TypeError, getattr, t, 'ndim')
@@ -74,13 +75,11 @@ class TestModule(unittest.TestCase):
 
 class TestFunction(unittest.TestCase):
 
-    def test_function(self):
+    def test_function_predicates(self):
         t = ndt("(10 * float64, string) -> float64")
  
-        # Predicates.
         self.assertTrue(t.is_abstract())
         self.assertFalse(t.is_concrete())
-
         self.assertFalse(t.is_optional())
         self.assertFalse(t.is_array())
         self.assertFalse(t.is_scalar())
@@ -88,6 +87,9 @@ class TestFunction(unittest.TestCase):
         self.assertFalse(t.is_unsigned())
         self.assertFalse(t.is_float())
         self.assertFalse(t.is_complex())
+
+    def test_function_common_fields(self):
+        t = ndt("(10 * float64, string) -> float64")
 
         # Common type fields are undefined.
         self.assertRaises(TypeError, getattr, t, 'ndim')
@@ -101,13 +103,11 @@ class TestFunction(unittest.TestCase):
 
 class TestAny(unittest.TestCase):
 
-    def test_any(self):
+    def test_any_predicates(self):
         t = ndt("Any")
 
-        # Predicates.
         self.assertTrue(t.is_abstract())
         self.assertFalse(t.is_concrete())
-
         self.assertFalse(t.is_optional())
         self.assertFalse(t.is_array())
         self.assertFalse(t.is_scalar())
@@ -115,6 +115,9 @@ class TestAny(unittest.TestCase):
         self.assertFalse(t.is_unsigned())
         self.assertFalse(t.is_float())
         self.assertFalse(t.is_complex())
+
+    def test_any_common_fields(self):
+        t = ndt("Any")
 
         # Common type fields are undefined.
         self.assertRaises(TypeError, getattr, t, 'ndim')
