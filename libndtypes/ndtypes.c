@@ -2130,6 +2130,7 @@ ndt_is_scalar(const ndt_t *t)
     case Complex32: case Complex64: case Complex128:
     case FixedString: case FixedBytes:
     case String: case Bytes:
+    case Char:
         return 1;
     default:
         return 0;
