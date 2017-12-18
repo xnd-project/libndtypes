@@ -81,6 +81,30 @@ DTYPE_TEST_CASES = [
    ("(uint16, (complex64), align=4)", Mem(itemsize=12, align=4)),
    ("(uint16, (complex64), align=8)", Mem(itemsize=16, align=8)),
 
+   # References to tuples
+   ("&(uint16, (complex64), align=1)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("(uint16, &(complex64), pack=1)", Mem(itemsize=2+PTR_SIZE, align=1)),
+
+   # Constructor containing references to tuples
+   ("Some(&(uint16, (complex64), align=1))", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("Some((uint16, &(complex64), pack=1))", Mem(itemsize=2+PTR_SIZE, align=1)),
+
+   # Optional tuples
+   ("?(uint16, (complex64), align=1)", Mem(itemsize=12, align=4)),
+   ("(uint16, ?(complex64), align=1)", Mem(itemsize=12, align=4)),
+   ("?(uint16, ?(complex64), align=1)", Mem(itemsize=12, align=4)),
+   ("?(uint16, (complex64), align=2)", Mem(itemsize=12, align=4)),
+   ("(uint16, ?(complex64), align=4)", Mem(itemsize=12, align=4)),
+   ("?(uint16, ?(complex64), align=8)", Mem(itemsize=16, align=8)),
+
+   # References to optional tuples or tuples with optional subtrees
+   ("&?(uint16, (complex64), align=1)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&(uint16, ?(complex64), align=1)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   # Constructor containing optional tuples or tuples with optional subtrees
+   ("Some(?(uint16, (complex64), align=1))", Mem(itemsize=12, align=4)),
+   ("Some((uint16, ?(complex64), align=1))", Mem(itemsize=12, align=4)),
+
    # Records
    ("{}", Mem(itemsize=0, align=1)),
    ("{x: complex128}", Mem(itemsize=16, align=8)),
@@ -115,6 +139,25 @@ DTYPE_TEST_CASES = [
    ("complex64", Mem(itemsize=8, align=4)),
    ("complex128", Mem(itemsize=16, align=8)),
 
+   # Primitive optional types
+   ("?bool", Mem(itemsize=1, align=1)),
+
+   ("?int8", Mem(itemsize=1, align=1)),
+   ("?int16", Mem(itemsize=2, align=2)),
+   ("?int32", Mem(itemsize=4, align=4)),
+   ("?int64", Mem(itemsize=8, align=8)),
+
+   ("?uint8", Mem(itemsize=1, align=1)),
+   ("?uint16", Mem(itemsize=2, align=2)),
+   ("?uint32", Mem(itemsize=4, align=4)),
+   ("?uint64", Mem(itemsize=8, align=8)),
+
+   ("?float32", Mem(itemsize=4, align=4)),
+   ("?float64", Mem(itemsize=8, align=8)),
+
+   ("?complex64", Mem(itemsize=8, align=4)),
+   ("?complex128", Mem(itemsize=16, align=8)),
+
    # References
    ("&bool", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
 
@@ -134,8 +177,45 @@ DTYPE_TEST_CASES = [
    ("ref(complex64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
    ("ref(complex128)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
 
+   # Optional references
+   ("?&bool", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   ("?&int8", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?&int16", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?&int32", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?&int64", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   ("?ref(uint8)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?ref(uint16)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?ref(uint32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?ref(uint64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   ("?ref(float32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?ref(float64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   ("?ref(complex64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?ref(complex128)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   # References to optional types
+   ("&?bool", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   ("&?int8", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&?int16", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&?int32", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&?int64", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   ("ref(?uint8)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(?uint16)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(?uint32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(?uint64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   ("ref(?float32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(?float64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
+   ("ref(?complex64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(?complex128)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+
    # Constructors
-   ("Some(bool)", Mem(itemsize=1, align=1)),
    ("Some(bool)", Mem(itemsize=1, align=1)),
 
    ("Some(int8)", Mem(itemsize=1, align=1)),
@@ -152,5 +232,43 @@ DTYPE_TEST_CASES = [
    ("Some(float64)", Mem(itemsize=8, align=8)),
 
    ("Some(complex64)", Mem(itemsize=8, align=4)),
-   ("Some(complex128)", Mem(itemsize=16, align=8))
+   ("Some(complex128)", Mem(itemsize=16, align=8)),
+
+   # Optional constructors
+   ("?Some(bool)", Mem(itemsize=1, align=1)),
+
+   ("?Some(int8)", Mem(itemsize=1, align=1)),
+   ("?Some(int16)", Mem(itemsize=2, align=2)),
+   ("?Some(int32)", Mem(itemsize=4, align=4)),
+   ("?Some(int64)", Mem(itemsize=8, align=8)),
+
+   ("?Some(uint8)", Mem(itemsize=1, align=1)),
+   ("?Some(uint16)", Mem(itemsize=2, align=2)),
+   ("?Some(uint32)", Mem(itemsize=4, align=4)),
+   ("?Some(uint64)", Mem(itemsize=8, align=8)),
+
+   ("?Some(float32)", Mem(itemsize=4, align=4)),
+   ("?Some(float64)", Mem(itemsize=8, align=8)),
+
+   ("?Some(complex64)", Mem(itemsize=8, align=4)),
+   ("?Some(complex128)", Mem(itemsize=16, align=8)),
+
+   # Constructors containing optional types
+   ("Some(?bool)", Mem(itemsize=1, align=1)),
+
+   ("Some(?int8)", Mem(itemsize=1, align=1)),
+   ("Some(?int16)", Mem(itemsize=2, align=2)),
+   ("Some(?int32)", Mem(itemsize=4, align=4)),
+   ("Some(?int64)", Mem(itemsize=8, align=8)),
+
+   ("Some(?uint8)", Mem(itemsize=1, align=1)),
+   ("Some(?uint16)", Mem(itemsize=2, align=2)),
+   ("Some(?uint32)", Mem(itemsize=4, align=4)),
+   ("Some(?uint64)", Mem(itemsize=8, align=8)),
+
+   ("Some(?float32)", Mem(itemsize=4, align=4)),
+   ("Some(?float64)", Mem(itemsize=8, align=8)),
+
+   ("Some(?complex64)", Mem(itemsize=8, align=4)),
+   ("Some(?complex128)", Mem(itemsize=16, align=8)),
 ]
