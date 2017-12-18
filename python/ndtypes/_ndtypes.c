@@ -855,12 +855,54 @@ init_api(void)
 /*                                  Module                                  */
 /****************************************************************************/
 
+static PyObject *
+ndtype_typedef(PyObject *mod UNUSED, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"name", "type", NULL};
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *name, *type;
+    const char *cname, *ctype;
+    ndt_t *t;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &name, &type)) {
+        return NULL;
+    }
+
+    cname = PyUnicode_AsUTF8(name);
+    if (cname == NULL) {
+        return NULL;
+    }
+
+    ctype = PyUnicode_AsUTF8(type);
+    if (ctype == NULL) {
+        return NULL;
+    }
+
+    t = ndt_from_string(ctype, &ctx);
+    if (t == NULL) {
+        return seterr(&ctx);
+    }
+
+    if (ndt_typedef(cname, t, &ctx) < 0) {
+        return seterr(&ctx);
+    }
+
+    Py_RETURN_NONE;
+}
+
+static PyMethodDef _ndtypes_methods [] =
+{
+  { "typedef", (PyCFunction)ndtype_typedef, METH_VARARGS|METH_KEYWORDS, NULL},
+  { NULL, NULL, 1, NULL }
+};
+
+
 static struct PyModuleDef ndtypes_module = {
     PyModuleDef_HEAD_INIT,        /* m_base */
     "_ndtypes",                   /* m_name */
     NULL,                         /* m_doc */
     -1,                           /* m_size */
-    NULL,                         /* m_methods */
+    _ndtypes_methods,             /* m_methods */
     NULL,                         /* m_slots */
     NULL,                         /* m_traverse */
     NULL,                         /* m_clear */

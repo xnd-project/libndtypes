@@ -32,7 +32,7 @@
 
 import unittest, sys, argparse, gc
 from copy import copy
-from ndtypes import ndt, MAX_DIM
+from ndtypes import ndt, typedef, MAX_DIM
 from randtype import *
 
 
@@ -625,6 +625,50 @@ class TestConstr(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
+class TestNominal(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        typedef("some_t", "2 * 10 * complex128")
+
+    def test_nominal_predicates(self):
+            t = ndt("some_t")
+
+            # The nominal type is opaque. The only thing known is that
+            # the typedef is concrete.
+            self.assertFalse(t.is_abstract())
+            self.assertFalse(t.is_array())
+            self.assertFalse(t.is_c_contiguous())
+            self.assertFalse(t.is_complex())
+            self.assertTrue(t.is_concrete())
+            self.assertFalse(t.is_f_contiguous())
+            self.assertFalse(t.is_float())
+            self.assertFalse(t.is_optional())
+            self.assertFalse(t.is_scalar())
+            self.assertFalse(t.is_signed())
+            self.assertFalse(t.is_unsigned())
+
+    def test_nominal_common_fields(self):
+        t = ndt("some_t")
+        dtype = ndt("complex128")
+
+        # The opaque type is treated as a dtype with ndim==0, same as
+        # for constructor types.
+        self.assertEqual(t.ndim, 0)
+        self.assertEqual(t.itemsize, 2 * 10 * dtype.itemsize)
+        self.assertEqual(t.align, dtype.align)
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+    def test_nominal_exceptions(self):
+        # not in the typedef table
+        self.assertRaises(ValueError, ndt, "undefined_t")
+
+        # duplicate typedef
+        self.assertRaises(ValueError, typedef, "some_t", "int64")
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -713,6 +757,7 @@ ALL_TESTS = [
   TestRecord,
   TestRef,
   TestConstr,
+  TestNominal,
   TestCopy,
   TestConstruction,
   TestError,
