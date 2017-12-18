@@ -138,7 +138,7 @@ class TestAny(unittest.TestCase):
 class TestFixedDim(unittest.TestCase):
 
     def test_fixed_dim_predicates(self):
-        t = ndt("10 * 20 * uint8")
+        t = ndt("10 * 20 * complex128")
 
         self.assertFalse(t.is_abstract())
         self.assertTrue(t.is_array())
@@ -152,11 +152,11 @@ class TestFixedDim(unittest.TestCase):
         self.assertFalse(t.is_signed())
         self.assertFalse(t.is_unsigned())
 
-        t = ndt("20 * uint8")
+        t = ndt("20 * complex128")
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
 
-        t = ndt("1 * 10 * uint8")
+        t = ndt("1 * 10 * complex128")
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
 
@@ -178,7 +178,7 @@ class TestFixedDim(unittest.TestCase):
         self.assertRaises(TypeError, ndt, "10 * var * 10 * int32")
         self.assertRaises(TypeError, ndt, "var * 10 * var * int64")
 
-    def test_fixed_dim(self):
+    def test_fixed_dim_dtypes(self):
         for dtype, mem in DTYPE_TEST_CASES:
             t = ndt(dtype)
             self.assertEqual(t.ndim, 0)
@@ -226,7 +226,41 @@ class TestFixedDim(unittest.TestCase):
 
 class TestFortran(unittest.TestCase):
 
-    def test_fortran(self):
+    def test_fortran_predicates(self):
+        t = ndt("!10 * 20 * complex128")
+
+        self.assertFalse(t.is_abstract())
+        self.assertTrue(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertTrue(t.is_concrete())
+        self.assertTrue(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
+        self.assertFalse(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+
+        t = ndt("!20 * complex128")
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
+
+        t = ndt("!1 * 10 * uint8")
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
+
+    def test_fortran_common_fields(self):
+        dt = "{a: complex64, b: string}"
+        t = ndt("!2 * 3 * %s" % dt)
+        dtype = ndt(dt)
+
+        self.assertEqual(t.ndim, 2)
+        self.assertEqual(t.align, 8)
+        self.assertEqual(t.itemsize, dtype.itemsize)
+        self.assertEqual(t.shape, (2, 3))
+        self.assertEqual(t.strides, (dtype.itemsize, 2 * dtype.itemsize))
+
+    def test_fortran_dtypes(self):
         for dtype, mem in DTYPE_TEST_CASES:
             t = ndt(dtype)
             self.assertEqual(t.ndim, 0)
