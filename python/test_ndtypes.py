@@ -594,6 +594,37 @@ class TestRef(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
+class TestConstr(unittest.TestCase):
+
+    def test_constr_predicates(self):
+        for s in ["Some(int16)", "Maybe(int64)", "Just((string, bytes))"]:
+            t = ndt(s)
+
+            self.assertFalse(t.is_abstract())
+            self.assertFalse(t.is_array())
+            self.assertFalse(t.is_c_contiguous())
+            self.assertFalse(t.is_complex())
+            self.assertTrue(t.is_concrete())
+            self.assertFalse(t.is_f_contiguous())
+            self.assertFalse(t.is_float())
+            self.assertFalse(t.is_optional())
+            self.assertFalse(t.is_scalar())
+            self.assertFalse(t.is_signed())
+            self.assertFalse(t.is_unsigned())
+
+    def test_constr_common_fields(self):
+        a = "{a: complex64, b: string}"
+        t = ndt("Just(%s)" % a)
+        arg = ndt(a)
+
+        self.assertEqual(t.ndim, 0)
+        self.assertEqual(t.itemsize, arg.itemsize)
+        self.assertEqual(t.align, arg.align)
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -681,6 +712,7 @@ ALL_TESTS = [
   TestTuple,
   TestRecord,
   TestRef,
+  TestConstr,
   TestCopy,
   TestConstruction,
   TestError,
