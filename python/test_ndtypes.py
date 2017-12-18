@@ -67,8 +67,8 @@ class TestModule(unittest.TestCase):
 
         # Common type fields are undefined.
         self.assertRaises(TypeError, getattr, t, 'ndim')
-        self.assertRaises(TypeError, getattr, t, 'align')
         self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
         # Cannot be represented as an ndarray.
         self.assertRaises(TypeError, getattr, t, 'shape')
@@ -97,8 +97,8 @@ class TestFunction(unittest.TestCase):
 
         # Common type fields are undefined.
         self.assertRaises(TypeError, getattr, t, 'ndim')
-        self.assertRaises(TypeError, getattr, t, 'align')
         self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
         # Cannot be represented as an ndarray.
         self.assertRaises(TypeError, getattr, t, 'shape')
@@ -127,8 +127,8 @@ class TestAny(unittest.TestCase):
 
         # Common type fields are undefined.
         self.assertRaises(TypeError, getattr, t, 'ndim')
-        self.assertRaises(TypeError, getattr, t, 'align')
         self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
         # Cannot be represented as an ndarray.
         self.assertRaises(TypeError, getattr, t, 'shape')
@@ -166,8 +166,9 @@ class TestFixedDim(unittest.TestCase):
         dtype = ndt(dt)
 
         self.assertEqual(t.ndim, 2)
-        self.assertEqual(t.align, dtype.align)
         self.assertEqual(t.itemsize, dtype.itemsize)
+        self.assertEqual(t.align, dtype.align)
+
         self.assertEqual(t.shape, (2, 3))
         self.assertEqual(t.strides, (3 * dtype.itemsize, dtype.itemsize))
 
@@ -183,9 +184,10 @@ class TestFixedDim(unittest.TestCase):
             t = ndt(dtype)
             self.assertEqual(t.ndim, 0)
             self.assertEqual(t.itemsize, mem.itemsize)
+            self.assertEqual(t.align, mem.align)
+
             self.assertEqual(t.shape, ())
             self.assertEqual(t.strides, ())
-            self.assertEqual(t.align, mem.align)
 
             for i in range(10):
                 t = ndt("%d * %s" % (i, dtype))
@@ -194,9 +196,10 @@ class TestFixedDim(unittest.TestCase):
 
                 self.assertEqual(t.ndim, 1)
                 self.assertEqual(t.itemsize, mem.itemsize)
+                self.assertEqual(t.align, mem.align)
+
                 self.assertEqual(t.shape, shape)
                 self.assertEqual(t.strides, strides)
-                self.assertEqual(t.align, mem.align)
 
             for i in range(10):
                 for j in range(10):
@@ -206,9 +209,10 @@ class TestFixedDim(unittest.TestCase):
 
                     self.assertEqual(t.ndim, 2)
                     self.assertEqual(t.itemsize, mem.itemsize)
+                    self.assertEqual(t.align, mem.align)
+
                     self.assertEqual(t.shape, shape)
                     self.assertEqual(t.strides, strides)
-                    self.assertEqual(t.align, mem.align)
 
             for i in range(5):
                 for j in range(5):
@@ -219,9 +223,10 @@ class TestFixedDim(unittest.TestCase):
 
                         self.assertEqual(t.ndim, 3)
                         self.assertEqual(t.itemsize, mem.itemsize)
+                        self.assertEqual(t.align, mem.align)
+
                         self.assertEqual(t.shape, shape)
                         self.assertEqual(t.strides, strides)
-                        self.assertEqual(t.align, mem.align)
 
 
 class TestFortran(unittest.TestCase):
@@ -255,8 +260,9 @@ class TestFortran(unittest.TestCase):
         dtype = ndt(dt)
 
         self.assertEqual(t.ndim, 2)
-        self.assertEqual(t.align, dtype.align)
         self.assertEqual(t.itemsize, dtype.itemsize)
+        self.assertEqual(t.align, dtype.align)
+
         self.assertEqual(t.shape, (2, 3))
         self.assertEqual(t.strides, (dtype.itemsize, 2 * dtype.itemsize))
 
@@ -265,9 +271,10 @@ class TestFortran(unittest.TestCase):
             t = ndt(dtype)
             self.assertEqual(t.ndim, 0)
             self.assertEqual(t.itemsize, mem.itemsize)
+            self.assertEqual(t.align, mem.align)
+
             self.assertEqual(t.shape, ())
             self.assertEqual(t.strides, ())
-            self.assertEqual(t.align, mem.align)
 
             for i in range(10):
                 t = ndt("!%d * %s" % (i, dtype))
@@ -275,15 +282,11 @@ class TestFortran(unittest.TestCase):
                 strides = (mem.itemsize,)
 
                 self.assertEqual(t.ndim, 1)
-                try:
-                    self.assertEqual(t.itemsize, mem.itemsize)
-                except AssertionError:
-                    print(i, dtype)
-                    raise
+                self.assertEqual(t.itemsize, mem.itemsize)
+                self.assertEqual(t.align, mem.align)
 
                 self.assertEqual(t.shape, shape)
                 self.assertEqual(t.strides, strides)
-                self.assertEqual(t.align, mem.align)
 
             for i in range(10):
                 for j in range(10):
@@ -293,9 +296,10 @@ class TestFortran(unittest.TestCase):
 
                     self.assertEqual(t.ndim, 2)
                     self.assertEqual(t.itemsize, mem.itemsize)
+                    self.assertEqual(t.align, mem.align)
+
                     self.assertEqual(t.shape, shape)
                     self.assertEqual(t.strides, strides)
-                    self.assertEqual(t.align, mem.align)
 
             for i in range(5):
                 for j in range(5):
@@ -306,9 +310,10 @@ class TestFortran(unittest.TestCase):
 
                         self.assertEqual(t.ndim, 3)
                         self.assertEqual(t.itemsize, mem.itemsize)
+                        self.assertEqual(t.align, mem.align)
+
                         self.assertEqual(t.shape, shape)
                         self.assertEqual(t.strides, strides)
-                        self.assertEqual(t.align, mem.align)
 
 
 class TestVarDim(unittest.TestCase):
@@ -334,8 +339,9 @@ class TestVarDim(unittest.TestCase):
         dtype = ndt(dt)
 
         self.assertEqual(t.ndim, 2)
-        self.assertEqual(t.align, dtype.align)
         self.assertEqual(t.itemsize, dtype.itemsize)
+        self.assertEqual(t.align, dtype.align)
+
         self.assertRaises(TypeError, getattr, t, 'shape')
         self.assertRaises(TypeError, getattr, t, 'strides')
 
