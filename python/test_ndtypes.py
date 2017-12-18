@@ -160,6 +160,17 @@ class TestFixedDim(unittest.TestCase):
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
 
+    def test_fixed_dim_common_fields(self):
+        dt = "{a: complex64, b: string}"
+        t = ndt("2 * 3 * %s" % dt)
+        dtype = ndt(dt)
+
+        self.assertEqual(t.ndim, 2)
+        self.assertEqual(t.align, 8)
+        self.assertEqual(t.itemsize, dtype.itemsize)
+        self.assertEqual(t.shape, (2, 3))
+        self.assertEqual(t.strides, (3 * dtype.itemsize, dtype.itemsize))
+
     def test_fixed_invariants(self):
         # Mixing var and fixed is disallowed.
         self.assertRaises(TypeError, ndt, "10 * var * int8")
