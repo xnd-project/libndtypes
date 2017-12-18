@@ -51,14 +51,16 @@ class TestModule(unittest.TestCase):
         t = ndt("SomeNamespace:: 2 * 3 * float64")
 
         self.assertTrue(t.is_abstract())
-        self.assertFalse(t.is_concrete())
-        self.assertFalse(t.is_optional())
         self.assertFalse(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertFalse(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
         self.assertFalse(t.is_scalar())
         self.assertFalse(t.is_signed())
         self.assertFalse(t.is_unsigned())
-        self.assertFalse(t.is_float())
-        self.assertFalse(t.is_complex())
 
     def test_module_common_fields(self):
         t = ndt("SomeNamespace:: 2 * 3 * float64")
@@ -79,14 +81,16 @@ class TestFunction(unittest.TestCase):
         t = ndt("(10 * float64, string) -> float64")
  
         self.assertTrue(t.is_abstract())
-        self.assertFalse(t.is_concrete())
-        self.assertFalse(t.is_optional())
         self.assertFalse(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertFalse(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
         self.assertFalse(t.is_scalar())
         self.assertFalse(t.is_signed())
         self.assertFalse(t.is_unsigned())
-        self.assertFalse(t.is_float())
-        self.assertFalse(t.is_complex())
 
     def test_function_common_fields(self):
         t = ndt("(10 * float64, string) -> float64")
@@ -107,14 +111,16 @@ class TestAny(unittest.TestCase):
         t = ndt("Any")
 
         self.assertTrue(t.is_abstract())
-        self.assertFalse(t.is_concrete())
-        self.assertFalse(t.is_optional())
         self.assertFalse(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertFalse(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
         self.assertFalse(t.is_scalar())
         self.assertFalse(t.is_signed())
         self.assertFalse(t.is_unsigned())
-        self.assertFalse(t.is_float())
-        self.assertFalse(t.is_complex())
 
     def test_any_common_fields(self):
         t = ndt("Any")

@@ -464,22 +464,6 @@ ndtype_##NDTFUNC(PyObject *self, PyObject *args UNUSED) \
     Py_RETURN_FALSE;                                    \
 }
 
-#define Ndtype_ArrayBoolFunc(NDTFUNC) \
-static PyObject *                                       \
-ndtype_##NDTFUNC(PyObject *self, PyObject *args UNUSED) \
-{                                                       \
-    if (!ndt_is_array(NDT(self))) {                     \
-        PyErr_SetString(PyExc_ValueError,               \
-            "argument must be an array type");          \
-            return NULL;                                \
-    }                                                   \
-                                                        \
-    if (NDTFUNC(NDT(self))) {                           \
-        Py_RETURN_TRUE;                                 \
-    }                                                   \
-    Py_RETURN_FALSE;                                    \
-}
-
 Ndtype_BoolFunc(ndt_is_abstract)
 Ndtype_BoolFunc(ndt_is_concrete)
 Ndtype_BoolFunc(ndt_is_signed)
@@ -489,9 +473,9 @@ Ndtype_BoolFunc(ndt_is_complex)
 Ndtype_BoolFunc(ndt_is_scalar)
 Ndtype_BoolFunc(ndt_is_array)
 Ndtype_BoolFunc(ndt_is_optional)
+Ndtype_BoolFunc(ndt_is_c_contiguous)
+Ndtype_BoolFunc(ndt_is_f_contiguous)
 
-Ndtype_ArrayBoolFunc(ndt_is_c_contiguous)
-Ndtype_ArrayBoolFunc(ndt_is_f_contiguous)
 
 static PyObject *
 ndtype_richcompare(PyObject *self, PyObject *other, int op)
