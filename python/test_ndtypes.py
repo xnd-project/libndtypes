@@ -456,6 +456,52 @@ class TestEllipsisDim(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
+class TestTuple(unittest.TestCase):
+
+    def test_tuple_predicates(self):
+        for s in ["()", "(int64)", "(string, bytes, pack=1)"]:
+            t = ndt(s)
+
+            self.assertFalse(t.is_abstract())
+            self.assertFalse(t.is_array())
+            self.assertFalse(t.is_c_contiguous())
+            self.assertFalse(t.is_complex())
+            self.assertTrue(t.is_concrete())
+            self.assertFalse(t.is_f_contiguous())
+            self.assertFalse(t.is_float())
+            self.assertFalse(t.is_optional())
+            self.assertFalse(t.is_scalar())
+            self.assertFalse(t.is_signed())
+            self.assertFalse(t.is_unsigned())
+
+        for s in ["(Any)", "(int64, N * M * uint8)", "(string, Float)"]:
+            t = ndt(s)
+
+            self.assertTrue(t.is_abstract())
+            self.assertFalse(t.is_array())
+            self.assertFalse(t.is_c_contiguous())
+            self.assertFalse(t.is_complex())
+            self.assertFalse(t.is_concrete())
+            self.assertFalse(t.is_f_contiguous())
+            self.assertFalse(t.is_float())
+            self.assertFalse(t.is_optional())
+            self.assertFalse(t.is_scalar())
+            self.assertFalse(t.is_signed())
+            self.assertFalse(t.is_unsigned())
+
+    def test_tuple_common_fields(self):
+        f = "{a: complex64, b: string}"
+        t = ndt("(%s, %s)" % (f, f))
+        field = ndt(f)
+
+        self.assertEqual(t.ndim, 0)
+        self.assertEqual(t.itemsize, 2 * field.itemsize)
+        self.assertEqual(t.align, field.align)
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -540,6 +586,7 @@ ALL_TESTS = [
   TestVarDim,
   TestSymbolicDim,
   TestEllipsisDim,
+  TestTuple,
   TestCopy,
   TestConstruction,
   TestError,
