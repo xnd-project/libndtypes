@@ -32,13 +32,16 @@
 
 # Functions for generating test cases.
 
+import sys
 from itertools import accumulate, count, product
 from collections import namedtuple
 from random import randrange
 from _testbuffer import get_sizeof_void_p
 
 
-PTR_SIZE = get_sizeof_void_p()
+SIZEOF_PTR = get_sizeof_void_p()
+SIZEOF_SIZE_T = 8 if sys.maxsize==2**63-1 else 4
+
 Mem = namedtuple("Mem", "itemsize align")
 
 
@@ -82,12 +85,12 @@ DTYPE_TEST_CASES = [
    ("(uint16, (complex64), align=8)", Mem(itemsize=16, align=8)),
 
    # References to tuples
-   ("&(uint16, (complex64), align=1)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("(uint16, &(complex64), pack=1)", Mem(itemsize=2+PTR_SIZE, align=1)),
+   ("&(uint16, (complex64), align=1)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("(uint16, &(complex64), pack=1)", Mem(itemsize=2+SIZEOF_PTR, align=1)),
 
    # Constructor containing references to tuples
-   ("Some(&(uint16, (complex64), align=1))", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("Some((uint16, &(complex64), pack=1))", Mem(itemsize=2+PTR_SIZE, align=1)),
+   ("Some(&(uint16, (complex64), align=1))", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("Some((uint16, &(complex64), pack=1))", Mem(itemsize=2+SIZEOF_PTR, align=1)),
 
    # Optional tuples
    ("?(uint16, (complex64), align=1)", Mem(itemsize=12, align=4)),
@@ -98,8 +101,8 @@ DTYPE_TEST_CASES = [
    ("?(uint16, ?(complex64), align=8)", Mem(itemsize=16, align=8)),
 
    # References to optional tuples or tuples with optional subtrees
-   ("&?(uint16, (complex64), align=1)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("&(uint16, ?(complex64), align=1)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&?(uint16, (complex64), align=1)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("&(uint16, ?(complex64), align=1)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
    # Constructor containing optional tuples or tuples with optional subtrees
    ("Some(?(uint16, (complex64), align=1))", Mem(itemsize=12, align=4)),
@@ -159,61 +162,61 @@ DTYPE_TEST_CASES = [
    ("?complex128", Mem(itemsize=16, align=8)),
 
    # References
-   ("&bool", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&bool", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("&int8", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("&int16", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("&int32", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("&int64", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&int8", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("&int16", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("&int32", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("&int64", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("ref(uint8)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(uint16)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(uint32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(uint64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(uint8)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(uint16)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(uint32)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(uint64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("ref(float32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(float64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(float32)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(float64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("ref(complex64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(complex128)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(complex64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(complex128)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
    # Optional references
-   ("?&bool", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?&bool", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("?&int8", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("?&int16", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("?&int32", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("?&int64", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?&int8", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("?&int16", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("?&int32", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("?&int64", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("?ref(uint8)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("?ref(uint16)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("?ref(uint32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("?ref(uint64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?ref(uint8)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("?ref(uint16)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("?ref(uint32)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("?ref(uint64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("?ref(float32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("?ref(float64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?ref(float32)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("?ref(float64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("?ref(complex64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("?ref(complex128)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("?ref(complex64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("?ref(complex128)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
    # References to optional types
-   ("&?bool", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&?bool", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("&?int8", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("&?int16", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("&?int32", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("&?int64", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("&?int8", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("&?int16", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("&?int32", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("&?int64", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("ref(?uint8)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(?uint16)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(?uint32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(?uint64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(?uint8)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(?uint16)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(?uint32)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(?uint64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("ref(?float32)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(?float64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(?float32)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(?float64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
-   ("ref(?complex64)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
-   ("ref(?complex128)", Mem(itemsize=PTR_SIZE, align=PTR_SIZE)),
+   ("ref(?complex64)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
+   ("ref(?complex128)", Mem(itemsize=SIZEOF_PTR, align=SIZEOF_PTR)),
 
    # Constructors
    ("Some(bool)", Mem(itemsize=1, align=1)),
