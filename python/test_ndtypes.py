@@ -758,6 +758,40 @@ class TestFixedStringKind(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
+class TestFixedString(unittest.TestCase):
+
+    def test_fixed_string_predicates(self):
+        t = ndt("fixed_string(380, 'utf16')")
+
+        self.assertFalse(t.is_abstract())
+        self.assertFalse(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertTrue(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
+        self.assertTrue(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+
+    def test_fixed_string_common_fields(self):
+        for encoding, codepoint_size in [
+            ('ascii', 1),
+            ('utf8', 1),
+            ('utf16', 2),
+            ('utf32', 4)]:
+
+            t = ndt("fixed_string(20, '%s')" % encoding)
+
+            self.assertEqual(t.ndim, 0)
+            self.assertEqual(t.itemsize, 20 * codepoint_size)
+            self.assertEqual(t.align, codepoint_size)
+
+            self.assertRaises(TypeError, t, 'shape')
+            self.assertRaises(TypeError, t, 'strides')
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -850,6 +884,7 @@ ALL_TESTS = [
   TestScalarKind,
   TestCategorical,
   TestFixedStringKind,
+  TestFixedString,
   TestCopy,
   TestConstruction,
   TestError,
