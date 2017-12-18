@@ -72,6 +72,33 @@ class TestModule(unittest.TestCase):
         self.assertRaises(TypeError, getattr, t, 'strides')
 
 
+class TestFunction(unittest.TestCase):
+
+    def test_function(self):
+        t = ndt("(10 * float64, string) -> float64")
+ 
+        # Predicates.
+        self.assertTrue(t.is_abstract())
+        self.assertFalse(t.is_concrete())
+
+        self.assertFalse(t.is_optional())
+        self.assertFalse(t.is_array())
+        self.assertFalse(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_complex())
+
+        # Common type fields are undefined.
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+
+        # Cannot be represented as an ndarray.
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
+
+
 class TestAny(unittest.TestCase):
 
     def test_any(self):
@@ -337,6 +364,7 @@ class TestApply(unittest.TestCase):
 
 ALL_TESTS = [
   TestModule,
+  TestFunction,
   TestAny,
   TestFixedDim,
   TestFortran,
