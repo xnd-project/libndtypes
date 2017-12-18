@@ -166,7 +166,7 @@ class TestFixedDim(unittest.TestCase):
         dtype = ndt(dt)
 
         self.assertEqual(t.ndim, 2)
-        self.assertEqual(t.align, 8)
+        self.assertEqual(t.align, dtype.align)
         self.assertEqual(t.itemsize, dtype.itemsize)
         self.assertEqual(t.shape, (2, 3))
         self.assertEqual(t.strides, (3 * dtype.itemsize, dtype.itemsize))
@@ -255,7 +255,7 @@ class TestFortran(unittest.TestCase):
         dtype = ndt(dt)
 
         self.assertEqual(t.ndim, 2)
-        self.assertEqual(t.align, 8)
+        self.assertEqual(t.align, dtype.align)
         self.assertEqual(t.itemsize, dtype.itemsize)
         self.assertEqual(t.shape, (2, 3))
         self.assertEqual(t.strides, (dtype.itemsize, 2 * dtype.itemsize))
@@ -312,6 +312,32 @@ class TestFortran(unittest.TestCase):
 
 
 class TestVarDim(unittest.TestCase):
+
+    def test_var_dim_predicates(self):
+        t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * complex128")
+
+        self.assertFalse(t.is_abstract())
+        self.assertTrue(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertTrue(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
+        self.assertFalse(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+
+    def test_var_dim_common_fields(self):
+        dt = "{a: complex64, b: string}"
+        t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * %s" % dt)
+        dtype = ndt(dt)
+
+        self.assertEqual(t.ndim, 2)
+        self.assertEqual(t.align, dtype.align)
+        self.assertEqual(t.itemsize, dtype.itemsize)
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
     def test_var_invariants(self):
         # Mixing var and fixed is disallowed.
