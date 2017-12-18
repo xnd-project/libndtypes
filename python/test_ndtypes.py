@@ -820,6 +820,40 @@ class TestFixedBytesKind(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
+class TestFixedBytes(unittest.TestCase):
+
+    def test_fixed_bytes_predicates(self):
+        t = ndt("fixed_bytes(size=1020)")
+
+        self.assertFalse(t.is_abstract())
+        self.assertFalse(t.is_array())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_complex())
+        self.assertTrue(t.is_concrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_float())
+        self.assertFalse(t.is_optional())
+        self.assertTrue(t.is_scalar())
+        self.assertFalse(t.is_signed())
+        self.assertFalse(t.is_unsigned())
+
+    def test_fixed_bytes_common_fields(self):
+        for align in [1,2,4,8,16,32,64]:
+
+            t = ndt("fixed_bytes(size=1024, align=%d)" % align)
+
+            self.assertEqual(t.ndim, 0)
+            self.assertEqual(t.itemsize, 1024)
+            self.assertEqual(t.align, align)
+
+            self.assertRaises(TypeError, t, 'shape')
+            self.assertRaises(TypeError, t, 'strides')
+
+    def test_fixed_bytes_exceptions(self):
+        # Data size must be a multiple of align.
+        self.assertRaises(ValueError, ndt, "fixed_bytes(size=20, align=8)")
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -914,6 +948,7 @@ ALL_TESTS = [
   TestFixedStringKind,
   TestFixedString,
   TestFixedBytesKind,
+  TestFixedBytes,
   TestCopy,
   TestConstruction,
   TestError,

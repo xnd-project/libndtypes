@@ -1803,6 +1803,12 @@ ndt_fixed_bytes(size_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
         return NULL;
     }
 
+    if (size % align != 0) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "data size must be a multiple of alignment");
+        return NULL;
+    }
+
     /* abstract type */
     t = ndt_new(FixedBytes, ctx);
     if (t == NULL) {
