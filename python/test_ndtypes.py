@@ -30,7 +30,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import unittest, sys, argparse, gc
+import sys, argparse
+import unittest, gc
+import weakref
 from copy import copy
 from ndtypes import ndt, typedef, MAX_DIM
 from randtype import *
@@ -1327,19 +1329,31 @@ class TestCopy(unittest.TestCase):
             self.assertEqual(u.ast_repr(), t.ast_repr())
 
     def test_copy_gc(self):
+        class MyType(ndt):
+            self.attr = None
+        class MyObject():
+            self.attr = None
+
         x = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * int8")
         y = copy(x)
-        del x
-        gc.collect()
-        del y
+        x = y = None
         gc.collect()
 
         x = ndt("{z: 10 * int8}", [[0, 2], [0, 10, 20]])
         y = copy(x)
-        del x
+        x = y = None
         gc.collect()
-        del y
+
+        x = MyType("var(offsets=[0,2]) * var(offsets=[0,3,10]) * int8")
+        y = copy(x)
+        o = MyObject()
+        o.attr = x
+        x.attr = y
+        y.attr = o
+        wr = weakref.ref(o)
+        x = y = o = None
         gc.collect()
+        self.assertTrue(wr() is None, wr())
 
 
 class TestError(unittest.TestCase):
