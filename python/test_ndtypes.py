@@ -42,6 +42,9 @@ parser.add_argument("-f", "--failfast", action="store_true",
 ARGS = parser.parse_args()
 
 
+HAVE_PYTHON_36 = sys.version_info >= (3, 6, 0)
+
+
 class TestModule(unittest.TestCase):
 
     def test_module_predicates(self):
@@ -1149,6 +1152,142 @@ class TestUnsigned(unittest.TestCase):
             self.assertRaises(TypeError, t, 'shape')
 
 
+class TestFloatKind(unittest.TestCase):
+
+    def test_float_kind_predicates(self):
+        t = ndt("Float")
+
+        self.assertTrue(t.isabstract())
+        self.assertFalse(t.isarray())
+        self.assertFalse(t.iscomplex())
+        self.assertFalse(t.isconcrete())
+        self.assertFalse(t.isfloat())
+        self.assertFalse(t.isoptional())
+        self.assertFalse(t.isscalar())
+        self.assertFalse(t.issigned())
+        self.assertFalse(t.isunsigned())
+
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_f_contiguous())
+
+    def test_float_kind_common_fields(self):
+        t = ndt("Float")
+
+        self.assertRaises(TypeError, t, 'ndim')
+        self.assertRaises(TypeError, t, 'itemsize')
+        self.assertRaises(TypeError, t, 'align')
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
+class TestFloat(unittest.TestCase):
+
+    def test_float_predicates(self):
+        _float = ['float32', 'float64']
+        if HAVE_PYTHON_36:
+            _float.insert(0, 'float16')
+
+        for s in _float:
+            t = ndt(s)
+
+            self.assertFalse(t.isabstract())
+            self.assertFalse(t.isarray())
+            self.assertFalse(t.iscomplex())
+            self.assertTrue(t.isconcrete())
+            self.assertTrue(t.isfloat())
+            self.assertFalse(t.isoptional())
+            self.assertTrue(t.isscalar())
+            self.assertFalse(t.issigned())
+            self.assertFalse(t.isunsigned())
+
+            self.assertFalse(t.is_c_contiguous())
+            self.assertFalse(t.is_f_contiguous())
+
+    def test_float_common_fields(self):
+        _float = [('float32', 4), ('float64', 8)]
+        if HAVE_PYTHON_36:
+            _float.insert(0, ('float16', 2))
+
+        for s, itemsize in _float:
+            t = ndt(s)
+
+            self.assertEqual(t.ndim, 0)
+            self.assertEqual(t.itemsize, itemsize)
+            self.assertEqual(t.align, itemsize)
+
+            self.assertRaises(TypeError, t, 'shape')
+            self.assertRaises(TypeError, t, 'shape')
+
+
+class TestComplexKind(unittest.TestCase):
+
+    def test_complex_kind_predicates(self):
+        t = ndt("Complex")
+
+        self.assertTrue(t.isabstract())
+        self.assertFalse(t.isarray())
+        self.assertFalse(t.iscomplex())
+        self.assertFalse(t.isconcrete())
+        self.assertFalse(t.isfloat())
+        self.assertFalse(t.isoptional())
+        self.assertFalse(t.isscalar())
+        self.assertFalse(t.issigned())
+        self.assertFalse(t.isunsigned())
+
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_f_contiguous())
+
+    def test_complex_kind_common_fields(self):
+        t = ndt("Complex")
+
+        self.assertRaises(TypeError, t, 'ndim')
+        self.assertRaises(TypeError, t, 'itemsize')
+        self.assertRaises(TypeError, t, 'align')
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
+class TestComplex(unittest.TestCase):
+
+    def test_complex_predicates(self):
+        _complex = ['complex64', 'complex128']
+        if HAVE_PYTHON_36:
+            _complex.insert(0, 'complex32')
+
+        for s in _complex:
+            t = ndt(s)
+
+            self.assertFalse(t.isabstract())
+            self.assertFalse(t.isarray())
+            self.assertTrue(t.iscomplex())
+            self.assertTrue(t.isconcrete())
+            self.assertFalse(t.isfloat())
+            self.assertFalse(t.isoptional())
+            self.assertTrue(t.isscalar())
+            self.assertFalse(t.issigned())
+            self.assertFalse(t.isunsigned())
+
+            self.assertFalse(t.is_c_contiguous())
+            self.assertFalse(t.is_f_contiguous())
+
+    def test_complex_common_fields(self):
+        _complex = [('complex64', 8), ('complex128', 16)]
+        if HAVE_PYTHON_36:
+            _complex.insert(0, ('complex32', 4))
+
+        for s, itemsize in _complex:
+            t = ndt(s)
+
+            self.assertEqual(t.ndim, 0)
+            self.assertEqual(t.itemsize, itemsize)
+            self.assertEqual(t.align, itemsize / 2)
+
+            self.assertRaises(TypeError, t, 'shape')
+            self.assertRaises(TypeError, t, 'shape')
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -1253,6 +1392,10 @@ ALL_TESTS = [
   TestSigned,
   TestUnsignedKind,
   TestUnsigned,
+  TestFloatKind,
+  TestFloat,
+  TestComplexKind,
+  TestComplex,
   TestCopy,
   TestConstruction,
   TestError,
