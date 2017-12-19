@@ -960,6 +960,34 @@ class TestChar(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
+class TestBool(unittest.TestCase):
+
+    def test_bool_predicates(self):
+        t = ndt("bool")
+
+        self.assertFalse(t.isabstract())
+        self.assertFalse(t.isarray())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.iscomplex())
+        self.assertTrue(t.isconcrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.isfloat())
+        self.assertFalse(t.isoptional())
+        self.assertTrue(t.isscalar())
+        self.assertFalse(t.issigned())
+        self.assertFalse(t.isunsigned())
+
+    def test_bool_common_fields(self):
+        t = ndt("bool")
+
+        self.assertEqual(t.ndim, 0)
+        self.assertEqual(t.itemsize, 1)
+        self.assertEqual(t.align, 1)
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -1059,6 +1087,7 @@ ALL_TESTS = [
   TestString,
   TestBytes,
   TestChar,
+  TestBool,
   TestCopy,
   TestConstruction,
   TestError,
