@@ -664,9 +664,14 @@ class TestConstr(unittest.TestCase):
 
 class TestNominal(unittest.TestCase):
 
+    # The regrtest.py -R option causes setUpClass() to be called several times.
+    initialized = False
+
     @classmethod
     def setUpClass(cls):
-        typedef("some_t", "2 * 10 * complex128")
+        if not cls.initialized:
+            typedef("some_t", "2 * 10 * complex128")
+            cls.initialized = True
 
     def test_nominal_predicates(self):
             t = ndt("some_t")
