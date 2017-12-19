@@ -105,6 +105,28 @@ class TestFunction(unittest.TestCase):
         self.assertRaises(TypeError, getattr, t, 'strides')
 
 
+class TestVoid(unittest.TestCase):
+
+    def test_void_as_return_value(self):
+        t = ndt("() -> void")
+
+        self.assertTrue(t.isabstract())
+        self.assertFalse(t.isarray())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.iscomplex())
+        self.assertFalse(t.isconcrete())
+        self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.isfloat())
+        self.assertFalse(t.isoptional())
+        self.assertFalse(t.isscalar())
+        self.assertFalse(t.issigned())
+        self.assertFalse(t.isunsigned())
+
+    def test_void_exceptions(self):
+        # Void can only be used as a function return type.
+        self.assertRaises(ValueError, ndt, "void")
+
+
 class TestAny(unittest.TestCase):
 
     def test_any_predicates(self):
@@ -938,28 +960,6 @@ class TestChar(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
-class TestVoid(unittest.TestCase):
-
-    def test_void_as_return_value(self):
-        t = ndt("() -> void")
-
-        self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
-        self.assertFalse(t.is_c_contiguous())
-        self.assertFalse(t.iscomplex())
-        self.assertFalse(t.isconcrete())
-        self.assertFalse(t.is_f_contiguous())
-        self.assertFalse(t.isfloat())
-        self.assertFalse(t.isoptional())
-        self.assertFalse(t.isscalar())
-        self.assertFalse(t.issigned())
-        self.assertFalse(t.isunsigned())
-
-    def test_void_exceptions(self):
-        # Void can only be used as a function return type.
-        self.assertRaises(ValueError, ndt, "void")
-
-
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -1038,6 +1038,7 @@ class TestApply(unittest.TestCase):
 ALL_TESTS = [
   TestModule,
   TestFunction,
+  TestVoid,
   TestAny,
   TestFixedDim,
   TestFortran,
@@ -1058,7 +1059,6 @@ ALL_TESTS = [
   TestString,
   TestBytes,
   TestChar,
-  TestVoid,
   TestCopy,
   TestConstruction,
   TestError,
