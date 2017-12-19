@@ -1288,6 +1288,35 @@ class TestComplex(unittest.TestCase):
             self.assertRaises(TypeError, t, 'shape')
 
 
+class TestTypevar(unittest.TestCase):
+
+    def test_typevar_predicates(self):
+        t = ndt("T")
+
+        self.assertTrue(t.isabstract())
+        self.assertFalse(t.isarray())
+        self.assertFalse(t.iscomplex())
+        self.assertFalse(t.isconcrete())
+        self.assertFalse(t.isfloat())
+        self.assertFalse(t.isoptional())
+        self.assertFalse(t.isscalar())
+        self.assertFalse(t.issigned())
+        self.assertFalse(t.isunsigned())
+
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_f_contiguous())
+
+    def test_typevar_common_fields(self):
+        t = ndt("T")
+
+        self.assertRaises(TypeError, t, 'ndim')
+        self.assertRaises(TypeError, t, 'itemsize')
+        self.assertRaises(TypeError, t, 'align')
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -1396,6 +1425,7 @@ ALL_TESTS = [
   TestFloat,
   TestComplexKind,
   TestComplex,
+  TestTypevar,
   TestCopy,
   TestConstruction,
   TestError,
