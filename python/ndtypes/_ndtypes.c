@@ -536,6 +536,7 @@ ndtype_apply(PyObject *self, PyObject *other)
 {
     NDT_STATIC_CONTEXT(ctx);
     PyObject *return_type, *outer_dims;
+    PyObject *res;
     ndt_t *t;
     int k = -1;
 
@@ -562,8 +563,12 @@ ndtype_apply(PyObject *self, PyObject *other)
         return NULL;
     }
 
-    return PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, self, other,
+    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, self, other,
                                         return_type, outer_dims, NULL);
+
+    Py_DECREF(return_type);
+    Py_DECREF(outer_dims);
+    return res;
 }
 
 static PyObject *
