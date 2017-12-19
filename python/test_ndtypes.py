@@ -38,12 +38,6 @@ from ndtypes import ndt, typedef, MAX_DIM
 from randtype import *
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-f", "--failfast", action="store_true",
-                    help="stop the test run on first error")
-ARGS = parser.parse_args()
-
-
 HAVE_PYTHON_36 = sys.version_info >= (3, 6, 0)
 
 
@@ -1447,6 +1441,11 @@ ALL_TESTS = [
 ]
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--failfast", action="store_true",
+                        help="stop the test run on first error")
+    args = parser.parse_args()
+
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()
 
@@ -1454,7 +1453,7 @@ if __name__ == '__main__':
         s = loader.loadTestsFromTestCase(case)
         suite.addTest(s)
 
-    runner = unittest.TextTestRunner(failfast=ARGS.failfast, verbosity=2)
+    runner = unittest.TextTestRunner(failfast=args.failfast, verbosity=2)
     result = runner.run(suite)
     ret = not result.wasSuccessful()
 
