@@ -1082,6 +1082,73 @@ class TestSigned(unittest.TestCase):
             self.assertRaises(TypeError, t, 'shape')
 
 
+class TestUnsignedKind(unittest.TestCase):
+
+    def test_unsigned_kind_predicates(self):
+        t = ndt("Unsigned")
+
+        self.assertTrue(t.isabstract())
+        self.assertFalse(t.isarray())
+        self.assertFalse(t.iscomplex())
+        self.assertFalse(t.isconcrete())
+        self.assertFalse(t.isfloat())
+        self.assertFalse(t.isoptional())
+        self.assertFalse(t.isscalar())
+        self.assertFalse(t.issigned())
+        self.assertFalse(t.isunsigned())
+
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_f_contiguous())
+
+    def test_unsigned_kind_common_fields(self):
+        t = ndt("Unsigned")
+
+        self.assertRaises(TypeError, t, 'ndim')
+        self.assertRaises(TypeError, t, 'itemsize')
+        self.assertRaises(TypeError, t, 'align')
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
+class TestUnsigned(unittest.TestCase):
+
+    def test_unsigned_predicates(self):
+        unsigned = ['uint8', 'uint16', 'uint32', 'uint64']
+
+        for s in unsigned:
+            t = ndt(s)
+
+            self.assertFalse(t.isabstract())
+            self.assertFalse(t.isarray())
+            self.assertFalse(t.iscomplex())
+            self.assertTrue(t.isconcrete())
+            self.assertFalse(t.isfloat())
+            self.assertFalse(t.isoptional())
+            self.assertTrue(t.isscalar())
+            self.assertFalse(t.issigned())
+            self.assertTrue(t.isunsigned())
+
+            self.assertFalse(t.is_c_contiguous())
+            self.assertFalse(t.is_f_contiguous())
+
+    def test_unsigned_common_fields(self):
+        for s, itemsize in [
+            ('uint8', 1),
+            ('uint16', 2),
+            ('uint32', 4),
+            ('uint64', 8)]:
+
+            t = ndt(s)
+
+            self.assertEqual(t.ndim, 0)
+            self.assertEqual(t.itemsize, itemsize)
+            self.assertEqual(t.align, itemsize)
+
+            self.assertRaises(TypeError, t, 'shape')
+            self.assertRaises(TypeError, t, 'shape')
+
+
 class TestCopy(unittest.TestCase):
 
     def test_copy(self):
@@ -1184,6 +1251,8 @@ ALL_TESTS = [
   TestBool,
   TestSignedKind,
   TestSigned,
+  TestUnsignedKind,
+  TestUnsigned,
   TestCopy,
   TestConstruction,
   TestError,
