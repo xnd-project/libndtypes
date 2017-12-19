@@ -444,7 +444,6 @@ ndtype_ast_repr(PyObject *self, PyObject *args UNUSED)
 static PyObject *
 ndtype_copy(PyObject *self, PyObject *args UNUSED)
 {
-    Py_XINCREF(RBUF(self));
     Py_INCREF(self);
     return self;
 }
