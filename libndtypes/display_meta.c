@@ -347,6 +347,10 @@ static const char *
 tag_as_constr(enum ndt tag)
 {
     switch (tag) {
+    case Module: return "Module";
+    case Function: return "Function";
+    case Void: return "Void";
+
     case AnyKind: return "Any";
 
     case FixedDim: return "FixedDim";
@@ -355,16 +359,13 @@ tag_as_constr(enum ndt tag)
     case EllipsisDim: return "EllipsisDim";
 
     case Nominal: return "Nominal";
-    case Module: return "Module";
     case Constr: return "Constr";
 
     case Tuple: return "Tuple";
     case Record: return "Record";
-    case Function: return "Function";
     case Typevar: return "Typevar";
 
     case ScalarKind: return "ScalarKind";
-    case Void: return "Void";
     case Bool: return "Bool";
 
     case SignedKind: return "SignedKind";

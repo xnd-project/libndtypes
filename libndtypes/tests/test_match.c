@@ -157,31 +157,11 @@ const match_testcase_t match_tests[] = {
     1 },
 
   { "Scalar",
-    "void",
-    1 },
-
-  { "Scalar",
     "string",
     1 },
 
   { "?Scalar",
     "?uint64",
-    1 },
-
-  { "10 * void",
-    "10 * void",
-    1 },
-
-  { "void",
-    "void",
-    1 },
-
-  { "void",
-    "(...)",
-    0 },
-
-  { "?void",
-    "?void",
     1 },
 
   { "10 * bool",
@@ -2348,10 +2328,6 @@ const match_testcase_t match_tests[] = {
 
   { "?categorical(31275, 69, 1.2e-32)",
     "?categorical(31275, 69, 1.2e-32)",
-    1 },
-
-  { "var * var * ... * void",
-    "var * var * ... * void",
     1 },
 
   { "categorical('omhwkoWVWw', 43, 946986991)",

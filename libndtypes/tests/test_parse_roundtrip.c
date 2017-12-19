@@ -51,8 +51,6 @@ const char *parse_roundtrip_tests[] = {
   "Any",
   "10 * ScalarKind",
   "ScalarKind",
-  "10 * void",
-  "void",
   "10 * bool",
   "bool",
   "10 * SignedKind",
@@ -320,7 +318,6 @@ const char *parse_roundtrip_tests[] = {
   "var * var * var * fixed_bytes(size=2816010912, align=16)",
   "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
   "var * var * var * ZcTmBXnKPi",
-  "var * var * ... * void",
   "categorical(946986991, 43, 'omhwkoWVWw')",
   "var * float32",
   "var * var * var * uint16",
@@ -388,6 +385,10 @@ const char *parse_roundtrip_tests[] = {
   "foo_t",
   "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
   "(a : ref({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
+
+  "() -> void",
+  "(complex128, a : float64) -> void",
+  "(int32, ...) -> void",
   /* END MANUALLY GENERATED */
 
   NULL

@@ -315,17 +315,19 @@ const char *
 ndt_tag_as_string(enum ndt tag)
 {
     switch (tag) {
+    case Module: return "module";
+    case Function: return "function";
+    case Void: return "void";
+
     case AnyKind: return "Any";
     case Nominal: return "nominal";
     case Constr: return "constr";
 
     case Tuple: return "tuple";
     case Record: return "record";
-    case Function: return "function";
     case Typevar: return "typevar";
 
     case ScalarKind: return "ScalarKind";
-    case Void: return "void";
     case Bool: return "bool";
 
     case SignedKind: return "SignedKind";
@@ -1569,6 +1571,12 @@ ndt_fixed_string_kind(ndt_context_t *ctx)
 }
 
 ndt_t *
+ndt_void(ndt_context_t *ctx)
+{
+    return ndt_new(Void, ctx);
+}
+
+ndt_t *
 ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -1588,11 +1596,6 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
     t->access = Concrete;
 
     switch(tag) {
-    case Void:
-        t->access = Abstract;
-        t->datasize = 0;
-        t->align = 1;
-        break;
     case Bool:
         t->datasize = sizeof(bool);
         t->align = alignof(bool);
@@ -2123,7 +2126,7 @@ int
 ndt_is_scalar(const ndt_t *t)
 {
     switch (t->tag) {
-    case Void: case Bool:
+    case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
     case Float16: case Float32: case Float64:

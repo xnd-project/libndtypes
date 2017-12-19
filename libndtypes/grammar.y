@@ -102,8 +102,9 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %start input
 %type <ndt> input
-%type <ndt> datashape_or_module
 %type <ndt> datashape
+%type <ndt> datashape_or_module
+%type <ndt> datashape_or_void
 %type <ndt> dimensions
 %type <ndt> dimensions_nooption
 %type <ndt> dimensions_tail
@@ -235,8 +236,7 @@ dtype:
 | NAME_UPPER                             { $$ = ndt_typevar($1, ctx); if ($$ == NULL) YYABORT; }
 
 scalar:
-  VOID arguments_opt { $$ = mk_primitive(Void, $2, ctx); if ($$ == NULL) YYABORT; }
-| BOOL arguments_opt { $$ = mk_primitive(Bool, $2, ctx); if ($$ == NULL) YYABORT; }
+  BOOL arguments_opt { $$ = mk_primitive(Bool, $2, ctx); if ($$ == NULL) YYABORT; }
 | SIGNED_KIND        { $$ = ndt_signed_kind(ctx); if ($$ == NULL) YYABORT; }
 | signed             { $$ = $1; }
 | UNSIGNED_KIND      { $$ = ndt_unsigned_kind(ctx); if ($$ == NULL) YYABORT; }
@@ -383,14 +383,18 @@ untyped_value:
 | FLOATNUMBER { $$ = $1; if ($$ == NULL) YYABORT; }
 | STRINGLIT   { $$ = $1; if ($$ == NULL) YYABORT; }
 
+datashape_or_void:
+  datashape { $$ = $1; if ($$ == NULL) YYABORT; }
+| VOID      { $$ = ndt_void(ctx); if ($$ == NULL) YYABORT; }
+
 function_type:
-  tuple_type RARROW datashape
+  tuple_type RARROW datashape_or_void
     { $$ = mk_function_from_tuple($3, $1, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN record_field_seq comma_variadic_flag RPAREN RARROW datashape
+| LPAREN record_field_seq comma_variadic_flag RPAREN RARROW datashape_or_void
     { $$ = mk_function($6, Nonvariadic, NULL, $3, $2, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN ELLIPSIS COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape
+| LPAREN ELLIPSIS COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape_or_void
     { $$ = mk_function($8, Variadic, NULL, $5, $4, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN tuple_field_seq COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape
+| LPAREN tuple_field_seq COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape_or_void
     { $$ = mk_function($8, Nonvariadic, $2, $5, $4, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN tuple_field_seq COMMA ELLIPSIS COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape
+| LPAREN tuple_field_seq COMMA ELLIPSIS COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape_or_void
     { $$ = mk_function($10, Variadic, $2, $7, $6, ctx); if ($$ == NULL) YYABORT; }

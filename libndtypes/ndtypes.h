@@ -163,6 +163,9 @@ enum ndt {
   /* Function */
   Function,
 
+  /* No return value */
+  Void,
+
   /* Any */
   AnyKind,
     FixedDim,
@@ -192,7 +195,6 @@ enum ndt {
         Char,
 
         /* Primitive */
-        Void,
         Bool,
 
         SignedKind,
@@ -523,6 +525,10 @@ NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Module */
 NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
+/* Function */
+NDTYPES_API ndt_t *ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx);
+/* Void */
+NDTYPES_API ndt_t *ndt_void(ndt_context_t *ctx);
 
 /* Any */
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
@@ -548,7 +554,6 @@ NDTYPES_API ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_
                  uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                   uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_typevar(char *name, ndt_context_t *ctx);
 
 
