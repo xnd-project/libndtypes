@@ -54,18 +54,19 @@ ndt_attr_del(ndt_attr_t *attr)
     switch (attr->tag) {
     case AttrValue:
         ndt_free(attr->AttrValue);
-        break;
+        ndt_free(attr);
+        return;
     case AttrList:
         for (i = 0; i < attr->AttrList.len; i++) {
             ndt_free(attr->AttrList.items[i]);
         }
         ndt_free(attr->AttrList.items);
-        break;
-    default:
-        abort(); /* NOT REACHED */
+        ndt_free(attr);
+        return;
     }
 
-    ndt_free(attr);
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid attribute");
 }
 
 void
@@ -83,16 +84,17 @@ ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
         switch (attr[i].tag) {
         case AttrValue:
             ndt_free(attr[i].AttrValue);
-            break;
+            continue;
         case AttrList:
             for (k = 0; k < attr[i].AttrList.len; k++) {
                 ndt_free(attr[i].AttrList.items[k]);
             }
             ndt_free(attr[i].AttrList.items);
-            break;
-        default:
-            abort(); /* NOT REACHED */
+            continue;
         }
+
+        /* NOT REACHED: tags should be exhaustive. */
+        ndt_internal_error("invalid attribute");
     }
 
     ndt_free(attr);

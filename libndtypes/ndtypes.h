@@ -151,7 +151,6 @@ enum ndt_encoding {
   Utf16,
   Utf32,
   Ucs2,
-  ErrorEncoding
 };
 
 
@@ -462,7 +461,7 @@ NDTYPES_API void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 NDTYPES_API void *ndt_memory_error(ndt_context_t *ctx);
 NDTYPES_API char *ndt_strdup(const char *s, ndt_context_t *ctx);
 NDTYPES_API char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
-NDTYPES_API enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
+NDTYPES_API enum ndt_encoding ndt_encoding_from_string(const char *s, ndt_context_t *ctx);
 NDTYPES_API const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 NDTYPES_API uint32_t ndt_dim_flags(const ndt_t *t);
 NDTYPES_API ndt_t *ndt_to_fortran(const ndt_t *type, ndt_context_t *ctx);
@@ -633,6 +632,23 @@ NDTYPES_API const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 NDTYPES_API char *ndt_as_string(ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
+
+
+
+/******************************************************************************/
+/*                              Error Macros                                  */
+/******************************************************************************/
+
+#define ndt_internal_error(msg) \
+  do {                                                                       \
+    fprintf(stderr, "%s:%d: internal error: %s\n", __FILE__, __LINE__, msg); \
+    abort();                                                                 \
+  } while (0)
+
+#define ndt_warn(msg) \
+    do {                                                                  \
+        fprintf(stderr, "%s:%d: warning: %s\n", __FILE__, __LINE__, msg); \
+    } while (0)
 
 
 /******************************************************************************/

@@ -50,6 +50,7 @@ char *mk_stringlit(const char *src, ndt_context_t *ctx);
 /*                        Functions used in the parser                       */
 /*****************************************************************************/
 
+enum ndt_encoding encoding_from_string(char *s, ndt_context_t *ctx);
 ndt_t *mk_fortran(ndt_t *type, ndt_context_t *ctx);
 ndt_t *mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx);
 ndt_t *mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx);

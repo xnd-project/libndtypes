@@ -261,5 +261,6 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
         return 1;
     }
 
-    abort(); /* NOT REACHED: tags should be exhaustive */
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid type");
 }

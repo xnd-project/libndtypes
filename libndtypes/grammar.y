@@ -296,7 +296,7 @@ fixed_string:
 | FIXED_STRING LPAREN INTEGER COMMA encoding RPAREN { $$ = mk_fixed_string($3, $5, ctx); if ($$ == NULL) YYABORT; }
 
 encoding:
-  STRINGLIT { $$ = ndt_encoding_from_string($1, ctx); if ($$ == ErrorEncoding) YYABORT; }
+  STRINGLIT { $$ = encoding_from_string($1, ctx); if (ndt_err_occurred(ctx)) YYABORT; }
 
 bytes:
   BYTES arguments_opt { $$ = mk_bytes($2, ctx); if ($$ == NULL) YYABORT; }

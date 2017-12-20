@@ -164,8 +164,7 @@ keyword(const ndt_t *t)
     }
 
     /* NOT REACHED: tags should be exhaustive. */
-    fprintf(stderr, "fatal internal error: invalid tag");
-    abort();
+    ndt_internal_error("invalid tag");
 }
 
 static int

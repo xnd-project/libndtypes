@@ -2415,7 +2415,7 @@ yyreduce:
 
   case 71:
 #line 299 "grammar.y" /* yacc.c:1646  */
-    { (yyval.encoding) = ndt_encoding_from_string((yyvsp[0].string), ctx); if ((yyval.encoding) == ErrorEncoding) YYABORT; }
+    { (yyval.encoding) = encoding_from_string((yyvsp[0].string), ctx); if (ndt_err_occurred(ctx)) YYABORT; }
 #line 2420 "grammar.c" /* yacc.c:1646  */
     break;
 

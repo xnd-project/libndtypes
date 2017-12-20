@@ -174,8 +174,9 @@ match_dimensions(const ndt_t *p[], int pshape,
             if (c[k]->tag == VarDim)
                 break;
             return 0;
-        default: /* NOT REACHED */
-            abort();
+        default:
+            /* NOT REACHED */
+            ndt_internal_error("not a dimension");
         }
     }
 
@@ -360,9 +361,10 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     case Constr:
         return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
                ndt_equal(p->Constr.type, c->Constr.type);
-    default: /* NOT REACHED */
-        abort();
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid type");
 }
 
 int

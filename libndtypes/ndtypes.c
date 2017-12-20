@@ -312,54 +312,57 @@ ndt_field_array_del(ndt_field_t *fields, size_t shape)
 /******************************************************************************/
 
 enum ndt_encoding
-ndt_encoding_from_string(char *s, ndt_context_t *ctx)
+ndt_encoding_from_string(const char *s, ndt_context_t *ctx)
 {
-    enum ndt_encoding ret = ErrorEncoding;
-
     if (strcmp(s, "A") == 0 ||
         strcmp(s, "ascii") == 0 ||
         strcmp(s, "us-ascii") == 0) {
-        ret = Ascii;
+        return Ascii;
     }
     else if (strcmp(s, "U8") == 0 ||
              strcmp(s, "utf8") == 0 ||
              strcmp(s, "utf-8") == 0) {
-        ret = Utf8;
+        return Utf8;
     }
     else if (strcmp(s, "U16") == 0 ||
              strcmp(s, "utf16") == 0 ||
              strcmp(s, "utf-16") == 0) {
-        ret = Utf16;
+        return Utf16;
     }
     else if (strcmp(s, "U32") == 0 ||
              strcmp(s, "utf32") == 0 ||
              strcmp(s, "utf-32") == 0) {
-        ret = Utf32;
+        return Utf32;
     }
     else if (strcmp(s, "ucs2") == 0 ||
              strcmp(s, "ucs-2") == 0 ||
              strcmp(s, "ucs_2") == 0) {
-        ret = Ucs2;
+        return Ucs2;
     }
     else {
         ndt_err_format(ctx, NDT_ValueError, "invalid encoding: '%s'", s);
+        return Ascii;
     }
-
-    ndt_free(s);
-    return ret;
 }
 
 const char *
 ndt_encoding_as_string(enum ndt_encoding encoding)
 {
     switch (encoding) {
-    case Ascii: return "'ascii'";
-    case Utf8: return "'utf8'";
-    case Utf16: return "'utf16'";
-    case Utf32: return "'utf32'";
-    case Ucs2: return "'ucs2'";
-    default: return "'unknown'";
+    case Ascii:
+        return "'ascii'";
+    case Utf8:
+        return "'utf8'";
+    case Utf16:
+        return "'utf16'";
+    case Utf32:
+        return "'utf32'";
+    case Ucs2:
+        return "'ucs2'";
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid encoding");
 }
 
 size_t
@@ -372,9 +375,10 @@ ndt_sizeof_encoding(enum ndt_encoding encoding)
         return 2;
     case Utf32:
         return 4;
-    default: /* NOT REACHED */
-        abort();
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid encoding");
 }
 
 uint16_t
@@ -1081,7 +1085,7 @@ ndt_next_dim(ndt_t *a)
     case VarDim: return a->VarDim.type;
     case SymbolicDim: return a->SymbolicDim.type;
     case EllipsisDim: return a->EllipsisDim.type;
-    default: abort();
+    default: abort(); /* XXX */
     }
 }
 
@@ -2169,7 +2173,8 @@ ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y)
         return 1;
     }
 
-    abort(); /* NOT REACHED: tags are exhaustive. */
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid value");
 }
 
 int
@@ -2192,7 +2197,8 @@ ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y)
         return 0;
     }
 
-    abort(); /* NOT REACHED: tags are exhaustive. */
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid value");
 }
 
 

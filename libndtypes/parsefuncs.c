@@ -76,6 +76,14 @@ mk_stringlit(const char *lexeme, ndt_context_t *ctx)
 /*                        Functions used in the parser                       */
 /*****************************************************************************/
 
+enum ndt_encoding
+encoding_from_string(char *s, ndt_context_t *ctx)
+{
+    enum ndt_encoding ret = ndt_encoding_from_string(s, ctx);
+    ndt_free(s);
+    return ret;
+}
+
 ndt_t *
 mk_fortran(ndt_t *type, ndt_context_t *ctx)
 {
