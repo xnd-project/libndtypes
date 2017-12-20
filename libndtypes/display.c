@@ -106,6 +106,68 @@ indent(ndt_context_t *ctx, buf_t *buf, int n)
     return 0;
 }
 
+const char *
+keyword(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Void: return "void";
+
+    case AnyKind: return "Any";
+    case FixedDim: return "fixed";
+    case VarDim: return "var";
+
+    case Ref: return "ref";
+
+    case ScalarKind: return "ScalarKind";
+    case Categorical: return "categorical";
+
+    case FixedStringKind: return "FixedStringKind";
+    case FixedString: return "FixedString";
+
+    case FixedBytesKind: return "FixedBytesKind";
+    case FixedBytes: return "FixedBytes";
+
+    case String: return "string";
+    case Bytes: return "bytes";
+    case Char: return "char";
+
+    case Bool: return "bool";
+
+    case SignedKind: return "SignedKind";
+    case Int8: return "int8";
+    case Int16: return "int16";
+    case Int32: return "int32";
+    case Int64: return "int64";
+
+    case UnsignedKind: return "UnsignedKind";
+    case Uint8: return "uint8";
+    case Uint16: return "uint16";
+    case Uint32: return "uint32";
+    case Uint64: return "uint64";
+
+    case FloatKind: return "FloatKind";
+    case Float16: return "float16";
+    case Float32: return "float32";
+    case Float64: return "float64";
+
+    case ComplexKind: return "ComplexKind";
+    case Complex32: return "complex32";
+    case Complex64: return "complex64";
+    case Complex128: return "complex128";
+
+    case Module: case Function:
+    case SymbolicDim: case EllipsisDim:
+    case Tuple: case Record:
+    case Nominal: case Constr:
+    case Typevar:
+        return "not a keyword";
+    }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    fprintf(stderr, "fatal internal error: invalid tag");
+    abort();
+}
+
 static int
 tuple_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
@@ -419,7 +481,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         case FixedStringKind:
         case FixedBytesKind:
         case String:
-            n = ndt_snprintf(ctx, buf, "%s", ndt_tag_as_string(t->tag));
+            n = ndt_snprintf(ctx, buf, "%s", keyword(t));
             return n;
 
         case FixedString:

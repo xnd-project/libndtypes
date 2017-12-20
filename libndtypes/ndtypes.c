@@ -308,69 +308,6 @@ ndt_field_array_del(ndt_field_t *fields, size_t shape)
 
 
 /******************************************************************************/
-/*                                   Tags                                     */
-/******************************************************************************/
-
-const char *
-ndt_tag_as_string(enum ndt tag)
-{
-    switch (tag) {
-    case Module: return "module";
-    case Function: return "function";
-    case Void: return "void";
-
-    case AnyKind: return "Any";
-    case Nominal: return "nominal";
-    case Constr: return "constr";
-
-    case Tuple: return "tuple";
-    case Record: return "record";
-    case Typevar: return "typevar";
-
-    case ScalarKind: return "ScalarKind";
-    case Bool: return "bool";
-
-    case SignedKind: return "SignedKind";
-    case Int8: return "int8";
-    case Int16: return "int16";
-    case Int32: return "int32";
-    case Int64: return "int64";
-
-    case UnsignedKind: return "UnsignedKind";
-    case Uint8: return "uint8";
-    case Uint16: return "uint16";
-    case Uint32: return "uint32";
-    case Uint64: return "uint64";
-
-    case FloatKind: return "FloatKind";
-    case Float16: return "float16";
-    case Float32: return "float32";
-    case Float64: return "float64";
-
-    case ComplexKind: return "ComplexKind";
-    case Complex32: return "complex32";
-    case Complex64: return "complex64";
-    case Complex128: return "complex128";
-
-    case Char: return "char";
-
-    case String: return "string";
-    case FixedStringKind: return "FixedStringKind";
-    case FixedString: return "FixedString";
-
-    case Bytes: return "bytes";
-    case FixedBytesKind: return "FixedBytesKind";
-    case FixedBytes: return "FixedBytes";
-
-    case Categorical: return "categorical";
-    case Ref: return "ref";
-
-    default: return "unknown tag";
-    }
-}
-
-
-/******************************************************************************/
 /*                                 Encodings                                  */
 /******************************************************************************/
 
@@ -1657,8 +1594,7 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
         t->align = alignof(ndt_complex128_t);
         break;
     default:
-        ndt_err_format(ctx, NDT_ValueError, "invalid tag: '%s'",
-                       ndt_tag_as_string(tag));
+        ndt_err_format(ctx, NDT_ValueError, "not a primitive type"),
         ndt_free(t);
         return NULL;
     }

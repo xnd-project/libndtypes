@@ -462,7 +462,6 @@ NDTYPES_API void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 NDTYPES_API void *ndt_memory_error(ndt_context_t *ctx);
 NDTYPES_API char *ndt_strdup(const char *s, ndt_context_t *ctx);
 NDTYPES_API char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
-NDTYPES_API const char *ndt_tag_as_string(enum ndt tag);
 NDTYPES_API enum ndt_encoding ndt_encoding_from_string(char *s, ndt_context_t *ctx);
 NDTYPES_API const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 NDTYPES_API uint32_t ndt_dim_flags(const ndt_t *t);
