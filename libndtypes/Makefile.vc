@@ -197,5 +197,6 @@ clean: FORCE
 
 distclean: clean
 	del Makefile 2>NUL
+	del ndtypes.h 2>NUL
 
 

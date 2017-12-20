@@ -2,7 +2,7 @@
 AC_PREREQ([2.67])
 AC_INIT(ndtypes, 0.1.0, plures@anaconda.com, ndtypes, https://github.com/plures/)
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_FILES([Makefile libndtypes/Makefile libndtypes/tests/Makefile])
+AC_CONFIG_FILES([Makefile libndtypes/Makefile libndtypes/tests/Makefile libndtypes/ndtypes.h])
 
 # System and machine type (only used for Darwin):
 AC_MSG_CHECKING(system as reported by uname -s)
@@ -57,6 +57,17 @@ AC_HEADER_STDC
 # Install program:
 AC_PROG_INSTALL
 AC_SUBST(INSTALL)
+
+# Endianness:
+AC_C_BIGENDIAN
+
+if test "$ac_cv_c_bigendian" = "yes"; then
+  NDT_SYS_BIG_ENDIAN=1
+else
+  NDT_SYS_BIG_ENDIAN=0
+fi
+
+AC_SUBST(NDT_SYS_BIG_ENDIAN)
 
 # Exact memcheck:
 AC_MSG_CHECKING([for --with-valgrind])

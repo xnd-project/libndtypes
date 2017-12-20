@@ -5,6 +5,7 @@ if exist dist32\* del /q dist32\*
 
 cd ..\libndtypes
 copy /y Makefile.vc Makefile
+copy /y ndtypes.h.in ndtypes.h
 
 nmake /nologo clean
 nmake /nologo

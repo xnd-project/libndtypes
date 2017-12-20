@@ -5,6 +5,7 @@ if exist dist64\* del /q dist64\*
 
 cd ..\libndtypes
 copy /y Makefile.vc Makefile
+copy /y ndtypes.h.in ndtypes.h
 
 nmake /nologo clean
 nmake /nologo

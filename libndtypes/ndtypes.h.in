@@ -61,6 +61,7 @@
   #define alignof __alignof
   #define alignas(n) __declspec(align(n))
   #define MAX_ALIGN 8
+  #define NDT_SYS_BIG_ENDIAN 0
 #else
   #define NDTYPES_API
 
@@ -71,6 +72,7 @@
   typedef double complex ndt_complex128_t;
   typedef float complex ndt_complex64_t;
   #define MAX_ALIGN (alignof(max_align_t))
+  #define NDT_SYS_BIG_ENDIAN @NDT_SYS_BIG_ENDIAN@
 #endif
 
 
@@ -79,9 +81,11 @@
 /*****************************************************************************/
 
 #define NDT_MAX_DIM 128
-#define NDT_OPTION         0x00000001U
-#define NDT_SUBTREE_OPTION 0x00000002U
-#define NDT_ELLIPSIS       0x00000004U
+#define NDT_LITTLE_ENDIAN  0x00000001U
+#define NDT_BIG_ENDIAN     0x00000002U
+#define NDT_OPTION         0x00000004U
+#define NDT_SUBTREE_OPTION 0x00000008U
+#define NDT_ELLIPSIS       0x00000010U
 
 
 /* Types: ndt_t */
