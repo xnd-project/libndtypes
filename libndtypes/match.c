@@ -495,7 +495,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
         return ndt_ref(u, ctx);
 
     case Int64: case Float32: case Float64:
-        return ndt_primitive(t->tag, 'L', ctx);
+        return ndt_primitive(t->tag, t->flags, ctx);
 
     default:
         ndt_err_format(ctx, NDT_NotImplementedError,

@@ -179,40 +179,6 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
 }
 
 ndt_t *
-mk_primitive(enum ndt tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
-{
-    static const attr_spec kwlist = {0, 1, {"endian"}, {AttrChar}};
-    char endian = 'L';
-
-    if (attrs) {
-        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &endian);
-        ndt_attr_seq_del(attrs);
-        if (ret < 0) {
-            return NULL;
-        }
-    }
-
-    return ndt_primitive(tag, endian, ctx);
-}
-
-ndt_t *
-mk_alias(enum ndt_alias tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
-{
-    static const attr_spec kwlist = {0, 1, {"endian"}, {AttrChar}};
-    char endian = 'L';
-
-    if (attrs) {
-        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &endian);
-        ndt_attr_seq_del(attrs);
-        if (ret < 0) {
-            return NULL;
-        }
-    }
-
-    return ndt_from_alias(tag, endian, ctx);
-}
-
-ndt_t *
 mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
 {
     size_t size;

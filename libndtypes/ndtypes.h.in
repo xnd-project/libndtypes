@@ -568,10 +568,10 @@ NDTYPES_API ndt_t *ndt_fixed_bytes_kind(ndt_context_t *ctx);
 
 
 /* Primitive Scalars */
-NDTYPES_API ndt_t *ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_signed(int size, char endian, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_unsigned(int size, char endian, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_from_alias(enum ndt_alias tag, char endian, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_signed(int size, uint32_t flags, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_unsigned(int size, uint32_t flags, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_from_alias(enum ndt_alias tag, uint32_t flags, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx);
 
 

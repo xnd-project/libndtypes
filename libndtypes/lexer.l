@@ -208,6 +208,8 @@ yycolumn = 1;
 "!"            { return BANG; }
 "&"            { return AMPERSAND; }
 "|"            { return BAR; }
+"<"            { return LESS; }
+">"            { return GREATER; }
 
 {name_lower}     { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_LOWER; }
 {name_upper}     { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME_UPPER; }

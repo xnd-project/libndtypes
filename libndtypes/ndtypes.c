@@ -1524,12 +1524,13 @@ ndt_void(ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
+ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    if (endian != 'L' && endian != 'B') {
-        ndt_err_format(ctx, NDT_ValueError, "endian must be 'L' or 'B'");
+    if (flags != 0 && flags != NDT_LITTLE_ENDIAN && flags != NDT_BIG_ENDIAN) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "flags argument must be 0 or NDT_LITTLE_ENDIAN or NDT_BIG_ENDIAN");
         return NULL;
     }
 
@@ -1538,6 +1539,7 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
     if (t == NULL) {
         return NULL;
     }
+    t->flags |= flags;
 
     /* concrete access */
     t->access = Concrete;
@@ -1613,13 +1615,13 @@ ndt_primitive(enum ndt tag, char endian, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_signed(int size, char endian, ndt_context_t *ctx)
+ndt_signed(int size, uint32_t flags, ndt_context_t *ctx)
 {
     switch (size) {
-    case  1: return ndt_primitive(Int8, endian, ctx);
-    case  2: return ndt_primitive(Int16, endian, ctx);
-    case  4: return ndt_primitive(Int32, endian, ctx);
-    case  8: return ndt_primitive(Int64, endian, ctx);
+    case  1: return ndt_primitive(Int8, flags, ctx);
+    case  2: return ndt_primitive(Int16, flags, ctx);
+    case  4: return ndt_primitive(Int32, flags, ctx);
+    case  8: return ndt_primitive(Int64, flags, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError,
                        "invalid size for signed integer: '%d'", size);
@@ -1628,13 +1630,13 @@ ndt_signed(int size, char endian, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_unsigned(int size, char endian, ndt_context_t *ctx)
+ndt_unsigned(int size, uint32_t flags, ndt_context_t *ctx)
 {
     switch (size) {
-    case  1: return ndt_primitive(Uint8, endian, ctx);
-    case  2: return ndt_primitive(Uint16, endian, ctx);
-    case  4: return ndt_primitive(Uint32, endian, ctx);
-    case  8: return ndt_primitive(Uint64, endian, ctx);
+    case  1: return ndt_primitive(Uint8, flags, ctx);
+    case  2: return ndt_primitive(Uint16, flags, ctx);
+    case  4: return ndt_primitive(Uint32, flags, ctx);
+    case  8: return ndt_primitive(Uint64, flags, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError,
                        "invalid size for unsigned integer: '%d'", size);
@@ -1643,12 +1645,12 @@ ndt_unsigned(int size, char endian, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_from_alias(enum ndt_alias tag, char endian, ndt_context_t *ctx)
+ndt_from_alias(enum ndt_alias tag, uint32_t flags, ndt_context_t *ctx)
 {
     switch (tag) {
-    case Size: return ndt_unsigned(sizeof(size_t), endian, ctx);
-    case Intptr: return ndt_signed(sizeof(intptr_t), endian, ctx);
-    case Uintptr: return ndt_unsigned(sizeof(uintptr_t), endian, ctx);
+    case Size: return ndt_unsigned(sizeof(size_t), flags, ctx);
+    case Intptr: return ndt_signed(sizeof(intptr_t), flags, ctx);
+    case Uintptr: return ndt_unsigned(sizeof(uintptr_t), flags, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError, "invalid alias tag");
         return NULL;

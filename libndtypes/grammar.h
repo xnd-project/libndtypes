@@ -106,17 +106,19 @@ extern int yydebug;
     ELLIPSIS = 305,
     RARROW = 306,
     EQUAL = 307,
-    QUESTIONMARK = 308,
-    BANG = 309,
-    AMPERSAND = 310,
-    BAR = 311,
-    ERRTOKEN = 312,
-    INTEGER = 313,
-    FLOATNUMBER = 314,
-    STRINGLIT = 315,
-    NAME_LOWER = 316,
-    NAME_UPPER = 317,
-    NAME_OTHER = 318
+    LESS = 308,
+    GREATER = 309,
+    QUESTIONMARK = 310,
+    BANG = 311,
+    AMPERSAND = 312,
+    BAR = 313,
+    ERRTOKEN = 314,
+    INTEGER = 315,
+    FLOATNUMBER = 316,
+    STRINGLIT = 317,
+    NAME_LOWER = 318,
+    NAME_UPPER = 319,
+    NAME_OTHER = 320
   };
 #endif
 
@@ -136,10 +138,11 @@ union YYSTYPE
     ndt_attr_seq_t *attribute_seq;
     enum ndt_variadic variadic_flag;
     enum ndt_encoding encoding;
+    uint32_t uint32;
     char *string;
     ndt_string_seq_t *string_seq;
 
-#line 143 "grammar.h" /* yacc.c:1909  */
+#line 146 "grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -169,6 +172,6 @@ int yyparse (yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx
   extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx, const char *msg);
 
-#line 173 "grammar.h" /* yacc.c:1909  */
+#line 176 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_YY_GRAMMAR_H_INCLUDED  */

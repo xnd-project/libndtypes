@@ -96,6 +96,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
     ndt_attr_seq_t *attribute_seq;
     enum ndt_variadic variadic_flag;
     enum ndt_encoding encoding;
+    uint32_t uint32;
     char *string;
     ndt_string_seq_t *string_seq;
 }
@@ -145,6 +146,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %type <ndt> function_type
 
+%type <uint32> endian_opt
 %type <encoding> encoding
 %type <variadic_flag> variadic_flag
 %type <variadic_flag> comma_variadic_flag
@@ -168,7 +170,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 FIXED VAR
 
 COMMA DOT COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
-RARROW EQUAL QUESTIONMARK BANG AMPERSAND BAR
+RARROW EQUAL LESS GREATER QUESTIONMARK BANG AMPERSAND BAR
 ERRTOKEN
 
 %token <string>
@@ -236,7 +238,7 @@ dtype:
 | NAME_UPPER                             { $$ = ndt_typevar($1, ctx); if ($$ == NULL) YYABORT; }
 
 scalar:
-  BOOL arguments_opt { $$ = mk_primitive(Bool, $2, ctx); if ($$ == NULL) YYABORT; }
+  endian_opt BOOL    { $$ = ndt_primitive(Bool, $1, ctx); if ($$ == NULL) YYABORT; }
 | SIGNED_KIND        { $$ = ndt_signed_kind(ctx); if ($$ == NULL) YYABORT; }
 | signed             { $$ = $1; }
 | UNSIGNED_KIND      { $$ = ndt_unsigned_kind(ctx); if ($$ == NULL) YYABORT; }
@@ -257,32 +259,32 @@ scalar:
 | ref                { $$ = $1; }
 
 signed:
-  INT8 arguments_opt  { $$ = mk_primitive(Int8, $2, ctx); if ($$ == NULL) YYABORT; }
-| INT16 arguments_opt { $$ = mk_primitive(Int16, $2, ctx); if ($$ == NULL) YYABORT; }
-| INT32 arguments_opt { $$ = mk_primitive(Int32, $2, ctx); if ($$ == NULL) YYABORT; }
-| INT64 arguments_opt { $$ = mk_primitive(Int64, $2, ctx); if ($$ == NULL) YYABORT; }
+  endian_opt INT8  { $$ = ndt_primitive(Int8, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt INT16 { $$ = ndt_primitive(Int16, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt INT32 { $$ = ndt_primitive(Int32, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt INT64 { $$ = ndt_primitive(Int64, $1, ctx); if ($$ == NULL) YYABORT; }
 
 unsigned:
-  UINT8 arguments_opt  { $$ = mk_primitive(Uint8, $2, ctx); if ($$ == NULL) YYABORT; }
-| UINT16 arguments_opt { $$ = mk_primitive(Uint16, $2, ctx); if ($$ == NULL) YYABORT; }
-| UINT32 arguments_opt { $$ = mk_primitive(Uint32, $2, ctx); if ($$ == NULL) YYABORT; }
-| UINT64 arguments_opt { $$ = mk_primitive(Uint64, $2, ctx); if ($$ == NULL) YYABORT; }
+  endian_opt UINT8  { $$ = ndt_primitive(Uint8, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt UINT16 { $$ = ndt_primitive(Uint16, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt UINT32 { $$ = ndt_primitive(Uint32, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt UINT64 { $$ = ndt_primitive(Uint64, $1, ctx); if ($$ == NULL) YYABORT; }
 
 ieee_float:
-  FLOAT16 arguments_opt { $$ = mk_primitive(Float16, $2, ctx); if ($$ == NULL) YYABORT; }
-| FLOAT32 arguments_opt { $$ = mk_primitive(Float32, $2, ctx); if ($$ == NULL) YYABORT; }
-| FLOAT64 arguments_opt { $$ = mk_primitive(Float64, $2, ctx); if ($$ == NULL) YYABORT; }
+  endian_opt FLOAT16 { $$ = ndt_primitive(Float16, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt FLOAT32 { $$ = ndt_primitive(Float32, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt FLOAT64 { $$ = ndt_primitive(Float64, $1, ctx); if ($$ == NULL) YYABORT; }
 
 ieee_complex:
-  COMPLEX32 arguments_opt  { $$ = mk_primitive(Complex32, $2, ctx); if ($$ == NULL) YYABORT; }
-| COMPLEX64 arguments_opt  { $$ = mk_primitive(Complex64, $2, ctx); if ($$ == NULL) YYABORT; }
-| COMPLEX128 arguments_opt { $$ = mk_primitive(Complex128, $2, ctx); if ($$ == NULL) YYABORT; }
+  endian_opt COMPLEX32  { $$ = ndt_primitive(Complex32, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt COMPLEX64  { $$ = ndt_primitive(Complex64, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt COMPLEX128 { $$ = ndt_primitive(Complex128, $1, ctx); if ($$ == NULL) YYABORT; }
 
 alias:
   /* machine dependent */
-  INTPTR arguments_opt  { $$ = mk_alias(Intptr, $2, ctx); if ($$ == NULL) YYABORT; }
-| UINTPTR arguments_opt { $$ = mk_alias(Uintptr, $2, ctx); if ($$ == NULL) YYABORT; }
-| SIZE arguments_opt    { $$ = mk_alias(Size, $2, ctx); if ($$ == NULL) YYABORT; }
+  endian_opt INTPTR  { $$ = ndt_from_alias(Intptr, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt UINTPTR { $$ = ndt_from_alias(Uintptr, $1, ctx); if ($$ == NULL) YYABORT; }
+| endian_opt SIZE    { $$ = ndt_from_alias(Size, $1, ctx); if ($$ == NULL) YYABORT; }
 
 character:
   CHAR                        { $$ = ndt_char(Utf32, ctx); if ($$ == NULL) YYABORT; }
@@ -294,6 +296,13 @@ string:
 fixed_string:
   FIXED_STRING LPAREN INTEGER RPAREN                { $$ = mk_fixed_string($3, Utf8, ctx); if ($$ == NULL) YYABORT; }
 | FIXED_STRING LPAREN INTEGER COMMA encoding RPAREN { $$ = mk_fixed_string($3, $5, ctx); if ($$ == NULL) YYABORT; }
+
+endian_opt:
+  %empty  { $$ = 0; }
+| EQUAL   { $$ = NDT_SYS_BIG_ENDIAN ? NDT_BIG_ENDIAN : NDT_LITTLE_ENDIAN; }
+| LESS    { $$ = NDT_LITTLE_ENDIAN; }
+| GREATER { $$ = NDT_BIG_ENDIAN; }
+| BAR     { $$ = 0; }
 
 encoding:
   STRINGLIT { $$ = encoding_from_string($1, ctx); if (ndt_err_occurred(ctx)) YYABORT; }
