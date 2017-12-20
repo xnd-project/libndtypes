@@ -1075,8 +1075,8 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
-static ndt_t *
-ndt_next_dim(ndt_t *a)
+static const ndt_t *
+ndt_next_dim(const ndt_t *a)
 {
     assert(a->ndim > 0);
 
@@ -1947,7 +1947,7 @@ ndt_is_c_contiguous(const ndt_t *t)
         return 0;
     }
 
-    ndim = ndt_const_dims_dtype(dims, &dtype, t);
+    ndim = ndt_dims_dtype(dims, &dtype, t);
 
     step = 1;
     for (i = ndim-1; i >= 0; i--) {
@@ -1976,7 +1976,7 @@ ndt_is_f_contiguous(const ndt_t *t)
         return 0;
     }
 
-    ndim = ndt_const_dims_dtype(dims, &dtype, t);
+    ndim = ndt_dims_dtype(dims, &dtype, t);
     step = 1;
     for (i = 0; i < ndim; i++) {
         shape = dims[i]->FixedDim.shape;
@@ -2026,32 +2026,14 @@ const ndt_t *
 ndt_dtype(const ndt_t *t)
 {
     while (t->ndim > 0) {
-        t = ndt_next_dim((ndt_t *)t);
+        t = ndt_next_dim(t);
     }
 
     return t;
 }
 
 int
-ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array)
-{
-    ndt_t *a = array;
-    int n = 0;
-
-    assert(array->ndim <= NDT_MAX_DIM);
-
-    while (a->ndim > 0) {
-        dims[n++] = a;
-        a = ndt_next_dim((ndt_t *)a);
-    }
-
-    *dtype = a;
-
-    return n;
-}
-
-int
-ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
+ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
 {
     const ndt_t *a = array;
     int n = 0;
@@ -2060,7 +2042,7 @@ ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const 
 
     while (a->ndim > 0) {
         dims[n++] = a;
-        a = ndt_next_dim((ndt_t *)a);
+        a = ndt_next_dim(a);
     }
 
     *dtype = a;

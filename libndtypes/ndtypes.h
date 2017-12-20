@@ -486,8 +486,7 @@ NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_d
 NDTYPES_API void ndt_set_next_type(ndt_t *a, ndt_t *type);
 NDTYPES_API int ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API const ndt_t *ndt_dtype(const ndt_t *t);
-NDTYPES_API int ndt_dims_dtype(ndt_t *dims[NDT_MAX_DIM], ndt_t **dtype, ndt_t *array);
-NDTYPES_API int ndt_const_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
+NDTYPES_API int ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array);
 
 /*** String conversion ***/
 NDTYPES_API bool ndt_strtobool(const char *v, ndt_context_t *ctx);
