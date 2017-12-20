@@ -1075,17 +1075,23 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
+static ndt_t *
 ndt_next_dim(ndt_t *a)
 {
     assert(a->ndim > 0);
 
     switch (a->tag) {
-    case FixedDim: return a->FixedDim.type;
-    case VarDim: return a->VarDim.type;
-    case SymbolicDim: return a->SymbolicDim.type;
-    case EllipsisDim: return a->EllipsisDim.type;
-    default: abort(); /* XXX */
+    case FixedDim:
+        return a->FixedDim.type;
+    case VarDim:
+        return a->VarDim.type;
+    case SymbolicDim:
+        return a->SymbolicDim.type;
+    case EllipsisDim:
+        return a->EllipsisDim.type;
+    default:
+        /* NOT REACHED: tags should be exhaustive. */
+        ndt_internal_error("invalid value");
     }
 }
 

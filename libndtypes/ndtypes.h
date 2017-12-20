@@ -483,7 +483,6 @@ NDTYPES_API int ndt_equal(const ndt_t *p, const ndt_t *c);
 NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
 
-NDTYPES_API ndt_t *ndt_next_dim(ndt_t *a);
 NDTYPES_API void ndt_set_next_type(ndt_t *a, ndt_t *type);
 NDTYPES_API int ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API const ndt_t *ndt_dtype(const ndt_t *t);
