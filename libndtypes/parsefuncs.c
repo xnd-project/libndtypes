@@ -202,7 +202,6 @@ mk_alias(enum ndt_alias tag, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     char endian = 'L';
 
     if (attrs) {
-        /* Alias attributes are the same as for Int64. */
         int ret = ndt_parse_attr(&kwlist, ctx, attrs, &endian);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
