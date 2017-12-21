@@ -693,6 +693,18 @@ ast_type_flags(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
         cont = 1;
     }
 
+    if (t->flags & NDT_LITTLE_ENDIAN) {
+        n = ndt_snprintf(ctx, buf, "%sLITTLE_ENDIAN", cont ? ", " : "");
+        if (n > 0) return -1;
+        cont = 1;
+    }
+
+    if (t->flags & NDT_BIG_ENDIAN) {
+        n = ndt_snprintf(ctx, buf, "%sBIG_ENDIAN", cont ? ", " : "");
+        if (n > 0) return -1;
+        cont = 1;
+    }
+
     if (t->flags & NDT_ELLIPSIS) {
         n = ndt_snprintf(ctx, buf, "%sELLIPSIS", cont ? ", " : "");
         if (n > 0) return -1;
