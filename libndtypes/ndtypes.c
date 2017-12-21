@@ -940,32 +940,6 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    if (!check_type_invariants(type, ctx)) {
-        ndt_free(name);
-        ndt_del(type);
-        return NULL;
-    }
-
-    /* abstract type */
-    t = ndt_new(SymbolicDim, ctx);
-    if (t == NULL) {
-        ndt_free(name);
-        ndt_del(type);
-        return NULL;
-    }
-    t->SymbolicDim.name = name;
-    t->SymbolicDim.type = type;
-    t->ndim = type->ndim + 1;
-    t->flags =  ndt_dim_flags(type);
-
-    return t;
-}
-
-ndt_t *
 ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t = NULL;
@@ -1148,6 +1122,32 @@ error:
     }
     ndt_free(slices);
     return NULL;
+}
+
+ndt_t *
+ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    if (!check_type_invariants(type, ctx)) {
+        ndt_free(name);
+        ndt_del(type);
+        return NULL;
+    }
+
+    /* abstract type */
+    t = ndt_new(SymbolicDim, ctx);
+    if (t == NULL) {
+        ndt_free(name);
+        ndt_del(type);
+        return NULL;
+    }
+    t->SymbolicDim.name = name;
+    t->SymbolicDim.type = type;
+    t->ndim = type->ndim + 1;
+    t->flags =  ndt_dim_flags(type);
+
+    return t;
 }
 
 ndt_t *
