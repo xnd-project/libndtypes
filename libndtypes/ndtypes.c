@@ -92,6 +92,27 @@ ndt_dim_flags(const ndt_t *type)
 
 
 /*****************************************************************************/
+/*                      Common fields for concrete types                     */
+/*****************************************************************************/
+
+/* Itemsize of a concrete type.  Undefined for abstract types. */
+int64_t
+ndt_itemsize(const ndt_t *t)
+{
+    assert(ndt_is_concrete(t));
+
+    switch (t->tag) {
+    case FixedDim:
+        return t->Concrete.FixedDim.itemsize;
+    case VarDim:
+        return t->Concrete.VarDim.itemsize;
+    default:
+        return t->datasize;
+    }
+}
+
+
+/*****************************************************************************/
 /*                                Predicates                                 */
 /*****************************************************************************/
 
@@ -538,7 +559,7 @@ check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ct
 
 
 /******************************************************************************/
-/*                       Type allocation/deallocation                         */
+/*                         Type allocation/deallocation                       */
 /******************************************************************************/
 
 ndt_t *
@@ -738,13 +759,110 @@ ndt_del(ndt_t *t)
     ndt_free(t);
 }
 
+
+/******************************************************************************/
+/*                               Type functions                               */
+/******************************************************************************/
+
+/* Abstract namespace type */
+ndt_t *
+ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    t = ndt_new(Module, ctx);
+    if (t == NULL) {
+        ndt_free(name);
+        ndt_del(type);
+        return NULL;
+    }
+
+    /* abstract type */
+    t->Module.name = name;
+    t->Module.type = type;
+    t->flags = ndt_subtree_flags(type);
+
+    return t;
+}
+
+/* Abstract function signatures */
+ndt_t *
+ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    /* abstract type */
+    t = ndt_new(Function, ctx);
+    if (t == NULL) {
+        ndt_del(ret);
+        ndt_del(pos);
+        ndt_del(kwds);
+        return NULL;
+    }
+    t->Function.ret = ret;
+    t->Function.pos = pos;
+    t->Function.kwds = kwds;
+
+    t->flags |= ndt_subtree_flags(ret);
+    t->flags |= ndt_subtree_flags(pos);
+    t->flags |= ndt_subtree_flags(kwds);
+
+    return t;
+}
+
+/* Abstract empty return value */
+ndt_t *
+ndt_void(ndt_context_t *ctx)
+{
+    return ndt_new(Void, ctx);
+}
+
 ndt_t *
 ndt_any_kind(ndt_context_t *ctx)
 {
     return ndt_new(AnyKind, ctx);
 }
 
-ndt_t *
+
+/******************************************************************************/
+/*                             Dimension types                                */
+/******************************************************************************/
+
+/* Return the next type in a dimension chain.  Undefined for non-dimensions. */
+static const ndt_t *
+ndt_next_dim(const ndt_t *a)
+{
+    assert(a->ndim > 0);
+
+    switch (a->tag) {
+    case FixedDim:
+        return a->FixedDim.type;
+    case VarDim:
+        return a->VarDim.type;
+    case SymbolicDim:
+        return a->SymbolicDim.type;
+    case EllipsisDim:
+        return a->EllipsisDim.type;
+    default:
+        /* NOT REACHED: tags should be exhaustive. */
+        ndt_internal_error("invalid value");
+    }
+}
+
+static int64_t
+fixed_step(ndt_t *type)
+{
+    assert(type->tag != VarDim);
+
+    switch (type->tag) {
+    case FixedDim:
+        return type->FixedDim.shape * type->Concrete.FixedDim.step;
+    default:
+        return 1;
+    }
+}
+
+static ndt_t *
 _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 {
     ndt_t *dt;
@@ -778,32 +896,6 @@ ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
     }
 
     return _ndt_to_fortran(t, 1, ctx);
-}
-
-int64_t
-ndt_itemsize(ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim:
-        return t->Concrete.FixedDim.itemsize;
-    case VarDim:
-        return t->Concrete.VarDim.itemsize;
-    default:
-        return t->datasize;
-    }
-}
-
-static int64_t
-fixed_step(ndt_t *type)
-{
-    assert(type->tag != VarDim);
-
-    switch (type->tag) {
-    case FixedDim:
-        return type->FixedDim.shape * type->Concrete.FixedDim.step;
-    default:
-        return 1;
-    }
 }
 
 ndt_t *
@@ -1088,26 +1180,6 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
-static const ndt_t *
-ndt_next_dim(const ndt_t *a)
-{
-    assert(a->ndim > 0);
-
-    switch (a->tag) {
-    case FixedDim:
-        return a->FixedDim.type;
-    case VarDim:
-        return a->VarDim.type;
-    case SymbolicDim:
-        return a->SymbolicDim.type;
-    case EllipsisDim:
-        return a->EllipsisDim.type;
-    default:
-        /* NOT REACHED: tags should be exhaustive. */
-        ndt_internal_error("invalid value");
-    }
-}
-
 ndt_t *
 ndt_option(ndt_t *t)
 {
@@ -1158,26 +1230,6 @@ ndt_nominal(char *name, ndt_context_t *ctx)
     t->flags = ndt_subtree_flags(type);
     t->datasize = type->datasize;
     t->align = type->align;
-
-    return t;
-}
-
-ndt_t *
-ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    t = ndt_new(Module, ctx);
-    if (t == NULL) {
-        ndt_free(name);
-        ndt_del(type);
-        return NULL;
-    }
-
-    /* abstract type */
-    t->Module.name = name;
-    t->Module.type = type;
-    t->flags = ndt_subtree_flags(type);
 
     return t;
 }
@@ -1432,30 +1484,6 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
 }
 
 ndt_t *
-ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    /* abstract type */
-    t = ndt_new(Function, ctx);
-    if (t == NULL) {
-        ndt_del(ret);
-        ndt_del(pos);
-        ndt_del(kwds);
-        return NULL;
-    }
-    t->Function.ret = ret;
-    t->Function.pos = pos;
-    t->Function.kwds = kwds;
-
-    t->flags |= ndt_subtree_flags(ret);
-    t->flags |= ndt_subtree_flags(pos);
-    t->flags |= ndt_subtree_flags(kwds);
-
-    return t;
-}
-
-ndt_t *
 ndt_typevar(char *name, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -1518,11 +1546,6 @@ ndt_fixed_string_kind(ndt_context_t *ctx)
     return ndt_new(FixedStringKind, ctx);
 }
 
-ndt_t *
-ndt_void(ndt_context_t *ctx)
-{
-    return ndt_new(Void, ctx);
-}
 
 ndt_t *
 ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
