@@ -32,13 +32,13 @@ endif
 default: $(LIBSTATIC) $(LIBSHARED)
 
 
-OBJS = alloc.o attr.o copy.o equal.o grammar.o io.o lexer.o match.o \
+OBJS = alloc.o attr.o copy.o context.o equal.o grammar.o io.o lexer.o match.o \
        ndtypes.o parsefuncs.o parser.o seq.o symtable.o
 
-SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/copy.o .objs/equal.o \
-              .objs/grammar.o .objs/io.o .objs/lexer.o .objs/match.o \
-              .objs/ndtypes.o .objs/parsefuncs.o .objs/parser.o .objs/seq.o \
-              .objs/symtable.o
+SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/copy.o .objs/context.o \
+              .objs/equal.o .objs/grammar.o .objs/io.o .objs/lexer.o \
+              .objs/match.o .objs/ndtypes.o .objs/parsefuncs.o .objs/parser.o \
+              .objs/seq.o .objs/symtable.o
 
 
 $(LIBSTATIC): Makefile $(OBJS)
@@ -66,6 +66,14 @@ Makefile attr.c attr.h ndtypes.h
 .objs/attr.o:\
 Makefile attr.c attr.h ndtypes.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c attr.c -o .objs/attr.o
+
+context.o:\
+Makefile context.c ndtypes.h
+	$(CC) $(NDT_CFLAGS) -c context.c
+
+.objs/context.o:\
+Makefile context.c ndtypes.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c context.c -o .objs/context.o
 
 copy.o:\
 Makefile copy.c ndtypes.h
