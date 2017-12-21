@@ -40,7 +40,7 @@
 static inline void
 copy_common(ndt_t *u, const ndt_t *t)
 {
-    assert(u->tag = t->tag);
+    assert(u->tag == t->tag);
     u->access = t->access;
     u->flags = t->flags;
     u->ndim = t->ndim;
