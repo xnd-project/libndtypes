@@ -30,12 +30,13 @@ default: $(LIBSTATIC) $(LIBSHARED)
 
 OBJS = alloc.obj attr.obj context.obj copy.obj equal.obj encodings.obj \
        grammar.obj io.obj lexer.obj match.obj ndtypes.obj parsefuncs.obj \
-       parser.obj seq.obj symtable.obj util.obj
+       parser.obj seq.obj symtable.obj util.obj values.obj
 
 SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\context.obj .objs\copy.obj \
               .objs\equal.obj .objs\encodings.obj .objs\grammar.obj .objs\io.obj \
               .objs\lexer.obj .objs\match.obj .objs\ndtypes.obj .objs\parsefuncs.obj \
-              .objs\parser.obj .objs\seq.obj .objs\symtable.obj .objs\util.obj
+              .objs\parser.obj .objs\seq.obj .objs\symtable.obj .objs\util.obj \
+              .objs\values.obj
 
 
 $(LIBSTATIC):\
@@ -176,6 +177,15 @@ Makefile util.c ndtypes.h
 .objs\util.obj:\
 Makefile util.c ndtypes.h
         $(CC) $(CFLAGS_SHARED) -c util.c
+
+values.obj:\
+Makefile values.c ndtypes.h
+        $(CC) $(CFLAGS) -c values.c
+
+.objs\values.obj:\
+Makefile values.c ndtypes.h
+        $(CC) $(CFLAGS_SHARED) -c values.c
+
 
 
 check:\
