@@ -462,6 +462,26 @@ ndt_field_array_del(ndt_field_t *fields, size_t shape)
 }
 
 
+/*****************************************************************************/
+/*                                Typedef                                    */
+/*****************************************************************************/
+
+/*
+ * Add a typedef name -> type to the symbol table.  Steals the 'type'
+ * reference. XXX
+ */
+int
+ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx)
+{
+    if (ndt_typedef_add(name, type, ctx) < 0) {
+        ndt_del(type);
+        return -1;
+    }
+
+    return 0;
+}
+
+
 /******************************************************************************/
 /*                              Type invariants                               */
 /******************************************************************************/
@@ -1191,18 +1211,6 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     t->ndim = type->ndim + 1;
 
     return t;
-}
-
-
-int
-ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx)
-{
-    if (ndt_typedef_add(name, type, ctx) < 0) {
-        ndt_del(type);
-        return -1;
-    }
-
-    return 0;
 }
 
 ndt_t *
