@@ -389,6 +389,11 @@ const char *parse_roundtrip_tests[] = {
   "() -> void",
   "(complex128, a : float64) -> void",
   "(int32, ...) -> void",
+
+  "<int64",
+  ">int64",
+  "2 * 10 * >float64",
+
   /* END MANUALLY GENERATED */
 
   NULL

@@ -275,6 +275,52 @@ ndt_is_complex(const ndt_t *t)
     }
 }
 
+int
+ndt_endian_is_set(const ndt_t *t)
+{
+    return t->flags & (NDT_LITTLE_ENDIAN|NDT_BIG_ENDIAN);
+}
+
+int
+ndt_is_little_endian(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Int16: case Int32: case Int64:
+    case Uint16: case Uint32: case Uint64:
+    case Float16: case Float32: case Float64:
+    case Complex32: case Complex64: case Complex128:
+        if (t->flags & NDT_LITTLE_ENDIAN) {
+            return 1;
+        }
+        if (t->flags & NDT_BIG_ENDIAN) {
+            return 0;
+        }
+        return !NDT_SYS_BIG_ENDIAN;
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_big_endian(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Int16: case Int32: case Int64:
+    case Uint16: case Uint32: case Uint64:
+    case Float16: case Float32: case Float64:
+    case Complex32: case Complex64: case Complex128:
+        if (t->flags & NDT_BIG_ENDIAN) {
+            return 1;
+        }
+        if (t->flags & NDT_LITTLE_ENDIAN) {
+            return 0;
+        }
+        return NDT_SYS_BIG_ENDIAN;
+    default:
+        return 0;
+    }
+}
+
 
 /*****************************************************************************/
 /*                           Alignment and packing                           */

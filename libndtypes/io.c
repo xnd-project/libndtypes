@@ -415,11 +415,27 @@ option(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 }
 
 static int
+endian(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+{
+    if (ndt_endian_is_set(t)) {
+        if (ndt_is_little_endian(t)) {
+            return ndt_snprintf(ctx, buf, "<");
+        }
+        return ndt_snprintf(ctx, buf, ">");
+    }
+
+    return 1;
+}
+
+static int
 datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
     int n;
 
     n = option(buf, t, ctx);
+    if (n < 0) return -1;
+
+    n = endian(buf, t, ctx);
     if (n < 0) return -1;
 
     switch (t->tag) {
