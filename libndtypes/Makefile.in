@@ -32,11 +32,11 @@ endif
 default: $(LIBSTATIC) $(LIBSHARED)
 
 
-OBJS = alloc.o attr.o copy.o display.o display_meta.o equal.o grammar.o lexer.o \
-       match.o ndtypes.o parsefuncs.o parser.o seq.o symtable.o
+OBJS = alloc.o attr.o copy.o equal.o grammar.o io.o lexer.o match.o \
+       ndtypes.o parsefuncs.o parser.o seq.o symtable.o
 
-SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/copy.o .objs/display.o .objs/display_meta.o \
-              .objs/equal.o .objs/grammar.o .objs/lexer.o .objs/match.o \
+SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/copy.o .objs/equal.o \
+              .objs/grammar.o .objs/io.o .objs/lexer.o .objs/match.o \
               .objs/ndtypes.o .objs/parsefuncs.o .objs/parser.o .objs/seq.o \
               .objs/symtable.o
 
@@ -75,21 +75,13 @@ Makefile copy.c ndtypes.h
 Makefile copy.c ndtypes.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c copy.c -o .objs/copy.o
 
-display.o:\
-Makefile display.c ndtypes.h
-	$(CC) $(NDT_CFLAGS) -c display.c
+io.o:\
+Makefile io.c ndtypes.h
+	$(CC) $(NDT_CFLAGS) -c io.c
 
-.objs/display.o:\
-Makefile display.c ndtypes.h
-	$(CC) $(NDT_CFLAGS_SHARED) -c display.c -o .objs/display.o
-
-display_meta.o:\
-Makefile display_meta.c ndtypes.h
-	$(CC) $(NDT_CFLAGS) -c display_meta.c
-
-.objs/display_meta.o:\
-Makefile display_meta.c ndtypes.h
-	$(CC) $(NDT_CFLAGS_SHARED) -c display_meta.c -o .objs/display_meta.o
+.objs/io.o:\
+Makefile io.c ndtypes.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c io.c -o .objs/io.o
 
 equal.o:\
 Makefile equal.c ndtypes.h

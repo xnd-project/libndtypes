@@ -28,12 +28,11 @@ default: $(LIBSTATIC) $(LIBSHARED)
 	copy /y $(LIBSHARED) ..\python\ndtypes
 
 
-OBJS = alloc.obj attr.obj copy.obj display.obj display_meta.obj equal.obj grammar.obj \
-       lexer.obj match.obj ndtypes.obj parsefuncs.obj parser.obj seq.obj \
-       symtable.obj
+OBJS = alloc.obj attr.obj copy.obj equal.obj grammar.obj io.obj lexer.obj \
+       match.obj ndtypes.obj parsefuncs.obj parser.obj seq.obj symtable.obj
 
-SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\copy.obj .objs\display.obj .objs\display_meta.obj \
-              .objs\equal.obj .objs\grammar.obj .objs\lexer.obj .objs\match.obj \
+SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\copy.obj .objs\equal.obj \
+              .objs\grammar.obj .objs\io.obj .objs\lexer.obj .objs\match.obj \
               .objs\ndtypes.obj .objs\parsefuncs.obj .objs\parser.obj .objs\seq.obj \
               .objs\symtable.obj
 
@@ -73,21 +72,13 @@ Makefile copy.c ndtypes.h
 Makefile copy.c ndtypes.h
 	$(CC) $(CFLAGS_SHARED) -c copy.c
 
-display.obj:\
-Makefile display.c ndtypes.h
-	$(CC) $(CFLAGS) -c display.c
+io.obj:\
+Makefile io.c ndtypes.h
+	$(CC) $(CFLAGS) -c io.c
 
-.objs\display.obj:\
-Makefile display.c ndtypes.h
-	$(CC) $(CFLAGS_SHARED) -c display.c
-
-display_meta.obj:\
-Makefile display_meta.c ndtypes.h
-	$(CC) $(CFLAGS) -c display_meta.c
-
-.objs\display_meta.obj:\
-Makefile display_meta.c ndtypes.h
-	$(CC) $(CFLAGS_SHARED) -c display_meta.c
+.objs\io.obj:\
+Makefile io.c ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c io.c
 
 equal.obj:\
 Makefile equal.c ndtypes.h
