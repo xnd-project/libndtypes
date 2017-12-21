@@ -442,7 +442,7 @@ ndt_field_array_del(ndt_field_t *fields, size_t shape)
 
 
 /******************************************************************************/
-/*                                 Datashape                                  */
+/*                              Type invariants                               */
 /******************************************************************************/
 
 /* Invariants for all types except for var dimensions. */
@@ -535,6 +535,11 @@ check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ct
 
     return 1;
 }
+
+
+/******************************************************************************/
+/*                       Type allocation/deallocation                         */
+/******************************************************************************/
 
 ndt_t *
 ndt_new(enum ndt tag, ndt_context_t *ctx)
@@ -731,41 +736,6 @@ ndt_del(ndt_t *t)
     }
 
     ndt_free(t);
-}
-
-/* Unoptimized hash function for experimenting. */
-int64_t
-ndt_hash(ndt_t *t, ndt_context_t *ctx)
-{
-    unsigned char *s, *cp;
-    size_t len;
-    int64_t x;
-
-    if (t->hash != -1) {
-        return t->hash;
-    }
-
-    cp = s = (unsigned char *)ndt_as_string(t, ctx);
-    if (s == NULL) {
-        return -1;
-    }
-
-    len = strlen((char *)s);
-
-    x = *cp << 7;
-    while (*cp != '\0') {
-        x = (1000003 * x) ^ *cp++;
-    }
-    x ^= len;
-
-    if (x == -1) {
-        x = -2;
-    }
-
-    ndt_free(s);
-    t->hash = x;
-
-    return x;
 }
 
 ndt_t *
