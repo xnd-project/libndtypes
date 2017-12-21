@@ -161,6 +161,14 @@ Makefile symtable.c ndtypes.h symtable.h
 Makefile symtable.c ndtypes.h symtable.h
         $(CC) $(CFLAGS_SHARED) -c symtable.c
 
+util.obj:\
+Makefile util.c ndtypes.h
+        $(CC) $(CFLAGS) -c util.c
+
+.objs\util.obj:\
+Makefile util.c ndtypes.h
+        $(CC) $(CFLAGS_SHARED) -c util.c
+
 
 check:\
 Makefile default

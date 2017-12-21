@@ -79,17 +79,12 @@ ndt_context_msg(ndt_context_t *ctx)
     return ctx->DynamicMsg;
 }
 
-void
-ndt_err_clear(ndt_context_t *ctx)
-{
-    ctx->err = NDT_Success;
-    if (ctx->msg == DynamicMsg) {
-        ndt_free(ctx->DynamicMsg);
-        ctx->msg = ConstMsg;
-        ctx->ConstMsg = "Success";
-    }
-}
 
+/******************************************************************************/
+/*                              Error handling                                */
+/******************************************************************************/
+
+/* Set an error with a message. */
 void
 ndt_err_format(ndt_context_t *ctx, enum ndt_error err, const char *fmt, ...)
 {
@@ -135,51 +130,37 @@ ndt_err_format(ndt_context_t *ctx, enum ndt_error err, const char *fmt, ...)
     ctx->DynamicMsg = s;
 }
 
-char *
-ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
-{
-    va_list ap, aq;
-    char *s;
-    int n;
-
-    va_start(ap, fmt);
-    va_copy(aq, ap);
-
-    n = vsnprintf(NULL, 0, fmt, ap);
-    va_end(ap);
-    if (n < 0 || n == INT_MAX) {
-        ndt_err_format(ctx, NDT_RuntimeError, "vsprintf failed");
-        return NULL;
-    }
-
-    s = ndt_alloc(1, n+1);
-    if (s == NULL) {
-        va_end(aq);
-        return ndt_memory_error(ctx);
-    }
-
-    n = vsnprintf(s, n+1, fmt, aq);
-    va_end(aq);
-    if (n < 0) {
-        ndt_free(s);
-        return NULL;
-    }
-
-    return s;
-}
-
+/* Check if an error has occurred. */
 int
 ndt_err_occurred(const ndt_context_t *ctx)
 {
     return ctx->err != NDT_Success;
 }
 
+/* Clear an error. */
+void
+ndt_err_clear(ndt_context_t *ctx)
+{
+    ctx->err = NDT_Success;
+    if (ctx->msg == DynamicMsg) {
+        ndt_free(ctx->DynamicMsg);
+        ctx->msg = ConstMsg;
+        ctx->ConstMsg = "Success";
+    }
+}
+
+/* Set a malloc error. */
 void *
 ndt_memory_error(ndt_context_t *ctx)
 {
     ndt_err_format(ctx, NDT_MemoryError, "out of memory");
     return NULL;
 }
+
+
+/******************************************************************************/
+/*                               Display errors                               */
+/******************************************************************************/
 
 const char *
 ndt_err_as_string(enum ndt_error err)
