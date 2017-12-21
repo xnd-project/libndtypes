@@ -32,7 +32,9 @@
 
 
 #include <string.h>
+#include <assert.h>
 #include "ndtypes.h"
+#include "seq.h"
 
 
 /*****************************************************************************/
@@ -70,6 +72,14 @@ ndt_value_array_del(ndt_value_t *mem, size_t ntypes)
 
     ndt_free(mem);
 }
+
+/* Value sequences */
+NDT_SEQ_NEW(ndt_value)
+NDT_SEQ_DEL(ndt_value)
+NDT_SEQ_GROW(ndt_value)
+NDT_SEQ_APPEND(ndt_value)
+NDT_SEQ_FINALIZE(ndt_value)
+
 
 /* Return a new ndt memory buffer. Input types are restricted. */
 ndt_value_t *

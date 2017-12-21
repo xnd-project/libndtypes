@@ -40,9 +40,6 @@
 #include "attr.h"
 
 
-int ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...);
-
-
 /*****************************************************************************/
 /*                        Functions used in the lexer                        */
 /*****************************************************************************/

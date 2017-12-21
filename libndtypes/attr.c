@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "ndtypes.h"
 #include "seq.h"
 #include "attr.h"
@@ -103,6 +104,14 @@ ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
 
     ndt_free(attr);
 }
+
+/* Attribute sequences */
+NDT_SEQ_NEW(ndt_attr)
+NDT_SEQ_DEL(ndt_attr)
+NDT_SEQ_GROW(ndt_attr)
+NDT_SEQ_APPEND(ndt_attr)
+NDT_SEQ_FINALIZE(ndt_attr)
+
 
 int
 ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,

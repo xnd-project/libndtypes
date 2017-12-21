@@ -89,9 +89,21 @@ typedef struct {
    const enum ndt tags[MAX_ATTR];
 } attr_spec;
 
+typedef struct {
+    size_t len;
+    size_t reserved;
+    ndt_attr_t *ptr;
+} ndt_attr_seq_t;
+
 void ndt_attr_del(ndt_attr_t *attr);
 void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
 
+ndt_attr_seq_t *ndt_attr_seq_new(ndt_attr_t *, ndt_context_t *ctx);
+void ndt_attr_seq_del(ndt_attr_seq_t *);
+ndt_attr_seq_t *ndt_attr_seq_append(ndt_attr_seq_t *, ndt_attr_t *, ndt_context_t *ctx);
+ndt_attr_seq_t *ndt_attr_seq_finalize(ndt_attr_seq_t *);
+
+int ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx, const ndt_attr_seq_t *seq, ...);
 
 
 #endif

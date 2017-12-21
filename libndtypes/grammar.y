@@ -61,6 +61,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %code requires {
   #include "ndtypes.h"
   #include "seq.h"
+  #include "attr.h"
   #include "parsefuncs.h"
   #define YY_TYPEDEF_YY_SCANNER_T
   typedef void * yyscan_t;

@@ -39,138 +39,14 @@
 
 
 /*****************************************************************************/
-/*                         Strongly typed sequences                          */
+/*                              Field sequences                              */
 /*****************************************************************************/
-
-/* Create a new sequence with one initial element.  Steal the element. */
-#define NDT_SEQ_NEW(elem) \
-elem##_seq_t *                                                 \
-elem##_seq_new(elem##_t *elt, ndt_context_t *ctx)              \
-{                                                              \
-    elem##_seq_t *seq;                                         \
-    elem##_t *ptr;                                             \
-                                                               \
-    seq = ndt_alloc(1, sizeof *seq);                           \
-    if (seq == NULL) {                                         \
-        elem##_del(elt);                                       \
-        return ndt_memory_error(ctx);                          \
-    }                                                          \
-                                                               \
-    ptr = ndt_alloc(2, sizeof *ptr);                           \
-    if (ptr == NULL) {                                         \
-        ndt_free(seq);                                         \
-        elem##_del(elt);                                       \
-        return ndt_memory_error(ctx);                          \
-    }                                                          \
-                                                               \
-    ptr[0] = *elt;                                             \
-    seq->len = 1;                                              \
-    seq->reserved = 2;                                         \
-    seq->ptr = ptr;                                            \
-                                                               \
-    ndt_free(elt);                                             \
-    return seq;                                                \
-}
-
-/* Delete a sequence */
-#define NDT_SEQ_DEL(elem) \
-void                                          \
-elem##_seq_del(elem##_seq_t *seq)             \
-{                                             \
-    if (seq != NULL) {                        \
-        elem##_array_del(seq->ptr, seq->len); \
-        ndt_free(seq);                        \
-    }                                         \
-}
-
-/* Grow a sequence */
-#define NDT_SEQ_GROW(elem) \
-static int                                                       \
-elem##_seq_grow(elem##_seq_t *seq, ndt_context_t *ctx)           \
-{                                                                \
-    elem##_t *ptr;                                               \
-                                                                 \
-    if (seq->reserved > SIZE_MAX / 2) {                          \
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");   \
-        return -1;                                               \
-    }                                                            \
-                                                                 \
-    ptr = ndt_realloc(seq->ptr, 2 * seq->reserved, sizeof *ptr); \
-    if (ptr == NULL) {                                           \
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");   \
-        return -1;                                               \
-    }                                                            \
-                                                                 \
-    seq->ptr = ptr;                                              \
-    seq->reserved = 2 * seq->reserved;                           \
-                                                                 \
-    return 0;                                                    \
-}
-
-/* Append an element to a sequence */
-#define NDT_SEQ_APPEND(elem) \
-elem##_seq_t *                                                          \
-elem##_seq_append(elem##_seq_t *seq, elem##_t *elt, ndt_context_t *ctx) \
-{                                                                       \
-    assert(seq->len <= seq->reserved);                                  \
-                                                                        \
-    if (seq->len == seq->reserved) {                                    \
-        if (elem##_seq_grow(seq, ctx) < 0) {                            \
-            elem##_seq_del(seq);                                        \
-            elem##_del(elt);                                            \
-            return NULL;                                                \
-        }                                                               \
-    }                                                                   \
-                                                                        \
-    seq->ptr[seq->len] = *elt;                                          \
-    seq->len++;                                                         \
-                                                                        \
-    ndt_free(elt);                                                      \
-    return seq;                                                         \
-}
-
-#define NDT_SEQ_FINALIZE(elem) \
-elem##_seq_t *                                          \
-elem##_seq_finalize(elem##_seq_t *seq)                  \
-{                                                       \
-    elem##_t *ptr;                                      \
-                                                        \
-    if (seq == NULL) {                                  \
-        return NULL;                                    \
-    }                                                   \
-                                                        \
-    assert(seq->len <= seq->reserved);                  \
-                                                        \
-    ptr = ndt_realloc(seq->ptr, seq->len, sizeof *ptr); \
-    if (ptr == NULL) {                                  \
-        return seq; /* seq is still valid */            \
-    }                                                   \
-                                                        \
-    seq->ptr = ptr;                                     \
-    seq->reserved = seq->len;                           \
-                                                        \
-    return seq;                                         \
-}
 
 NDT_SEQ_NEW(ndt_field)
 NDT_SEQ_DEL(ndt_field)
 NDT_SEQ_GROW(ndt_field)
 NDT_SEQ_APPEND(ndt_field)
 NDT_SEQ_FINALIZE(ndt_field)
-
-
-NDT_SEQ_NEW(ndt_attr)
-NDT_SEQ_DEL(ndt_attr)
-NDT_SEQ_GROW(ndt_attr)
-NDT_SEQ_APPEND(ndt_attr)
-NDT_SEQ_FINALIZE(ndt_attr)
-
-
-NDT_SEQ_NEW(ndt_value)
-NDT_SEQ_DEL(ndt_value)
-NDT_SEQ_GROW(ndt_value)
-NDT_SEQ_APPEND(ndt_value)
-NDT_SEQ_FINALIZE(ndt_value)
 
 
 /*****************************************************************************/
