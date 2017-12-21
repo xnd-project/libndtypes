@@ -849,9 +849,14 @@ ndt_next_dim(const ndt_t *a)
     }
 }
 
+/*
+ * Return the step in the fixed dimension that contains 'type'.  'type'
+ * is assumed to be either a dtype with ndim==0 or a FixedDim.
+ */
 static int64_t
 fixed_step(ndt_t *type)
 {
+    assert(ndt_is_concrete(type));
     assert(type->tag != VarDim);
 
     switch (type->tag) {
