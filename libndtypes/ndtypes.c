@@ -764,6 +764,14 @@ ndt_del(ndt_t *t)
 /*                               Type functions                               */
 /******************************************************************************/
 
+/* Set the option flag of a type */
+ndt_t *
+ndt_option(ndt_t *t)
+{
+    t->flags |= NDT_OPTION;
+    return t;
+}
+
 /* Abstract namespace type */
 ndt_t *
 ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
@@ -1185,12 +1193,6 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
-ndt_option(ndt_t *t)
-{
-    t->flags |= NDT_OPTION;
-    return t;
-}
 
 int
 ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx)
