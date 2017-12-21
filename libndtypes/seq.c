@@ -152,6 +152,24 @@ elem##_seq_finalize(elem##_seq_t *seq)                  \
     return seq;                                         \
 }
 
+NDT_SEQ_NEW(ndt_field)
+NDT_SEQ_DEL(ndt_field)
+NDT_SEQ_GROW(ndt_field)
+NDT_SEQ_APPEND(ndt_field)
+NDT_SEQ_FINALIZE(ndt_field)
+
+
+NDT_SEQ_NEW(ndt_attr)
+NDT_SEQ_DEL(ndt_attr)
+NDT_SEQ_GROW(ndt_attr)
+NDT_SEQ_APPEND(ndt_attr)
+NDT_SEQ_FINALIZE(ndt_attr)
+
+
+/*****************************************************************************/
+/*                   Value sequences for the categorical type                */
+/*****************************************************************************/
+
 void
 ndt_value_del(ndt_value_t *mem)
 {
@@ -184,11 +202,6 @@ ndt_value_array_del(ndt_value_t *mem, size_t ntypes)
     ndt_free(mem);
 }
 
-NDT_SEQ_NEW(ndt_field)
-NDT_SEQ_DEL(ndt_field)
-NDT_SEQ_GROW(ndt_field)
-NDT_SEQ_APPEND(ndt_field)
-NDT_SEQ_FINALIZE(ndt_field)
 
 NDT_SEQ_NEW(ndt_value)
 NDT_SEQ_DEL(ndt_value)
@@ -196,14 +209,11 @@ NDT_SEQ_GROW(ndt_value)
 NDT_SEQ_APPEND(ndt_value)
 NDT_SEQ_FINALIZE(ndt_value)
 
-NDT_SEQ_NEW(ndt_attr)
-NDT_SEQ_DEL(ndt_attr)
-NDT_SEQ_GROW(ndt_attr)
-NDT_SEQ_APPEND(ndt_attr)
-NDT_SEQ_FINALIZE(ndt_attr)
 
+/*****************************************************************************/
+/*                               String sequences                            */
+/*****************************************************************************/
 
-/* String sequences */
 ndt_string_seq_t *
 ndt_string_seq_new(char *elt, ndt_context_t *ctx)
 {
@@ -304,41 +314,6 @@ ndt_string_seq_finalize(ndt_string_seq_t *seq)
 
     seq->ptr = ptr;
     seq->reserved = seq->len;
-
-    return seq;
-}
-
-ndt_string_seq_t *
-ndt_string_pair_seq_new(char *first, char *second, ndt_context_t *ctx)
-{
-    ndt_string_seq_t *seq;
-
-    seq = ndt_string_seq_new(first, ctx);
-    if (seq == NULL) {
-        return NULL;
-    }
-
-    seq = ndt_string_seq_append(seq, second, ctx);
-    if (seq == NULL) {
-        return NULL;
-    }
-
-    return seq;
-}
-
-ndt_string_seq_t *
-ndt_string_pair_seq_append(ndt_string_seq_t *seq, char *first, char *second,
-                           ndt_context_t *ctx)
-{
-    seq = ndt_string_seq_append(seq, first, ctx);
-    if (seq == NULL) {
-        return NULL;
-    }
-
-    seq = ndt_string_seq_append(seq, second, ctx);
-    if (seq == NULL) {
-        return NULL;
-    }
 
     return seq;
 }
