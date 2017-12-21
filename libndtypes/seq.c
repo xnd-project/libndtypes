@@ -166,43 +166,6 @@ NDT_SEQ_APPEND(ndt_attr)
 NDT_SEQ_FINALIZE(ndt_attr)
 
 
-/*****************************************************************************/
-/*                   Value sequences for the categorical type                */
-/*****************************************************************************/
-
-void
-ndt_value_del(ndt_value_t *mem)
-{
-    if (mem == NULL) {
-        return;
-    }
-
-    if (mem->tag == ValString) {
-        ndt_free(mem->ValString);
-    }
-
-    ndt_free(mem);
-}
-
-void
-ndt_value_array_del(ndt_value_t *mem, size_t ntypes)
-{
-    size_t i;
-
-    if (mem == NULL) {
-        return;
-    }
-
-    for (i = 0; i < ntypes; i++) {
-        if (mem[i].tag == ValString) {
-            ndt_free(mem[i].ValString);
-        }
-    }
-
-    ndt_free(mem);
-}
-
-
 NDT_SEQ_NEW(ndt_value)
 NDT_SEQ_DEL(ndt_value)
 NDT_SEQ_GROW(ndt_value)
