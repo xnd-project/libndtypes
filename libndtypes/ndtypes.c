@@ -1705,6 +1705,26 @@ ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx)
 }
 
 ndt_t *
+ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    /* abstract type */
+    t = ndt_new(Char, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->Char.encoding = encoding;
+
+    /* concrete access */
+    t->access = Concrete;
+    t->datasize = ndt_sizeof_encoding(encoding);
+    t->align = ndt_alignof_encoding(encoding);
+
+    return t;
+}
+
+ndt_t *
 ndt_signed_kind(ndt_context_t *ctx)
 {
     return ndt_new(SignedKind, ctx);
@@ -1876,26 +1896,6 @@ ndt_from_alias(enum ndt_alias tag, uint32_t flags, ndt_context_t *ctx)
         ndt_err_format(ctx, NDT_ValueError, "invalid alias tag");
         return NULL;
     }
-}
-
-ndt_t *
-ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    /* abstract type */
-    t = ndt_new(Char, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    t->Char.encoding = encoding;
-
-    /* concrete access */
-    t->access = Concrete;
-    t->datasize = ndt_sizeof_encoding(encoding);
-    t->align = ndt_alignof_encoding(encoding);
-
-    return t;
 }
 
 int
