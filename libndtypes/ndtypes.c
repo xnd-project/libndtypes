@@ -1213,74 +1213,9 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
-ndt_nominal(char *name, ndt_context_t *ctx)
-{
-    const ndt_t *type;
-    ndt_t *t;
-
-    type = ndt_typedef_find(name, ctx);
-    if (type == NULL) {
-        ndt_free(name);
-        return NULL;
-    }
-
-    if (ndt_is_abstract(type)) {
-        ndt_err_format(ctx, NDT_ValueError,
-                       "nominal type must be a concrete type");
-        ndt_free(name);
-        return NULL;
-    }
-
-    /* abstract type */
-    t = ndt_new(Nominal, ctx);
-    if (t == NULL) {
-        ndt_free(name);
-        return NULL;
-    }
-    t->Nominal.name = name;
-
-    /* concrete access */
-    t->access = type->access;
-    t->flags = ndt_subtree_flags(type);
-    t->datasize = type->datasize;
-    t->align = type->align;
-
-    return t;
-}
-
-ndt_t *
-ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    if (!check_type_invariants(type, ctx)) {
-        ndt_free(name);
-        ndt_del(type);
-        return NULL;
-    }
-
-    t = ndt_new(Constr, ctx);
-    if (t == NULL) {
-        ndt_free(name);
-        ndt_del(type);
-        return NULL;
-    }
-
-    /* abstract type */
-    t->Constr.name = name;
-    t->Constr.type = type;
-    t->flags = ndt_subtree_flags(type);
-
-    /* concrete access */
-    t->access = type->access;
-    if (t->access == Concrete) {
-        t->datasize = type->datasize;
-        t->align = type->align;
-    }
-
-    return t;
-}
+/******************************************************************************/
+/*                             Container types                                */
+/******************************************************************************/
 
 /*
  * Initialize the access information of a concrete tuple or record.
@@ -1496,6 +1431,102 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
         ndt_free(fields);
         return t;
     }
+}
+
+ndt_t *
+ndt_ref(ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    if (!check_type_invariants(type, ctx)) {
+        ndt_del(type);
+        return NULL;
+    }
+
+    /* abstract type */
+    t = ndt_new(Ref, ctx);
+    if (t == NULL) {
+        ndt_del(type);
+        return NULL;
+    }
+    t->Ref.type = type;
+    t->flags = ndt_subtree_flags(type);
+
+    /* concrete access */
+    t->access = type->access;
+    t->datasize = sizeof(void *);
+    t->align = alignof(void *);
+
+    return t;
+}
+
+ndt_t *
+ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    if (!check_type_invariants(type, ctx)) {
+        ndt_free(name);
+        ndt_del(type);
+        return NULL;
+    }
+
+    t = ndt_new(Constr, ctx);
+    if (t == NULL) {
+        ndt_free(name);
+        ndt_del(type);
+        return NULL;
+    }
+
+    /* abstract type */
+    t->Constr.name = name;
+    t->Constr.type = type;
+    t->flags = ndt_subtree_flags(type);
+
+    /* concrete access */
+    t->access = type->access;
+    if (t->access == Concrete) {
+        t->datasize = type->datasize;
+        t->align = type->align;
+    }
+
+    return t;
+}
+
+ndt_t *
+ndt_nominal(char *name, ndt_context_t *ctx)
+{
+    const ndt_t *type;
+    ndt_t *t;
+
+    type = ndt_typedef_find(name, ctx);
+    if (type == NULL) {
+        ndt_free(name);
+        return NULL;
+    }
+
+    if (ndt_is_abstract(type)) {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "nominal type must be a concrete type");
+        ndt_free(name);
+        return NULL;
+    }
+
+    /* abstract type */
+    t = ndt_new(Nominal, ctx);
+    if (t == NULL) {
+        ndt_free(name);
+        return NULL;
+    }
+    t->Nominal.name = name;
+
+    /* concrete access */
+    t->access = type->access;
+    t->flags = ndt_subtree_flags(type);
+    t->datasize = type->datasize;
+    t->align = type->align;
+
+    return t;
 }
 
 ndt_t *
@@ -1864,33 +1895,6 @@ ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx)
     t->access = Concrete;
     t->datasize = sizeof(ndt_categorical_t);
     t->align = alignof(ndt_categorical_t);
-
-    return t;
-}
-
-ndt_t *
-ndt_ref(ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    if (!check_type_invariants(type, ctx)) {
-        ndt_del(type);
-        return NULL;
-    }
-
-    /* abstract type */
-    t = ndt_new(Ref, ctx);
-    if (t == NULL) {
-        ndt_del(type);
-        return NULL;
-    }
-    t->Ref.type = type;
-    t->flags = ndt_subtree_flags(type);
-
-    /* concrete access */
-    t->access = type->access;
-    t->datasize = sizeof(void *);
-    t->align = alignof(void *);
 
     return t;
 }
