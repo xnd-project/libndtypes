@@ -34,7 +34,7 @@ OBJS = alloc.obj attr.obj context.obj copy.obj equal.obj encodings.obj \
 
 SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\context.obj .objs\copy.obj \
               .objs\equal.obj .objs\encodings.obj .objs\grammar.obj .objs\io.obj \
-              .objs\lexer.obj .objs\match.obj .objs\ndtypes.obj .objs\parsefuncs.obj \ 
+              .objs\lexer.obj .objs\match.obj .objs\ndtypes.obj .objs\parsefuncs.obj \
               .objs\parser.obj .objs\seq.obj .objs\symtable.obj .objs\util.obj
 
 
