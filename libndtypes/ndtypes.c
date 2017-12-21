@@ -1749,22 +1749,6 @@ ndt_complex_kind(ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_typevar(char *name, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    /* abstract type */
-    t = ndt_new(Typevar, ctx);
-    if (t == NULL) {
-        ndt_free(name);
-        return NULL;
-    }
-    t->Typevar.name = name;
-
-    return t;
-}
-
-ndt_t *
 ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -1896,6 +1880,22 @@ ndt_from_alias(enum ndt_alias tag, uint32_t flags, ndt_context_t *ctx)
         ndt_err_format(ctx, NDT_ValueError, "invalid alias tag");
         return NULL;
     }
+}
+
+ndt_t *
+ndt_typevar(char *name, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    /* abstract type */
+    t = ndt_new(Typevar, ctx);
+    if (t == NULL) {
+        ndt_free(name);
+        return NULL;
+    }
+    t->Typevar.name = name;
+
+    return t;
 }
 
 int
