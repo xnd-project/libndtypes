@@ -1862,10 +1862,10 @@ ndt_t *
 ndt_signed(int size, uint32_t flags, ndt_context_t *ctx)
 {
     switch (size) {
-    case  1: return ndt_primitive(Int8, flags, ctx);
-    case  2: return ndt_primitive(Int16, flags, ctx);
-    case  4: return ndt_primitive(Int32, flags, ctx);
-    case  8: return ndt_primitive(Int64, flags, ctx);
+    case 1: return ndt_primitive(Int8, flags, ctx);
+    case 2: return ndt_primitive(Int16, flags, ctx);
+    case 4: return ndt_primitive(Int32, flags, ctx);
+    case 8: return ndt_primitive(Int64, flags, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError,
                        "invalid size for signed integer: '%d'", size);
@@ -1877,10 +1877,10 @@ ndt_t *
 ndt_unsigned(int size, uint32_t flags, ndt_context_t *ctx)
 {
     switch (size) {
-    case  1: return ndt_primitive(Uint8, flags, ctx);
-    case  2: return ndt_primitive(Uint16, flags, ctx);
-    case  4: return ndt_primitive(Uint32, flags, ctx);
-    case  8: return ndt_primitive(Uint64, flags, ctx);
+    case 1: return ndt_primitive(Uint8, flags, ctx);
+    case 2: return ndt_primitive(Uint16, flags, ctx);
+    case 4: return ndt_primitive(Uint32, flags, ctx);
+    case 8: return ndt_primitive(Uint64, flags, ctx);
     default:
         ndt_err_format(ctx, NDT_ValueError,
                        "invalid size for unsigned integer: '%d'", size);
