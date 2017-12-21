@@ -174,6 +174,13 @@ ndt_err_occurred(const ndt_context_t *ctx)
     return ctx->err != NDT_Success;
 }
 
+void *
+ndt_memory_error(ndt_context_t *ctx)
+{
+    ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+    return NULL;
+}
+
 const char *
 ndt_err_as_string(enum ndt_error err)
 {

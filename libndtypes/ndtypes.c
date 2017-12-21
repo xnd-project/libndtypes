@@ -148,13 +148,6 @@ round_up(size_t offset, uint16_t align)
     return ((offset + align - 1) / align) * align;
 }
 
-void *
-ndt_memory_error(ndt_context_t *ctx)
-{
-    ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-    return NULL;
-}
-
 char *
 ndt_strdup(const char *s, ndt_context_t *ctx)
 {
