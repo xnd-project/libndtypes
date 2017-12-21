@@ -423,111 +423,13 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
     if (n < 0) return -1;
 
     switch (t->tag) {
-        case FixedDim:
-            n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->FixedDim.type, d, ctx);
-            return n;
-
-        case SymbolicDim:
-            n = ndt_snprintf(ctx, buf, "%s * ", t->SymbolicDim.name);
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->SymbolicDim.type, d, ctx);
-            return n;
-
-        case VarDim:
-            n = ndt_snprintf(ctx, buf, "var * ");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->VarDim.type, d, ctx);
-            return n;
-
-        case EllipsisDim:
-            n = ndt_snprintf(ctx, buf, "%s... * ",
-                    t->EllipsisDim.name ? t->EllipsisDim.name : "");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->EllipsisDim.type, d, ctx);
-            return n;
-
-        case Nominal:
-            n = ndt_snprintf(ctx, buf, "%s", t->Nominal.name);
-            return n;
-
-        case Module:
-            n = ndt_snprintf(ctx, buf, "%s.(", t->Module.name);
+        case Module: {
+            n = ndt_snprintf(ctx, buf, "%s:: ", t->Module.name);
             if (n < 0) return -1;
 
             n = datashape(buf, t->Module.type, d, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ")");
             return n;
-
-        case Constr:
-            n = ndt_snprintf(ctx, buf, "%s(", t->Constr.name);
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->Constr.type, d, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
-
-        case Tuple:
-            n = ndt_snprintf(ctx, buf, "(");
-            if (n < 0) return -1;
-
-            if (t->Tuple.shape > 0) {
-                n = tuple_fields(buf, t, d, ctx);
-                if (n < 0) return -1;
-
-                n = comma_variadic_flag(buf, t->Tuple.flag, INT_MIN, ctx);
-                if (n < 0) return -1;
-            }
-            else {
-                n = variadic_flag(buf, t->Tuple.flag, ctx);
-                if (n < 0) return -1;
-            }
-
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
-
-        case Record:
-            n = ndt_snprintf(ctx, buf, "{");
-            if (n < 0) return -1;
-
-            if (d >= 0) {
-                n = ndt_snprintf(ctx, buf, "\n");
-                if (n < 0) return -1;
-                n = indent(ctx, buf, d+2);
-                if (n < 0) return -1;
-            }
-
-            if (t->Record.shape > 0) {
-                n = record_fields(buf, t, d+2, ctx);
-                if (n < 0) return -1;
-
-                n = comma_variadic_flag(buf, t->Record.flag, d+2, ctx);
-                if (n < 0) return -1;
-            }
-            else {
-                n = variadic_flag(buf, t->Record.flag, ctx);
-                if (n < 0) return -1;
-
-            }
-
-            if (d >= 0) {
-                n = ndt_snprintf(ctx, buf, "\n");
-                if (n < 0) return -1;
-                n = indent(ctx, buf, d);
-                if (n < 0) return -1;
-            }
-
-            n = ndt_snprintf(ctx, buf, "}");
-            return n;
+        }
 
         case Function: {
             ndt_t *pos = t->Function.pos;
@@ -572,9 +474,177 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return n;
         }
 
-        case Typevar:
+        case FixedDim: {
+            n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->FixedDim.type, d, ctx);
+            return n;
+        }
+
+        case VarDim: {
+            n = ndt_snprintf(ctx, buf, "var * ");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->VarDim.type, d, ctx);
+            return n;
+        }
+
+        case SymbolicDim: {
+            n = ndt_snprintf(ctx, buf, "%s * ", t->SymbolicDim.name);
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->SymbolicDim.type, d, ctx);
+            return n;
+        }
+
+        case EllipsisDim: {
+            n = ndt_snprintf(ctx, buf, "%s... * ",
+                    t->EllipsisDim.name ? t->EllipsisDim.name : "");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->EllipsisDim.type, d, ctx);
+            return n;
+        }
+
+        case Tuple: {
+            n = ndt_snprintf(ctx, buf, "(");
+            if (n < 0) return -1;
+
+            if (t->Tuple.shape > 0) {
+                n = tuple_fields(buf, t, d, ctx);
+                if (n < 0) return -1;
+
+                n = comma_variadic_flag(buf, t->Tuple.flag, INT_MIN, ctx);
+                if (n < 0) return -1;
+            }
+            else {
+                n = variadic_flag(buf, t->Tuple.flag, ctx);
+                if (n < 0) return -1;
+            }
+
+            n = ndt_snprintf(ctx, buf, ")");
+            return n;
+        }
+
+        case Record: {
+            n = ndt_snprintf(ctx, buf, "{");
+            if (n < 0) return -1;
+
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, "\n");
+                if (n < 0) return -1;
+                n = indent(ctx, buf, d+2);
+                if (n < 0) return -1;
+            }
+
+            if (t->Record.shape > 0) {
+                n = record_fields(buf, t, d+2, ctx);
+                if (n < 0) return -1;
+
+                n = comma_variadic_flag(buf, t->Record.flag, d+2, ctx);
+                if (n < 0) return -1;
+            }
+            else {
+                n = variadic_flag(buf, t->Record.flag, ctx);
+                if (n < 0) return -1;
+
+            }
+
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, "\n");
+                if (n < 0) return -1;
+                n = indent(ctx, buf, d);
+                if (n < 0) return -1;
+            }
+
+            n = ndt_snprintf(ctx, buf, "}");
+            return n;
+        }
+
+        case Ref: {
+            n = ndt_snprintf(ctx, buf, "ref(");
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->Ref.type, d, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ")");
+            return n;
+        }
+
+        case Constr: {
+            n = ndt_snprintf(ctx, buf, "%s(", t->Constr.name);
+            if (n < 0) return -1;
+
+            n = datashape(buf, t->Constr.type, d, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ")");
+            return n;
+        }
+
+        case Nominal: {
+            n = ndt_snprintf(ctx, buf, "%s", t->Nominal.name);
+            return n;
+        }
+
+        case Categorical: {
+            n = ndt_snprintf(ctx, buf, "categorical(");
+            if (n < 0) return -1;
+
+            n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ")");
+            return n;
+        }
+
+        case FixedString: {
+            if (t->FixedString.encoding == Utf8) {
+                n = ndt_snprintf(ctx, buf, "fixed_string(%zu)",
+                                 t->FixedString.size);
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, "fixed_string(%zu, %s)",
+                                 t->FixedString.size,
+                                 ndt_encoding_as_string(t->FixedString.encoding));
+            }
+            return n;
+        }
+
+        case FixedBytes: {
+            if (t->FixedBytes.align == 1) {
+                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu)",
+                                 t->FixedBytes.size);
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu, align=%" PRIu8 ")",
+                                 t->FixedBytes.size, t->FixedBytes.align);
+            }
+            return n;
+        }
+
+        case Bytes: {
+            if (t->Bytes.target_align == 1) {
+                n = ndt_snprintf(ctx, buf, "bytes()");
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
+            }
+            return n;
+        }
+
+        case Char: {
+            n = ndt_snprintf(ctx, buf, "char(%s)",
+                          ndt_encoding_as_string(t->Char.encoding));
+            return n;
+        }
+
+        case Typevar: {
             n = ndt_snprintf(ctx, buf, "%s", t->Typevar.name);
             return n;
+        }
 
         case AnyKind:
         case ScalarKind:
@@ -592,68 +662,10 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         case String:
             n = ndt_snprintf(ctx, buf, "%s", ndt_type_keyword(t));
             return n;
-
-        case FixedString:
-            if (t->FixedString.encoding == Utf8) {
-                n = ndt_snprintf(ctx, buf, "fixed_string(%zu)",
-                                 t->FixedString.size);
-            }
-            else {
-                n = ndt_snprintf(ctx, buf, "fixed_string(%zu, %s)",
-                                 t->FixedString.size,
-                                 ndt_encoding_as_string(t->FixedString.encoding));
-            }
-            return n;
-
-        case Char:
-            n = ndt_snprintf(ctx, buf, "char(%s)",
-                          ndt_encoding_as_string(t->Char.encoding));
-            return n;
-
-        case Bytes:
-            if (t->Bytes.target_align == 1) {
-                n = ndt_snprintf(ctx, buf, "bytes()");
-            }
-            else {
-                n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
-            }
-            return n;
-
-        case FixedBytes:
-            if (t->FixedBytes.align == 1) {
-                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu)",
-                                 t->FixedBytes.size);
-            }
-            else {
-                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu, align=%" PRIu8 ")",
-                                 t->FixedBytes.size, t->FixedBytes.align);
-            }
-            return n;
-
-        case Categorical:
-            n = ndt_snprintf(ctx, buf, "categorical(");
-            if (n < 0) return -1;
-
-            n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
-
-        case Ref:
-            n = ndt_snprintf(ctx, buf, "ref(");
-            if (n < 0) return -1;
-
-            n = datashape(buf, t->Ref.type, d, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
-
-        default:
-            ndt_err_format(ctx, NDT_ValueError, "invalid tag");
-            return -1;
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid tag");
 }
 
 
