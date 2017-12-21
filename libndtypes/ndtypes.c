@@ -57,6 +57,31 @@ ispower2(uint16_t n)
 
 
 /*****************************************************************************/
+/*                                   Flags                                   */
+/*****************************************************************************/
+
+/* Determine general subtree flags. */
+static uint32_t
+ndt_subtree_flags(const ndt_t *type)
+{
+    if (type && type->flags & (NDT_OPTION|NDT_SUBTREE_OPTION)) {
+        return NDT_SUBTREE_OPTION;
+    }
+
+    return 0;
+}
+
+/* Determine general subtree and ellipsis flags. */
+static uint32_t
+ndt_dim_flags(const ndt_t *type)
+{
+    uint32_t flags = ndt_subtree_flags(type);
+    flags |= (type->flags & NDT_ELLIPSIS);
+    return flags;
+}
+
+
+/*****************************************************************************/
 /*                                Predicates                                 */
 /*****************************************************************************/
 
@@ -293,24 +318,6 @@ static size_t
 round_up(size_t offset, uint16_t align)
 {
     return ((offset + align - 1) / align) * align;
-}
-
-uint32_t
-ndt_subtree_flags(const ndt_t *type)
-{
-    if (type && type->flags & (NDT_OPTION|NDT_SUBTREE_OPTION)) {
-        return NDT_SUBTREE_OPTION;
-    }
-
-    return 0;
-}
-
-uint32_t
-ndt_dim_flags(const ndt_t *type)
-{
-    uint32_t flags = ndt_subtree_flags(type);
-    flags |= (type->flags & NDT_ELLIPSIS);
-    return flags;
 }
 
 
