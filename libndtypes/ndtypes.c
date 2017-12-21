@@ -1529,31 +1529,179 @@ ndt_nominal(char *name, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
-ndt_typevar(char *name, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    /* abstract type */
-    t = ndt_new(Typevar, ctx);
-    if (t == NULL) {
-        ndt_free(name);
-        return NULL;
-    }
-    t->Typevar.name = name;
-
-    return t;
-}
-
 
 /******************************************************************************/
-/*                                  Scalars                                   */
+/*                               Scalar types                                 */
 /******************************************************************************/
 
 ndt_t *
 ndt_scalar_kind(ndt_context_t *ctx)
 {
     return ndt_new(ScalarKind, ctx);
+}
+
+/* Define a sort order for the typed values in the categorical set. */
+static int
+cmp(const void *x, const void *y)
+{
+    const ndt_value_t *p = (const ndt_value_t *)x;
+    const ndt_value_t *q = (const ndt_value_t *)y;
+
+    return ndt_value_compare(p, q);
+}
+
+ndt_t *
+ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx)
+{
+    ndt_value_t *tmp;
+    ndt_t *t;
+    size_t i;
+
+    tmp = ndt_alloc(ntypes, sizeof(ndt_value_t));
+    if (tmp == NULL) {
+        ndt_value_array_del(types, ntypes);
+        return ndt_memory_error(ctx);
+    }
+
+    memcpy(tmp, types, ntypes * sizeof(ndt_value_t));
+    qsort(tmp, ntypes, sizeof *tmp, cmp);
+
+    for (i = 0; i+1 < ntypes; i++) {
+        if (ndt_value_equal(&tmp[i], &tmp[i+1])) {
+            ndt_free(tmp);
+            ndt_value_array_del(types, ntypes);
+            ndt_err_format(ctx, NDT_ValueError, "duplicate category entries");
+            return NULL;
+        }
+    }
+    ndt_free(tmp);
+
+    /* abstract type */
+    t = ndt_new(Categorical, ctx);
+    if (t == NULL) {
+        ndt_value_array_del(types, ntypes);
+        return NULL;
+    }
+    t->Categorical.ntypes = ntypes;
+    t->Categorical.types = types;
+
+    /* concrete access */
+    t->access = Concrete;
+    t->datasize = sizeof(ndt_categorical_t);
+    t->align = alignof(ndt_categorical_t);
+
+    return t;
+}
+
+ndt_t *
+ndt_fixed_bytes_kind(ndt_context_t *ctx)
+{
+    return ndt_new(FixedBytesKind, ctx);
+}
+
+ndt_t *
+ndt_fixed_bytes(size_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
+{
+    ndt_t *t;
+    uint16_t align;
+
+    align = get_align(align_attr, 1, ctx);
+    if (align == UINT16_MAX) {
+        return NULL;
+    }
+
+    if (size % align != 0) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "data size must be a multiple of alignment");
+        return NULL;
+    }
+
+    /* abstract type */
+    t = ndt_new(FixedBytes, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->FixedBytes.size = size;
+    t->FixedBytes.align = align;
+
+    /* concrete access */
+    t->access = Concrete;
+    t->datasize = size;
+    t->align = align;
+
+    return t;
+}
+
+ndt_t *
+ndt_fixed_string_kind(ndt_context_t *ctx)
+{
+    return ndt_new(FixedStringKind, ctx);
+}
+
+ndt_t *
+ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    /* abstract type */
+    t = ndt_new(FixedString, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->FixedString.size = size;
+    t->FixedString.encoding = encoding;
+
+    /* concrete access */
+    t->access = Concrete;
+    t->datasize = ndt_sizeof_encoding(encoding) * size;
+    t->align = ndt_alignof_encoding(encoding);
+
+    return t;
+}
+
+ndt_t *
+ndt_string(ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    /* abstract type */
+    t = ndt_new(String, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+
+    /* concrete access */
+    t->access = Concrete;
+    t->datasize = sizeof(char *);
+    t->align = alignof(char *);
+
+    return t;
+}
+
+ndt_t *
+ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx)
+{
+    ndt_t *t;
+    uint16_t align;
+
+    align = get_align(target_align, 1, ctx);
+    if (align == UINT16_MAX) {
+        return NULL;
+    }
+
+    /* abstract type */
+    t = ndt_new(Bytes, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->Bytes.target_align = align;
+
+    /* concrete access */
+    t->access = Concrete;
+    t->datasize = sizeof(ndt_bytes_t);
+    t->align = alignof(ndt_bytes_t);
+
+    return t;
 }
 
 ndt_t *
@@ -1581,17 +1729,20 @@ ndt_complex_kind(ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_fixed_bytes_kind(ndt_context_t *ctx)
+ndt_typevar(char *name, ndt_context_t *ctx)
 {
-    return ndt_new(FixedBytesKind, ctx);
-}
+    ndt_t *t;
 
-ndt_t *
-ndt_fixed_string_kind(ndt_context_t *ctx)
-{
-    return ndt_new(FixedStringKind, ctx);
-}
+    /* abstract type */
+    t = ndt_new(Typevar, ctx);
+    if (t == NULL) {
+        ndt_free(name);
+        return NULL;
+    }
+    t->Typevar.name = name;
 
+    return t;
+}
 
 ndt_t *
 ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
@@ -1743,158 +1894,6 @@ ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx)
     t->access = Concrete;
     t->datasize = ndt_sizeof_encoding(encoding);
     t->align = ndt_alignof_encoding(encoding);
-
-    return t;
-}
-
-ndt_t *
-ndt_string(ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    /* abstract type */
-    t = ndt_new(String, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-
-    /* concrete access */
-    t->access = Concrete;
-    t->datasize = sizeof(char *);
-    t->align = alignof(char *);
-
-    return t;
-}
-
-ndt_t *
-ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    /* abstract type */
-    t = ndt_new(FixedString, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    t->FixedString.size = size;
-    t->FixedString.encoding = encoding;
-
-    /* concrete access */
-    t->access = Concrete;
-    t->datasize = ndt_sizeof_encoding(encoding) * size;
-    t->align = ndt_alignof_encoding(encoding);
-
-    return t;
-}
-
-ndt_t *
-ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx)
-{
-    ndt_t *t;
-    uint16_t align;
-
-    align = get_align(target_align, 1, ctx);
-    if (align == UINT16_MAX) {
-        return NULL;
-    }
-
-    /* abstract type */
-    t = ndt_new(Bytes, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    t->Bytes.target_align = align;
-
-    /* concrete access */
-    t->access = Concrete;
-    t->datasize = sizeof(ndt_bytes_t);
-    t->align = alignof(ndt_bytes_t);
-
-    return t;
-}
-
-ndt_t *
-ndt_fixed_bytes(size_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
-{
-    ndt_t *t;
-    uint16_t align;
-
-    align = get_align(align_attr, 1, ctx);
-    if (align == UINT16_MAX) {
-        return NULL;
-    }
-
-    if (size % align != 0) {
-        ndt_err_format(ctx, NDT_ValueError,
-            "data size must be a multiple of alignment");
-        return NULL;
-    }
-
-    /* abstract type */
-    t = ndt_new(FixedBytes, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    t->FixedBytes.size = size;
-    t->FixedBytes.align = align;
-
-    /* concrete access */
-    t->access = Concrete;
-    t->datasize = size;
-    t->align = align;
-
-    return t;
-}
-
-/* Define a sort order for the typed values in the categorical set. */
-static int
-cmp(const void *x, const void *y)
-{
-    const ndt_value_t *p = (const ndt_value_t *)x;
-    const ndt_value_t *q = (const ndt_value_t *)y;
-
-    return ndt_value_compare(p, q);
-}
-
-ndt_t *
-ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx)
-{
-    ndt_value_t *tmp;
-    ndt_t *t;
-    size_t i;
-
-    tmp = ndt_alloc(ntypes, sizeof(ndt_value_t));
-    if (tmp == NULL) {
-        ndt_value_array_del(types, ntypes);
-        return ndt_memory_error(ctx);
-    }
-
-    memcpy(tmp, types, ntypes * sizeof(ndt_value_t));
-    qsort(tmp, ntypes, sizeof *tmp, cmp);
-
-    for (i = 0; i+1 < ntypes; i++) {
-        if (ndt_value_equal(&tmp[i], &tmp[i+1])) {
-            ndt_free(tmp);
-            ndt_value_array_del(types, ntypes);
-            ndt_err_format(ctx, NDT_ValueError, "duplicate category entries");
-            return NULL;
-        }
-    }
-    ndt_free(tmp);
-
-    /* abstract type */
-    t = ndt_new(Categorical, ctx);
-    if (t == NULL) {
-        ndt_value_array_del(types, ntypes);
-        return NULL;
-    }
-    t->Categorical.ntypes = ntypes;
-    t->Categorical.types = types;
-
-    /* concrete access */
-    t->access = Concrete;
-    t->datasize = sizeof(ndt_categorical_t);
-    t->align = alignof(ndt_categorical_t);
 
     return t;
 }
