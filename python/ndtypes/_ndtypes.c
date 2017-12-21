@@ -465,13 +465,14 @@ ndtype_##NDTFUNC(PyObject *self, PyObject *args UNUSED) \
 
 Ndtype_BoolFunc(ndt_is_abstract)
 Ndtype_BoolFunc(ndt_is_concrete)
+
+Ndtype_BoolFunc(ndt_is_optional)
+Ndtype_BoolFunc(ndt_is_scalar)
 Ndtype_BoolFunc(ndt_is_signed)
 Ndtype_BoolFunc(ndt_is_unsigned)
 Ndtype_BoolFunc(ndt_is_float)
 Ndtype_BoolFunc(ndt_is_complex)
-Ndtype_BoolFunc(ndt_is_scalar)
-Ndtype_BoolFunc(ndt_is_array)
-Ndtype_BoolFunc(ndt_is_optional)
+
 Ndtype_BoolFunc(ndt_is_c_contiguous)
 Ndtype_BoolFunc(ndt_is_f_contiguous)
 
@@ -685,15 +686,14 @@ static PyGetSetDef ndtype_getsets [] =
 static PyMethodDef ndtype_methods [] =
 {
   /* Boolean functions */
+  { "isoptional", (PyCFunction)ndtype_ndt_is_optional, METH_NOARGS, NULL },
   { "isabstract", (PyCFunction)ndtype_ndt_is_abstract, METH_NOARGS, NULL },
   { "isconcrete", (PyCFunction)ndtype_ndt_is_concrete, METH_NOARGS, NULL },
+  { "isscalar", (PyCFunction)ndtype_ndt_is_scalar, METH_NOARGS, NULL },
   { "issigned", (PyCFunction)ndtype_ndt_is_signed, METH_NOARGS, NULL },
   { "isunsigned", (PyCFunction)ndtype_ndt_is_unsigned, METH_NOARGS, NULL },
   { "isfloat", (PyCFunction)ndtype_ndt_is_float, METH_NOARGS, NULL },
   { "iscomplex", (PyCFunction)ndtype_ndt_is_complex, METH_NOARGS, NULL },
-  { "isscalar", (PyCFunction)ndtype_ndt_is_scalar, METH_NOARGS, NULL },
-  { "isarray", (PyCFunction)ndtype_ndt_is_array, METH_NOARGS, NULL },
-  { "isoptional", (PyCFunction)ndtype_ndt_is_optional, METH_NOARGS, NULL },
 
   /* Boolean functions on array types */
   { "is_c_contiguous", (PyCFunction)ndtype_ndt_is_c_contiguous, METH_NOARGS, NULL },

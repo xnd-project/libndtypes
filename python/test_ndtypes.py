@@ -50,7 +50,6 @@ class TestModule(unittest.TestCase):
         t = ndt("SomeNamespace:: 2 * 3 * float64")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -81,7 +80,6 @@ class TestFunction(unittest.TestCase):
         t = ndt("(10 * float64, string) -> float64")
  
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -112,7 +110,6 @@ class TestVoid(unittest.TestCase):
         t = ndt("() -> void")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -135,7 +132,6 @@ class TestAny(unittest.TestCase):
         t = ndt("Any")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -166,7 +162,6 @@ class TestFixedDim(unittest.TestCase):
         t = ndt("10 * 20 * complex128")
 
         self.assertFalse(t.isabstract())
-        self.assertTrue(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -261,7 +256,6 @@ class TestFortran(unittest.TestCase):
         t = ndt("!10 * 20 * complex128")
 
         self.assertFalse(t.isabstract())
-        self.assertTrue(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -349,7 +343,6 @@ class TestVarDim(unittest.TestCase):
         t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * complex128")
 
         self.assertFalse(t.isabstract())
-        self.assertTrue(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -430,7 +423,6 @@ class TestSymbolicDim(unittest.TestCase):
         t = ndt("N * M * complex128")
 
         self.assertTrue(t.isabstract())
-        self.assertTrue(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -461,7 +453,6 @@ class TestEllipsisDim(unittest.TestCase):
         t = ndt("2 * ... * complex128")
 
         self.assertTrue(t.isabstract())
-        self.assertTrue(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -493,7 +484,6 @@ class TestTuple(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -509,7 +499,6 @@ class TestTuple(unittest.TestCase):
             t = ndt(s)
 
             self.assertTrue(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertFalse(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -541,7 +530,6 @@ class TestRecord(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -557,7 +545,6 @@ class TestRecord(unittest.TestCase):
             t = ndt(s)
 
             self.assertTrue(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertFalse(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -589,7 +576,6 @@ class TestRef(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -605,7 +591,6 @@ class TestRef(unittest.TestCase):
             t = ndt(s)
 
             self.assertTrue(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertFalse(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -637,7 +622,6 @@ class TestConstr(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -679,7 +663,6 @@ class TestNominal(unittest.TestCase):
             # The nominal type is opaque. The only thing known is that
             # the typedef is concrete.
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -718,7 +701,6 @@ class TestScalarKind(unittest.TestCase):
         t = ndt("Scalar")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -752,7 +734,6 @@ class TestCategorical(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -781,7 +762,6 @@ class TestFixedStringKind(unittest.TestCase):
         t = ndt("FixedString")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -810,7 +790,6 @@ class TestFixedString(unittest.TestCase):
         t = ndt("fixed_string(380, 'utf16')")
 
         self.assertFalse(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -845,7 +824,6 @@ class TestFixedBytesKind(unittest.TestCase):
         t = ndt("FixedBytes")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -874,7 +852,6 @@ class TestFixedBytes(unittest.TestCase):
         t = ndt("fixed_bytes(size=1020)")
 
         self.assertFalse(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -909,7 +886,6 @@ class TestString(unittest.TestCase):
         t = ndt("string")
 
         self.assertFalse(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -938,7 +914,6 @@ class TestBytes(unittest.TestCase):
         t = ndt("bytes")
 
         self.assertFalse(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -967,7 +942,6 @@ class TestChar(unittest.TestCase):
         t = ndt("char")
 
         self.assertFalse(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -996,7 +970,6 @@ class TestBool(unittest.TestCase):
         t = ndt("bool")
 
         self.assertFalse(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertTrue(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -1025,7 +998,6 @@ class TestSignedKind(unittest.TestCase):
         t = ndt("Signed")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -1057,7 +1029,6 @@ class TestSigned(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -1092,7 +1063,6 @@ class TestUnsignedKind(unittest.TestCase):
         t = ndt("Unsigned")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -1124,7 +1094,6 @@ class TestUnsigned(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -1159,7 +1128,6 @@ class TestFloatKind(unittest.TestCase):
         t = ndt("Float")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -1193,7 +1161,6 @@ class TestFloat(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertFalse(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertTrue(t.isfloat())
@@ -1227,7 +1194,6 @@ class TestComplexKind(unittest.TestCase):
         t = ndt("Complex")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())
@@ -1261,7 +1227,6 @@ class TestComplex(unittest.TestCase):
             t = ndt(s)
 
             self.assertFalse(t.isabstract())
-            self.assertFalse(t.isarray())
             self.assertTrue(t.iscomplex())
             self.assertTrue(t.isconcrete())
             self.assertFalse(t.isfloat())
@@ -1295,7 +1260,6 @@ class TestTypevar(unittest.TestCase):
         t = ndt("T")
 
         self.assertTrue(t.isabstract())
-        self.assertFalse(t.isarray())
         self.assertFalse(t.iscomplex())
         self.assertFalse(t.isconcrete())
         self.assertFalse(t.isfloat())

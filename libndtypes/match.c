@@ -47,6 +47,17 @@ static int match_dimensions(const ndt_t *p[], int pshape, const ndt_t *c[], int 
 
 
 static int
+is_array(const ndt_t *t)
+{
+    switch (t->tag) {
+    case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int
 symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
                      ndt_context_t *ctx)
 {
@@ -275,7 +286,7 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     case AnyKind:
         return 1;
     case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
-        if (!ndt_is_array(c)) return 0;
+        if (!is_array(c)) return 0;
 
         pn = ndt_dims_dtype(pdims, &pdtype, p);
         cn = ndt_dims_dtype(cdims, &cdtype, c);

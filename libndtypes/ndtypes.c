@@ -155,17 +155,6 @@ ndt_is_f_contiguous(const ndt_t *t)
     return 1;
 }
 
-int
-ndt_is_array(const ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
 /* Primitive type predicates */
 int
 ndt_is_signed(const ndt_t *t)
