@@ -55,6 +55,164 @@ ispower2(uint16_t n)
     return n != 0 && (n & (n-1)) == 0;
 }
 
+
+/*****************************************************************************/
+/*                                Predicates                                 */
+/*****************************************************************************/
+
+/* Type field access */
+int
+ndt_is_abstract(const ndt_t *t)
+{
+    return t->access == Abstract;
+}
+
+int
+ndt_is_concrete(const ndt_t *t)
+{
+    return t->access == Concrete;
+}
+
+/* Type flags */
+int
+ndt_is_optional(const ndt_t *t)
+{
+    return t->flags & NDT_OPTION;
+}
+
+int
+ndt_subtree_is_optional(const ndt_t *t)
+{
+    return t->flags & NDT_SUBTREE_OPTION;
+}
+
+/* Array predicates */
+int
+ndt_is_ndarray(const ndt_t *t)
+{
+    switch (t->tag) {
+    case FixedDim:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_c_contiguous(const ndt_t *t)
+{
+    const ndt_t *dims[NDT_MAX_DIM];
+    const ndt_t *dtype;
+    int64_t shape, step;
+    int ndim, i;
+
+    if (!ndt_is_ndarray(t)) {
+        return 0;
+    }
+    if (!ndt_is_concrete(t)) {
+        return 0;
+    }
+
+    ndim = ndt_dims_dtype(dims, &dtype, t);
+
+    step = 1;
+    for (i = ndim-1; i >= 0; i--) {
+        shape = dims[i]->FixedDim.shape;
+        if (shape > 1 && dims[i]->Concrete.FixedDim.step != step) {
+            return 0;
+        }
+        step *= shape;
+    }
+
+    return 1;
+}
+
+int
+ndt_is_f_contiguous(const ndt_t *t)
+{
+    const ndt_t *dims[NDT_MAX_DIM];
+    const ndt_t *dtype;
+    int64_t shape, step;
+    int ndim, i;
+
+    if (!ndt_is_ndarray(t)) {
+        return 0;
+    }
+    if (!ndt_is_concrete(t)) {
+        return 0;
+    }
+
+    ndim = ndt_dims_dtype(dims, &dtype, t);
+    step = 1;
+    for (i = 0; i < ndim; i++) {
+        shape = dims[i]->FixedDim.shape;
+        if (shape > 1 && dims[i]->Concrete.FixedDim.step != step) {
+            return 0;
+        }
+        step *= shape;
+    }
+
+    return 1;
+}
+
+int
+ndt_is_array(const ndt_t *t)
+{
+    switch (t->tag) {
+    case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* Primitive type predicates */
+int
+ndt_is_signed(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Int8: case Int16: case Int32: case Int64:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_unsigned(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Uint8: case Uint16: case Uint32: case Uint64:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_float(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Float16: case Float32: case Float64:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_complex(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Complex32: case Complex64: case Complex128:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+
+
 /* Check that 'align' is a power of two. */
 static inline bool
 align_ispower2(uint16_t align, ndt_context_t *ctx)
@@ -628,17 +786,6 @@ ndt_any_kind(ndt_context_t *ctx)
     return ndt_new(AnyKind, ctx);
 }
 
-int
-ndt_is_ndarray(const ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
 ndt_t *
 _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 {
@@ -1008,18 +1155,6 @@ ndt_option(ndt_t *t)
 {
     t->flags |= NDT_OPTION;
     return t;
-}
-
-int
-ndt_is_optional(const ndt_t *t)
-{
-    return t->flags & NDT_OPTION;
-}
-
-int
-ndt_subtree_is_optional(const ndt_t *t)
-{
-    return t->flags & NDT_SUBTREE_OPTION;
 }
 
 int
@@ -1762,141 +1897,6 @@ ndt_ref(ndt_t *type, ndt_context_t *ctx)
     t->align = alignof(void *);
 
     return t;
-}
-
-int
-ndt_is_signed(const ndt_t *t)
-{
-    switch (t->tag) {
-    case Int8: case Int16: case Int32: case Int64:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-int
-ndt_is_unsigned(const ndt_t *t)
-{
-    switch (t->tag) {
-    case Uint8: case Uint16: case Uint32: case Uint64:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-int
-ndt_is_float(const ndt_t *t)
-{
-    switch (t->tag) {
-    case Float16: case Float32: case Float64:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-int
-ndt_is_complex(const ndt_t *t)
-{
-    switch (t->tag) {
-    case Complex32: case Complex64: case Complex128:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-int
-ndt_is_abstract(const ndt_t *t)
-{
-    return t->access == Abstract;
-}
-
-int
-ndt_is_concrete(const ndt_t *t)
-{
-    return t->access == Concrete;
-}
-
-int
-ndt_is_array(const ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-int
-ndt_is_concrete_array(const ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim: case VarDim:
-        return ndt_is_concrete(t);
-    default:
-        return 0;
-    }
-}
-
-int
-ndt_is_c_contiguous(const ndt_t *t)
-{
-    const ndt_t *dims[NDT_MAX_DIM];
-    const ndt_t *dtype;
-    int64_t shape, step;
-    int ndim, i;
-
-    if (!ndt_is_ndarray(t)) {
-        return 0;
-    }
-    if (!ndt_is_concrete(t)) {
-        return 0;
-    }
-
-    ndim = ndt_dims_dtype(dims, &dtype, t);
-
-    step = 1;
-    for (i = ndim-1; i >= 0; i--) {
-        shape = dims[i]->FixedDim.shape;
-        if (shape > 1 && dims[i]->Concrete.FixedDim.step != step) {
-            return 0;
-        }
-        step *= shape;
-    }
-
-    return 1;
-}
-
-int
-ndt_is_f_contiguous(const ndt_t *t)
-{
-    const ndt_t *dims[NDT_MAX_DIM];
-    const ndt_t *dtype;
-    int64_t shape, step;
-    int ndim, i;
-
-    if (!ndt_is_ndarray(t)) {
-        return 0;
-    }
-    if (!ndt_is_concrete(t)) {
-        return 0;
-    }
-
-    ndim = ndt_dims_dtype(dims, &dtype, t);
-    step = 1;
-    for (i = 0; i < ndim; i++) {
-        shape = dims[i]->FixedDim.shape;
-        if (shape > 1 && dims[i]->Concrete.FixedDim.step != step) {
-            return 0;
-        }
-        step *= shape;
-    }
-
-    return 1;
 }
 
 int
