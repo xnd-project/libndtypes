@@ -484,6 +484,9 @@ NDTYPES_API int ndt_is_signed(const ndt_t *t);
 NDTYPES_API int ndt_is_unsigned(const ndt_t *t);
 NDTYPES_API int ndt_is_float(const ndt_t *t);
 NDTYPES_API int ndt_is_complex(const ndt_t *t);
+NDTYPES_API int ndt_endian_is_set(const ndt_t *t);
+NDTYPES_API int ndt_is_little_endian(const ndt_t *t);
+NDTYPES_API int ndt_is_big_endian(const ndt_t *t);
 
 NDTYPES_API int ndt_is_ndarray(const ndt_t *t);
 NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);

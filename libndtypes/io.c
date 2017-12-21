@@ -920,7 +920,64 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
     int n;
 
     switch (t->tag) {
-        case FixedDim:
+        case Module: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Module(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Module.name);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "type=");
+            if (n < 0) return -1;
+
+            n = ast_datashape(buf, t->Module.type, d+5+2, 1, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "\n");
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case Function: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Function(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "pos=");
+            if (n < 0) return -1;
+
+            n = ast_datashape(buf, t->Function.pos, d+4+2, 1, ctx);
+
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "kwds=");
+            if (n < 0) return -1;
+
+            n = ast_datashape(buf, t->Function.kwds, d+5+2, 1, ctx);
+
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "ret=");
+            if (n < 0) return -1;
+
+            n = ast_datashape(buf, t->Function.ret, d+4+2, 1, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case FixedDim: {
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedDim(\n");
             if (n < 0) return -1;
 
@@ -948,26 +1005,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
-
-        case SymbolicDim:
-            assert(ndt_is_abstract(t));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "SymbolicDim(\n");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->SymbolicDim.type, d+2, 0, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->SymbolicDim.name);
-            if (n < 0) return -1;
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
 
         case VarDim: {
             int i;
@@ -1021,10 +1059,26 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             return ndt_snprintf_d(ctx, buf, d, ")");
         }
 
-        case EllipsisDim:
-            assert(ndt_is_abstract(t));
-            assert(!ndt_is_optional(t));
+        case SymbolicDim: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "SymbolicDim(\n");
+            if (n < 0) return -1;
 
+            n = ast_datashape(buf, t->SymbolicDim.type, d+2, 0, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->SymbolicDim.name);
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case EllipsisDim: {
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "EllipsisDim(\n");
             if (n < 0) return -1;
 
@@ -1038,66 +1092,9 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
+        }
 
-        case Nominal:
-            assert(ndt_is_concrete(t));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Nominal(\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Nominal.name);
-            if (n < 0) return -1;
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-
-        case Module:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Module(\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Module.name);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "type=");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->Module.type, d+5+2, 1, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, "\n");
-            if (n < 0) return -1;
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d, ")");
-            return n;
-
-        case Constr:
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Constr(\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Constr.name);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "type=");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->Constr.type, d+5+2, 1, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, "\n");
-            if (n < 0) return -1;
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d, ")");
-            return n;
-
-        case Tuple:
+        case Tuple: {
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Tuple(\n");
             if (n < 0) return -1;
 
@@ -1120,8 +1117,9 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
+        }
 
-        case Record:
+        case Record: {
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Record(\n");
             if (n < 0) return -1;
 
@@ -1145,118 +1143,9 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
+        }
 
-        case Function:
-            assert(ndt_is_abstract(t));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Function(\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "pos=");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->Function.pos, d+4+2, 1, ctx);
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "kwds=");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->Function.kwds, d+5+2, 1, ctx);
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "ret=");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->Function.ret, d+4+2, 1, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-
-        case Typevar:
-            assert(ndt_is_abstract(t));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Typevar(");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, "name='%s', ", t->Typevar.name);
-            if (n < 0) return -1;
-
-            n = ast_common_attributes(buf, t, 0, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf(ctx, buf, ")");
-
-        case AnyKind: case ScalarKind:
-        case Void: case Bool:
-        case SignedKind:
-        case Int8: case Int16: case Int32: case Int64:
-        case UnsignedKind:
-        case Uint8: case Uint16: case Uint32: case Uint64:
-        case FloatKind:
-        case Float16: case Float32: case Float64:
-        case ComplexKind:
-        case Complex32: case Complex64: case Complex128:
-        case FixedStringKind: case FixedBytesKind:
-        case String: case FixedString: case FixedBytes:
-            assert(ndt_is_concrete(t));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "%s(", ndt_type_name(t));
-            if (n < 0) return -1;
-
-            n = ast_common_attributes(buf, t, 0, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf(ctx, buf, ")");
-
-        case Char:
-            assert(ndt_is_concrete(t));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Char(%s,\n",
-                               ndt_encoding_as_string(t->Char.encoding));
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-
-        case Bytes:
-            assert(ndt_is_concrete(t));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d,
-                    "Bytes(target_align=%" PRIu16 ",\n", t->Bytes.target_align);
-            if (n < 0) return -1;
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
-
-        case Categorical:
-            assert(ndt_is_concrete(t));
-
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Categorical(");
-            if (n < 0) return -1;
-
-            n = ast_categorical(buf, t->Categorical.types, t->Categorical.ntypes, ctx);
-            if (n < 0) return -1;
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
-
-        case Ref:
+        case Ref: {
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Ref(\n");
             if (n < 0) return -1;
 
@@ -1269,13 +1158,157 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d, ")");
-            return n;
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
 
-        default:
-            ndt_err_format(ctx, NDT_ValueError, "invalid tag");
-            return -1;
+        case Constr: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Constr(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Constr.name);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "type=");
+            if (n < 0) return -1;
+
+            n = ast_datashape(buf, t->Constr.type, d+5+2, 1, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "\n");
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case Nominal: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Nominal(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Nominal.name);
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case Categorical: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Categorical(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "items=[");
+            if (n < 0) return -1;
+
+            n = ast_categorical(buf, t->Categorical.types, t->Categorical.ntypes, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "],\n");
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case FixedString: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedString(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, encoding=%s,\n",
+                               t->FixedString.size,
+                               ndt_encoding_as_string(t->FixedString.encoding));
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case FixedBytes: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedBytes(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, align=%" PRIu16 ",\n",
+                               t->FixedBytes.size,
+                               t->FixedBytes.align);
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case Bytes: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Bytes(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "target_align=%" PRIu16 ",\n",
+                               t->Bytes.target_align);
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case Char: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Char(\n");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf_d(ctx, buf, d+2, "encoding=%s,\n",
+                               ndt_encoding_as_string(t->Char.encoding));
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case Typevar: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Typevar(");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "name='%s', ", t->Typevar.name);
+            if (n < 0) return -1;
+
+            n = ast_common_attributes(buf, t, 0, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf(ctx, buf, ")");
+        }
+
+        case AnyKind: case ScalarKind:
+        case Void: case Bool:
+        case SignedKind:
+        case Int8: case Int16: case Int32: case Int64:
+        case UnsignedKind:
+        case Uint8: case Uint16: case Uint32: case Uint64:
+        case FloatKind:
+        case Float16: case Float32: case Float64:
+        case ComplexKind:
+        case Complex32: case Complex64: case Complex128:
+        case FixedStringKind: case FixedBytesKind:
+        case String:
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "%s(", ndt_type_name(t));
+            if (n < 0) return -1;
+
+            n = ast_common_attributes(buf, t, 0, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf(ctx, buf, ")");
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid tag");
 }
 
 
