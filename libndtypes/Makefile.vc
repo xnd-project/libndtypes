@@ -28,14 +28,14 @@ default: $(LIBSTATIC) $(LIBSHARED)
 	copy /y $(LIBSHARED) ..\python\ndtypes
 
 
-OBJS = alloc.obj attr.obj context.obj copy.obj equal.obj grammar.obj io.obj \
-       lexer.obj match.obj ndtypes.obj parsefuncs.obj parser.obj seq.obj \
-       symtable.obj
+OBJS = alloc.obj attr.obj context.obj copy.obj equal.obj encodings.obj \
+       grammar.obj io.obj lexer.obj match.obj ndtypes.obj parsefuncs.obj \
+       parser.obj seq.obj symtable.obj util.obj
 
-SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\copy.obj .objs\context.obj \
-              .objs\equal.obj .objs\grammar.obj .objs\io.obj .objs\lexer.obj \
-              .objs\match.obj .objs\ndtypes.obj .objs\parsefuncs.obj \
-              .objs\parser.obj .objs\seq.obj .objs\symtable.obj
+SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\context.obj .objs\copy.obj \
+              .objs\equal.obj .objs\encodings.obj .objs\grammar.obj .objs\io.obj \
+              .objs\lexer.obj .objs\match.obj .objs\ndtypes.obj .objs\parsefuncs.obj \ 
+              .objs\parser.obj .objs\seq.obj .objs\symtable.obj .objs\util.obj
 
 
 $(LIBSTATIC):\
@@ -80,6 +80,14 @@ Makefile copy.c ndtypes.h
 .objs\copy.obj:\
 Makefile copy.c ndtypes.h
 	$(CC) $(CFLAGS_SHARED) -c copy.c
+
+encodings.obj:\
+Makefile encodings.c ndtypes.h
+	$(CC) $(CFLAGS) -c encodings.c
+
+.objs\encodings.obj:\
+Makefile encodings.c ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c encodings.c
 
 io.obj:\
 Makefile io.c ndtypes.h
