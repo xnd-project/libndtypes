@@ -42,6 +42,10 @@
 #include "slice.h"
 
 
+/*****************************************************************************/
+/*                           Static helper functions                         */
+/*****************************************************************************/
+
 #undef max
 static inline uint16_t
 max(uint16_t x, uint16_t y)
@@ -53,6 +57,12 @@ static inline int
 ispower2(uint16_t n)
 {
     return n != 0 && (n & (n-1)) == 0;
+}
+
+static size_t
+round_up(size_t offset, uint16_t align)
+{
+    return ((offset + align - 1) / align) * align;
 }
 
 
@@ -226,6 +236,9 @@ ndt_is_complex(const ndt_t *t)
 }
 
 
+/*****************************************************************************/
+/*                           Alignment and packing                           */
+/*****************************************************************************/
 
 /* Check that 'align' is a power of two. */
 static inline bool
@@ -312,12 +325,6 @@ get_align(uint16_opt_t align, uint16_t default_align, ndt_context_t *ctx)
     default: /* None */
         return default_align;
     }
-}
-
-static size_t
-round_up(size_t offset, uint16_t align)
-{
-    return ((offset + align - 1) / align) * align;
 }
 
 
