@@ -33,6 +33,7 @@
 
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "ndtypes.h"
 
 
@@ -85,6 +86,89 @@ ndt_hash(ndt_t *t, ndt_context_t *ctx)
     t->hash = x;
 
     return x;
+}
+
+
+/* Return the next type in a dimension chain.  Undefined for non-dimensions. */
+static const ndt_t *
+next_dim(const ndt_t *a)
+{
+    assert(a->ndim > 0);
+
+    switch (a->tag) {
+    case FixedDim:
+        return a->FixedDim.type;
+    case VarDim:
+        return a->VarDim.type;
+    case SymbolicDim:
+        return a->SymbolicDim.type;
+    case EllipsisDim:
+        return a->EllipsisDim.type;
+    default:
+        /* NOT REACHED: tags should be exhaustive. */
+        ndt_internal_error("invalid value");
+    }
+}
+
+int
+ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
+{
+    int ndim;
+
+    assert(t->ndim <= NDT_MAX_DIM);
+
+    if (ndt_is_abstract(t)) {
+        ndt_err_format(ctx, NDT_TypeError, "type is not an ndarray");
+        return -1;
+    }
+
+    if (!ndt_is_ndarray(t)) {
+        if (t->ndim == 0) {
+            a->ndim = t->ndim;
+            a->itemsize = t->datasize;
+            return 0;
+        }
+        ndt_err_format(ctx, NDT_TypeError, "type is not an ndarray");
+        return -1;
+    }
+
+    a->ndim = t->ndim;
+    a->itemsize = t->Concrete.FixedDim.itemsize;
+
+    for (ndim=0; t->ndim > 0; ndim++, t=t->FixedDim.type) {
+        a->shape[ndim] = t->FixedDim.shape;
+        a->strides[ndim] = t->Concrete.FixedDim.step * a->itemsize;
+    }
+
+    return 0;
+}
+
+const ndt_t *
+ndt_dtype(const ndt_t *t)
+{
+    while (t->ndim > 0) {
+        t = next_dim(t);
+    }
+
+    return t;
+}
+
+int
+ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
+{
+    const ndt_t *a = array;
+    int n = 0;
+
+    assert(array->ndim <= NDT_MAX_DIM);
+
+    while (a->ndim > 0) {
+        dims[n++] = a;
+        a = next_dim(a);
+    }
+
+    *dtype = a;
+
+    return n;
 }
 
 char *
