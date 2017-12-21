@@ -211,6 +211,25 @@ ndt_is_f_contiguous(const ndt_t *t)
     return 1;
 }
 
+/* Scalar */
+int
+ndt_is_scalar(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Bool:
+    case Int8: case Int16: case Int32: case Int64:
+    case Uint8: case Uint16: case Uint32: case Uint64:
+    case Float16: case Float32: case Float64:
+    case Complex32: case Complex64: case Complex128:
+    case FixedString: case FixedBytes:
+    case String: case Bytes:
+    case Char:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 /* Primitive type predicates */
 int
 ndt_is_signed(const ndt_t *t)
@@ -1957,24 +1976,6 @@ ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t 
     *dtype = a;
 
     return n;
-}
-
-int
-ndt_is_scalar(const ndt_t *t)
-{
-    switch (t->tag) {
-    case Bool:
-    case Int8: case Int16: case Int32: case Int64:
-    case Uint8: case Uint16: case Uint32: case Uint64:
-    case Float16: case Float32: case Float64:
-    case Complex32: case Complex64: case Complex128:
-    case FixedString: case FixedBytes:
-    case String: case Bytes:
-    case Char:
-        return 1;
-    default:
-        return 0;
-    }
 }
 
 
