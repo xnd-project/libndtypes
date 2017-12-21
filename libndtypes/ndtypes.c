@@ -295,22 +295,6 @@ round_up(size_t offset, uint16_t align)
     return ((offset + align - 1) / align) * align;
 }
 
-char *
-ndt_strdup(const char *s, ndt_context_t *ctx)
-{
-    size_t len = strlen(s);
-    char *cp;
-
-    cp = ndt_alloc(1, len+1);
-    if (cp == NULL) {
-        return ndt_memory_error(ctx);
-    }
-
-    memcpy(cp, s, len);
-    cp[len] = '\0';
-    return cp;
-}
-
 uint32_t
 ndt_subtree_flags(const ndt_t *type)
 {

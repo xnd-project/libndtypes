@@ -31,9 +31,26 @@
  */
 
 
+#include <string.h>
 #include <stdarg.h>
 #include "ndtypes.h"
 
+
+char *
+ndt_strdup(const char *s, ndt_context_t *ctx)
+{
+    size_t len = strlen(s);
+    char *cp;
+
+    cp = ndt_alloc(1, len+1);
+    if (cp == NULL) {
+        return ndt_memory_error(ctx);
+    }
+
+    memcpy(cp, s, len);
+    cp[len] = '\0';
+    return cp;
+}
 
 char *
 ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
