@@ -165,33 +165,60 @@ ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,
         }
 
         switch(spec->tags[i]) {
-        case AttrBool: *(bool *)ptr = ndt_strtobool(v[i]->AttrValue, ctx); break;
-        case AttrChar: *(char *)ptr = ndt_strtochar(v[i]->AttrValue, ctx); break;
-        case AttrInt8: *(int8_t *)ptr = (int8_t)ndt_strtol(v[i]->AttrValue, INT8_MIN, INT8_MAX, ctx); break;
-        case AttrInt16: *(int16_t *)ptr = (int16_t)ndt_strtol(v[i]->AttrValue, INT16_MIN, INT16_MAX, ctx); break;
-        case AttrInt32: *(int32_t *)ptr = (int32_t)ndt_strtol(v[i]->AttrValue, INT32_MIN, INT32_MAX, ctx); break;
-        case AttrInt64: *(int64_t *)ptr = (int64_t)ndt_strtoll(v[i]->AttrValue, INT64_MIN, INT64_MAX, ctx); break;
-        case AttrUint8: *(uint8_t *)ptr = (uint8_t)ndt_strtoul(v[i]->AttrValue, UINT8_MAX, ctx); break;
-        case AttrUint16: *(uint16_t *)ptr = (uint16_t)ndt_strtoul(v[i]->AttrValue, UINT16_MAX, ctx); break;
-        case AttrUint32: *(uint32_t *)ptr = (uint32_t)ndt_strtoul(v[i]->AttrValue, UINT32_MAX, ctx); break;
-        case AttrUint64: *(uint64_t *)ptr = (uint64_t)ndt_strtoull(v[i]->AttrValue, UINT64_MAX, ctx); break;
-        case AttrSize: *(size_t *)ptr = (size_t)ndt_strtoull(v[i]->AttrValue, SIZE_MAX, ctx); break;
-        case AttrFloat32: *(float *)ptr = ndt_strtof(v[i]->AttrValue, ctx); break;
-        case AttrFloat64: *(double *)ptr = ndt_strtod(v[i]->AttrValue, ctx); break;
+        case AttrBool:
+            *(bool *)ptr = ndt_strtobool(v[i]->AttrValue, ctx);
+            goto endloop;
+        case AttrChar:
+            *(char *)ptr = ndt_strtochar(v[i]->AttrValue, ctx);
+            goto endloop;
+        case AttrInt8:
+            *(int8_t *)ptr = (int8_t)ndt_strtol(v[i]->AttrValue, INT8_MIN, INT8_MAX, ctx);
+            goto endloop;
+        case AttrInt16:
+            *(int16_t *)ptr = (int16_t)ndt_strtol(v[i]->AttrValue, INT16_MIN, INT16_MAX, ctx);
+            goto endloop;
+        case AttrInt32:
+            *(int32_t *)ptr = (int32_t)ndt_strtol(v[i]->AttrValue, INT32_MIN, INT32_MAX, ctx);
+            goto endloop;
+        case AttrInt64:
+            *(int64_t *)ptr = (int64_t)ndt_strtoll(v[i]->AttrValue, INT64_MIN, INT64_MAX, ctx);
+            goto endloop;
+        case AttrUint8:
+            *(uint8_t *)ptr = (uint8_t)ndt_strtoul(v[i]->AttrValue, UINT8_MAX, ctx);
+            goto endloop;
+        case AttrUint16:
+            *(uint16_t *)ptr = (uint16_t)ndt_strtoul(v[i]->AttrValue, UINT16_MAX, ctx);
+            goto endloop;
+        case AttrUint32:
+            *(uint32_t *)ptr = (uint32_t)ndt_strtoul(v[i]->AttrValue, UINT32_MAX, ctx);
+            goto endloop;
+        case AttrUint64:
+            *(uint64_t *)ptr = (uint64_t)ndt_strtoull(v[i]->AttrValue, UINT64_MAX, ctx);
+            goto endloop;
+        case AttrSize:
+            *(size_t *)ptr = (size_t)ndt_strtoull(v[i]->AttrValue, SIZE_MAX, ctx);
+            goto endloop;
+        case AttrFloat32:
+            *(float *)ptr = ndt_strtof(v[i]->AttrValue, ctx);
+            goto endloop;
+        case AttrFloat64:
+            *(double *)ptr = ndt_strtod(v[i]->AttrValue, ctx);
+            goto endloop;
 
         case AttrCharOpt:
             ((char_opt_t *)ptr)->tag = Some;
             ((char_opt_t *)ptr)->Some = ndt_strtochar(v[i]->AttrValue, ctx);
-            break;
+            goto endloop;
 
         case AttrInt64Opt:
             ((int64_opt_t *)ptr)->tag = Some;
-            ((int64_opt_t *)ptr)->Some = (int64_t)ndt_strtoll(v[i]->AttrValue, INT64_MIN, INT64_MAX, ctx); break;
+            ((int64_opt_t *)ptr)->Some = (int64_t)ndt_strtoll(v[i]->AttrValue, INT64_MIN, INT64_MAX, ctx);
+            goto endloop;
 
         case AttrUint16Opt:
             ((uint16_opt_t *)ptr)->tag = Some;
             ((uint16_opt_t *)ptr)->Some = (uint16_t)ndt_strtoul(v[i]->AttrValue, UINT16_MAX, ctx);
-            break;
+            goto endloop;
 
         case AttrString: {
             char *value = ndt_strdup(v[i]->AttrValue, ctx);
@@ -199,7 +226,7 @@ ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,
                 return -1;
             }
             *(char **)ptr = value;
-            break;
+            goto endloop;
         }
 
         case AttrInt32List: {
@@ -223,15 +250,14 @@ ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,
             ptr = va_arg(ap, void *);
             *(size_t *)ptr = v[i]->AttrList.len;
             i++;
-            break;
+            goto endloop;
+          }
         }
 
-        default:
-            ndt_err_format(ctx, NDT_RuntimeError,
-                           "invalid attribute type", v[i]);
-            break;
-        }
+        /* NOT REACHED: tags should be exhaustive */
+        ndt_err_format(ctx, NDT_RuntimeError, "invalid attribute tag", v[i]);
 
+     endloop:
         if (ndt_err_occurred(ctx)) {
             return -1;
         }

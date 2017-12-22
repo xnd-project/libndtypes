@@ -86,7 +86,7 @@ typedef struct {
    const size_t min;
    const size_t max;
    const char *names[MAX_ATTR];
-   const enum ndt tags[MAX_ATTR];
+   const enum ndt_attr tags[MAX_ATTR];
 } attr_spec;
 
 typedef struct {
