@@ -186,9 +186,10 @@ ndt_err_as_string(enum ndt_error err)
         return "ParseError";
     case NDT_OSError:
         return "OSError";
-    default:
-        return "UnknownError";
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    return "UnknownError";
 }
 
 void

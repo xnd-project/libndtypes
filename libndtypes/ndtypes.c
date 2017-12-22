@@ -845,7 +845,7 @@ ndt_del(ndt_t *t)
         goto free_type;
     }
 
-    /* NOT REACHED: tags should be exhaustive */
+    /* NOT REACHED: tags should be exhaustive. */
     ndt_internal_error("invalid tag");
 
 
