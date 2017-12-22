@@ -75,7 +75,8 @@ symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
         return match_dimensions(v->DimListEntry.dims, v->DimListEntry.size,
                                 w->DimListEntry.dims, w->DimListEntry.size,
                                 tbl, ctx);
-    default:
+    case Unbound:
+        /* NOT REACHED: 'v' is always bound. */
         return 0;
     }
 }
