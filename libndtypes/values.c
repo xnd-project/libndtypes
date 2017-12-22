@@ -96,12 +96,15 @@ ndt_value_from_number(enum ndt_value tag, char *v, ndt_context_t *ctx)
 
     switch (tag) {
     case ValBool:
-        mem->ValBool = ndt_strtobool(v, ctx); break;
+        mem->ValBool = ndt_strtobool(v, ctx);
+        break;
     case ValInt64:
-        mem->ValInt64 = (int64_t)ndt_strtoll(v, INT64_MIN, INT64_MAX, ctx); break;
+        mem->ValInt64 = (int64_t)ndt_strtoll(v, INT64_MIN, INT64_MAX, ctx);
+        break;
     case ValFloat64:
-        mem->ValFloat64 = ndt_strtod(v, ctx); break;
-    default:
+        mem->ValFloat64 = ndt_strtod(v, ctx);
+        break;
+    case ValString: case ValNA:
         ndt_err_format(ctx, NDT_InvalidArgumentError, "expected number tag");
         break;
     }
