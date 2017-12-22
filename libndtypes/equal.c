@@ -129,6 +129,17 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
     }
 
     switch (t->tag) {
+    case Module: {
+        return strcmp(t->Module.name, u->Module.name) == 0 &&
+               ndt_equal(t->Module.type, u->Module.type);
+    }
+
+    case Function: {
+        return ndt_equal(t->Function.ret, u->Function.ret) &&
+               ndt_equal(t->Function.pos, u->Function.pos) &&
+               ndt_equal(t->Function.kwds, u->Function.kwds);
+    }
+
     case FixedDim: {
         return t->FixedDim.shape == u->FixedDim.shape &&
                t->Concrete.FixedDim.itemsize == u->Concrete.FixedDim.itemsize &&
@@ -214,10 +225,6 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
                                  t->Categorical.ntypes);
     }
 
-    case Typevar: {
-        return strcmp(t->Typevar.name, u->Typevar.name) == 0;
-    }
-
     case FixedString: {
         return t->FixedString.size == u->FixedString.size &&
                t->FixedString.encoding == u->FixedString.encoding;
@@ -236,15 +243,8 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
         return t->Char.encoding == u->Char.encoding;
     }
 
-    case Function: {
-        return ndt_equal(t->Function.ret, u->Function.ret) &&
-               ndt_equal(t->Function.pos, u->Function.pos) &&
-               ndt_equal(t->Function.kwds, u->Function.kwds);
-    }
-
-    case Module: {
-        return strcmp(t->Module.name, u->Module.name) == 0 &&
-               ndt_equal(t->Module.type, u->Module.type);
+    case Typevar: {
+        return strcmp(t->Typevar.name, u->Typevar.name) == 0;
     }
 
     case AnyKind:
