@@ -237,10 +237,13 @@ symtable_free_entry(symtable_entry_t entry)
     switch(entry.tag) {
     case DimListEntry:
        ndt_free((void *)entry.DimListEntry.dims);
-       break;
-    default:
-       break;
+       return;
+    case Unbound: case ShapeEntry: case SymbolEntry: case TypeEntry:
+       return;
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid symtable entry tag");
 }
 
 void
