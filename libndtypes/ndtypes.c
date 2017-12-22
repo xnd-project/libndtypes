@@ -744,14 +744,25 @@ ndt_del(ndt_t *t)
     }
 
     switch (t->tag) {
-    case Module:
+    case Module: {
         ndt_free(t->Module.name);
         ndt_del(t->Module.type);
-        break;
-    case FixedDim:
+        goto free_type;
+    }
+
+    case Function: {
+        ndt_del(t->Function.ret);
+        ndt_del(t->Function.pos);
+        ndt_del(t->Function.kwds);
+        goto free_type;
+    }
+
+    case FixedDim: {
         ndt_del(t->FixedDim.type);
-        break;
-    case VarDim:
+        goto free_type;
+    }
+
+    case VarDim: {
         ndt_del(t->VarDim.type);
         if (ndt_is_concrete(t)) {
             if (t->Concrete.VarDim.flag == InternalOffsets) {
@@ -759,55 +770,86 @@ ndt_del(ndt_t *t)
             }
             ndt_free(t->Concrete.VarDim.slices);
         }
-        break;
-    case SymbolicDim:
+        goto free_type;
+    }
+
+    case SymbolicDim: {
         ndt_free(t->SymbolicDim.name);
         ndt_del(t->SymbolicDim.type);
-        break;
-    case EllipsisDim:
+        goto free_type;
+    }
+
+    case EllipsisDim: {
         ndt_free(t->EllipsisDim.name);
         ndt_del(t->EllipsisDim.type);
-        break;
-    case Nominal:
-        ndt_free(t->Nominal.name);
-        break;
-    case Constr:
-        ndt_free(t->Constr.name);
-        ndt_del(t->Constr.type);
-        break;
+        goto free_type;
+    }
+
     case Tuple: {
         int64_t i;
         for (i = 0; i < t->Tuple.shape; i++) {
             ndt_del(t->Tuple.types[i]);
         }
-        break;
+        goto free_type;
     }
+
     case Record: {
         int64_t i;
         for (i = 0; i < t->Record.shape; i++) {
             ndt_free(t->Record.names[i]);
             ndt_del(t->Record.types[i]);
         }
-        break;
-    }
-    case Function:
-        ndt_del(t->Function.ret);
-        ndt_del(t->Function.pos);
-        ndt_del(t->Function.kwds);
-        break;
-    case Typevar:
-        ndt_free(t->Typevar.name);
-        break;
-    case Categorical:
-        ndt_value_array_del(t->Categorical.types, t->Categorical.ntypes);
-        break;
-    case Ref:
-        ndt_del(t->Ref.type);
-        break;
-    default:
-        break;
+        goto free_type;
     }
 
+    case Ref: {
+        ndt_del(t->Ref.type);
+        goto free_type;
+    }
+
+    case Constr: {
+        ndt_free(t->Constr.name);
+        ndt_del(t->Constr.type);
+        goto free_type;
+    }
+
+    case Nominal: {
+        ndt_free(t->Nominal.name);
+        goto free_type;
+    }
+
+    case Categorical: {
+        ndt_value_array_del(t->Categorical.types, t->Categorical.ntypes);
+        goto free_type;
+    }
+
+    case Typevar: {
+        ndt_free(t->Typevar.name);
+        goto free_type;
+    }
+
+    case Void:
+    case AnyKind: case ScalarKind:
+    case FixedStringKind: case FixedString:
+    case FixedBytesKind: case FixedBytes:
+    case String: case Bytes: case Char:
+    case Bool:
+    case SignedKind:
+    case Int8: case Int16: case Int32: case Int64:
+    case UnsignedKind:
+    case Uint8: case Uint16: case Uint32: case Uint64:
+    case FloatKind:
+    case Float16: case Float32: case Float64:
+    case ComplexKind:
+    case Complex32: case Complex64: case Complex128:
+        goto free_type;
+    }
+
+    /* NOT REACHED: tags should be exhaustive */
+    ndt_internal_error("invalid tag");
+
+
+free_type:
     ndt_free(t);
 }
 
