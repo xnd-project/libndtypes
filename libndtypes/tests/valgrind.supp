@@ -37,3 +37,30 @@
    fun:yy_scan_buffer
    fun:_ndt_from_string
 }
+
+{
+   lex_inadequate_error_handling_opt4
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   ...
+   fun:bp_scan_buffer
+   fun:ndt_from_bpformat
+}
+
+{
+   lex_inadequate_error_handling_opt5
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:bp_scan_buffer
+   fun:ndt_from_bpformat
+}
+
+{
+   lex_inadequate_error_handling_opt6
+   Memcheck:Leak
+   match-leak-kinds: definite
+   ...
+   fun:bp_scan_buffer
+   fun:ndt_from_bpformat
+}

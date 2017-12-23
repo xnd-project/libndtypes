@@ -1053,6 +1053,141 @@ test_copy(void)
     return 0;
 }
 
+static int
+test_buffer(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    char *s;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = buffer_tests; *c != NULL; c++) {
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            t = ndt_from_bpformat(*c, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (t != NULL) {
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_buffer: convert: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_buffer: convert: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+        if (t == NULL) {
+            fprintf(stderr, "test_buffer: convert: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_buffer: convert: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            s = ndt_as_string(t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (s != NULL) {
+                ndt_free(s);
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_buffer: convert: FAIL: s != NULL after MemoryError\n");
+                fprintf(stderr, "test_buffer: convert: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+        if (s == NULL) {
+            fprintf(stderr, "test_buffer: convert: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_buffer: convert: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_free(s);
+        ndt_del(t);
+        count++;
+    }
+    fprintf(stderr, "test_buffer (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_buffer_error(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = buffer_error_tests; *c != NULL; c++) {
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            t = ndt_from_bpformat(*c, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (t != NULL) {
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_buffer_error: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_buffer_error: FAIL: input: %s\n", *c);
+                return -1;
+            }
+        }
+        if (t != NULL) {
+            fprintf(stderr, "test_buffer_error: FAIL: unexpected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_buffer_error: FAIL: t != NULL after %s: %s\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_context_del(ctx);
+            return -1;
+        }
+        count++;
+    }
+    fprintf(stderr, "test_buffer_error (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
 
 static int (*tests[])(void) = {
   test_parse,
@@ -1068,6 +1203,8 @@ static int (*tests[])(void) = {
   test_static_context,
   test_hash,
   test_copy,
+  test_buffer,
+  test_buffer_error,
 #ifdef __GNUC__
   test_struct_align_pack,
   test_array,

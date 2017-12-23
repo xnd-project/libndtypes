@@ -31,45 +31,63 @@
  */
 
 
-#ifndef TEST_H
-#define TEST_H
+#include <stdio.h>
+#include "test.h"
 
 
-#include "ndtypes.h"
+const char *buffer_tests[] = {
+  "?",
+  "c", "b", "B",
+  "h", "i", "l", "q",
+  "H", "I", "L", "Q",
+  "n", "N",
+  "f", "d",
+  "Zf", "Zd",
+  "s", "100s", "0s",
+  "T{b:a:100s:b:}",
 
 
-typedef struct {
-    const char *input;
-    const char *indented;
-} indent_testcase_t;
+  "(10,2)?",
+  "(10)c",
+  "(2,3)b",
+  "(0,2,0)B",
+  "(1,2,3,4)h",
+  "(2,3,10)Zf",
+  "(20,2,100)Zd",
+  "(10,2)s",
+  "(10,2)100s",
+  "(10,2)T{b:a:100s:b:}",
+  "(10,2)T{b:a:100s:b:}",
 
-typedef struct {
-    const char *pattern;
-    const char *candidate;
-    int expected;
-} match_testcase_t;
+  "T{T{Zf:foo:(2,3)L:bar:}:a:100s:b:}",
 
-typedef struct {
-    const char *signature;
-    const char *args;
-    const char *expected;
-    int outer_dims;
-} typecheck_testcase_t;
+   NULL
+};
 
+const char *buffer_error_tests[] = {
+  "&",
+  "O", "O",
+  "T{O:a:100O:b:}",
 
-extern const char *parse_tests[];
-extern const char *parse_roundtrip_tests[];
-extern const char *parse_error_tests[];
-extern const indent_testcase_t indent_tests[];
-extern const char *typedef_tests[];
-extern const char *typedef_error_tests[];
-extern const match_testcase_t match_tests[];
-extern const typecheck_testcase_t typecheck_tests[];
-extern const char *buffer_tests[];
-extern const char *buffer_error_tests[];
+  "{10,2)f",
+  "({,2)f",
+  "(10{2)f",
+  "(10,{)f",
+  "(10,2}f",
+  "(10,2}}",
 
-int test_struct_align_pack(void);
-int test_array(void);
+  "(10,2)T{{:a:100s:b:}",
+  "(10,2)T{b{a:100s:b:}",
+  "(10,2)T{b:{:100s:b:}",
+  "(10,2)T{b:a:{:b:}",
+  "(10,2)T{b:a:100{:b:}",
+  "(10,2)T{b:a:100s{b:}",
+  "(10,2)T{b:a:100s:{:}",
+  "(10,2)T{b:a:100s:b{}",
+  "(10,2)T{b:a:100s:b:{",
+  "(10,2)T{b:a:100s:b:}}",
 
+  "T{T{Zf:foo:(2,3)%:bar:}:a:100s:b:}",
 
-#endif /* TEST_H */
+   NULL
+};

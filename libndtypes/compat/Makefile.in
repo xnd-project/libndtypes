@@ -1,0 +1,90 @@
+
+# ==============================================================================
+#                        Unix Makefile for libndtypes/compat
+# ==============================================================================
+
+
+LIBSTATIC = @LIBSTATIC@
+LIBNAME = @LIBNAME@
+LIBSONAME = @LIBSONAME@
+LIBSHARED = @LIBSHARED@
+
+CC = @CC@
+LD = @LD@
+AR = @AR@
+RANLIB = @RANLIB@
+
+CONFIGURE_CFLAGS = @CONFIGURE_CFLAGS@
+NDT_CFLAGS = $(strip $(CONFIGURE_CFLAGS) $(CFLAGS))
+NDT_CFLAGS_SHARED = $(NDT_CFLAGS) -fPIC
+
+CONFIGURE_LDFLAGS = @CONFIGURE_LDFLAGS@
+NDT_LDFLAGS = $(strip $(CONFIGURE_LDFLAGS) $(LDFLAGS))
+
+CONFIGURE_COV_CFLAGS = @CONFIGURE_COV_CFLAGS@
+CONFIGURE_COV_LDFLAGS = @CONFIGURE_COV_LDFLAGS@
+ifeq ($(MAKECMDGOALS), coverage)
+  NDT_CFLAGS = $(strip $(CONFIGURE_COV_CFLAGS) $(CFLAGS))
+  NDT_LDFLAGS = $(strip $(CONFIGURE_COV_LDFLAGS) $(LDFLAGS))
+endif
+
+
+OBJS = bpgrammar.o bplexer.o import.o
+SHARED_OBJS = .objs/bpgrammar.o .objs/bplexer.o .objs/import.o
+
+
+default: $(OBJS) $(SHARED_OBJS)
+
+
+bpgrammar.o:\
+Makefile bpgrammar.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
+	$(CC) $(NDT_CFLAGS) -c bpgrammar.c
+
+.objs/bpgrammar.o:\
+Makefile bpgrammar.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c bpgrammar.c -o .objs/bpgrammar.o
+
+bplexer.o:\
+Makefile bplexer.c bpgrammar.h bplexer.h
+	$(CC) $(NDT_CFLAGS) -c bplexer.c
+
+.objs/bplexer.o:\
+Makefile bplexer.c bpgrammar.h bplexer.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c bplexer.c -o .objs/bplexer.o
+
+import.o:\
+Makefile import.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
+	$(CC) $(NDT_CFLAGS) -c import.c
+
+.objs/import.o:\
+Makefile import.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c import.c -o .objs/import.o
+
+
+# Flex generated files
+bplexer.h:\
+Makefile bplexer.c
+
+bplexer.c:\
+Makefile bplexer.l ../ndtypes.h
+	flex -o bplexer.c -Pbp --header-file=bplexer.h bplexer.l
+
+# Bison generated files
+bpgrammar.h:\
+Makefile bpgrammar.c
+
+bpgrammar.c:\
+Makefile bpgrammar.y ../ndtypes.h
+	bison -Wall -o bpgrammar.c -pbp --defines=bpgrammar.h bpgrammar.y
+
+
+FORCE:
+
+clean: FORCE
+	rm -f *.o *.so *.gch *.gcda *.gcno *.gcov *.dyn *.dpi *.lock
+	cd .objs && rm -f *.o *.so *.gch *.gcda *.gcno *.gcov *.dyn *.dpi *.lock
+
+distclean: clean
+	rm -f Makefile
+
+

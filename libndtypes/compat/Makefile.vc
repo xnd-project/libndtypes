@@ -1,0 +1,66 @@
+
+# ======================================================================
+#                Visual C (nmake) Makefile for libndtypes
+# ======================================================================
+
+LIBSTATIC = libndtypes-0.1.0.lib
+LIBIMPORT = libndtypes-0.1.0.dll.lib
+LIBSHARED = libndtypes-0.1.0.dll
+
+OPT = /MT /Ox /GS /EHsc
+OPT_SHARED = /DEXPORT /MD /Ox /GS /EHsc /Fo.objs^\
+
+COMMON_CFLAGS = /nologo /W4 /wd4200 /wd4201 /wd4204
+COMMON_CFLAGS_FOR_GENERATED = /nologo /W4 /wd4200 /wd4201 /wd4244 /wd4267 /wd4702 /wd4127 /DYY_NO_UNISTD_H=1 /D__STDC_VERSION__=199901L
+COMMON_CFLAGS_FOR_PARSER = /nologo /W4 /wd4200 /wd4201 /wd4090 /nologo /DYY_NO_UNISTD_H=1
+
+CFLAGS = $(COMMON_CFLAGS) $(OPT)
+CFLAGS_SHARED = $(COMMON_CFLAGS) $(OPT_SHARED)
+
+CFLAGS_FOR_GENERATED = $(COMMON_CFLAGS_FOR_GENERATED) $(OPT)
+CFLAGS_FOR_GENERATED_SHARED = $(COMMON_CFLAGS_FOR_GENERATED) $(OPT_SHARED)
+
+CFLAGS_FOR_PARSER = $(COMMON_CFLAGS_FOR_PARSER) $(OPT)
+CFLAGS_FOR_PARSER_SHARED = $(COMMON_CFLAGS_FOR_PARSER) $(OPT_SHARED)
+
+
+OBJS = bpgrammar.obj bplexer.obj import.obj
+SHARED_OBJS = .objs\bpgrammar.obj .objs\bplexer.obj .objs\import.obj
+
+
+default: $(OBJS) $(SHARED_OBJS)
+
+
+bpgrammar.obj:\
+Makefile bpgrammar.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
+	$(CC) $(CFLAGS_FOR_GENERATED) -c bpgrammar.c
+
+.objs\bpgrammar.obj:\
+Makefile bpgrammar.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
+	$(CC) $(CFLAGS_FOR_GENERATED_SHARED) -c bpgrammar.c
+
+bplexer.obj:\
+Makefile bplexer.c bpgrammar.h bplexer.h
+	$(CC) $(CFLAGS_FOR_GENERATED) -c bplexer.c
+
+.objs\bplexer.obj:\
+Makefile bplexer.c bpgrammar.h bplexer.h
+	$(CC) $(CFLAGS_FOR_GENERATED_SHARED) -c bplexer.c
+
+import.obj:\
+Makefile import.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
+       $(CC) $(CFLAGS) -c import.c
+
+.objs\import.obj:\
+Makefile import.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
+       $(CC) $(CFLAGS_SHARED) -c import.c
+
+
+clean: FORCE
+	del /q /f *.exe *.obj *.lib *.dll *.exp *.manifest 2>NUL
+	cd .objs && del /q /f *.obj 2>NUL
+
+distclean: clean
+	del Makefile 2>NUL
+
+

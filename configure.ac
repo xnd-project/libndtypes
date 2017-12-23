@@ -2,7 +2,11 @@
 AC_PREREQ([2.67])
 AC_INIT(ndtypes, 0.1.0, plures@anaconda.com, ndtypes, https://github.com/plures/)
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_FILES([Makefile libndtypes/Makefile libndtypes/tests/Makefile libndtypes/ndtypes.h])
+AC_CONFIG_FILES([
+  Makefile
+  libndtypes/Makefile libndtypes/tests/Makefile libndtypes/ndtypes.h
+  libndtypes/compat/Makefile
+])
 
 # System and machine type (only used for Darwin):
 AC_MSG_CHECKING(system as reported by uname -s)
