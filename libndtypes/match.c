@@ -79,6 +79,9 @@ symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
         /* NOT REACHED: 'v' is always bound. */
         return 0;
     }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid symtable entry");
 }
 
 static int
