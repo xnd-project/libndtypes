@@ -2009,7 +2009,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 ac_config_headers="$ac_config_headers config.h"
 
-ac_config_files="$ac_config_files Makefile libndtypes/Makefile libndtypes/tests/Makefile libndtypes/ndtypes.h"
+ac_config_files="$ac_config_files Makefile libndtypes/Makefile libndtypes/tests/Makefile libndtypes/ndtypes.h libndtypes/compat/Makefile"
 
 
 # System and machine type (only used for Darwin):
@@ -4645,6 +4645,7 @@ do
     "libndtypes/Makefile") CONFIG_FILES="$CONFIG_FILES libndtypes/Makefile" ;;
     "libndtypes/tests/Makefile") CONFIG_FILES="$CONFIG_FILES libndtypes/tests/Makefile" ;;
     "libndtypes/ndtypes.h") CONFIG_FILES="$CONFIG_FILES libndtypes/ndtypes.h" ;;
+    "libndtypes/compat/Makefile") CONFIG_FILES="$CONFIG_FILES libndtypes/compat/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

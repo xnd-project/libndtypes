@@ -24,21 +24,21 @@ coverage: runtest runtest_shared
 
 runtest:\
 Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
-test_indent.c test_typedef.c test_match.c test_record.c test.h alloc_fail.h \
+test_indent.c test_typedef.c test_match.c test_record.c test_buffer.c test.h alloc_fail.h \
 $(SRCDIR)/ndtypes.h $(SRCDIR)/$(LIBSTATIC)
 	$(CC) $(NDT_CFLAGS) -DTEST_ALLOC -o runtest runtest.c \
             alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
             test_indent.c test_typedef.c test_match.c test_typecheck.c \
-            test_record.c test_array.c $(SRCDIR)/$(LIBSTATIC)
+            test_record.c test_array.c test_buffer.c $(SRCDIR)/$(LIBSTATIC)
 
 runtest_shared:\
 Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
-test_indent.c test_typedef.c test_match.c test_record.c test.h alloc_fail.h \
+test_indent.c test_typedef.c test_match.c test_record.c test_buffer.c test.h alloc_fail.h \
 $(SRCDIR)/ndtypes.h $(SRCDIR)/$(LIBSHARED)
 	$(CC) -L$(SRCDIR) $(NDT_CFLAGS) -DTEST_ALLOC -o runtest_shared runtest.c \
             alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
             test_indent.c test_typedef.c test_match.c test_typecheck.c \
-            test_record.c test_array.c -lndtypes
+            test_record.c test_array.c test_buffer.c -lndtypes
 
 
 FORCE:

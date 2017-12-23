@@ -43,12 +43,18 @@ SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/context.o .objs/copy.o \
               .objs/values.o
 
 
-$(LIBSTATIC): Makefile $(OBJS)
-	$(AR) rc $(LIBSTATIC) $(OBJS)
+COMPAT_OBJS = compat/bpgrammar.o compat/bplexer.o compat/import.o
+
+COMPAT_SHARED_OBJS = compat/.objs/bpgrammar.o compat/.objs/bplexer.o \
+                     compat/.objs/import.o
+
+
+$(LIBSTATIC): Makefile $(OBJS) $(COMPAT_OBJS)
+	$(AR) rc $(LIBSTATIC) $(OBJS) $(COMPAT_OBJS)
 	$(RANLIB) $(LIBSTATIC)
 
-$(LIBSHARED): Makefile $(SHARED_OBJS)
-	$(LD) $(NDT_LDFLAGS) -o $(LIBSHARED) $(SHARED_OBJS)
+$(LIBSHARED): Makefile $(SHARED_OBJS) $(COMPAT_SHARED_OBJS)
+	$(LD) $(NDT_LDFLAGS) -o $(LIBSHARED) $(SHARED_OBJS) $(COMPAT_SHARED_OBJS)
 	ln -sf $(LIBSHARED) $(LIBNAME)
 	ln -sf $(LIBSHARED) $(LIBSONAME)
 
@@ -208,6 +214,13 @@ Makefile grammar.y ndtypes.h parsefuncs.h ndtypes.h
 	bison -Wall -o grammar.c --defines=grammar.h grammar.y
 
 
+# compat directory
+$(COMPAT_OBJS) $(COMPAT_SHARED_OBJS):\
+Makefile compat/Makefile compat/bpgrammar.y compat/bplexer.l compat/import.c \
+ndtypes.h seq.h
+	cd compat && make
+
+
 # Coverage
 coverage:\
 Makefile clean $(LIBSTATIC) $(LIBSHARED)
@@ -237,9 +250,11 @@ clean: FORCE
 	rm -f *.o *.so *.gch *.gcda *.gcno *.gcov *.dyn *.dpi *.lock
 	rm -f bench indent print_ast $(LIBSTATIC) $(LIBSHARED) $(LIBSONAME) $(LIBNAME)
 	cd .objs && rm -f *.o *.so *.gch *.gcda *.gcno *.gcov *.dyn *.dpi *.lock
+	cd compat && make clean
 
 distclean: clean
 	rm -f Makefile ndtypes.h
+	cd compat && make distclean
 
 
 
