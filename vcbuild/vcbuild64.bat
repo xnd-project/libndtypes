@@ -7,6 +7,10 @@ cd ..\libndtypes
 copy /y Makefile.vc Makefile
 copy /y ndtypes.h.in ndtypes.h
 
+cd compat
+copy /y Makefile.vc Makefile
+cd ..
+
 nmake /nologo clean
 nmake /nologo
 
