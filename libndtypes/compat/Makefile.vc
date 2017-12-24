@@ -1,14 +1,12 @@
 
-# ======================================================================
-#                Visual C (nmake) Makefile for libndtypes
-# ======================================================================
+SRCDIR = ..
 
 OPT = /MT /Ox /GS /EHsc
 OPT_SHARED = /DEXPORT /MD /Ox /GS /EHsc /Fo.objs^\
 
-COMMON_CFLAGS = /nologo /W4 /wd4200 /wd4201 /wd4204
-COMMON_CFLAGS_FOR_GENERATED = /nologo /W4 /wd4200 /wd4201 /wd4244 /wd4267 /wd4702 /wd4127 /DYY_NO_UNISTD_H=1 /D__STDC_VERSION__=199901L
-COMMON_CFLAGS_FOR_PARSER = /nologo /W4 /wd4200 /wd4201 /wd4090 /nologo /DYY_NO_UNISTD_H=1
+COMMON_CFLAGS = -I$(SRCDIR) /nologo /W4 /wd4200 /wd4201 /wd4204
+COMMON_CFLAGS_FOR_GENERATED = -I$(SRCDIR) /nologo /W4 /wd4200 /wd4201 /wd4244 /wd4267 /wd4702 /wd4127 /DYY_NO_UNISTD_H=1 /D__STDC_VERSION__=199901L
+COMMON_CFLAGS_FOR_PARSER = -I$(SRCDIR) /nologo /W4 /wd4200 /wd4201 /wd4090 /nologo /DYY_NO_UNISTD_H=1
 
 CFLAGS = $(COMMON_CFLAGS) $(OPT)
 CFLAGS_SHARED = $(COMMON_CFLAGS) $(OPT_SHARED)
@@ -45,11 +43,11 @@ Makefile bplexer.c bpgrammar.h bplexer.h
 
 import.obj:\
 Makefile import.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
-       $(CC) $(CFLAGS) -c import.c
+       $(CC) $(CFLAGS_FOR_PARSER) -c import.c
 
 .objs\import.obj:\
 Makefile import.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
-       $(CC) $(CFLAGS_SHARED) -c import.c
+       $(CC) $(CFLAGS_FOR_PARSER_SHARED) -c import.c
 
 
 FORCE:
