@@ -52,6 +52,8 @@ Makefile import.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
        $(CC) $(CFLAGS_SHARED) -c import.c
 
 
+FORCE:
+
 clean: FORCE
 	del /q /f *.exe *.obj *.lib *.dll *.exp *.manifest 2>NUL
 	cd .objs && del /q /f *.obj 2>NUL
