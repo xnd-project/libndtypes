@@ -673,6 +673,32 @@ ndtype_align(PyObject *self, PyObject *args UNUSED)
     return PyLong_FromLong(NDT(self)->align);
 }
 
+static PyObject *
+ndtype_from_format(PyObject *type, PyObject *format)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *self;
+    const char *cp;
+
+    cp = PyUnicode_AsUTF8(format);
+    if (cp == NULL) {
+        return NULL;
+    }
+
+    self = ndtype_alloc((PyTypeObject *)type);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    NDT(self) = ndt_from_bpformat(cp, &ctx);
+    if (NDT(self) == NULL) {
+        Py_DECREF(self);
+        return seterr(&ctx);
+    }
+
+    return self;
+}
+
 static PyGetSetDef ndtype_getsets [] =
 {
   { "ndim", (getter)ndtype_ndim, NULL, NULL, NULL},
@@ -706,6 +732,9 @@ static PyMethodDef ndtype_methods [] =
   /* Other functions */
   { "pretty", (PyCFunction)ndtype_indent, METH_NOARGS, NULL },
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, NULL },
+
+  /* Class methods */
+  { "from_format", ndtype_from_format, METH_O|METH_CLASS, NULL },
 
   /* Special methods */
   { "__copy__", ndtype_copy, METH_NOARGS, NULL },
