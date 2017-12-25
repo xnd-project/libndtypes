@@ -426,11 +426,14 @@ get_align(uint16_opt_t align, uint16_t default_align, ndt_context_t *ctx)
  * pack = n: minimum alignment for the field; the resulting alignment is
  * guaranteed to be at least n.
  *
+ * pad = n: requested padding for a field; used for checking if an explicitly
+ * given padding is equal to the computed padding.
+ *
  * 'name' is NULL for a tuple field.
  */
 ndt_field_t *
 ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack,
-          ndt_context_t *ctx)
+          uint16_opt_t pad, ndt_context_t *ctx)
 {
     ndt_field_t *field;
     uint16_t min_align;
@@ -461,6 +464,8 @@ ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack,
     if (field->access == Concrete) {
         field->Concrete.align = min_align;
         field->Concrete.explicit_align = (align.tag==Some || pack.tag==Some);
+        field->Concrete.pad = (pad.tag==Some) ? pad.Some : UINT16_MAX;
+        field->Concrete.explicit_pad = (pad.tag==Some);
     }
 
     return field;
@@ -1336,6 +1341,18 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
     assert(t->access == Concrete);
     t->align = maxalign;
     t->datasize = size;
+
+    for (i = 0; i < shape; i++) {
+        if (fields[i].Concrete.explicit_pad) {
+            if (fields[i].Concrete.pad != pad[i]) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "field %zu has invalid padding, natural padding is %" PRIi16
+                    ", got %" PRIi16 "\n",
+                     i, pad[i], fields[i].Concrete.pad);
+                return -1;
+            }
+        }
+    }
 
     return 0;
 }

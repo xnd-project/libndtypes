@@ -231,6 +231,7 @@ mk_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
+    uint16_opt_t pad = {None, 0};
 
     if (attrs) {
         int ret = ndt_parse_attr(&kwlist, ctx, attrs, &align, &pack);
@@ -243,7 +244,7 @@ mk_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
         }
     }
 
-    return ndt_field(name, type, align, pack, ctx);
+    return ndt_field(name, type, align, pack, pad, ctx);
 }
 
 ndt_t *
