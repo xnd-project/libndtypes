@@ -229,6 +229,7 @@ void bpfree (void * ,yyscan_t yyscanner );
 
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
+#define FIELDNAME 1
 
 #endif
 
@@ -349,9 +350,9 @@ extern int bplex \
 #undef YY_DECL
 #endif
 
-#line 166 "bplexer.l"
+#line 178 "bplexer.l"
 
 
-#line 356 "bplexer.h"
+#line 357 "bplexer.h"
 #undef bpIN_HEADER
 #endif /* bpHEADER_H */

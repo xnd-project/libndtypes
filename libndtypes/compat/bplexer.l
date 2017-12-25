@@ -94,6 +94,8 @@ yyfree(void *ptr, yyscan_t yyscanner)
 %option extra-type="ndt_context_t *"
 %option warn nodefault
 
+%x FIELDNAME
+
 newline        [\n\r]
 space          [ \t\f]
 non_newline    [^\n\r]
@@ -120,6 +122,7 @@ yycolumn = 1;
 
 }
 
+<INITIAL>{
 "?"        { yylval->uchar = '?'; return DTYPE; }
 "c"        { yylval->uchar = 'c'; return DTYPE; }
 "b"        { yylval->uchar = 'b'; return DTYPE; }
@@ -149,18 +152,27 @@ yycolumn = 1;
 ">"        { return GREATER; }
 "!"        { return BANG; }
 ","        { return COMMA; }
-":"        { return COLON; }
+":"        { BEGIN(FIELDNAME); return COLON; }
 "("        { return LPAREN; }
 ")"        { return RPAREN; }
 "{"        { return LBRACE; }
 "}"        { return RBRACE; }
 
-{name}     { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME; }
 {integer}  { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return INTEGER; }
 
+}
+
+<FIELDNAME>{
+":"     { BEGIN(INITIAL); return COLON; }
+{name}  { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME; }
+}
+
+<INITIAL,FIELDNAME>{
 {newline}  { yycolumn = 1; }
 {space}    {} /* ignore */
 {comment}  {} /* ignore */
 .          { return ERRTOKEN; }
+}
+
 
 %%

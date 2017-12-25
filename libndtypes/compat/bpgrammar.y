@@ -75,22 +75,6 @@ add_uint16(uint16_t a, uint16_t b, ndt_context_t *ctx)
     return c;
 }
 
-static char *
-dtype_to_name(unsigned char c, ndt_context_t *ctx)
-{
-    char buf[2];
-
-    if (!isalpha(c)) {
-        ndt_err_format(ctx, NDT_ValueError, "invalid name '%c'", c);
-        return NULL;
-    }
-
-    buf[0] = c;
-    buf[1] = '\0';
-
-    return ndt_strdup(buf, ctx);
-}
-
 static ndt_t *
 primitive_native(char dtype, ndt_context_t *ctx)
 {
@@ -207,6 +191,7 @@ mk_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
+    uint16_opt_t pad = {None, 0};
     uint32_t a;
 
     a = type->align + padding;
@@ -226,7 +211,7 @@ mk_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
     pack.tag = Some;
     pack.Some = (uint16_t)a;
 
-    return ndt_field(name, type, align, pack, ctx);
+    return ndt_field(name, type, align, pack, pad, ctx);
 }
 
 static ndt_t *
@@ -284,6 +269,7 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 
 %code requires {
   #include <ctype.h>
+  #include <assert.h>
   #include "ndtypes.h"
   #include "seq.h"
   #define YY_TYPEDEF_YY_SCANNER_T
@@ -331,7 +317,6 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 %type <field_seq> field_seq
 
 %type <ndt> dtype
-%type <string> name
 
 %type <string_seq> dimensions
 %type <string> repeat
@@ -392,11 +377,7 @@ field_seq:
 | field_seq field { $$ = ndt_field_seq_append($1, $2, ctx); if ($$ == NULL) YYABORT; }
 
 field:
-  datatype COLON name COLON padding { $$ = mk_field($3, $1, $5, ctx); if ($$ == NULL) YYABORT; }
-
-name:
-  NAME  { $$ = $1; if ($$ == NULL) YYABORT; }
-| DTYPE { $$ = dtype_to_name($1, ctx); if ($$ == NULL) YYABORT; }
+  datatype COLON NAME COLON padding { $$ = mk_field($3, $1, $5, ctx); if ($$ == NULL) YYABORT; }
 
 modifier:
  %empty   { $$ = '@'; }
