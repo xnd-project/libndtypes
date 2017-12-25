@@ -160,7 +160,7 @@ mk_dtype(char modifier, char dtype, ndt_context_t *ctx)
     case '=':
         return primitive_fixed(dtype, 0, ctx);
     case '<':
-        return  primitive_fixed(dtype, NDT_LITTLE_ENDIAN, ctx);
+        return primitive_fixed(dtype, NDT_LITTLE_ENDIAN, ctx);
     case '>':
         return primitive_fixed(dtype, NDT_BIG_ENDIAN, ctx);
     case '!':
