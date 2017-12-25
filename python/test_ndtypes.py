@@ -1327,9 +1327,12 @@ class TestBufferProtocol(unittest.TestCase):
           'c', 'b', 'B',
           'h', 'i', 'l', 'q',
           'H', 'I', 'L', 'Q',
-          'e', 'f', 'd']
+          'f', 'd']
 
         native = ['n', 'N']
+
+        if HAVE_PYTHON_36:
+            standard += ['e']
 
         for fmt in standard:
             for modifier in ['', '@', '=', '<', '>', '!']:
@@ -1350,6 +1353,14 @@ class TestBufferProtocol(unittest.TestCase):
                 f = modifier + fmt
                 self.assertRaises(ValueError, ndt.from_format, f)
                 self.assertRaises(struct.error, struct.Struct, f)
+
+        if HAVE_PYTHON_36:
+            # complex32
+            fmt = 'Ze'
+            for modifier in ['', '@', '=', '<', '>', '!']:
+                f = modifier + fmt
+                t = ndt.from_format(f)
+                self.assertEqual(t.itemsize, 4)
 
         # complex64
         fmt = 'Zf'
