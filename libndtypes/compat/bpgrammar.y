@@ -191,25 +191,7 @@ mk_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
-    uint16_opt_t pad = {None, 0};
-    uint32_t a;
-
-    a = type->align + padding;
-    if (a > UINT16_MAX) {
-        ndt_err_format(ctx, NDT_ValueError, "padding too large");
-        ndt_del(type);
-        return NULL;
-    }
-
-    if (!ispower2(a)) {
-        ndt_err_format(ctx, NDT_ValueError,
-            "field_align = data_align + padding must be a power of 2");
-        ndt_del(type);
-        return NULL;
-    }
-
-    pack.tag = Some;
-    pack.Some = (uint16_t)a;
+    uint16_opt_t pad = {Some, padding};
 
     return ndt_field(name, type, align, pack, pad, ctx);
 }
@@ -254,10 +236,21 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
     ndt_t *t;
+    size_t i;
 
     fields = ndt_field_seq_finalize(fields);
     if (fields == NULL) {
         return ndt_record(Nonvariadic, NULL, 0, align, pack, ctx);
+    }
+
+    assert(fields->len >= 1);
+
+    fields->ptr[0].Concrete.align = fields->ptr[0].type->align;
+    fields->ptr[0].Concrete.explicit_align = false;
+
+    for (i = 1; i < fields->len; i++) {
+        fields->ptr[i].Concrete.align = fields->ptr[i-1].type->align + fields->ptr[i-1].Concrete.pad;
+        fields->ptr[i].Concrete.explicit_align = true;
     }
 
     t = ndt_record(Nonvariadic, fields->ptr, fields->len, align, pack, ctx);
