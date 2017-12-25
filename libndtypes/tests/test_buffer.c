@@ -41,8 +41,8 @@ const char *buffer_tests[] = {
   "h", "i", "l", "q",
   "H", "I", "L", "Q",
   "n", "N",
-  "f", "d",
-  "Zf", "Zd",
+  "e", "f", "d",
+  "Ze", "Zf", "Zd",
   "s", "100s", "0s",
   "T{b:a:100s:b:}",
 

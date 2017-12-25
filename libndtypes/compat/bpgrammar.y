@@ -97,9 +97,11 @@ primitive_native(char dtype, ndt_context_t *ctx)
     case 'Q': return ndt_unsigned(sizeof(unsigned long long), 0, ctx);
     case 'N': return ndt_unsigned(sizeof(size_t), 0, ctx);
 
+    case 'e': return ndt_primitive(Float16, 0, ctx);
     case 'f': return ndt_primitive(Float32, 0, ctx);
     case 'd': return ndt_primitive(Float64, 0, ctx);
 
+    case 'E': return ndt_primitive(Complex32, 0, ctx);
     case 'F': return ndt_primitive(Complex64, 0, ctx);
     case 'D': return ndt_primitive(Complex128, 0, ctx);
 
@@ -132,9 +134,11 @@ primitive_fixed(char dtype, uint32_t flags, ndt_context_t *ctx)
     case 'L': tag = Uint32; break;
     case 'Q': tag = Uint64; break;
 
+    case 'e': tag = Float16; break;
     case 'f': tag = Float32; break;
     case 'd': tag = Float64; break;
 
+    case 'E': tag = Complex32; break;
     case 'F': tag = Complex64; break;
     case 'D': tag = Complex128; break;
 

@@ -137,8 +137,10 @@ yycolumn = 1;
 "Q"        { yylval->uchar = 'Q'; return DTYPE; }
 "n"        { yylval->uchar = 'n'; return DTYPE; }
 "N"        { yylval->uchar = 'N'; return DTYPE; }
+"e"        { yylval->uchar = 'e'; return DTYPE; }
 "f"        { yylval->uchar = 'f'; return DTYPE; }
 "d"        { yylval->uchar = 'd'; return DTYPE; }
+"Ze"       { yylval->uchar = 'E'; return DTYPE; }
 "Zf"       { yylval->uchar = 'F'; return DTYPE; }
 "Zd"       { yylval->uchar = 'D'; return DTYPE; }
 
@@ -159,7 +161,6 @@ yycolumn = 1;
 "}"        { return RBRACE; }
 
 {integer}  { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return INTEGER; }
-
 }
 
 <FIELDNAME>{

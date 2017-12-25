@@ -32,7 +32,7 @@
 
 import sys, argparse
 import unittest, gc
-import weakref
+import weakref, struct
 from copy import copy
 from ndtypes import ndt, typedef, MAX_DIM
 from randtype import *
@@ -1319,6 +1319,53 @@ class TestCopy(unittest.TestCase):
         self.assertTrue(wr() is None, wr())
 
 
+class TestBufferProtocol(unittest.TestCase):
+
+    def test_primitive(self):
+        standard = [
+          '?',
+          'c', 'b', 'B',
+          'h', 'i', 'l', 'q',
+          'H', 'I', 'L', 'Q',
+          'e', 'f', 'd']
+
+        native = ['n', 'N']
+
+        for fmt in standard:
+            for modifier in ['', '@', '=', '<', '>', '!']:
+                f = modifier + fmt
+                t = ndt.from_format(f)
+                s = struct.Struct(f)
+                self.assertEqual(t.itemsize, s.size)
+
+        for fmt in native:
+            for modifier in ['', '@']:
+                f = modifier + fmt
+                t = ndt.from_format(f)
+                s = struct.Struct(f)
+                self.assertEqual(t.itemsize, s.size)
+
+        for fmt in native:
+            for modifier in ['=', '<', '>', '!']:
+                f = modifier + fmt
+                self.assertRaises(ValueError, ndt.from_format, f)
+                self.assertRaises(struct.error, struct.Struct, f)
+
+        # complex64
+        fmt = 'Zf'
+        for modifier in ['', '@', '=', '<', '>', '!']:
+            f = modifier + fmt
+            t = ndt.from_format(f)
+            self.assertEqual(t.itemsize, 8)
+
+        # complex128
+        fmt = 'Zd'
+        for modifier in ['', '@', '=', '<', '>', '!']:
+            f = modifier + fmt
+            t = ndt.from_format(f)
+            self.assertEqual(t.itemsize, 16)
+
+
 class TestError(unittest.TestCase):
 
     def test_exceptions(self):
@@ -1404,6 +1451,7 @@ ALL_TESTS = [
   TestComplex,
   TestTypevar,
   TestCopy,
+  TestBufferProtocol,
   TestConstruction,
   TestError,
   TestApply,
