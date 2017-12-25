@@ -186,16 +186,6 @@ mk_fixed_bytes(char *v, ndt_context_t *ctx)
     return ndt_fixed_bytes(datasize, align, ctx);
 }
 
-static ndt_field_t *
-mk_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
-{
-    uint16_opt_t align = {None, 0};
-    uint16_opt_t pack = {None, 0};
-    uint16_opt_t pad = {Some, padding};
-
-    return ndt_field(name, type, align, pack, pad, ctx);
-}
-
 static ndt_t *
 mk_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 {
@@ -228,6 +218,16 @@ mk_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
     ndt_string_seq_del(seq);
 
     return t;
+}
+
+static ndt_field_t *
+mk_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
+{
+    uint16_opt_t align = {None, 0};
+    uint16_opt_t pack = {None, 0};
+    uint16_opt_t pad = {Some, padding};
+
+    return ndt_field(name, type, align, pack, pad, ctx);
 }
 
 static ndt_t *
