@@ -1321,12 +1321,39 @@ class TestCopy(unittest.TestCase):
 
 class TestBufferProtocol(unittest.TestCase):
 
+    def test_array(self):
+        test_cases = [
+            # format, itemsize, alignment
+            ("(0)f", 4, 4),
+            ("(1)d", 8, 8),
+            ("(125)d", 8, 8),
+            ("(2,3)d", 8, 8),
+            ("(2,10)T{<b:a:Q:b:}", 9, 1),
+            ("(2,19)T{<b:a:xxxQ:b:}", 12, 4),
+            ("(31,221)T{<b:a:xxxxxxxQ:b:}", 16, 8),
+            ("(2,3,10)T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16),
+            ("(2,10)T{=L:a:(2,3)Zd:b:}", 100, 4)]
+
+        test_error_cases = [
+            # empty shape (scalars are not arrays in datashape)
+            "()Q",
+            # Ambiguous (tuple of 10 or array of 10)?
+            "10Q"]
+
+        for fmt, itemsize, align in test_cases:
+            t = ndt.from_format(fmt)
+            self.assertEqual(t.itemsize, itemsize)
+            self.assertEqual(t.align, align)
+
+        for fmt in test_error_cases:
+            self.assertRaises(ValueError, ndt.from_format, fmt)
+
     def test_record(self):
         test_cases = [
             # format, itemsize, alignment
             ("T{<b:a:Q:b:}", 9, 1),
             ("T{<b:a:xQ:b:}", 10, 2),
-            ("T{<b:a:xxxL:b:}", 12, 4),
+            ("T{<b:a:xxxQ:b:}", 12, 4),
             ("T{<b:a:xxxxxxxQ:b:}", 16, 8),
             ("T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16)]
 
