@@ -871,6 +871,21 @@ Ndt_MoveSubtree(const PyObject *src, ndt_t *t)
 }
 
 static PyObject *
+Ndt_FromType(ndt_t *type)
+{
+    PyObject *self;
+
+    self = ndtype_alloc(&Ndt_Type);
+    if (self == NULL) {
+        ndt_del(type);
+        return NULL;
+    }
+
+    NDT(self) = type;
+    return self;
+}
+
+static PyObject *
 init_api(void)
 {
     ndtypes_api[Ndt_CheckExact_INDEX] = (void *)Ndt_CheckExact;
@@ -879,6 +894,7 @@ init_api(void)
     ndtypes_api[Ndt_SetError_INDEX] = (void *)Ndt_SetError;
     ndtypes_api[Ndt_CopySubtree_INDEX] = (void *)Ndt_CopySubtree;
     ndtypes_api[Ndt_MoveSubtree_INDEX] = (void *)Ndt_MoveSubtree;
+    ndtypes_api[Ndt_FromType_INDEX] = (void *)Ndt_FromType;
 
     return PyCapsule_New(ndtypes_api, "ndtypes._ndtypes._API", NULL);
 }
