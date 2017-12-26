@@ -1341,7 +1341,7 @@ class TestBufferProtocol(unittest.TestCase):
             # the end of the struct.
             "T{<b:a:xxxh:b:}",
             # Unnatural padding at the end of the struct (expect two padding
-            # bytes instead of four.
+            # bytes instead of four).
             "T{<b:a:xxxh:b:xxxx}"]
 
         for fmt, itemsize, align in test_cases:
