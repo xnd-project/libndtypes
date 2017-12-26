@@ -1321,6 +1321,37 @@ class TestCopy(unittest.TestCase):
 
 class TestBufferProtocol(unittest.TestCase):
 
+    def test_record(self):
+        test_cases = [
+            # format, itemsize, alignment
+            ("T{<b:a:Q:b:}", 9, 1),
+            ("T{<b:a:xQ:b:}", 10, 2),
+            ("T{<b:a:xxxL:b:}", 12, 4),
+            ("T{<b:a:xxxxxxxQ:b:}", 16, 8),
+            ("T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16)]
+
+        test_error_cases = [
+            # sizeof(signed char) + padding is not a power of two.
+            "T{<b:a:xxQ:b:}",
+            # Missing padding bytes at the end of the struct.  The only
+            # reason a compiler would add three padding bytes to field
+            # zero is an artificial forced alignment of four for the short
+            # in field one.  This in turn requires that the entire struct
+            # has alignment four, which necessitates two padding bytes at
+            # the end of the struct.
+            "T{<b:a:xxxh:b:}",
+            # Unnatural padding at the end of the struct (expect two padding
+            # bytes instead of four.
+            "T{<b:a:xxxh:b:xxxx}"]
+
+        for fmt, itemsize, align in test_cases:
+            t = ndt.from_format(fmt)
+            self.assertEqual(t.itemsize, itemsize)
+            self.assertEqual(t.align, align)
+
+        for fmt in test_error_cases:
+            self.assertRaises(ValueError, ndt.from_format, fmt)
+
     def test_fixed_bytes(self):
         for fmt in ['s', '100s']:
             t = ndt.from_format(fmt)
