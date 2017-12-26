@@ -288,7 +288,7 @@ mk_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
             return NULL;
         }
 
-        t = ndt_fixed_dim(type, shape, INT_MAX, ctx);
+        t = ndt_fixed_dim(type, shape, INT64_MAX, ctx);
         if (t == NULL) {
             ndt_string_seq_del(seq);
             return NULL;
