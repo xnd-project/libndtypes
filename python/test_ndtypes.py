@@ -1377,10 +1377,14 @@ class TestBufferProtocol(unittest.TestCase):
             self.assertEqual(t.itemsize, 16)
 
     def test_fixed_bytes(self):
-        for fmt in ['0s', 's', '100s']:
+        for fmt in ['s', '100s']:
             t = ndt.from_format(fmt)
             s = struct.Struct(fmt)
             self.assertEqual(t.itemsize, s.size)
+
+        # For consistency (it would be easy to allow, but other dtypes
+        # cannot have size 0).
+        self.assertRaises(ValueError, ndt.from_format, "0s")
 
         for fmt in ['0s', 's', '100s']:
             for modifier in ['@', '=', '<', '>', '!']:

@@ -43,7 +43,7 @@ const char *buffer_tests[] = {
   "n", "N",
   "e", "f", "d",
   "Ze", "Zf", "Zd",
-  "s", "100s", "0s",
+  "s", "100s",
   "T{b:a:100s:b:}",
 
 
@@ -68,6 +68,8 @@ const char *buffer_error_tests[] = {
   "&",
   "O", "O",
   "T{O:a:100O:b:}",
+
+  "(2,3)T{f:a:=0s:b:}",
 
   "{10,2)f",
   "({,2)f",

@@ -181,9 +181,14 @@ mk_fixed_bytes(char *v, ndt_context_t *ctx)
     if (v != NULL) {
         datasize = ndt_strtoll(v, 0, INT64_MAX, ctx);
         ndt_free(v);
+        if (ndt_err_occurred(ctx)) {
+            return NULL;
+        }
     }
 
-    if (ndt_err_occurred(ctx)) {
+    if (datasize < 1) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "fixed bytes datasize must be greater than 0");
         return NULL;
     }
 
