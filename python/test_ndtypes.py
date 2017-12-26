@@ -1332,7 +1332,7 @@ class TestBufferProtocol(unittest.TestCase):
             ("(2,19)T{<b:a:xxxQ:b:}", 12, 4),
             ("(31,221)T{<b:a:xxxxxxxQ:b:}", 16, 8),
             ("(2,3,10)T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16),
-            ("(2,10)T{=L:a:(2,3)Zd:b:}", 100, 4)]
+            ("(2,10)T{=L:a:(2,3)Zd:b:}", 100, 1)]
 
         test_error_cases = [
             # empty shape (scalars are not arrays in datashape)
@@ -1355,7 +1355,8 @@ class TestBufferProtocol(unittest.TestCase):
             ("T{<b:a:xQ:b:}", 10, 2),
             ("T{<b:a:xxxQ:b:}", 12, 4),
             ("T{<b:a:xxxxxxxQ:b:}", 16, 8),
-            ("T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16)]
+            ("T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16),
+            ("T{=i:foo:f:bar:10s:baz:}", 18, 1)]
 
         test_error_cases = [
             # sizeof(signed char) + padding is not a power of two.

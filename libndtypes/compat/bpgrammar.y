@@ -254,11 +254,15 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 
     assert(fields->len >= 1);
 
-    fields->ptr[0].Concrete.align = fields->ptr[0].type->align;
-    fields->ptr[0].Concrete.explicit_align = false;
+    fields->ptr[0].Concrete.align = 1;
+    fields->ptr[0].Concrete.explicit_align = true;
 
     for (i = 1; i < fields->len; i++) {
-        fields->ptr[i].Concrete.align = fields->ptr[i-1].type->align + fields->ptr[i-1].Concrete.pad;
+        uint16_t a = 1;
+        if (fields->ptr[i-1].Concrete.pad != 0) {
+            a = fields->ptr[i-1].type->align + fields->ptr[i-1].Concrete.pad;
+        }
+        fields->ptr[i].Concrete.align = a;
         fields->ptr[i].Concrete.explicit_align = true;
     }
 
