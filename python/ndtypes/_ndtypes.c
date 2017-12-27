@@ -921,6 +921,12 @@ Ndt_FromType(ndt_t *type)
 }
 
 static PyObject *
+Ndt_FromObject(PyObject *obj)
+{
+    return ndtype_from_object(&Ndt_Type, obj);
+}
+
+static PyObject *
 init_api(void)
 {
     ndtypes_api[Ndt_CheckExact_INDEX] = (void *)Ndt_CheckExact;
@@ -930,6 +936,7 @@ init_api(void)
     ndtypes_api[Ndt_CopySubtree_INDEX] = (void *)Ndt_CopySubtree;
     ndtypes_api[Ndt_MoveSubtree_INDEX] = (void *)Ndt_MoveSubtree;
     ndtypes_api[Ndt_FromType_INDEX] = (void *)Ndt_FromType;
+    ndtypes_api[Ndt_FromObject_INDEX] = (void *)Ndt_FromObject;
 
     return PyCapsule_New(ndtypes_api, "ndtypes._ndtypes._API", NULL);
 }
