@@ -57,41 +57,24 @@ extern int bpdebug;
   enum yytokentype
   {
     ENDMARKER = 0,
-    PAD = 258,
-    BOOL = 259,
-    CHAR = 260,
-    SCHAR = 261,
-    UCHAR = 262,
-    SHORT = 263,
-    INT = 264,
-    LONG = 265,
-    LONGLONG = 266,
-    SSIZE = 267,
-    USHORT = 268,
-    UINT = 269,
-    ULONG = 270,
-    ULONGLONG = 271,
-    SIZE = 272,
-    FLOAT = 273,
-    DOUBLE = 274,
-    BYTES = 275,
-    COMPLEX = 276,
-    RECORD = 277,
-    AT = 278,
-    EQUAL = 279,
-    LESS = 280,
-    GREATER = 281,
-    BANG = 282,
-    COMMA = 283,
-    COLON = 284,
-    LPAREN = 285,
-    RPAREN = 286,
-    LBRACE = 287,
-    RBRACE = 288,
-    ERRTOKEN = 289,
-    DTYPE = 290,
-    INTEGER = 291,
-    NAME = 292
+    BYTES = 258,
+    RECORD = 259,
+    PAD = 260,
+    AT = 261,
+    EQUAL = 262,
+    LESS = 263,
+    GREATER = 264,
+    BANG = 265,
+    COMMA = 266,
+    COLON = 267,
+    LPAREN = 268,
+    RPAREN = 269,
+    LBRACE = 270,
+    RBRACE = 271,
+    ERRTOKEN = 272,
+    DTYPE = 273,
+    INTEGER = 274,
+    NAME = 275
   };
 #endif
 
@@ -110,7 +93,7 @@ union YYSTYPE
     unsigned char uchar;
     uint16_t uint16;
 
-#line 114 "bpgrammar.h" /* yacc.c:1909  */
+#line 97 "bpgrammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -140,6 +123,6 @@ int bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
   extern int bplexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 144 "bpgrammar.h" /* yacc.c:1909  */
+#line 127 "bpgrammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_BP_BPGRAMMAR_H_INCLUDED  */
