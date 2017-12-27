@@ -326,7 +326,33 @@ ndtype_dealloc(NdtObject *self)
 }
 
 static PyObject *
-ndtype_from_format(PyObject *type, PyObject *format)
+ndtype_from_string(PyTypeObject *tp, PyObject *type)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *self;
+    const char *cp;
+
+    cp = PyUnicode_AsUTF8(type);
+    if (cp == NULL) {
+        return NULL;
+    }
+
+    self = ndtype_alloc(tp);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    NDT(self) = ndt_from_string(cp, &ctx);
+    if (NDT(self) == NULL) {
+        Py_DECREF(self);
+        return seterr(&ctx);
+    }
+
+    return self;
+}
+
+static PyObject *
+ndtype_from_format(PyTypeObject *tp, PyObject *format)
 {
     NDT_STATIC_CONTEXT(ctx);
     PyObject *self;
@@ -337,7 +363,7 @@ ndtype_from_format(PyObject *type, PyObject *format)
         return NULL;
     }
 
-    self = ndtype_alloc((PyTypeObject *)type);
+    self = ndtype_alloc(tp);
     if (self == NULL) {
         return NULL;
     }
@@ -352,35 +378,20 @@ ndtype_from_format(PyObject *type, PyObject *format)
 }
 
 static PyObject *
-ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+ndtype_from_offsets_and_dtype(PyTypeObject *tp, PyObject *offsets, PyObject *dtype)
 {
-    static char *kwlist[] = {"type", "offsets", NULL};
     NDT_STATIC_CONTEXT(ctx);
-    PyObject *offsets = Py_None;
-    PyObject *self, *s;
+    PyObject *self;
     const char *cp;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist, &s, &offsets)) {
-        return NULL;
-    }
-
-    cp = PyUnicode_AsUTF8(s);
+    cp = PyUnicode_AsUTF8(dtype);
     if (cp == NULL) {
         return NULL;
     }
 
-    self = ndtype_alloc(type);
+    self = ndtype_alloc(tp);
     if (self == NULL) {
         return NULL;
-    }
-
-    if (offsets == Py_None) {
-        NDT(self) = ndt_from_string(cp, &ctx);
-        if (NDT(self) == NULL) {
-            Py_DECREF(self);
-            return seterr(&ctx);
-        }
-        return self;
     }
 
     RBUF(self) = rbuf_from_offset_lists(offsets);
@@ -397,6 +408,25 @@ ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     }
 
     return self;
+}
+
+static PyObject *
+ndtype_new(PyTypeObject *tp, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"type", "offsets", NULL};
+    PyObject *offsets = Py_None;
+    PyObject *type;
+
+    if (!PyArg_ParseTupleAndKeywords(
+             args, kwds, "O|O", kwlist, &type, &offsets)) {
+        return NULL;
+    }
+
+    if (offsets == Py_None) {
+        return ndtype_from_string(tp, type);
+    }
+
+    return ndtype_from_offsets_and_dtype(tp, offsets, type);
 }
 
 static PyObject *
@@ -734,7 +764,7 @@ static PyMethodDef ndtype_methods [] =
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, NULL },
 
   /* Class methods */
-  { "from_format", ndtype_from_format, METH_O|METH_CLASS, NULL },
+  { "from_format", (PyCFunction)ndtype_from_format, METH_O|METH_CLASS, NULL },
 
   /* Special methods */
   { "__copy__", ndtype_copy, METH_NOARGS, NULL },
