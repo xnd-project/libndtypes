@@ -1471,6 +1471,25 @@ class TestConstruction(unittest.TestCase):
             t = ndt(s)
             self.assertEqual(str(t), s)
 
+    def test_from_ndt(self):
+        test_cases = [
+          "2 * 3 * {a : 10 * bytes, b : 20 * string}",
+          "var(offsets=[0,2]) * var(offsets=[0,3,10]) * complex128"]
+
+        for s in test_cases:
+            t = ndt(s)
+            u = ndt(t)
+            self.assertEqual(u, t)
+            t = None
+            gc.collect()
+
+        t = ndt("{x: complex128, y: float64}", [[0, 2], [0, 3, 5]])
+        u = ndt(t)
+        self.assertEqual(u, t)
+        t = None
+        gc.collect()
+
+
 class TestApply(unittest.TestCase):
 
     def test_apply(self):

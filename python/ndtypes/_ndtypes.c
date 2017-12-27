@@ -326,11 +326,16 @@ ndtype_dealloc(NdtObject *self)
 }
 
 static PyObject *
-ndtype_from_string(PyTypeObject *tp, PyObject *type)
+ndtype_from_object(PyTypeObject *tp, PyObject *type)
 {
     NDT_STATIC_CONTEXT(ctx);
     PyObject *self;
     const char *cp;
+
+    if (Ndt_Check(type)) {
+        Py_INCREF(type);
+        return type;
+    }
 
     cp = PyUnicode_AsUTF8(type);
     if (cp == NULL) {
@@ -423,7 +428,7 @@ ndtype_new(PyTypeObject *tp, PyObject *args, PyObject *kwds)
     }
 
     if (offsets == Py_None) {
-        return ndtype_from_string(tp, type);
+        return ndtype_from_object(tp, type);
     }
 
     return ndtype_from_offsets_and_dtype(tp, offsets, type);
