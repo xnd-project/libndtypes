@@ -326,6 +326,32 @@ ndtype_dealloc(NdtObject *self)
 }
 
 static PyObject *
+ndtype_from_format(PyObject *type, PyObject *format)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *self;
+    const char *cp;
+
+    cp = PyUnicode_AsUTF8(format);
+    if (cp == NULL) {
+        return NULL;
+    }
+
+    self = ndtype_alloc((PyTypeObject *)type);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    NDT(self) = ndt_from_bpformat(cp, &ctx);
+    if (NDT(self) == NULL) {
+        Py_DECREF(self);
+        return seterr(&ctx);
+    }
+
+    return self;
+}
+
+static PyObject *
 ndtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"type", "offsets", NULL};
@@ -671,32 +697,6 @@ ndtype_align(PyObject *self, PyObject *args UNUSED)
     }
 
     return PyLong_FromLong(NDT(self)->align);
-}
-
-static PyObject *
-ndtype_from_format(PyObject *type, PyObject *format)
-{
-    NDT_STATIC_CONTEXT(ctx);
-    PyObject *self;
-    const char *cp;
-
-    cp = PyUnicode_AsUTF8(format);
-    if (cp == NULL) {
-        return NULL;
-    }
-
-    self = ndtype_alloc((PyTypeObject *)type);
-    if (self == NULL) {
-        return NULL;
-    }
-
-    NDT(self) = ndt_from_bpformat(cp, &ctx);
-    if (NDT(self) == NULL) {
-        Py_DECREF(self);
-        return seterr(&ctx);
-    }
-
-    return self;
 }
 
 static PyGetSetDef ndtype_getsets [] =
