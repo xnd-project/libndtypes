@@ -155,7 +155,7 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
                 "length of a single offset list must be in [2, INT32_MAX]");
             return -1;
         }
-        rbuf->m.num_offsets[i] = n;
+        rbuf->m.num_offsets[i] = (int32_t)n;
 
         rbuf->m.offset_arrays[i] = ndt_alloc(rbuf->m.num_offsets[i], sizeof(int32_t));
         if (rbuf->m.offset_arrays[i] == NULL) {
