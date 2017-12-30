@@ -50,8 +50,10 @@
 
 #if SIZE_MAX == UINT32_MAX
   typedef int32_t ndt_ssize_t;
+  #define PRI_ndt_ssize PRIi32
 #elif SIZE_MAX == UINT64_MAX
   typedef int64_t ndt_ssize_t;
+  #define PRI_ndt_ssize PRIi64
 #else
   #error "need SIZE_MAX == UINT32_MAX or SIZE_MAX == UINT64_MAX"
 #endif

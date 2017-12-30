@@ -955,7 +955,7 @@ test_hash(void)
     for (i = 0; i < n-1; i++) {
         if (buf[i].hash == buf[i+1].hash) {
             fprintf(stderr,
-                "test_hash: duplicate hash for %s: %" PRIi64 "\n\n",
+                "test_hash: duplicate hash for %s: %" PRI_ndt_ssize "\n\n",
                 buf[i].str, buf[i].hash);
         }
     }
@@ -975,7 +975,7 @@ test_hash(void)
     ndt_del(t);
 
     if (x.hash != -1 || ctx.err != NDT_MemoryError) {
-        fprintf(stderr, "test_hash: FAIL: expected failure, got %" PRIi64 "\n\n", x.hash);
+        fprintf(stderr, "test_hash: FAIL: expected failure, got %" PRI_ndt_ssize "\n\n", x.hash);
         ndt_context_del(&ctx);
         return -1;
     }
