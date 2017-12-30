@@ -890,7 +890,7 @@ test_static_context(void)
 
 typedef struct {
     const char *str;
-    int64_t hash;
+    ndt_ssize_t hash;
 } hash_testcase_t;
 
 static int

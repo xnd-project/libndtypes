@@ -633,7 +633,6 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
     t->access = Abstract;
     t->flags = 0;
     t->ndim = 0;
-    t->hash = -1;
 
     t->datasize = -1;
     t->align = UINT16_MAX;
@@ -655,7 +654,6 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
     t->access = Abstract;
     t->flags = 0;
     t->ndim = 0;
-    t->hash = -1;
 
     t->datasize = -1;
     t->align = UINT16_MAX;

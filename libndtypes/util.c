@@ -54,16 +54,12 @@ ndt_strdup(const char *s, ndt_context_t *ctx)
 }
 
 /* Unoptimized hash function for experimenting. */
-int64_t
+ndt_ssize_t
 ndt_hash(ndt_t *t, ndt_context_t *ctx)
 {
     unsigned char *s, *cp;
     size_t len;
-    int64_t x;
-
-    if (t->hash != -1) {
-        return t->hash;
-    }
+    ndt_ssize_t x;
 
     cp = s = (unsigned char *)ndt_as_string(t, ctx);
     if (s == NULL) {
@@ -83,7 +79,6 @@ ndt_hash(ndt_t *t, ndt_context_t *ctx)
     }
 
     ndt_free(s);
-    t->hash = x;
 
     return x;
 }
