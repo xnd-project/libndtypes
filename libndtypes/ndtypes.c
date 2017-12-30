@@ -1064,7 +1064,7 @@ ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
  */
 int64_t
 ndt_var_indices(int64_t *res_start, int64_t *res_step, const ndt_t *t,
-                int32_t index)
+                int64_t index, ndt_context_t *ctx)
 {
     int64_t list_start, list_stop, list_shape;
     int64_t start, stop, step;
@@ -1074,7 +1074,13 @@ ndt_var_indices(int64_t *res_start, int64_t *res_step, const ndt_t *t,
 
     assert(ndt_is_concrete(t));
     assert(t->tag == VarDim);
-    assert(0 <= index && index+1 < t->Concrete.VarDim.noffsets);
+
+    if (index < 0 || index+1 >= t->Concrete.VarDim.noffsets) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "var dim index out of range: index=%" PRIi64 ", noffsets=%" PRIi32,
+            index, t->Concrete.VarDim.noffsets);
+        return -1;
+    }
 
     list_start = t->Concrete.VarDim.offsets[index];
     list_stop = t->Concrete.VarDim.offsets[index+1];
