@@ -234,8 +234,9 @@ mk_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
-    uint16_opt_t pad = {Some, padding};
+    uint16_opt_t pad = {Some, 0};
 
+    pad.Some = padding;
     return ndt_field(name, type, align, pack, pad, ctx);
 }
 
