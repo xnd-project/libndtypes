@@ -1289,14 +1289,14 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
  */
 static int
 init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
-                     const ndt_field_t *fields, size_t shape,
+                     const ndt_field_t *fields, int64_t shape,
                      uint16_opt_t align_attr, uint16_opt_t pack,
                      ndt_context_t *ctx)
 {
     size_t offset = 0;
     size_t size = 0;
     uint16_t maxalign;
-    size_t i;
+    int64_t i;
 
     maxalign = get_align(align_attr, 1, ctx);
     if (maxalign == UINT16_MAX) {
