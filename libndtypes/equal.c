@@ -60,13 +60,12 @@ tuple_fields_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
 
     assert(t->tag == Tuple && u->tag == Tuple);
 
-    if (memcmp(t->Concrete.Tuple.offset, u->Concrete.Tuple.offset,
-               shape * (sizeof *t->Concrete.Tuple.offset)) ||
-        memcmp(t->Concrete.Tuple.align, u->Concrete.Tuple.align,
-               shape * (sizeof *t->Concrete.Tuple.align)) ||
-        memcmp(t->Concrete.Tuple.pad, u->Concrete.Tuple.pad,
-               shape * (sizeof *t->Concrete.Tuple.pad))) {
-        return 0;
+    for (i = 0; i < shape; i++) {
+        if (t->Concrete.Tuple.offset[i] != u->Concrete.Tuple.offset[i] ||
+            t->Concrete.Tuple.align[i] != u->Concrete.Tuple.align[i] ||
+            t->Concrete.Tuple.pad[i] != u->Concrete.Tuple.pad[i]) {
+            return 0;
+        }
     }
 
     for (i = 0; i < shape; i++) {
@@ -85,13 +84,12 @@ record_fields_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
 
     assert(t->tag == Record && u->tag == Record);
 
-    if (memcmp(t->Concrete.Record.offset, u->Concrete.Record.offset,
-               shape * (sizeof *t->Concrete.Record.offset)) ||
-        memcmp(t->Concrete.Record.align, u->Concrete.Record.align,
-               shape * (sizeof *t->Concrete.Record.align)) ||
-        memcmp(t->Concrete.Record.pad, u->Concrete.Record.pad,
-               shape * (sizeof *t->Concrete.Record.pad))) {
-        return 0;
+    for (i = 0; i < shape; i++) {
+        if (t->Concrete.Record.offset[i] != u->Concrete.Record.offset[i] ||
+            t->Concrete.Record.align[i] != u->Concrete.Record.align[i] ||
+            t->Concrete.Record.pad[i] != u->Concrete.Record.pad[i]) {
+            return 0;
+        }
     }
 
     for (i = 0; i < shape; i++) {
