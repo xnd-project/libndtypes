@@ -1381,7 +1381,7 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
     size = round_up(offset, maxalign, &overflow);
 
     if (shape > 0) {
-        size_t n = (size - offsets[shape-1]) - fields[shape-1].type->datasize;
+        int64_t n = (size - offsets[shape-1]) - fields[shape-1].type->datasize;
         pad[shape-1] = (uint16_t)n;
     }
 
