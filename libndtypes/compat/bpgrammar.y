@@ -56,12 +56,6 @@ bplex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
     return bplexfunc(val, loc, scanner, ctx);
 }
 
-static inline int
-ispower2(uint32_t n)
-{
-    return n != 0 && (n & (n-1)) == 0;
-}
-
 static uint16_t
 add_uint16(uint16_t a, uint16_t b, ndt_context_t *ctx)
 {
