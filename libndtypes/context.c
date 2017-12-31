@@ -44,7 +44,7 @@ ndt_context_new(void)
 {
     ndt_context_t *ctx;
 
-    ctx = ndt_alloc(1, sizeof *ctx);
+    ctx = ndt_alloc_size(sizeof *ctx);
     if (ctx == NULL) {
         return NULL;
     }

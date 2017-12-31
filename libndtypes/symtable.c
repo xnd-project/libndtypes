@@ -80,7 +80,7 @@ typedef_trie_new(ndt_context_t *ctx)
     typedef_trie_t *t;
     int i;
 
-    t = ndt_alloc(1, offsetof(typedef_trie_t, next) + ALPHABET_LEN * (sizeof t));
+    t = ndt_alloc_size(offsetof(typedef_trie_t, next) + ALPHABET_LEN * (sizeof t));
     if (t == NULL) {
         return ndt_memory_error(ctx);
     }
@@ -217,7 +217,7 @@ symtable_new(ndt_context_t *ctx)
     symtable_t *t;
     int i;
 
-    t = ndt_alloc(1, offsetof(symtable_t, next) + ALPHABET_LEN * (sizeof t));
+    t = ndt_alloc_size(offsetof(symtable_t, next) + ALPHABET_LEN * (sizeof t));
     if (t == NULL) {
         return ndt_memory_error(ctx);
     }

@@ -59,13 +59,13 @@ ndt_string_seq_new(char *elt, ndt_context_t *ctx)
     ndt_string_seq_t *seq;
     char **ptr;
 
-    seq = ndt_alloc(1, sizeof *seq);
+    seq = ndt_alloc_size(sizeof *seq);
     if (seq == NULL) {
         ndt_free(elt);
         return ndt_memory_error(ctx);
     }
 
-    ptr = ndt_alloc(2, sizeof *ptr);
+    ptr = ndt_alloc_size(2 * (sizeof *ptr));
     if (ptr == NULL) {
         ndt_free(seq);
         ndt_free(elt);

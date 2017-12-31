@@ -35,7 +35,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
+#include <assert.h>
 #include "ndtypes.h"
+#include "overflow.h"
 
 
 #if defined(_MSC_VER)
@@ -66,30 +68,35 @@ ispower2(size_t n)
 }
 
 static inline size_t
-mul_size_t_overflow(size_t nmemb, size_t size, int *overflow)
+convert_req(int64_t nmemb, int64_t size, bool *overflow)
 {
-    *overflow = 0;
+    int64_t req;
 
+    assert(nmemb >= 0 && size >= 0);
     if (nmemb == 0 || size == 0) {
         return 1;
     }
 
-    if (nmemb > SIZE_MAX / size) {
+    req = MULi64(nmemb, size, overflow);
+
+#if SIZE_MAX < INT64_MAX
+    if (req > SIZE_MAX) {
         *overflow = 1;
         return SIZE_MAX;
     }
+#endif
 
-    return nmemb * size;
+    return (size_t)req;
 }
 
 /* malloc with overflow checking */
 void *
-ndt_alloc(size_t nmemb, size_t size)
+ndt_alloc(int64_t nmemb, int64_t size)
 {
+    bool overflow = 0;
     size_t req;
-    int overflow;
 
-    req = mul_size_t_overflow(nmemb, size, &overflow);
+    req = convert_req(nmemb, size, &overflow);
     if (overflow) {
         return NULL;
     }
@@ -97,24 +104,37 @@ ndt_alloc(size_t nmemb, size_t size)
     return ndt_mallocfunc(req);
 }
 
+void *
+ndt_alloc_size(size_t size)
+{
+    return ndt_mallocfunc(size);
+}
+
 /* calloc */
 void *
-ndt_calloc(size_t nmemb, size_t size)
+ndt_calloc(int64_t nmemb, int64_t size)
 {
+    assert(nmemb >= 0 && size >= 0);
     nmemb = nmemb == 0 ? 1 : nmemb;
     size = size == 0 ? 1 : size;
 
-    return ndt_callocfunc(nmemb, size);
+#if SIZE_MAX < INT64_MAX
+    if (nmemb > SIZE_MAX || size > SIZE_MAX) {
+        return NULL;
+    }
+#endif
+
+    return ndt_callocfunc((size_t)nmemb, (size_t)size);
 }
 
 /* realloc with overflow checking */
 void *
-ndt_realloc(void *ptr, size_t nmemb, size_t size)
+ndt_realloc(void *ptr, int64_t nmemb, int64_t size)
 {
+    bool overflow = 0;
     size_t req;
-    int overflow;
 
-    req = mul_size_t_overflow(nmemb, size, &overflow);
+    req = convert_req(nmemb, size, &overflow);
     if (overflow) {
         return NULL;
     }

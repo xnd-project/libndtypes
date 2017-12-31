@@ -43,7 +43,7 @@ ndt_strdup(const char *s, ndt_context_t *ctx)
     size_t len = strlen(s);
     char *cp;
 
-    cp = ndt_alloc(1, len+1);
+    cp = ndt_alloc_size(len+1);
     if (cp == NULL) {
         return ndt_memory_error(ctx);
     }
@@ -183,7 +183,7 @@ ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
         return NULL;
     }
 
-    s = ndt_alloc(1, n+1);
+    s = ndt_alloc_size(n+1);
     if (s == NULL) {
         va_end(aq);
         return ndt_memory_error(ctx);

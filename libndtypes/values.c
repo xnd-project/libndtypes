@@ -87,7 +87,7 @@ ndt_value_from_number(enum ndt_value tag, char *v, ndt_context_t *ctx)
 {
     ndt_value_t *mem;
 
-    mem = ndt_alloc(1, sizeof *mem);
+    mem = ndt_alloc_size(sizeof *mem);
     if (mem == NULL) {
         ndt_free(v);
         return ndt_memory_error(ctx);
@@ -124,7 +124,7 @@ ndt_value_from_string(char *v, ndt_context_t *ctx)
 {
     ndt_value_t *mem;
 
-    mem = ndt_alloc(1, sizeof *mem);
+    mem = ndt_alloc_size(sizeof *mem);
     if (mem == NULL) {
         ndt_free(v);
         return ndt_memory_error(ctx);
@@ -143,7 +143,7 @@ ndt_value_na(ndt_context_t *ctx)
 {
     ndt_value_t *mem;
 
-    mem = ndt_alloc(1, sizeof *mem);
+    mem = ndt_alloc_size(sizeof *mem);
     if (mem == NULL) {
         return ndt_memory_error(ctx);
     }

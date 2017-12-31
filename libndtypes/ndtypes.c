@@ -455,7 +455,7 @@ ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack,
     }
 
     /* abstract field */
-    field = ndt_alloc(1, sizeof *field);
+    field = ndt_alloc_size(sizeof *field);
     if (field == NULL) {
         ndt_free(name);
         ndt_del(type);
@@ -629,7 +629,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    t = ndt_alloc(1, sizeof *t);
+    t = ndt_alloc_size(sizeof *t);
     if (t == NULL) {
         return ndt_memory_error(ctx);
     }
@@ -646,11 +646,19 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
 }
 
 static ndt_t *
-ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
+ndt_new_extra(enum ndt tag, int64_t n, ndt_context_t *ctx)
 {
+    bool overflow = 0;
     ndt_t *t;
+    int64_t size;
 
-    t = ndt_alloc(1, offsetof(ndt_t, extra) + n);
+    size = ADDi64(offsetof(ndt_t, extra), n, &overflow);
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError, "type too large");
+        return NULL;
+    }
+
+    t = ndt_alloc(1, size);
     if (t == NULL) {
         return ndt_memory_error(ctx);
     }

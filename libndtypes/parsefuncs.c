@@ -366,7 +366,7 @@ mk_attr(char *name, char *value, ndt_context_t *ctx)
 {
     ndt_attr_t *attr;
 
-    attr = ndt_alloc(1, sizeof *attr);
+    attr = ndt_alloc_size(sizeof *attr);
     if (attr == NULL) {
         ndt_free(name);
         ndt_free(value);
@@ -385,7 +385,7 @@ mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
 {
     ndt_attr_t *attr;
 
-    attr = ndt_alloc(1, sizeof *attr);
+    attr = ndt_alloc_size(sizeof *attr);
     if (attr == NULL) {
         ndt_free(name);
         ndt_string_seq_del(seq);

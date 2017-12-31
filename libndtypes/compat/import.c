@@ -66,7 +66,7 @@ ndt_from_bpformat(const char *input, ndt_context_t *ctx)
         return NULL;
     }
 
-    buffer = ndt_alloc(1, size+2);
+    buffer = ndt_alloc_size(size+2);
     if (buffer == NULL) {
         return ndt_memory_error(ctx);
     }
