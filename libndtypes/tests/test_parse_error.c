@@ -27816,6 +27816,16 @@ const char *parse_error_tests[] = {
   "var(offsets=[-1, -1]) * Some(int64)",
   "var(offsets=[0, -1]) * Some(int64)",
 
+  /* Negative dimensions */
+  "-2 * 4 * uint8",
+  "-9223372036854775808 * uint8",
+  "-2 * 4611686018427387904 * uint8",
+
+  /* Overflow */
+  "9223372036854775808 * uint8",
+  "4611686018427387904 * 2 uint8",
+  "2 * 4611686018427387904 * uint8",
+
   /* END MANUALLY GENERATED */
 
   NULL

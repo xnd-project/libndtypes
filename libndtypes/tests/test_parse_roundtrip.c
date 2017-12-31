@@ -316,7 +316,7 @@ const char *parse_roundtrip_tests[] = {
   "var * var * FixedBytesKind",
   "var * ... * Nf",
   "var * var * var * fixed_bytes(size=2816010912, align=16)",
-  "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
+  "36 * 16 * fixed_bytes(size=912328236, align=2)",
   "var * var * var * ZcTmBXnKPi",
   "categorical(946986991, 43, 'omhwkoWVWw')",
   "var * float32",
@@ -393,6 +393,10 @@ const char *parse_roundtrip_tests[] = {
   "<int64",
   ">int64",
   "2 * 10 * >float64",
+
+  /* Overflow */
+  "9223372036854775807 * uint8",
+  "1 * 1 * 9223372036854775807 * uint8",
 
   /* END MANUALLY GENERATED */
 

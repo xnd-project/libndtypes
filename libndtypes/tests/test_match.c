@@ -2318,8 +2318,8 @@ const match_testcase_t match_tests[] = {
     "var * var * var * fixed_bytes(size=2816010000, align=16)",
     1 },
 
-  { "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
-    "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
+  { "36 * 16 * fixed_bytes(size=912328236, align=2)",
+    "36 * 16 * fixed_bytes(size=912328236, align=2)",
     1 },
 
   { "var * var * var * ZcTmBXnKPi",

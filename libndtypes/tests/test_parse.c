@@ -313,7 +313,7 @@ const char *parse_tests[] = {
   "var * var * FixedBytesKind",
   "var * ... * Nf",
   "var * var * var * fixed_bytes(size=2816010912, align=16)",
-  "3663546803 * 1650974226 * fixed_bytes(size=912328236, align=2)",
+  "36 * 16 * fixed_bytes(size=912328236, align=2)",
   "var * var * float64",
   "var * var * var * ZcTmBXnKPi",
   "categorical('omhwkoWVWw', 43, 946986991)",
@@ -414,6 +414,10 @@ const char *parse_tests[] = {
   "!2 * 10 * {a: !2 * 10 * (int64, string)}",
 
   "2 * N * {a: !2 * 10 * (int64, string)}",
+
+  /* Overflow */
+  "9223372036854775807 * uint8",
+  "1 * 1 * 9223372036854775807 * uint8",
 
   /* END MANUALLY GENERATED */
 

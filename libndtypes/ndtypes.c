@@ -39,6 +39,7 @@
 #include <complex.h>
 #include <assert.h>
 #include "ndtypes.h"
+#include "overflow.h"
 #include "slice.h"
 
 
@@ -59,10 +60,14 @@ ispower2(uint16_t n)
     return n != 0 && (n & (n-1)) == 0;
 }
 
-static size_t
-round_up(size_t offset, uint16_t align)
+static int64_t
+round_up(int64_t offset, uint16_t align, bool *overflow)
 {
-    return ((offset + align - 1) / align) * align;
+    int64_t size;
+
+    assert(align > 0);
+    size = ADDi64(offset, align-1, overflow);
+    return (size / align) * align;
 }
 
 
@@ -664,17 +669,30 @@ ndt_new_extra(enum ndt tag, size_t n, ndt_context_t *ctx)
 ndt_t *
 ndt_tuple_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
 {
-    ndt_t *t;
-    size_t offset_offset;
-    size_t align_offset;
-    size_t pad_offset;
-    size_t extra;
+    ndt_t *t = NULL;
+    bool overflow = 0;
+    int64_t offset_offset;
+    int64_t align_offset;
+    int64_t pad_offset;
+    int64_t extra;
+    int64_t size;
     int64_t i;
 
-    offset_offset = round_up(shape * sizeof(ndt_t *), alignof(int64_t));
-    align_offset = offset_offset + shape * sizeof(int64_t);
-    pad_offset = align_offset + shape * sizeof(uint16_t);
-    extra = pad_offset + shape * sizeof(uint16_t);
+    size = MULi64(shape, sizeof(ndt_t *), &overflow);
+    offset_offset = round_up(size, alignof(int64_t), &overflow);
+
+    size = MULi64(shape, sizeof(int64_t), &overflow);
+    align_offset = ADDi64(offset_offset, size, &overflow);
+
+    size = MULi64(shape, sizeof(uint16_t), &overflow);
+    pad_offset = ADDi64(align_offset, size, &overflow);
+
+    extra = ADDi64(pad_offset, size, &overflow);
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError, "tuple size too large");
+        return NULL;
+    }
 
     t = ndt_new_extra(Tuple, extra, ctx);
     if (t == NULL) {
@@ -701,19 +719,28 @@ ndt_tuple_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
 ndt_t *
 ndt_record_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
 {
-    ndt_t *t;
-    size_t types_offset;
-    size_t offset_offset;
-    size_t align_offset;
-    size_t pad_offset;
-    size_t extra;
+    ndt_t *t = NULL;
+    bool overflow = 0;
+    int64_t types_offset;
+    int64_t offset_offset;
+    int64_t align_offset;
+    int64_t pad_offset;
+    int64_t extra;
+    int64_t size;
     int64_t i;
 
-    types_offset = round_up(shape * sizeof(char *), alignof(ndt_t *));
-    offset_offset = types_offset + round_up(shape * sizeof(ndt_t *), alignof(int64_t));
-    align_offset = offset_offset + shape * sizeof(int64_t);
-    pad_offset = align_offset + shape * sizeof(uint16_t);
-    extra = pad_offset + shape * sizeof(uint16_t);
+    size = types_offset = MULi64(shape, sizeof(char *), &overflow);
+
+    offset_offset = ADDi64(types_offset, size, &overflow);
+    offset_offset = round_up(offset_offset, alignof(int64_t), &overflow);
+
+    size = MULi64(shape, sizeof(int64_t), &overflow);
+    align_offset = ADDi64(offset_offset, size, &overflow);
+
+    size = MULi64(shape, sizeof(uint16_t), &overflow);
+    pad_offset = ADDi64(align_offset, size, &overflow);
+
+    extra = ADDi64(pad_offset, size, &overflow);
 
     t = ndt_new_extra(Record, extra, ctx);
     if (t == NULL) {
@@ -991,6 +1018,7 @@ ndt_t *
 ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
 {
     ndt_t *t;
+    bool overflow = 0;
 
     if (!check_type_invariants(type, ctx)) {
         ndt_del(type);
@@ -1016,8 +1044,14 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
     if (t->access == Concrete) {
         t->Concrete.FixedDim.itemsize = ndt_itemsize(type);
         t->Concrete.FixedDim.step = step==INT64_MAX ? fixed_step(type) : step;
-        t->datasize = shape * type->datasize;
+        t->datasize = MULi64(shape, type->datasize, &overflow);
         t->align = type->align;
+    }
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError, "data size too large");
+        ndt_del(t);
+        return NULL;
     }
 
     return t;
@@ -1293,8 +1327,9 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
                      uint16_opt_t align_attr, uint16_opt_t pack,
                      ndt_context_t *ctx)
 {
-    size_t offset = 0;
-    size_t size = 0;
+    bool overflow = 0;
+    int64_t offset = 0;
+    int64_t size = 0;
     uint16_t maxalign;
     int64_t i;
 
@@ -1326,16 +1361,16 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
         maxalign = max(align[i], maxalign);
 
         if (i > 0) {
-            size_t n = offset;
-            offset = round_up(offset, align[i]);
+            int64_t n = offset;
+            offset = round_up(offset, align[i], &overflow);
             pad[i-1] = (uint16_t)(offset - n);
         }
 
         offsets[i] = offset;
-        offset += fields[i].type->datasize;
+        offset = ADDi64(offset, fields[i].type->datasize, &overflow);
     }
 
-    size = round_up(offset, maxalign);
+    size = round_up(offset, maxalign, &overflow);
 
     if (shape > 0) {
         size_t n = (size - offsets[shape-1]) - fields[shape-1].type->datasize;
@@ -1356,6 +1391,11 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
                 return -1;
             }
         }
+    }
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError, "tuple or record too large");
+        return -1;
     }
 
     return 0;
