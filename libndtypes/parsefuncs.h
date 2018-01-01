@@ -44,34 +44,43 @@
 /*                        Functions used in the lexer                        */
 /*****************************************************************************/
 
-char *mk_stringlit(const char *src, ndt_context_t *ctx);
+char *mk_stringlit(const char *lexeme, ndt_context_t *ctx);
 
 
 /*****************************************************************************/
-/*                        Functions used in the parser                       */
+/*                          Parser helper functions                          */
 /*****************************************************************************/
 
 enum ndt_encoding encoding_from_string(char *s, ndt_context_t *ctx);
-ndt_t *mk_fortran(ndt_t *type, ndt_context_t *ctx);
-ndt_t *mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx);
-ndt_t *mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx);
-ndt_t *mk_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
-ndt_t *mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
+ndt_attr_t *mk_attr(char *name, char *value, ndt_context_t *ctx);
 ndt_attr_t *mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx);
-ndt_t *mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
-ndt_field_t *mk_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
+
+
+/*****************************************************************************/
+/*                    Parser functions for creating types                    */
+/*****************************************************************************/
+
 ndt_t *mk_function(ndt_t *ret,
                    enum ndt_variadic tflag, ndt_field_seq_t *tseq,
                    enum ndt_variadic rflag, ndt_field_seq_t *rseq,
                    ndt_context_t *ctx);
 ndt_t *mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx);
+
+ndt_t *mk_fortran(ndt_t *type, ndt_context_t *ctx);
+ndt_t *mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx);
+ndt_t *mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx);
+
+ndt_t *mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
+
+ndt_field_t *mk_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
+ndt_t *mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
+ndt_t *mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);
+
 ndt_t *mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx);
-ndt_attr_t *mk_attr(char *name, char *value, ndt_context_t *ctx);
-ndt_t *mk_var_dim_offsets(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
+
+ndt_t *mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx);
+ndt_t *mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
+ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 
 
 #endif /*  PARSEFUNCS_H */

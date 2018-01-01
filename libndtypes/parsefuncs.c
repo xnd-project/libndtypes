@@ -74,6 +74,14 @@ mk_stringlit(const char *lexeme, ndt_context_t *ctx)
 /*                          Parser helper functions                          */
 /*****************************************************************************/
 
+enum ndt_encoding
+encoding_from_string(char *s, ndt_context_t *ctx)
+{
+    enum ndt_encoding ret = ndt_encoding_from_string(s, ctx);
+    ndt_free(s);
+    return ret;
+}
+
 ndt_attr_t *
 mk_attr(char *name, char *value, ndt_context_t *ctx)
 {
@@ -113,15 +121,6 @@ mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
     ndt_free(seq);
 
     return attr;
-}
-
-
-enum ndt_encoding
-encoding_from_string(char *s, ndt_context_t *ctx)
-{
-    enum ndt_encoding ret = ndt_encoding_from_string(s, ctx);
-    ndt_free(s);
-    return ret;
 }
 
 
