@@ -1746,6 +1746,7 @@ ndt_fixed_string_kind(ndt_context_t *ctx)
 ndt_t *
 ndt_fixed_string(int64_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
 {
+    bool overflow = 0;
     ndt_t *t;
 
     /* abstract type */
@@ -1758,8 +1759,15 @@ ndt_fixed_string(int64_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = Concrete;
-    t->datasize = ndt_sizeof_encoding(encoding) * size;
+    t->datasize = MULi64(ndt_sizeof_encoding(encoding), size, &overflow);
     t->align = ndt_alignof_encoding(encoding);
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "overflow while creating fixed string");
+        ndt_del(t);
+        return NULL;
+    }
 
     return t;
 }
