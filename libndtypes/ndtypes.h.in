@@ -521,16 +521,10 @@ NDTYPES_API int ndt_is_big_endian(const ndt_t *t);
 
 
 /*****************************************************************************/
-/*                               Functions                                   */
+/*                            Input/Output                                   */
 /*****************************************************************************/
 
-NDTYPES_API int ndt_equal(const ndt_t *p, const ndt_t *c);
-NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
-
-NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
-
-/*** String conversion ***/
+/*** String to primitive conversion ***/
 NDTYPES_API bool ndt_strtobool(const char *v, ndt_context_t *ctx);
 NDTYPES_API char ndt_strtochar(const char *v, ndt_context_t *ctx);
 NDTYPES_API long ndt_strtol(const char *v, long min, long max, ndt_context_t *ctx);
@@ -539,6 +533,22 @@ NDTYPES_API unsigned long ndt_strtoul(const char *v, unsigned long max, ndt_cont
 NDTYPES_API unsigned long long ndt_strtoull(const char *v, unsigned long long max, ndt_context_t *ctx);
 NDTYPES_API float ndt_strtof(const char *v, ndt_context_t *ctx);
 NDTYPES_API double ndt_strtod(const char *v, ndt_context_t *ctx);
+
+/*** Type to string conversion ***/
+NDTYPES_API char *ndt_as_string(ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
+
+
+/*****************************************************************************/
+/*                               Functions                                   */
+/*****************************************************************************/
+
+NDTYPES_API int ndt_equal(const ndt_t *p, const ndt_t *c);
+NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
+
+NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
 
 
 /*** Sequence elements ***/
@@ -671,10 +681,6 @@ NDTYPES_API const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 /******************************************************************************/
 /*                                 Printing                                   */
 /******************************************************************************/
-
-NDTYPES_API char *ndt_as_string(ndt_t *t, ndt_context_t *ctx);
-NDTYPES_API char *ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx);
-NDTYPES_API char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
 
 
 
