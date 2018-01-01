@@ -40,7 +40,6 @@ from _testbuffer import get_sizeof_void_p
 
 
 SIZEOF_PTR = get_sizeof_void_p()
-SIZEOF_SIZE_T = 8 if sys.maxsize==2**63-1 else 4
 
 Mem = namedtuple("Mem", "itemsize align")
 

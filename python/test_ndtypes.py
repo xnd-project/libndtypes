@@ -749,8 +749,8 @@ class TestCategorical(unittest.TestCase):
         t = ndt("categorical(NA, 'something', 'must', 'be', 'done')")
 
         self.assertEqual(t.ndim, 0)
-        self.assertEqual(t.itemsize, SIZEOF_SIZE_T)
-        self.assertEqual(t.align, SIZEOF_SIZE_T)
+        self.assertEqual(t.itemsize, 8)
+        self.assertEqual(t.align, 8)
 
         self.assertRaises(TypeError, t, 'shape')
         self.assertRaises(TypeError, t, 'strides')
