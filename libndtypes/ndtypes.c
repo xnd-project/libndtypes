@@ -510,7 +510,7 @@ ndt_field_array_del(ndt_field_t *fields, int64_t shape)
 
 /*
  * Add a typedef name -> type to the symbol table.  Steals the 'type'
- * reference. XXX
+ * reference.
  */
 int
 ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx)
