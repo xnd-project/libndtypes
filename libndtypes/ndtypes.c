@@ -1197,6 +1197,7 @@ ndt_var_dim(ndt_t *type,
             int32_t nslices, ndt_slice_t *slices,
             ndt_context_t *ctx)
 {
+    bool overflow = 0;
     ndt_t *t;
     int64_t itemsize, datasize;
 
@@ -1233,9 +1234,16 @@ ndt_var_dim(ndt_t *type,
         itemsize = type->Concrete.VarDim.itemsize;
         break;
     default:
-        datasize = offsets[noffsets-1] * type->datasize;
+        datasize = MULi64(offsets[noffsets-1], type->datasize, &overflow);
         itemsize = type->datasize;
         break;
+    }
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "overflow in creating var dimension");
+        ndt_del(type);
+        goto error;
     }
 
     /* abstract type */
