@@ -429,7 +429,6 @@ struct _ndt {
 #define NDT_STATIC_CONTEXT(name) \
     ndt_context_t name = { .flags=0, .err=NDT_Success, .msg=ConstMsg, .ConstMsg="Success" }
 
-
 enum ndt_error {
   NDT_Success,
   NDT_ValueError,
@@ -461,11 +460,13 @@ typedef struct {
 NDTYPES_API ndt_context_t *ndt_context_new(void);
 NDTYPES_API void ndt_context_del(ndt_context_t *ctx);
 
+NDTYPES_API void ndt_err_format(ndt_context_t *ctx, enum ndt_error err, const char *fmt, ...);
 NDTYPES_API int ndt_err_occurred(const ndt_context_t *ctx);
 NDTYPES_API void ndt_err_clear(ndt_context_t *ctx);
-NDTYPES_API const char *ndt_context_msg(ndt_context_t *ctx);
+NDTYPES_API void *ndt_memory_error(ndt_context_t *ctx);
+
 NDTYPES_API const char *ndt_err_as_string(enum ndt_error err);
-NDTYPES_API void ndt_err_format(ndt_context_t *ctx, enum ndt_error err, const char *fmt, ...);
+const char *ndt_context_msg(ndt_context_t *ctx);
 NDTYPES_API void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 
 
@@ -474,7 +475,6 @@ NDTYPES_API void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 /*****************************************************************************/
 
 /*** Various ***/
-NDTYPES_API void *ndt_memory_error(ndt_context_t *ctx);
 NDTYPES_API char *ndt_strdup(const char *s, ndt_context_t *ctx);
 NDTYPES_API char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
 NDTYPES_API enum ndt_encoding ndt_encoding_from_string(const char *s, ndt_context_t *ctx);

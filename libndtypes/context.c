@@ -70,15 +70,6 @@ ndt_context_del(ndt_context_t *ctx)
     }
 }
 
-const char *
-ndt_context_msg(ndt_context_t *ctx)
-{
-    if (ctx->msg == ConstMsg) {
-        return ctx->ConstMsg;
-    }
-    return ctx->DynamicMsg;
-}
-
 
 /******************************************************************************/
 /*                              Error handling                                */
@@ -192,6 +183,17 @@ ndt_err_as_string(enum ndt_error err)
     return "UnknownError";
 }
 
+/* Get the current error message. */
+const char *
+ndt_context_msg(ndt_context_t *ctx)
+{
+    if (ctx->msg == ConstMsg) {
+        return ctx->ConstMsg;
+    }
+    return ctx->DynamicMsg;
+}
+
+/* Print an error.  Mostly useful for debugging. */
 void
 ndt_err_fprint(FILE *fp, ndt_context_t *ctx)
 {
