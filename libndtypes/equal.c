@@ -106,9 +106,9 @@ record_fields_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
 }
 
 static int
-categorical_equal(ndt_value_t *t, ndt_value_t *u, size_t shape)
+categorical_equal(ndt_value_t *t, ndt_value_t *u, int64_t shape)
 {
-    size_t i;
+    int64_t i;
 
     for (i = 0; i < shape; i++) {
         if (!ndt_value_equal(t+i, u+i)) {

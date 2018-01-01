@@ -175,9 +175,9 @@ ndt_copy_value(ndt_value_t *v, const ndt_value_t *u, ndt_context_t *ctx)
 static ndt_t *
 ndt_copy_categorical(const ndt_t *t, ndt_context_t *ctx)
 {
-    size_t ntypes = t->Categorical.ntypes;
+    int64_t ntypes = t->Categorical.ntypes;
     ndt_value_t *types;
-    size_t i;
+    int64_t i;
 
     assert(t->tag == Categorical);
 

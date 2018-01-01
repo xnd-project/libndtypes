@@ -386,9 +386,9 @@ value(buf_t *buf, const ndt_value_t *mem, ndt_context_t *ctx)
 }
 
 static int
-categorical(buf_t *buf, ndt_value_t *mem, size_t ntypes, ndt_context_t *ctx)
+categorical(buf_t *buf, ndt_value_t *mem, int64_t ntypes, ndt_context_t *ctx)
 {
-    size_t i;
+    int64_t i;
     int n;
 
     for (i = 0; i < ntypes; i++) {
@@ -896,9 +896,9 @@ ast_value(buf_t *buf, const ndt_value_t *mem, ndt_context_t *ctx)
 }
 
 static int
-ast_categorical(buf_t *buf, ndt_value_t *mem, size_t ntypes, ndt_context_t *ctx)
+ast_categorical(buf_t *buf, ndt_value_t *mem, int64_t ntypes, ndt_context_t *ctx)
 {
-    size_t i;
+    int64_t i;
     int n;
 
     for (i = 0; i < ntypes; i++) {

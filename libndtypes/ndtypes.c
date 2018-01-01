@@ -1671,11 +1671,11 @@ cmp(const void *x, const void *y)
 }
 
 ndt_t *
-ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx)
+ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx)
 {
     ndt_value_t *tmp;
     ndt_t *t;
-    size_t i;
+    int64_t i;
 
     tmp = ndt_alloc(ntypes, sizeof(ndt_value_t));
     if (tmp == NULL) {

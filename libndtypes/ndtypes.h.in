@@ -358,7 +358,7 @@ struct _ndt {
         } Nominal;
 
         struct {
-            size_t ntypes;
+            int64_t ntypes;
             ndt_value_t *types;
         } Categorical;
 
@@ -601,7 +601,7 @@ NDTYPES_API ndt_t *ndt_string(ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_bytes(size_t size, uint16_opt_t align, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_categorical(ndt_value_t *types, size_t ntypes, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_ref(ndt_t *type, ndt_context_t *ctx);
 
 
@@ -704,7 +704,7 @@ typedef struct {
     uint8_t *data;
 } ndt_bytes_t;
 
-typedef size_t ndt_categorical_t;
+typedef int64_t ndt_categorical_t;
 
 
 #endif /* NDTYPES_H */

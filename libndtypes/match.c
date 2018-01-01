@@ -254,10 +254,10 @@ match_record_fields(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
 }
 
 static int
-match_categorical(ndt_value_t *p, size_t plen,
-                  ndt_value_t *c, size_t clen)
+match_categorical(ndt_value_t *p, int64_t plen,
+                  ndt_value_t *c, int64_t clen)
 {
-    size_t i;
+    int64_t i;
 
     if (plen != clen) {
         return 0;
