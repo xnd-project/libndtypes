@@ -91,7 +91,7 @@ static inline int64_t
 MULi64(int64_t a, int64_t b, bool *overflow)
 {
     int64_t c = (uint64_t)a * (uint64_t)b;
-    *overflow |= (b != 0 && a != c / b);
+    *overflow |= ((b < 0 && a == INT64_MIN) || (b != 0 && a != c / b));
     return c;
 }
 
