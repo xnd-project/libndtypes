@@ -36,6 +36,7 @@
 #include <limits.h>
 #include <assert.h>
 #include "ndtypes.h"
+#include "parsefuncs.h"
 #include "seq.h"
 #include "attr.h"
 
@@ -217,68 +218,6 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
     }
 }
 
-ndt_t *
-mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    seq = ndt_value_seq_finalize(seq);
-    t = ndt_categorical(seq->ptr, seq->len, ctx);
-
-    ndt_free(seq);
-    return t;
-}
-
-ndt_t *
-mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
-{
-    int64_t size;
-
-    size = ndt_strtoll(v, 0, INT64_MAX, ctx);
-    ndt_free(v);
-
-    if (ndt_err_occurred(ctx)) {
-        return NULL;
-    }
-
-    return ndt_fixed_string(size, encoding, ctx);
-}
-
-ndt_t *
-mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
-{
-    static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrInt64, AttrUint16Opt}};
-    uint16_opt_t align = {None, 0};
-    int64_t datasize = 0;
-
-    if (attrs) {
-        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &datasize, &align);
-        ndt_attr_seq_del(attrs);
-        if (ret < 0) {
-            return NULL;
-        }
-    }
-
-    return ndt_fixed_bytes(datasize, align, ctx);
-}
-
-ndt_t *
-mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
-{
-    static const attr_spec kwlist = {0, 1, {"align"}, {AttrUint16Opt}};
-    uint16_opt_t target_align = {None, 0};
-
-    if (attrs) {
-        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &target_align);
-        ndt_attr_seq_del(attrs);
-        if (ret < 0) {
-            return NULL;
-        }
-    }
-
-    return ndt_bytes(target_align, ctx);
-}
-
 ndt_field_t *
 mk_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
@@ -359,6 +298,68 @@ mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
     t = ndt_record(flag, fields->ptr, fields->len, align, pack, ctx);
     ndt_free(fields);
     return t;
+}
+
+ndt_t *
+mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    seq = ndt_value_seq_finalize(seq);
+    t = ndt_categorical(seq->ptr, seq->len, ctx);
+
+    ndt_free(seq);
+    return t;
+}
+
+ndt_t *
+mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
+{
+    int64_t size;
+
+    size = ndt_strtoll(v, 0, INT64_MAX, ctx);
+    ndt_free(v);
+
+    if (ndt_err_occurred(ctx)) {
+        return NULL;
+    }
+
+    return ndt_fixed_string(size, encoding, ctx);
+}
+
+ndt_t *
+mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+{
+    static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrInt64, AttrUint16Opt}};
+    uint16_opt_t align = {None, 0};
+    int64_t datasize = 0;
+
+    if (attrs) {
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &datasize, &align);
+        ndt_attr_seq_del(attrs);
+        if (ret < 0) {
+            return NULL;
+        }
+    }
+
+    return ndt_fixed_bytes(datasize, align, ctx);
+}
+
+ndt_t *
+mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+{
+    static const attr_spec kwlist = {0, 1, {"align"}, {AttrUint16Opt}};
+    uint16_opt_t target_align = {None, 0};
+
+    if (attrs) {
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &target_align);
+        ndt_attr_seq_del(attrs);
+        if (ret < 0) {
+            return NULL;
+        }
+    }
+
+    return ndt_bytes(target_align, ctx);
 }
 
 ndt_attr_t *
