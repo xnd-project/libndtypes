@@ -62,6 +62,14 @@ MULi64(int64_t a, int64_t b, bool *overflow)
     *overflow |= __builtin_mul_overflow(a, b, &c);
     return c;
 }
+
+static inline uint16_t
+ADDu16(uint16_t a, uint16_t b, bool *overflow)
+{
+    uint16_t c;
+    *overflow |= __builtin_add_overflow(a, b, &c);
+    return c;
+}
 #else
 static inline int64_t
 ADDi64(int64_t a, int64_t b, bool *overflow)
@@ -84,6 +92,14 @@ MULi64(int64_t a, int64_t b, bool *overflow)
 {
     int64_t c = (uint64_t)a * (uint64_t)b;
     *overflow |= (b != 0 && a != c / b);
+    return c;
+}
+
+static inline uint16_t
+ADDu16(uint16_t a, uint16_t b, bool *overflow)
+{
+    uint16_t c = a + b;
+    *overflow |= (c < a);
     return c;
 }
 #endif /* OVERFLOW_H */

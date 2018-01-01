@@ -40,16 +40,17 @@
 extern int bpdebug;
 #endif
 /* "%code requires" blocks.  */
-#line 271 "bpgrammar.y" /* yacc.c:1909  */
+#line 272 "bpgrammar.y" /* yacc.c:1909  */
 
   #include <ctype.h>
   #include <assert.h>
   #include "ndtypes.h"
   #include "seq.h"
+  #include "overflow.h"
   #define YY_TYPEDEF_YY_SCANNER_T
   typedef void * yyscan_t;
 
-#line 53 "bpgrammar.h" /* yacc.c:1909  */
+#line 54 "bpgrammar.h" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -83,7 +84,7 @@ extern int bpdebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 302 "bpgrammar.y" /* yacc.c:1909  */
+#line 304 "bpgrammar.y" /* yacc.c:1909  */
 
     ndt_t *ndt;
     ndt_field_t *field;
@@ -93,7 +94,7 @@ union YYSTYPE
     unsigned char uchar;
     uint16_t uint16;
 
-#line 97 "bpgrammar.h" /* yacc.c:1909  */
+#line 98 "bpgrammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -117,12 +118,12 @@ struct YYLTYPE
 
 int bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
-#line 280 "bpgrammar.y" /* yacc.c:1909  */
+#line 282 "bpgrammar.y" /* yacc.c:1909  */
 
   #define YY_DECL extern int bplexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int bplexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 127 "bpgrammar.h" /* yacc.c:1909  */
+#line 128 "bpgrammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_BP_BPGRAMMAR_H_INCLUDED  */

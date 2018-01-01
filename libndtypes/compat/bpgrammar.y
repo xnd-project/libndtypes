@@ -59,9 +59,10 @@ bplex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 static uint16_t
 add_uint16(uint16_t a, uint16_t b, ndt_context_t *ctx)
 {
-    uint16_t c = a + b;
+    bool overflow = 0;
+    uint16_t c = ADDu16(a, b, &overflow);
 
-    if (c < a) {
+    if (overflow) {
         ndt_err_format(ctx, NDT_ValueError, "overflow while adding uint16");
         return UINT16_MAX;
     }
@@ -273,6 +274,7 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
   #include <assert.h>
   #include "ndtypes.h"
   #include "seq.h"
+  #include "overflow.h"
   #define YY_TYPEDEF_YY_SCANNER_T
   typedef void * yyscan_t;
 }
