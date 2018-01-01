@@ -499,7 +499,6 @@ NDTYPES_API uint16_t ndt_alignof_encoding(enum ndt_encoding encoding);
 /*                               Functions                                   */
 /*****************************************************************************/
 
-NDTYPES_API ndt_t *ndt_to_fortran(const ndt_t *type, ndt_context_t *ctx);
 
 NDTYPES_API int ndt_is_abstract(const ndt_t *t);
 NDTYPES_API int ndt_is_concrete(const ndt_t *t);
@@ -565,6 +564,7 @@ NDTYPES_API ndt_t *ndt_void(ndt_context_t *ctx);
 
 /* Any */
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_to_fortran(const ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx);
