@@ -1716,6 +1716,33 @@ ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx)
 }
 
 ndt_t *
+ndt_fixed_string_kind(ndt_context_t *ctx)
+{
+    return ndt_new(FixedStringKind, ctx);
+}
+
+ndt_t *
+ndt_fixed_string(int64_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    /* abstract type */
+    t = ndt_new(FixedString, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->FixedString.size = size;
+    t->FixedString.encoding = encoding;
+
+    /* concrete access */
+    t->access = Concrete;
+    t->datasize = ndt_sizeof_encoding(encoding) * size;
+    t->align = ndt_alignof_encoding(encoding);
+
+    return t;
+}
+
+ndt_t *
 ndt_fixed_bytes_kind(ndt_context_t *ctx)
 {
     return ndt_new(FixedBytesKind, ctx);
@@ -1750,33 +1777,6 @@ ndt_fixed_bytes(int64_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
     t->access = Concrete;
     t->datasize = size;
     t->align = align;
-
-    return t;
-}
-
-ndt_t *
-ndt_fixed_string_kind(ndt_context_t *ctx)
-{
-    return ndt_new(FixedStringKind, ctx);
-}
-
-ndt_t *
-ndt_fixed_string(int64_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    /* abstract type */
-    t = ndt_new(FixedString, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    t->FixedString.size = size;
-    t->FixedString.encoding = encoding;
-
-    /* concrete access */
-    t->access = Concrete;
-    t->datasize = ndt_sizeof_encoding(encoding) * size;
-    t->align = ndt_alignof_encoding(encoding);
 
     return t;
 }
