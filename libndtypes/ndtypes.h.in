@@ -528,6 +528,19 @@ NDTYPES_API int ndt_is_big_endian(const ndt_t *t);
 
 
 /*****************************************************************************/
+/*                               Functions                                   */
+/*****************************************************************************/
+
+NDTYPES_API ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
+
+NDTYPES_API int ndt_equal(const ndt_t *p, const ndt_t *c);
+NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
+
+NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
+
+
+/*****************************************************************************/
 /*                            Input/Output                                   */
 /*****************************************************************************/
 
@@ -548,25 +561,26 @@ NDTYPES_API char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
 
 
 /*****************************************************************************/
-/*                               Functions                                   */
+/*                                 Typedef                                   */
 /*****************************************************************************/
 
-NDTYPES_API int ndt_equal(const ndt_t *p, const ndt_t *c);
-NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
-
-NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
+/* Typedef for nominal types */
+NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 
 
-/*** Datashape ***/
+/*****************************************************************************/
+/*                            Allocate types                                 */
+/*****************************************************************************/
+
 NDTYPES_API ndt_t *ndt_new(enum ndt tag, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_tuple_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_record_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API void ndt_del(ndt_t *t);
-NDTYPES_API ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
 
-/* Typedef for nominal types */
-NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
+
+/*****************************************************************************/
+/*                            Construct types                                */
+/*****************************************************************************/
 
 /* Special types */
 NDTYPES_API ndt_t *ndt_option(ndt_t *type);
@@ -669,7 +683,7 @@ NDTYPES_API ndt_t *ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *
 
 
 /******************************************************************************/
-/*                       Initialization and tables                            */
+/*                       Library initialization and tables                    */
 /******************************************************************************/
 
 NDTYPES_API int ndt_init(ndt_context_t *ctx);
