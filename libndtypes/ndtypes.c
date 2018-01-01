@@ -1686,7 +1686,7 @@ ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx)
     /* Successful allocation implies no overflow and size <= SIZE_MAX. */
     size = ntypes * sizeof(ndt_value_t);
     memcpy(tmp, types, (size_t)size);
-    qsort(tmp, ntypes, sizeof *tmp, cmp);
+    qsort(tmp, (size_t)ntypes, sizeof *tmp, cmp);
 
     for (i = 0; i+1 < ntypes; i++) {
         if (ndt_value_equal(&tmp[i], &tmp[i+1])) {
