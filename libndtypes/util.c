@@ -158,19 +158,18 @@ ndt_dtype(const ndt_t *t)
 }
 
 int
-ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
+ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *t)
 {
-    const ndt_t *a = array;
     int n = 0;
 
-    assert(array->ndim <= NDT_MAX_DIM);
+    assert(t->ndim <= NDT_MAX_DIM);
 
-    while (a->ndim > 0) {
-        dims[n++] = a;
-        a = next_dim(a);
+    while (t->ndim > 0) {
+        dims[n++] = t;
+        t = next_dim(t);
     }
 
-    *dtype = a;
+    *dtype = t;
 
     return n;
 }
