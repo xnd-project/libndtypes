@@ -3894,25 +3894,25 @@ fi
 
 # Compiler dependent settings:
 NDT_WARN=
-NDT_OPT="-O2"
+NDT_OPT="-O2 -g"
 case $CC in
     *gcc*)
         NDT_WARN="-Wall -Wextra -std=c11 -pedantic"
-        NDT_OPT="-O2"
-        NDT_COV_CFLAGS="-O0 -fno-inline -fprofile-arcs -ftest-coverage"
+        NDT_OPT="-O2 -g"
+        NDT_COV_CFLAGS="-O0 -g -fno-inline -fprofile-arcs -ftest-coverage"
         NDT_COV_LDFLAGS="-fprofile-arcs"
         ;;
     *icc*)
         AR=xiar
         NDT_WARN="-Wall"
-        NDT_OPT="-O2"
+        NDT_OPT="-O2 -g"
         NDT_COV_CFLAGS=""
         NDT_COV_LDFLAGS=""
         ;;
     *clang*)
         NDT_WARN="-Wall -Wextra -std=c11 -pedantic"
-        NDT_OPT="-O2"
-        NDT_COV_CFLAGS="-O0 -fno-inline -fprofile-arcs -ftest-coverage"
+        NDT_OPT="-O2 -g"
+        NDT_COV_CFLAGS="-O0 -g -fno-inline -fprofile-arcs -ftest-coverage"
         NDT_COV_LDFLAGS="-fprofile-arcs"
         ;;
 esac
