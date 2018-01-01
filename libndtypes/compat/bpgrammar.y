@@ -194,7 +194,7 @@ mk_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
     int64_t shape;
-    size_t i;
+    int64_t i;
 
     if (seq->len < 1 || seq->len > NDT_MAX_DIM) {
         ndt_err_format(ctx, NDT_ValueError,
@@ -240,7 +240,7 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
     ndt_t *t;
-    size_t i;
+    int64_t i;
 
     fields = ndt_field_seq_finalize(fields);
     if (fields == NULL) {

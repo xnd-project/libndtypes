@@ -48,7 +48,7 @@
 void
 ndt_attr_del(ndt_attr_t *attr)
 {
-    size_t i;
+    int64_t i;
 
     if (attr == NULL) {
         return;
@@ -75,9 +75,9 @@ ndt_attr_del(ndt_attr_t *attr)
 }
 
 void
-ndt_attr_array_del(ndt_attr_t *attr, size_t nattr)
+ndt_attr_array_del(ndt_attr_t *attr, int64_t nattr)
 {
-    size_t i, k;
+    int64_t i, k;
 
     if (attr == NULL) {
         return;
@@ -120,7 +120,7 @@ ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,
     va_list ap;
     ndt_attr_t const *v[MAX_ATTR] = {NULL};
     int found;
-    size_t i, k;
+    int64_t i, k;
 
     if (seq->len < spec->min || seq->len > spec->max) {
         ndt_err_format(ctx, NDT_InvalidArgumentError,
@@ -248,7 +248,7 @@ ndt_parse_attr(const attr_spec *spec, ndt_context_t *ctx,
             *(int32_t **)ptr = values;
 
             ptr = va_arg(ap, void *);
-            *(size_t *)ptr = v[i]->AttrList.len;
+            *(int64_t *)ptr = v[i]->AttrList.len;
             i++;
             goto endloop;
           }

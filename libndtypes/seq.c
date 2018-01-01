@@ -83,7 +83,7 @@ ndt_string_seq_new(char *elt, ndt_context_t *ctx)
 void
 ndt_string_seq_del(ndt_string_seq_t *seq)
 {
-    size_t i;
+    int64_t i;
 
     if (seq != NULL) {
         for (i = 0; i < seq->len; i++) {
@@ -99,12 +99,7 @@ ndt_string_seq_grow(ndt_string_seq_t *seq, ndt_context_t *ctx)
 {
     char **ptr;
 
-    if (seq->reserved > SIZE_MAX / 2) {
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
-        return -1;
-    }
-
-    ptr = ndt_realloc(seq->ptr, 2 * seq->reserved, sizeof *ptr);
+    ptr = ndt_realloc(seq->ptr, seq->reserved, 2 * (sizeof *ptr));
     if (ptr == NULL) {
         ndt_err_format(ctx, NDT_MemoryError, "out of memory");
         return -1;

@@ -487,9 +487,9 @@ ndt_field_del(ndt_field_t *field)
 }
 
 void
-ndt_field_array_del(ndt_field_t *fields, size_t shape)
+ndt_field_array_del(ndt_field_t *fields, int64_t shape)
 {
-    size_t i;
+    int64_t i;
 
     if (fields == NULL) {
         return;

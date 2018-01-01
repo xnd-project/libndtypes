@@ -85,26 +85,21 @@ elem##_seq_del(elem##_seq_t *seq)             \
 
 /* Grow a sequence */
 #define NDT_SEQ_GROW(elem) \
-static int                                                       \
-elem##_seq_grow(elem##_seq_t *seq, ndt_context_t *ctx)           \
-{                                                                \
-    elem##_t *ptr;                                               \
-                                                                 \
-    if (seq->reserved > SIZE_MAX / 2) {                          \
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");   \
-        return -1;                                               \
-    }                                                            \
-                                                                 \
-    ptr = ndt_realloc(seq->ptr, 2 * seq->reserved, sizeof *ptr); \
-    if (ptr == NULL) {                                           \
-        ndt_err_format(ctx, NDT_MemoryError, "out of memory");   \
-        return -1;                                               \
-    }                                                            \
-                                                                 \
-    seq->ptr = ptr;                                              \
-    seq->reserved = 2 * seq->reserved;                           \
-                                                                 \
-    return 0;                                                    \
+static int                                                         \
+elem##_seq_grow(elem##_seq_t *seq, ndt_context_t *ctx)             \
+{                                                                  \
+    elem##_t *ptr;                                                 \
+                                                                   \
+    ptr = ndt_realloc(seq->ptr, seq->reserved, 2 * (sizeof *ptr)); \
+    if (ptr == NULL) {                                             \
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");     \
+        return -1;                                                 \
+    }                                                              \
+                                                                   \
+    seq->ptr = ptr;                                                \
+    seq->reserved = 2 * seq->reserved;                             \
+                                                                   \
+    return 0;                                                      \
 }
 
 /* Append an element to a sequence */
@@ -153,21 +148,20 @@ elem##_seq_finalize(elem##_seq_t *seq)                  \
 }
 
 typedef struct {
-    size_t len;
-    size_t reserved;
+    int64_t len;
+    int64_t reserved;
     ndt_field_t *ptr;
 } ndt_field_seq_t;
 
 typedef struct {
-    size_t len;
-    size_t reserved;
+    int64_t len;
+    int64_t reserved;
     ndt_value_t *ptr;
 } ndt_value_seq_t;
 
-
 typedef struct {
-    size_t len;
-    size_t reserved;
+    int64_t len;
+    int64_t reserved;
     char **ptr;
 } ndt_string_seq_t;
 

@@ -56,9 +56,9 @@ ndt_value_del(ndt_value_t *mem)
 }
 
 void
-ndt_value_array_del(ndt_value_t *mem, size_t ntypes)
+ndt_value_array_del(ndt_value_t *mem, int64_t ntypes)
 {
-    size_t i;
+    int64_t i;
 
     if (mem == NULL) {
         return;

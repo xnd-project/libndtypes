@@ -76,27 +76,27 @@ typedef struct {
     union {
         char *AttrValue;
         struct {
-            size_t len;
+            int64_t len;
             char **items;
         } AttrList;
     };
 } ndt_attr_t;
 
 typedef struct {
-   const size_t min;
-   const size_t max;
+   const int min;
+   const int max;
    const char *names[MAX_ATTR];
    const enum ndt_attr tags[MAX_ATTR];
 } attr_spec;
 
 typedef struct {
-    size_t len;
-    size_t reserved;
+    int64_t len;
+    int64_t reserved;
     ndt_attr_t *ptr;
 } ndt_attr_seq_t;
 
 void ndt_attr_del(ndt_attr_t *attr);
-void ndt_attr_array_del(ndt_attr_t *attr, size_t nattr);
+void ndt_attr_array_del(ndt_attr_t *attr, int64_t nattr);
 
 ndt_attr_seq_t *ndt_attr_seq_new(ndt_attr_t *, ndt_context_t *ctx);
 void ndt_attr_seq_del(ndt_attr_seq_t *);
