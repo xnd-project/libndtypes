@@ -233,23 +233,6 @@ mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
 }
 
 ndt_t *
-mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
-{
-    static const attr_spec kwlist = {0, 1, {"align"}, {AttrUint16Opt}};
-    uint16_opt_t target_align = {None, 0};
-
-    if (attrs) {
-        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &target_align);
-        ndt_attr_seq_del(attrs);
-        if (ret < 0) {
-            return NULL;
-        }
-    }
-
-    return ndt_bytes(target_align, ctx);
-}
-
-ndt_t *
 mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrInt64, AttrUint16Opt}};
@@ -265,6 +248,23 @@ mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     }
 
     return ndt_fixed_bytes(datasize, align, ctx);
+}
+
+ndt_t *
+mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+{
+    static const attr_spec kwlist = {0, 1, {"align"}, {AttrUint16Opt}};
+    uint16_opt_t target_align = {None, 0};
+
+    if (attrs) {
+        int ret = ndt_parse_attr(&kwlist, ctx, attrs, &target_align);
+        ndt_attr_seq_del(attrs);
+        if (ret < 0) {
+            return NULL;
+        }
+    }
+
+    return ndt_bytes(target_align, ctx);
 }
 
 ndt_field_t *
