@@ -71,8 +71,50 @@ mk_stringlit(const char *lexeme, ndt_context_t *ctx)
 
 
 /*****************************************************************************/
-/*                        Functions used in the parser                       */
+/*                          Parser helper functions                          */
 /*****************************************************************************/
+
+ndt_attr_t *
+mk_attr(char *name, char *value, ndt_context_t *ctx)
+{
+    ndt_attr_t *attr;
+
+    attr = ndt_alloc_size(sizeof *attr);
+    if (attr == NULL) {
+        ndt_free(name);
+        ndt_free(value);
+        return ndt_memory_error(ctx);
+    }
+
+    attr->tag = AttrValue;
+    attr->name = name;
+    attr->AttrValue = value;
+
+    return attr;
+}
+
+ndt_attr_t *
+mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
+{
+    ndt_attr_t *attr;
+
+    attr = ndt_alloc_size(sizeof *attr);
+    if (attr == NULL) {
+        ndt_free(name);
+        ndt_string_seq_del(seq);
+        return ndt_memory_error(ctx);
+    }
+
+    attr->tag = AttrList;
+    attr->name = name;
+    attr->AttrList.len = seq->len;
+    attr->AttrList.items = seq->ptr;
+
+    ndt_free(seq);
+
+    return attr;
+}
+
 
 enum ndt_encoding
 encoding_from_string(char *s, ndt_context_t *ctx)
@@ -81,6 +123,11 @@ encoding_from_string(char *s, ndt_context_t *ctx)
     ndt_free(s);
     return ret;
 }
+
+
+/*****************************************************************************/
+/*                    Parser functions for creating types                    */
+/*****************************************************************************/
 
 ndt_t *
 mk_function(ndt_t *ret,
@@ -360,45 +407,4 @@ mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
     }
 
     return ndt_bytes(target_align, ctx);
-}
-
-ndt_attr_t *
-mk_attr(char *name, char *value, ndt_context_t *ctx)
-{
-    ndt_attr_t *attr;
-
-    attr = ndt_alloc_size(sizeof *attr);
-    if (attr == NULL) {
-        ndt_free(name);
-        ndt_free(value);
-        return ndt_memory_error(ctx);
-    }
-
-    attr->tag = AttrValue;
-    attr->name = name;
-    attr->AttrValue = value;
-
-    return attr;
-}
-
-ndt_attr_t *
-mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
-{
-    ndt_attr_t *attr;
-
-    attr = ndt_alloc_size(sizeof *attr);
-    if (attr == NULL) {
-        ndt_free(name);
-        ndt_string_seq_del(seq);
-        return ndt_memory_error(ctx);
-    }
-
-    attr->tag = AttrList;
-    attr->name = name;
-    attr->AttrList.len = seq->len;
-    attr->AttrList.items = seq->ptr;
-
-    ndt_free(seq);
-
-    return attr;
 }
