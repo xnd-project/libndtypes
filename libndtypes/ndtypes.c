@@ -994,15 +994,24 @@ fixed_step(ndt_t *type, int64_t step, bool *overflow)
 static ndt_t *
 _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 {
+    bool overflow = 0;
     ndt_t *dt;
+    int64_t next_step;
 
     assert(ndt_is_concrete(t));
     if (t->ndim == 0) {
         return ndt_copy(t, ctx);
     }
 
+    next_step = MULi64(step, t->FixedDim.shape, &overflow);
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "overflow in converting to Fortran order");
+        return NULL;
+    }
+
     assert(t->tag == FixedDim);
-    dt = _ndt_to_fortran(t->FixedDim.type, step * t->FixedDim.shape, ctx);
+    dt = _ndt_to_fortran(t->FixedDim.type, next_step, ctx);
     if (dt == NULL) {
         return NULL;
     }
