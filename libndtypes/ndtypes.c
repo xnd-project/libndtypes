@@ -1675,7 +1675,7 @@ ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx)
 {
     ndt_value_t *tmp;
     ndt_t *t;
-    int64_t i;
+    int64_t size, i;
 
     tmp = ndt_alloc(ntypes, sizeof(ndt_value_t));
     if (tmp == NULL) {
@@ -1683,7 +1683,9 @@ ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx)
         return ndt_memory_error(ctx);
     }
 
-    memcpy(tmp, types, ntypes * sizeof(ndt_value_t));
+    /* Successful allocation implies no overflow and size <= SIZE_MAX. */
+    size = ntypes * sizeof(ndt_value_t);
+    memcpy(tmp, types, (size_t)size);
     qsort(tmp, ntypes, sizeof *tmp, cmp);
 
     for (i = 0; i+1 < ntypes; i++) {
