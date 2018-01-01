@@ -618,11 +618,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
         case FixedString: {
             if (t->FixedString.encoding == Utf8) {
-                n = ndt_snprintf(ctx, buf, "fixed_string(%zu)",
+                n = ndt_snprintf(ctx, buf, "fixed_string(%" PRIi64 ")",
                                  t->FixedString.size);
             }
             else {
-                n = ndt_snprintf(ctx, buf, "fixed_string(%zu, %s)",
+                n = ndt_snprintf(ctx, buf, "fixed_string(%" PRIi64 ", %s)",
                                  t->FixedString.size,
                                  ndt_encoding_as_string(t->FixedString.encoding));
             }
@@ -631,11 +631,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
         case FixedBytes: {
             if (t->FixedBytes.align == 1) {
-                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu)",
+                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%" PRIi64 ")",
                                  t->FixedBytes.size);
             }
             else {
-                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%zu, align=%" PRIu8 ")",
+                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%" PRIi64 ", align=%" PRIu8 ")",
                                  t->FixedBytes.size, t->FixedBytes.align);
             }
             return n;
@@ -1219,7 +1219,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedString(\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, encoding=%s,\n",
+            n = ndt_snprintf_d(ctx, buf, d+2, "size=%" PRIi64 ", encoding=%s,\n",
                                t->FixedString.size,
                                ndt_encoding_as_string(t->FixedString.encoding));
             if (n < 0) return -1;
@@ -1234,7 +1234,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "FixedBytes(\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "size=%zu, align=%" PRIu16 ",\n",
+            n = ndt_snprintf_d(ctx, buf, d+2, "size=%" PRIi64 ", align=%" PRIu16 ",\n",
                                t->FixedBytes.size,
                                t->FixedBytes.align);
             if (n < 0) return -1;

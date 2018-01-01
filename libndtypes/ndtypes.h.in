@@ -363,12 +363,12 @@ struct _ndt {
         } Categorical;
 
         struct {
-            size_t size;
+            int64_t size;
             enum ndt_encoding encoding;
         } FixedString;
 
         struct {
-            size_t size;
+            int64_t size;
             uint16_t align;
         } FixedBytes;
 
@@ -598,9 +598,9 @@ NDTYPES_API ndt_t *ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx);
 
 /* Scalars */
 NDTYPES_API ndt_t *ndt_string(ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_string(int64_t size, enum ndt_encoding encoding, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_fixed_bytes(size_t size, uint16_opt_t align, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_bytes(int64_t size, uint16_opt_t align, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_ref(ndt_t *type, ndt_context_t *ctx);
 

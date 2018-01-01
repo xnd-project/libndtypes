@@ -1722,7 +1722,7 @@ ndt_fixed_bytes_kind(ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_fixed_bytes(size_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
+ndt_fixed_bytes(int64_t size, uint16_opt_t align_attr, ndt_context_t *ctx)
 {
     ndt_t *t;
     uint16_t align;
@@ -1761,7 +1761,7 @@ ndt_fixed_string_kind(ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_fixed_string(size_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
+ndt_fixed_string(int64_t size, enum ndt_encoding encoding, ndt_context_t *ctx)
 {
     ndt_t *t;
 

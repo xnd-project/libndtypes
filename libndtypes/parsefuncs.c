@@ -178,9 +178,9 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
 ndt_t *
 mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
 {
-    size_t size;
+    int64_t size;
 
-    size = (size_t)ndt_strtoull(v, SIZE_MAX, ctx);
+    size = ndt_strtoll(v, 0, INT64_MAX, ctx);
     ndt_free(v);
 
     if (ndt_err_occurred(ctx)) {
@@ -210,9 +210,9 @@ mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 ndt_t *
 mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
-    static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrSize, AttrUint16Opt}};
+    static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrInt64, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
-    size_t datasize = 0;
+    int64_t datasize = 0;
 
     if (attrs) {
         int ret = ndt_parse_attr(&kwlist, ctx, attrs, &datasize, &align);
