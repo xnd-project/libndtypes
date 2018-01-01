@@ -127,11 +127,11 @@ mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 ndt_t *
 mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 {
-    static const attr_spec kwlist = {1, 2, {"offsets", "_noffsets"}, {AttrInt32List, AttrSize}};
+    static const attr_spec kwlist = {1, 2, {"offsets", "_noffsets"}, {AttrInt32List, AttrInt64}};
 
     if (attrs) {
         int32_t *offsets = NULL;
-        size_t noffsets = 0;
+        int64_t noffsets = 0;
         ndt_t *t;
         int ret;
 
