@@ -486,16 +486,20 @@ NDTYPES_API int ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *
 
 
 /*****************************************************************************/
-/*                               Functions                                   */
+/*                               Encodings                                   */
 /*****************************************************************************/
 
-/*** Various ***/
 NDTYPES_API enum ndt_encoding ndt_encoding_from_string(const char *s, ndt_context_t *ctx);
 NDTYPES_API const char *ndt_encoding_as_string(enum ndt_encoding encoding);
 NDTYPES_API size_t ndt_sizeof_encoding(enum ndt_encoding encoding);
 NDTYPES_API uint16_t ndt_alignof_encoding(enum ndt_encoding encoding);
-NDTYPES_API ndt_t *ndt_to_fortran(const ndt_t *type, ndt_context_t *ctx);
 
+
+/*****************************************************************************/
+/*                               Functions                                   */
+/*****************************************************************************/
+
+NDTYPES_API ndt_t *ndt_to_fortran(const ndt_t *type, ndt_context_t *ctx);
 
 NDTYPES_API int ndt_is_abstract(const ndt_t *t);
 NDTYPES_API int ndt_is_concrete(const ndt_t *t);
