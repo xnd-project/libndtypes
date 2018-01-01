@@ -496,9 +496,8 @@ NDTYPES_API uint16_t ndt_alignof_encoding(enum ndt_encoding encoding);
 
 
 /*****************************************************************************/
-/*                               Functions                                   */
+/*                              Predicates                                   */
 /*****************************************************************************/
-
 
 NDTYPES_API int ndt_is_abstract(const ndt_t *t);
 NDTYPES_API int ndt_is_concrete(const ndt_t *t);
@@ -506,18 +505,24 @@ NDTYPES_API int ndt_is_concrete(const ndt_t *t);
 NDTYPES_API int ndt_is_optional(const ndt_t *t);
 NDTYPES_API int ndt_subtree_is_optional(const ndt_t *t);
 
+NDTYPES_API int ndt_is_ndarray(const ndt_t *t);
+NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);
+NDTYPES_API int ndt_is_f_contiguous(const ndt_t *t);
+
 NDTYPES_API int ndt_is_scalar(const ndt_t *t);
 NDTYPES_API int ndt_is_signed(const ndt_t *t);
 NDTYPES_API int ndt_is_unsigned(const ndt_t *t);
 NDTYPES_API int ndt_is_float(const ndt_t *t);
 NDTYPES_API int ndt_is_complex(const ndt_t *t);
+
 NDTYPES_API int ndt_endian_is_set(const ndt_t *t);
 NDTYPES_API int ndt_is_little_endian(const ndt_t *t);
 NDTYPES_API int ndt_is_big_endian(const ndt_t *t);
 
-NDTYPES_API int ndt_is_ndarray(const ndt_t *t);
-NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);
-NDTYPES_API int ndt_is_f_contiguous(const ndt_t *t);
+
+/*****************************************************************************/
+/*                               Functions                                   */
+/*****************************************************************************/
 
 NDTYPES_API int ndt_equal(const ndt_t *p, const ndt_t *c);
 NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
