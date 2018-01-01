@@ -37,6 +37,10 @@
 #include "ndtypes.h"
 
 
+/*****************************************************************************/
+/*                     String  and formatting utilities                      */
+/*****************************************************************************/
+
 char *
 ndt_strdup(const char *s, ndt_context_t *ctx)
 {
@@ -52,6 +56,44 @@ ndt_strdup(const char *s, ndt_context_t *ctx)
     cp[len] = '\0';
     return cp;
 }
+
+char *
+ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
+{
+    va_list ap, aq;
+    char *s;
+    int n;
+
+    va_start(ap, fmt);
+    va_copy(aq, ap);
+
+    n = vsnprintf(NULL, 0, fmt, ap);
+    va_end(ap);
+    if (n < 0 || n == INT_MAX) {
+        ndt_err_format(ctx, NDT_RuntimeError, "vsprintf failed");
+        return NULL;
+    }
+
+    s = ndt_alloc_size(n+1);
+    if (s == NULL) {
+        va_end(aq);
+        return ndt_memory_error(ctx);
+    }
+
+    n = vsnprintf(s, n+1, fmt, aq);
+    va_end(aq);
+    if (n < 0) {
+        ndt_free(s);
+        return NULL;
+    }
+
+    return s;
+}
+
+
+/*****************************************************************************/
+/*                       Type functions (unstable API)                       */
+/*****************************************************************************/
 
 /* Unoptimized hash function for experimenting. */
 ndt_ssize_t
@@ -105,6 +147,34 @@ next_dim(const ndt_t *a)
     }
 }
 
+const ndt_t *
+ndt_dtype(const ndt_t *t)
+{
+    while (t->ndim > 0) {
+        t = next_dim(t);
+    }
+
+    return t;
+}
+
+int
+ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
+{
+    const ndt_t *a = array;
+    int n = 0;
+
+    assert(array->ndim <= NDT_MAX_DIM);
+
+    while (a->ndim > 0) {
+        dims[n++] = a;
+        a = next_dim(a);
+    }
+
+    *dtype = a;
+
+    return n;
+}
+
 int
 ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
 {
@@ -136,65 +206,4 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
     }
 
     return 0;
-}
-
-const ndt_t *
-ndt_dtype(const ndt_t *t)
-{
-    while (t->ndim > 0) {
-        t = next_dim(t);
-    }
-
-    return t;
-}
-
-int
-ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *array)
-{
-    const ndt_t *a = array;
-    int n = 0;
-
-    assert(array->ndim <= NDT_MAX_DIM);
-
-    while (a->ndim > 0) {
-        dims[n++] = a;
-        a = next_dim(a);
-    }
-
-    *dtype = a;
-
-    return n;
-}
-
-char *
-ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
-{
-    va_list ap, aq;
-    char *s;
-    int n;
-
-    va_start(ap, fmt);
-    va_copy(aq, ap);
-
-    n = vsnprintf(NULL, 0, fmt, ap);
-    va_end(ap);
-    if (n < 0 || n == INT_MAX) {
-        ndt_err_format(ctx, NDT_RuntimeError, "vsprintf failed");
-        return NULL;
-    }
-
-    s = ndt_alloc_size(n+1);
-    if (s == NULL) {
-        va_end(aq);
-        return ndt_memory_error(ctx);
-    }
-
-    n = vsnprintf(s, n+1, fmt, aq);
-    va_end(aq);
-    if (n < 0) {
-        ndt_free(s);
-        return NULL;
-    }
-
-    return s;
 }
