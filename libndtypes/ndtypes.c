@@ -973,14 +973,19 @@ ndt_any_kind(ndt_context_t *ctx)
  * is assumed to be either a dtype with ndim==0 or a FixedDim.
  */
 static int64_t
-fixed_step(ndt_t *type)
+fixed_step(ndt_t *type, int64_t step, bool *overflow)
 {
     assert(ndt_is_concrete(type));
     assert(type->tag != VarDim);
 
+    if (step != INT64_MAX) {
+        return step;
+    }
+
     switch (type->tag) {
     case FixedDim:
-        return type->FixedDim.shape * type->Concrete.FixedDim.step;
+        return MULi64(type->FixedDim.shape, type->Concrete.FixedDim.step,
+                      overflow);
     default:
         return 1;
     }
@@ -1051,7 +1056,7 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
     t->access = type->access;
     if (t->access == Concrete) {
         t->Concrete.FixedDim.itemsize = ndt_itemsize(type);
-        t->Concrete.FixedDim.step = step==INT64_MAX ? fixed_step(type) : step;
+        t->Concrete.FixedDim.step = fixed_step(type, step, &overflow);
         t->datasize = MULi64(shape, type->datasize, &overflow);
         t->align = type->align;
     }
