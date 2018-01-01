@@ -218,6 +218,18 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
 }
 
 ndt_t *
+mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    seq = ndt_value_seq_finalize(seq);
+    t = ndt_categorical(seq->ptr, seq->len, ctx);
+
+    ndt_free(seq);
+    return t;
+}
+
+ndt_t *
 mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
 {
     int64_t size;
@@ -346,18 +358,6 @@ mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
 
     t = ndt_record(flag, fields->ptr, fields->len, align, pack, ctx);
     ndt_free(fields);
-    return t;
-}
-
-ndt_t *
-mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    seq = ndt_value_seq_finalize(seq);
-    t = ndt_categorical(seq->ptr, seq->len, ctx);
-
-    ndt_free(seq);
     return t;
 }
 
