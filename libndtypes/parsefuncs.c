@@ -82,6 +82,48 @@ encoding_from_string(char *s, ndt_context_t *ctx)
 }
 
 ndt_t *
+mk_function(ndt_t *ret,
+            enum ndt_variadic tflag, ndt_field_seq_t *tseq,
+            enum ndt_variadic rflag, ndt_field_seq_t *rseq,
+            ndt_context_t *ctx)
+{
+    ndt_t *pos = NULL;
+    ndt_t *kwds = NULL;
+
+    pos = mk_tuple(tflag, tseq, NULL, ctx);
+    if (pos == NULL) {
+        ndt_del(ret);
+        ndt_field_seq_del(rseq);
+        return NULL;
+    }
+
+    kwds = mk_record(rflag, rseq, NULL, ctx);
+    if (kwds == NULL) {
+        ndt_del(ret);
+        ndt_del(pos);
+        return NULL;
+    }
+
+    return ndt_function(ret, pos, kwds, ctx);
+}
+
+ndt_t *
+mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx)
+{
+    ndt_t *kwds = NULL;
+    uint16_opt_t align = {None, 0};
+
+    kwds = ndt_record(Nonvariadic, NULL, 0, align, align, ctx);
+    if (kwds == NULL) {
+        ndt_del(ret);
+        ndt_del(pos);
+        return NULL;
+    }
+
+    return ndt_function(ret, pos, kwds, ctx);
+}
+
+ndt_t *
 mk_fortran(ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t = ndt_to_fortran(type, ctx);
@@ -305,48 +347,6 @@ mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
     t = ndt_record(flag, fields->ptr, fields->len, align, pack, ctx);
     ndt_free(fields);
     return t;
-}
-
-ndt_t *
-mk_function(ndt_t *ret,
-            enum ndt_variadic tflag, ndt_field_seq_t *tseq,
-            enum ndt_variadic rflag, ndt_field_seq_t *rseq,
-            ndt_context_t *ctx)
-{
-    ndt_t *pos = NULL;
-    ndt_t *kwds = NULL;
-
-    pos = mk_tuple(tflag, tseq, NULL, ctx);
-    if (pos == NULL) {
-        ndt_del(ret);
-        ndt_field_seq_del(rseq);
-        return NULL;
-    }
-
-    kwds = mk_record(rflag, rseq, NULL, ctx);
-    if (kwds == NULL) {
-        ndt_del(ret);
-        ndt_del(pos);
-        return NULL;
-    }
-
-    return ndt_function(ret, pos, kwds, ctx);
-}
-
-ndt_t *
-mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx)
-{
-    ndt_t *kwds = NULL;
-    uint16_opt_t align = {None, 0};
-
-    kwds = ndt_record(Nonvariadic, NULL, 0, align, align, ctx);
-    if (kwds == NULL) {
-        ndt_del(ret);
-        ndt_del(pos);
-        return NULL;
-    }
-
-    return ndt_function(ret, pos, kwds, ctx);
 }
 
 ndt_t *
