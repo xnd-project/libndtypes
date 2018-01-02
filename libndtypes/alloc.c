@@ -62,7 +62,7 @@ void (* ndt_freefunc)(void *ptr) = free;
 
 
 static inline int
-ispower2(size_t n)
+ispower2(uint16_t n)
 {
     return n != 0 && (n & (n-1)) == 0;
 }
@@ -151,10 +151,12 @@ ndt_free(void *ptr)
 
 /* aligned calloc */
 void *
-ndt_aligned_calloc(size_t alignment, size_t size)
+ndt_aligned_calloc(uint16_t alignment, int64_t size)
 {
+    bool overflow = 0;
     uintptr_t uintptr, aligned;
-    size_t req, extra;
+    int64_t req;
+    uint32_t extra;
     void *ptr;
 
     if (!ispower2(alignment)) {
@@ -171,16 +173,19 @@ ndt_aligned_calloc(size_t alignment, size_t size)
 
     extra = alignment - 1;
     extra = extra + sizeof(uintptr_t);
-    if (extra < sizeof(uintptr_t)) {
+
+    req = ADDi64(size, extra, &overflow);
+    if (overflow) {
         return NULL;
     }
 
-    req = size + extra;
-    if (req < size) {
+#if SIZE_MAX < INT64_MAX
+    if (req > SIZE_MAX) {
         return NULL;
     }
+#endif
 
-    ptr = ndt_callocfunc(req, 1);
+    ptr = ndt_callocfunc((size_t)req, 1);
     if (ptr == NULL) {
         return NULL;
     }
