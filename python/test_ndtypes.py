@@ -929,8 +929,8 @@ class TestBytes(unittest.TestCase):
         t = ndt("bytes")
 
         self.assertEqual(t.ndim, 0)
-        self.assertEqual(t.itemsize, 2 * SIZEOF_PTR)
-        self.assertEqual(t.align, SIZEOF_PTR)
+        self.assertEqual(t.itemsize, 16)
+        self.assertEqual(t.align, 8)
 
         self.assertRaises(TypeError, t, 'shape')
         self.assertRaises(TypeError, t, 'strides')
