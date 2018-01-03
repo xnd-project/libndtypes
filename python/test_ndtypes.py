@@ -346,7 +346,6 @@ class TestFortran(unittest.TestCase):
                             self.assertEqual(t.strides, strides)
 
                         self.assertEqual(t.shape, shape)
-                        self.assertEqual(t.strides, strides)
 
 
 class TestVarDim(unittest.TestCase):
