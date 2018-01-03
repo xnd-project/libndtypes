@@ -80,7 +80,7 @@ convert_req(int64_t nmemb, int64_t size, bool *overflow)
     req = MULi64(nmemb, size, overflow);
 
 #if SIZE_MAX < INT64_MAX
-    if (req > SIZE_MAX) {
+    if (req > INT32_MAX) {
         *overflow = 1;
         return SIZE_MAX;
     }
@@ -119,7 +119,7 @@ ndt_calloc(int64_t nmemb, int64_t size)
     size = size == 0 ? 1 : size;
 
 #if SIZE_MAX < INT64_MAX
-    if (nmemb > SIZE_MAX || size > SIZE_MAX) {
+    if (nmemb > INT32_MAX || size > INT32_MAX) {
         return NULL;
     }
 #endif
@@ -180,7 +180,7 @@ ndt_aligned_calloc(uint16_t alignment, int64_t size)
     }
 
 #if SIZE_MAX < INT64_MAX
-    if (req > SIZE_MAX) {
+    if (req > INT32_MAX) {
         return NULL;
     }
 #endif
