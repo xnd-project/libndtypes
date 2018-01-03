@@ -222,9 +222,9 @@ class TestFixedDim(unittest.TestCase):
                 if not HAVE_32_BIT_LINUX:
                     self.assertEqual(t.itemsize, mem.itemsize)
                     self.assertEqual(t.align, mem.align)
+                    self.assertEqual(t.strides, strides)
 
                 self.assertEqual(t.shape, shape)
-                self.assertEqual(t.strides, strides)
 
             for i in range(10):
                 for j in range(10):
@@ -236,9 +236,9 @@ class TestFixedDim(unittest.TestCase):
                     if not HAVE_32_BIT_LINUX:
                         self.assertEqual(t.itemsize, mem.itemsize)
                         self.assertEqual(t.align, mem.align)
+                        self.assertEqual(t.strides, strides)
 
                     self.assertEqual(t.shape, shape)
-                    self.assertEqual(t.strides, strides)
 
             for i in range(5):
                 for j in range(5):
@@ -251,9 +251,9 @@ class TestFixedDim(unittest.TestCase):
                         if not HAVE_32_BIT_LINUX:
                             self.assertEqual(t.itemsize, mem.itemsize)
                             self.assertEqual(t.align, mem.align)
+                            self.assertEqual(t.strides, strides)
 
                         self.assertEqual(t.shape, shape)
-                        self.assertEqual(t.strides, strides)
 
 
 class TestFortran(unittest.TestCase):
@@ -314,9 +314,9 @@ class TestFortran(unittest.TestCase):
                 if not HAVE_32_BIT_LINUX:
                     self.assertEqual(t.itemsize, mem.itemsize)
                     self.assertEqual(t.align, mem.align)
+                    self.assertEqual(t.strides, strides)
 
                 self.assertEqual(t.shape, shape)
-                self.assertEqual(t.strides, strides)
 
             for i in range(10):
                 for j in range(10):
@@ -328,9 +328,9 @@ class TestFortran(unittest.TestCase):
                     if not HAVE_32_BIT_LINUX:
                         self.assertEqual(t.itemsize, mem.itemsize)
                         self.assertEqual(t.align, mem.align)
+                        self.assertEqual(t.strides, strides)
 
                     self.assertEqual(t.shape, shape)
-                    self.assertEqual(t.strides, strides)
 
             for i in range(5):
                 for j in range(5):
@@ -343,6 +343,7 @@ class TestFortran(unittest.TestCase):
                         if not HAVE_32_BIT_LINUX:
                             self.assertEqual(t.itemsize, mem.itemsize)
                             self.assertEqual(t.align, mem.align)
+                            self.assertEqual(t.strides, strides)
 
                         self.assertEqual(t.shape, shape)
                         self.assertEqual(t.strides, strides)
