@@ -39,8 +39,6 @@ from random import randrange
 from _testbuffer import get_sizeof_void_p
 
 
-HAVE_64_BIT = sys.maxsize == 2**63-1
-
 SIZEOF_PTR = get_sizeof_void_p()
 
 Mem = namedtuple("Mem", "itemsize align")

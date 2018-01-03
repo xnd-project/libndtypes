@@ -1519,13 +1519,6 @@ class TestApply(unittest.TestCase):
             args = ndt(s)
             self.assertRaises(TypeError, f.apply, args)
 
-    def test_apply_overflow(self):
-
-        if not HAVE_64_BIT:
-            f = ndt("1073741824 * N * uint8 -> float64")
-            arg = "1073741824 * 2 * uint8"
-            self.assertRaises(MemoryError, f.apply, arg)
-
 
 ALL_TESTS = [
   TestModule,
