@@ -95,37 +95,6 @@ ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
 /*                       Type functions (unstable API)                       */
 /*****************************************************************************/
 
-/* Unoptimized hash function for experimenting. */
-ndt_ssize_t
-ndt_hash(ndt_t *t, ndt_context_t *ctx)
-{
-    unsigned char *s, *cp;
-    size_t len;
-    ndt_ssize_t x;
-
-    cp = s = (unsigned char *)ndt_as_string(t, ctx);
-    if (s == NULL) {
-        return -1;
-    }
-
-    len = strlen((char *)s);
-
-    x = *cp << 7;
-    while (*cp != '\0') {
-        x = (1000003 * x) ^ *cp++;
-    }
-    x ^= len;
-
-    if (x == -1) {
-        x = -2;
-    }
-
-    ndt_free(s);
-
-    return x;
-}
-
-
 /* Return the next type in a dimension chain.  Undefined for non-dimensions. */
 static const ndt_t *
 next_dim(const ndt_t *a)
@@ -205,4 +174,34 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
     }
 
     return 0;
+}
+
+/* Unoptimized hash function for experimenting. */
+ndt_ssize_t
+ndt_hash(ndt_t *t, ndt_context_t *ctx)
+{
+    unsigned char *s, *cp;
+    size_t len;
+    ndt_ssize_t x;
+
+    cp = s = (unsigned char *)ndt_as_string(t, ctx);
+    if (s == NULL) {
+        return -1;
+    }
+
+    len = strlen((char *)s);
+
+    x = *cp << 7;
+    while (*cp != '\0') {
+        x = (1000003 * x) ^ *cp++;
+    }
+    x ^= len;
+
+    if (x == -1) {
+        x = -2;
+    }
+
+    ndt_free(s);
+
+    return x;
 }

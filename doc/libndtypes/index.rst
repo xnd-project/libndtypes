@@ -28,10 +28,7 @@ small container libraries that can traverse memory without type erasure.
 
 .. toctree::
 
-   changelog.rst
    context.rst
-   types.rst
-   pattern-matching.rst
-   grammar.rst
+   util.rst
 
 
