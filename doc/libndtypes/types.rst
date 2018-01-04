@@ -103,9 +103,12 @@ Abstract fields
         } FixedDim;
 
         ...
+
     };
 
 These fields are always defined for both abstract and concrete types.
+:macro:`FixedDim` is just an example field.  Refer to :macro:`ndtypes.h`
+directly for the complete set of fields.
 
 
 Concrete fields
@@ -121,10 +124,12 @@ Concrete fields
                 int64_t itemsize;
                 int64_t step;
             } FixedDim;
+
         ...
+
         };
    } Concrete;
 
-These fields are only defined for concrete types. For internal reasons
+These fields are only defined for concrete types.  For internal reasons
 (facilitating copying etc.) they are initialized to zero for abstract
 types.
