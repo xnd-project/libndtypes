@@ -169,7 +169,7 @@ ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y)
     case ValString:
         return strcmp(x->ValString, y->ValString) == 0;
     case ValNA:
-        return 1;
+        return 1; /* XXX */
     }
 
     /* NOT REACHED: tags should be exhaustive. */
