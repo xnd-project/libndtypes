@@ -794,7 +794,7 @@ ast_tuple_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
         if (ndt_is_concrete(t)) {
             n = ndt_snprintf_d(ctx, buf, d+2,
-                               "offset=%zu, align=%" PRIu16 ", pad=%" PRIu16 "\n",
+                               "offset=%" PRIi64 ", align=%" PRIu16 ", pad=%" PRIu16 "\n",
                                t->Concrete.Tuple.offset[i], t->Concrete.Tuple.align[i],
                                t->Concrete.Tuple.pad[i]);
             if (n < 0) return -1;
@@ -838,7 +838,7 @@ ast_record_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
         if (ndt_is_concrete(t)) {
             n = ndt_snprintf_d(ctx, buf, d+2,
-                "offset=%zu, align=%" PRIu16 ", pad=%" PRIu16 "\n",
+                "offset=%" PRIi64 ", align=%" PRIu16 ", pad=%" PRIu16 "\n",
                 t->Concrete.Record.offset[i], t->Concrete.Record.align[i],
                 t->Concrete.Record.pad[i]);
             if (n < 0) return -1;
@@ -987,7 +987,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "shape=%zu", t->FixedDim.shape);
+            n = ndt_snprintf_d(ctx, buf, d+2, "shape=%" PRIi64, t->FixedDim.shape);
 
             if (ndt_is_abstract(t)) {
                 n = ndt_snprintf(ctx, buf, ",\n");
@@ -995,7 +995,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             }
             else {
                 n = ndt_snprintf(ctx, buf,
-                    ", itemsize=%" PRIi64 ", step=%zu,\n",
+                    ", itemsize=%" PRIi64 ", step=%" PRIi64 ",\n",
                     t->Concrete.FixedDim.itemsize,
                     t->Concrete.FixedDim.step);
             }
