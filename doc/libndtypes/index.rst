@@ -32,6 +32,8 @@ small container libraries that can traverse memory without type erasure.
    encodings.rst
    fields-values.rst
    predicates.rst
+   typedef.rst
+   types.rst
    util.rst
 
 
