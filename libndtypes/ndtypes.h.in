@@ -503,6 +503,7 @@ NDTYPES_API ndt_value_t *ndt_value_from_number(enum ndt_value tag, char *v, ndt_
 NDTYPES_API ndt_value_t *ndt_value_from_string(char *v, ndt_context_t *ctx);
 NDTYPES_API ndt_value_t *ndt_value_na(ndt_context_t *ctx);
 NDTYPES_API int ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y);
+NDTYPES_API int ndt_value_mem_equal(const ndt_value_t *x, const ndt_value_t *y);
 NDTYPES_API int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
 
 

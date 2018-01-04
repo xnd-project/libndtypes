@@ -1711,7 +1711,7 @@ ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx)
     qsort(tmp, (size_t)ntypes, sizeof *tmp, cmp);
 
     for (i = 0; i+1 < ntypes; i++) {
-        if (ndt_value_equal(&tmp[i], &tmp[i+1])) {
+        if (ndt_value_mem_equal(&tmp[i], &tmp[i+1])) {
             ndt_free(tmp);
             ndt_value_array_del(types, ntypes);
             ndt_err_format(ctx, NDT_ValueError, "duplicate category entries");

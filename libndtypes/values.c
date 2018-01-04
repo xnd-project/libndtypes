@@ -152,6 +152,7 @@ ndt_value_na(ndt_context_t *ctx)
     return mem;
 }
 
+/* Equality: NA does not compare equal to anything. */
 int
 ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y)
 {
@@ -169,13 +170,39 @@ ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y)
     case ValString:
         return strcmp(x->ValString, y->ValString) == 0;
     case ValNA:
-        return 1; /* XXX */
+        return 0;
     }
 
     /* NOT REACHED: tags should be exhaustive. */
     ndt_internal_error("invalid value");
 }
 
+/* Structural equality: NA compares equal to itself. */
+int
+ndt_value_mem_equal(const ndt_value_t *x, const ndt_value_t *y)
+{
+    if (x->tag != y->tag) {
+        return 0;
+    }
+
+    switch(x->tag) {
+    case ValBool:
+        return x->ValBool == y->ValBool;
+    case ValInt64:
+        return x->ValInt64 == y->ValInt64;
+    case ValFloat64:
+        return x->ValFloat64 == y->ValFloat64;
+    case ValString:
+        return strcmp(x->ValString, y->ValString) == 0;
+    case ValNA:
+        return 1;
+    }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid value");
+}
+
+/* Sort order: NA compares equal to itself. */
 int
 ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y)
 {
@@ -192,7 +219,7 @@ ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y)
         return x->ValFloat64 < y->ValFloat64 ? -1 : x->ValFloat64 != y->ValFloat64;
     case ValString:
         return strcmp(x->ValString, y->ValString);
-    case ValNA: /* XXX */
+    case ValNA:
         return 0;
     }
 

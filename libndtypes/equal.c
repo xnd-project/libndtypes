@@ -111,7 +111,7 @@ categorical_equal(ndt_value_t *t, ndt_value_t *u, int64_t shape)
     int64_t i;
 
     for (i = 0; i < shape; i++) {
-        if (!ndt_value_equal(t+i, u+i)) {
+        if (!ndt_value_mem_equal(t+i, u+i)) {
             return 0;
         }
     }
