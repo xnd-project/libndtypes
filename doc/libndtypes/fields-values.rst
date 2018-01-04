@@ -147,8 +147,18 @@ Construct the :macro:`NA` value.
 
    int ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y);
 
-Determine if two values are equal.
+Determine if two values are equal.  :macro:`NA` compares not equal to
+itself.
 
+
+.. topic:: ndt_value_mem_equal
+
+.. code-block:: c
+
+   ndt_value_mem_equal(const ndt_value_t *x, const ndt_value_t *y);
+
+Determine if two values are structurally equal.  :macro:`NA` compares
+equal to itself.
 
 
 .. topic:: ndt_value_compare
@@ -157,7 +167,9 @@ Determine if two values are equal.
 
    int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
 
-Compare values according to a sorting order.
+Compare values according to a sorting order.  :macro:`NA` compares equal
+to itself.
+
 
 
 
