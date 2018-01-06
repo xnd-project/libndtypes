@@ -492,3 +492,91 @@ may be removed in the future, since single UTF-8 chars etc. have no real
 meaning and arrays of UTF-8 chars can be represented by fixed string.
 
 
+Integer kinds
+-------------
+
+.. topic:: ndt_signed_kind
+
+.. code-block:: c
+
+   ndt_t *ndt_signed_kind(ndt_context_t *ctx);
+
+Create a symbolic signed kind type for pattern matching.
+
+
+.. topic:: ndt_unsigned_kind
+
+.. code-block:: c
+
+   ndt_t *ndt_unsigned_kind(ndt_context_t *ctx);
+
+Create a symbolic unsigned kind type for pattern matching.
+
+
+.. topic:: ndt_float_kind
+
+.. code-block:: c
+
+   ndt_t *ndt_float_kind(ndt_context_t *ctx);
+
+Create a symbolic float kind type for pattern matching.
+
+
+.. topic:: ndt_complex_kind
+
+.. code-block:: c
+
+   ndt_t *ndt_complex_kind(ndt_context_t *ctx);
+
+Create a symbolic complex kind type for pattern matching.
+
+
+Numbers
+-------
+
+.. topic:: ndt_primitive
+
+.. code-block:: c
+
+   ndt_t *ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx);
+
+Create a number type according to the given enum value. *flags* can be
+:macro:`NDT_LITTLE_ENDIAN` or :macro:`NDT_BIG_ENDIAN`.
+
+If no endian flag is given, native order is assumed.
+
+
+.. topic:: ndt_signed
+
+.. code-block:: c
+
+   ndt_t *ndt_signed(int size, uint32_t flags, ndt_context_t *ctx);
+
+Create a signed fixed width integer according to *size*. *flags* as above.
+
+
+.. topic:: ndt_unsigned
+
+.. code-block:: c
+
+   ndt_t *ndt_unsigned(int size, uint32_t flags, ndt_context_t *ctx);
+
+Create an unsigned fixed width integer according to *size*. *flags* as above.
+
+
+.. topic:: ndt_from_alias
+
+.. code-block:: c
+
+   enum ndt_alias {
+     Size,
+     Intptr,
+     Uintptr
+   };
+
+   ndt_t *ndt_from_alias(enum ndt_alias tag, uint32_t flags, ndt_context_t *ctx);
+
+Create a fixed width integer type from an alias. Sizes are platform dependent.
+
+
+
