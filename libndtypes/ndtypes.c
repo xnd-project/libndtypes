@@ -1041,9 +1041,9 @@ _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 ndt_t *
 ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
 {
-    if (!ndt_is_ndarray(t)) {
+    if (!ndt_is_c_contiguous(t)) {
         ndt_err_format(ctx, NDT_TypeError,
-            "ndt_to_fortran: function expects an ndarray");
+            "array must be C-contiguous for conversion to Fortran order");
         return NULL;
     }
 

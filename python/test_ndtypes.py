@@ -361,6 +361,11 @@ class TestFortran(unittest.TestCase):
                         self.assertEqual(t.datasize, c_datasize(t))
                         self.assertTrue(verify_datasize(t))
 
+    def test_fortran_conversion(self):
+        # Conversion should be from C-contiguous array.
+        s = "!fixed(shape=2, step=-20) * uint8"
+        self.assertRaises(TypeError, ndt, s)
+
 
 class TestVarDim(unittest.TestCase):
 
