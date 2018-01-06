@@ -489,7 +489,7 @@ The alignment of the pointer value is *target_align*.
 
 Create a char type with a specific *encoding*.  Encodings apart from UTF-32
 may be removed in the future, since single UTF-8 chars etc. have no real
-meaning and arrays of UTF-8 chars can be represented by fixed string.
+meaning and arrays of UTF-8 chars can be represented by the fixed string type.
 
 
 Integer kinds
@@ -577,6 +577,18 @@ Create an unsigned fixed width integer according to *size*. *flags* as above.
    ndt_t *ndt_from_alias(enum ndt_alias tag, uint32_t flags, ndt_context_t *ctx);
 
 Create a fixed width integer type from an alias. Sizes are platform dependent.
+
+
+Type variables
+--------------
+
+.. topic:: ndt_typevar
+
+.. code-block:: c
+
+   ndt_t *ndt_typevar(char *name, ndt_context_t *ctx);
+
+Create a type variable for pattern matching.
 
 
 
