@@ -195,27 +195,195 @@ Used in type checking.
 Currently only used as the empty return value in function signatures.
 
 
-Regular types
--------------
+Any type
+--------
 
-.. topic:: ndt_fixed_dim
+.. topic:: ndt_any
+
+.. code-block:: c
+
+   ndt_t *ndt_any_kind(ndt_context_t *ctx);
+
+Constructs the abstract *Any* type.  Used in type checking.
+
+
+Dimension types
+---------------
 
 .. code-block:: c
 
    ndt_t *ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx);
 
-*type* is either a dtype or the rest of the dimensions.
+*type* is either a dtype or the tail of the dimension list.
 
 *shape* is the dimension size and must be a natural number.
 
- *step* is the amount to add to the linear index in order to move one
-dimension element dimension to the next. *step* may be negative.
+*step* is the amount to add to the linear index in order to move to
+the next dimension element. *step* may be negative.
 
 
 If *step* is :macro:`INT64_MAX`, the steps are computed from the dimensions
 shapes and the resulting array is C-contiguous. This is the regular case.
 
 If *step* is given, it is used without further checks. This is mostly useful
-for slicing. The computed *datasize* is the minimum datasize such that all
-index combinations are within the bounds of the allocated memory.
+for slicing. The computed datasize is the minimum datasize such that all index
+combinations are within the bounds of the allocated memory.
+
+
+.. topic:: ndt_to_fortran
+
+.. code-block:: c
+
+   ndt_t *ndt_to_fortran(const ndt_t *type, ndt_context_t *ctx);
+
+Convert a C-contiguous chain of fixed dimensions to Fortran order.
+
+
+
+.. topic:: ndt_abstract_var_dim
+
+.. code-block:: c
+
+   ndt_t *ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx);
+
+Create an abstract *var* dimension for pattern matching.
+
+
+
+.. topic:: ndt_var_dim
+
+.. code-block:: c
+
+   /* Ownership flag for var dim offsets */
+   enum ndt_offsets {
+     InternalOffsets,
+     ExternalOffsets,
+   };
+
+   ndt_t *ndt_var_dim(ndt_t *type,
+                      enum ndt_offsets flag, int32_t noffsets, const int32_t *offsets,
+                      int32_t nslices, ndt_slice_t *slices,
+                      ndt_context_t *ctx);
+
+
+Create a concrete *var* dimension.  Variable dimensions are offset-based
+and use the same addressing scheme as the Arrow data format.
+
+Offset arrays can be very large, so copying must be avoided. For ease of
+use, libndtypes supports creating offset arrays from a datashape string.
+In that case, *flag* must be set to :macro:`InternalOffsets` and the offsets
+are managed by the type.
+
+However, in the most common case offsets are generated and managed elsewhere.
+In that case, *flag* must be set to :macro:`ExternalOffsets`.
+
+
+The offset-based scheme makes it hard to store a sliced var dimension or
+repeatedly slice a var dimension.  This would require additional shape
+arrays that are as large as the offset arrays.
+
+Instead, var dimensions have the concept of a slice stack that stores
+all slices that need to be applied to a var dimension.
+
+Accessing elements recomputes the (start, stop, step) triples that result
+from applying the entire slice stack.
+
+The *nslices* and *slices* arguments are used to provide this stack.  For
+an unsliced var dimension these arguments must be *0* and *NULL*.
+
+
+
+.. topic:: ndt_symbolic_dim
+
+.. code-block:: c
+
+   ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+
+Create a dimension variable for pattern matching. The variable stands for
+a fixed dimension.
+
+
+
+.. topic:: ndt_ellipsis_dim
+
+.. code-block:: c
+
+   ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+
+Create an ellipsis dimension for pattern matching. If *name* is non-NULL,
+a named ellipsis variable is created.
+
+In pattern matching, multiple named ellipsis variables always stand for
+the exact same sequence of dimensions.
+
+By contrast, multiple unnamed ellipses stand for any sequence of dimensions
+that can be broadcast together.
+
+
+Container types
+---------------
+
+.. topic:: ndt_tuple
+
+.. code-block:: c
+
+   ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+                    uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
+
+Construct a tuple type. *fields* is the field sequence, *shape* the length
+of the tuple.
+
+*align* and *pack* are mutually exclusive and have the exact same meaning
+as gcc's *aligned* and *packed* attributes applied to an entire struct.
+
+Either of these may only be given if no field has an *align* or *pack*
+attribute.
+
+
+.. topic:: ndt_record
+
+.. code-block:: c
+
+   ndt_t *ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+                     uint16_opt_t align, uint16_opt_t pack, ndt_context_t *ctx);
+
+Construct a record (struct) type. *fields* is the field sequence, *shape*
+the length of the record.
+
+*align* and *pack* are mutually exclusive and have the exact same meaning
+as gcc's *aligned* and *packed* attributes applied to an entire struct.
+
+Either of these may only be given if no field has an *align* or *pack*
+attribute.
+
+
+.. topic:: ndt_ref
+
+.. code-block:: c
+
+   ndt_t *ndt_ref(ndt_t *type, ndt_context_t *ctx);
+
+Construct a reference type.  References are pointers whose contents (the values
+pointed to) are addressed transparently.
+
+
+.. topic:: ndt_constr
+
+.. code-block:: c
+
+   ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
+
+Create a constructor type.  Constructor types are equal if their names
+and types are equal.
+
+
+.. topic:: ndt_nominal
+
+.. code-block:: c
+
+   ndt_t *ndt_nominal(char *name, ndt_t *type, ndt_context_t *ctx);
+
+Same as constructor, but the type is stored in a lookup table. Comparisons
+and pattern matching are only by name.  The name is globally unique.
+
 
