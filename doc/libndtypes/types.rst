@@ -455,4 +455,40 @@ Create a fixed bytes kind symbolic type for pattern matching.
 Create a fixed bytes type with size *size* and alignment *align*.
 
 
+String, bytes, char
+-------------------
+
+.. topic:: ndt_string
+
+.. code-block:: c
+
+   ndt_t *ndt_string(ndt_context_t *ctx);
+
+Create a string type. The value representation in memory is a pointer to a
+:macro:`NUL`-terminated UTF-8 string.
+
+
+.. topic:: ndt_bytes
+
+.. code-block:: c
+
+   ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
+
+Create a bytes type. The value representation in memory is a struct containing
+an :macro:`int64_t` *size* field and a pointer to :macro:`uint8_t`.
+
+The alignment of the pointer value is *target_align*.
+
+
+
+.. topic:: ndt_char
+
+.. code-block:: c
+
+   ndt_t *ndt_char(enum ndt_encoding encoding, ndt_context_t *ctx);
+
+Create a char type with a specific *encoding*.  Encodings apart from UTF-32
+may be removed in the future, since single UTF-8 chars etc. have no real
+meaning and arrays of UTF-8 chars can be represented by fixed string.
+
 
