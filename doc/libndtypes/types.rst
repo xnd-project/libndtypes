@@ -387,3 +387,72 @@ Same as constructor, but the type is stored in a lookup table. Comparisons
 and pattern matching are only by name.  The name is globally unique.
 
 
+Scalars
+-------
+
+.. topic:: ndt_scalar_kind
+
+.. code-block:: c
+
+   ndt_t *ndt_scalar_kind(ndt_context_t *ctx);
+
+Create a scalar kind type for pattern matching.
+
+
+Categorical
+-----------
+
+.. topic:: ndt_categorical
+
+.. code-block:: c
+
+   ndt_t *ndt_categorical(ndt_value_t *types, int64_t ntypes, ndt_context_t *ctx);
+
+Create a categorical type.  The categories are given as an array of typed
+values.
+
+
+
+Fixed string and fixed bytes
+----------------------------
+
+.. topic:: ndt_fixed_string_kind
+
+.. code-block:: c
+
+   ndt_t *ndt_fixed_string_kind(ndt_context_t *ctx);
+
+Create a fixed string kind symbolic type for pattern matching.
+
+
+
+.. topic:: ndt_fixed_string
+
+.. code-block:: c
+
+   ndt_t *ndt_fixed_string(int64_t len, enum ndt_encoding encoding, ndt_context_t *ctx);
+
+Create a fixed string type. *len is the length in code points, for *encoding* refer
+to the encodings section.
+
+
+.. topic:: ndt_fixed_bytes_kind
+
+.. code-block:: c
+
+   ndt_t *ndt_fixed_bytes(int64_t size, uint16_opt_t align, ndt_context_t *ctx);
+
+Create a fixed bytes kind symbolic type for pattern matching.
+
+
+
+.. topic:: ndt_fixed_bytes
+
+.. code-block:: c
+
+   ndt_t *ndt_fixed_bytes(int64_t size, uint16_opt_t align, ndt_context_t *ctx);
+
+Create a fixed bytes type with size *size* and alignment *align*.
+
+
+
