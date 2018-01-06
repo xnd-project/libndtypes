@@ -972,7 +972,7 @@ ndt_any_kind(ndt_context_t *ctx)
  * Return the step in the fixed dimension that contains 'type'.  'type'
  * is assumed to be either a dtype with ndim==0 or a FixedDim.
  */
-static int64_t
+static inline int64_t
 fixed_step(ndt_t *type, int64_t step, bool *overflow)
 {
     assert(ndt_is_concrete(type));
@@ -991,6 +991,24 @@ fixed_step(ndt_t *type, int64_t step, bool *overflow)
     }
 }
 
+static inline int64_t
+fixed_datasize(ndt_t *type, int64_t shape, int64_t step, int64_t itemsize,
+               bool *overflow)
+{
+    int64_t index_range;
+    int64_t datasize;
+    int64_t abs_step;
+
+    if (shape == 0 || type->datasize == 0) {
+        return 0;
+    }
+
+    abs_step = ABSi64(step, overflow);
+    index_range = MULi64(shape-1, abs_step, overflow);
+    datasize = MULi64(index_range, itemsize, overflow);
+    return ADDi64(datasize, type->datasize, overflow);
+}
+ 
 static ndt_t *
 _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 {
@@ -1047,6 +1065,11 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
         return NULL;
     }
 
+    if (shape < 0) {
+        ndt_err_format(ctx, NDT_ValueError, "shape must be a natural number");
+        return NULL;
+    }
+
     /* abstract type */
     t = ndt_new(FixedDim, ctx);
     if (t == NULL) {
@@ -1064,9 +1087,12 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
     /* concrete access */
     t->access = type->access;
     if (t->access == Concrete) {
-        t->Concrete.FixedDim.itemsize = ndt_itemsize(type);
-        t->Concrete.FixedDim.step = fixed_step(type, step, &overflow);
-        t->datasize = MULi64(shape, type->datasize, &overflow);
+        int64_t itemsize = ndt_itemsize(type);
+        step = fixed_step(type, step, &overflow);
+
+        t->Concrete.FixedDim.itemsize = itemsize;
+        t->Concrete.FixedDim.step = step;
+        t->datasize = fixed_datasize(type, shape, step, itemsize, &overflow);
         t->align = type->align;
     }
 

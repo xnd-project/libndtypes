@@ -674,6 +674,20 @@ ndtype_ndim(PyObject *self, PyObject *args UNUSED)
 }
 
 static PyObject *
+ndtype_datasize(PyObject *self, PyObject *args UNUSED)
+{
+    const ndt_t *t = NDT(self);
+
+    if (ndt_is_abstract(t)) {
+        PyErr_SetString(PyExc_TypeError,
+            "abstract type has no datasize");
+        return NULL;
+    }
+
+    return PyLong_FromLongLong(t->datasize);
+}
+
+static PyObject *
 ndtype_itemsize(PyObject *self, PyObject *args UNUSED)
 {
     const ndt_t *t = NDT(self);
@@ -741,10 +755,11 @@ ndtype_align(PyObject *self, PyObject *args UNUSED)
 static PyGetSetDef ndtype_getsets [] =
 {
   { "ndim", (getter)ndtype_ndim, NULL, NULL, NULL},
+  { "datasize", (getter)ndtype_datasize, NULL, NULL, NULL},
+  { "align", (getter)ndtype_align, NULL, NULL, NULL},
   { "itemsize", (getter)ndtype_itemsize, NULL, NULL, NULL},
   { "shape", (getter)ndtype_shape, NULL, NULL, NULL},
   { "strides", (getter)ndtype_strides, NULL, NULL, NULL},
-  { "align", (getter)ndtype_align, NULL, NULL, NULL},
   {NULL}
 };
 

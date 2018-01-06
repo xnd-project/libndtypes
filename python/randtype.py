@@ -45,6 +45,47 @@ Mem = namedtuple("Mem", "itemsize align")
 
 
 # ======================================================================
+#                    Check contiguous fixed dimensions
+# ======================================================================
+
+def c_datasize(t):
+    """Check the datasize of contiguous arrays."""
+    datasize = t.itemsize
+    for v in t.shape:
+        datasize *= v
+    return datasize
+
+
+# ======================================================================
+#              Check fixed dimensions with arbitary strides
+# ======================================================================
+
+def verify_datasize(t):
+    """Verify the datasize of fixed dimensions with arbitrary strides."""
+
+    if t.itemsize == 0:
+        return t.datasize == 0
+    if t.datasize % t.itemsize:
+        return False
+    if t.ndim <= 0:
+        return t.ndim == 0 and not t.shape and not t.strides
+    if any(v < 0 for v in t.shape):
+        return False
+    if any(v % t.itemsize for v in t.strides):
+        return False
+
+    if 0 in t.shape:
+        return t.datasize == 0
+
+    imin = sum(t.strides[j]*(t.shape[j]-1) for j in range(t.ndim)
+               if t.strides[j] <= 0)
+    imax = sum(t.strides[j]*(t.shape[j]-1) for j in range(t.ndim)
+               if t.strides[j] > 0)
+
+    return t.datasize == (abs(imin) + imax + t.itemsize)
+
+
+# ======================================================================
 #                             Typed values
 # ======================================================================
 

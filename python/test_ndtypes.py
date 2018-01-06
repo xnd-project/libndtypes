@@ -35,11 +35,12 @@ import unittest, gc
 import weakref, struct
 from copy import copy
 from ndtypes import ndt, typedef, MAX_DIM
+from support import *
 from randtype import *
 
 
-HAVE_PYTHON_36 = sys.version_info >= (3, 6, 0)
-HAVE_32_BIT_LINUX = sys.maxsize == 2**31-1 and sys.platform == 'linux'
+SKIP_LONG = True
+SKIP_BRUTE_FORCE = True
 
 
 class TestModule(unittest.TestCase):
@@ -225,6 +226,8 @@ class TestFixedDim(unittest.TestCase):
                     self.assertEqual(t.strides, strides)
 
                 self.assertEqual(t.shape, shape)
+                self.assertEqual(t.datasize, c_datasize(t))
+                self.assertTrue(verify_datasize(t))
 
             for i in range(10):
                 for j in range(10):
@@ -239,6 +242,8 @@ class TestFixedDim(unittest.TestCase):
                         self.assertEqual(t.strides, strides)
 
                     self.assertEqual(t.shape, shape)
+                    self.assertEqual(t.datasize, c_datasize(t))
+                    self.assertTrue(verify_datasize(t))
 
             for i in range(5):
                 for j in range(5):
@@ -254,6 +259,8 @@ class TestFixedDim(unittest.TestCase):
                             self.assertEqual(t.strides, strides)
 
                         self.assertEqual(t.shape, shape)
+                        self.assertEqual(t.datasize, c_datasize(t))
+                        self.assertTrue(verify_datasize(t))
 
 
 class TestFortran(unittest.TestCase):
@@ -293,6 +300,7 @@ class TestFortran(unittest.TestCase):
 
         self.assertEqual(t.shape, (2, 3))
         self.assertEqual(t.strides, (dtype.itemsize, 2 * dtype.itemsize))
+        self.assertTrue(verify_datasize(t))
 
     def test_fortran_dtypes(self):
         for dtype, mem in DTYPE_TEST_CASES:
@@ -317,6 +325,8 @@ class TestFortran(unittest.TestCase):
                     self.assertEqual(t.strides, strides)
 
                 self.assertEqual(t.shape, shape)
+                self.assertEqual(t.datasize, c_datasize(t))
+                self.assertTrue(verify_datasize(t))
 
             for i in range(10):
                 for j in range(10):
@@ -331,6 +341,8 @@ class TestFortran(unittest.TestCase):
                         self.assertEqual(t.strides, strides)
 
                     self.assertEqual(t.shape, shape)
+                    self.assertEqual(t.datasize, c_datasize(t))
+                    self.assertTrue(verify_datasize(t))
 
             for i in range(5):
                 for j in range(5):
@@ -346,6 +358,8 @@ class TestFortran(unittest.TestCase):
                             self.assertEqual(t.strides, strides)
 
                         self.assertEqual(t.shape, shape)
+                        self.assertEqual(t.datasize, c_datasize(t))
+                        self.assertTrue(verify_datasize(t))
 
 
 class TestVarDim(unittest.TestCase):
@@ -1551,6 +1565,60 @@ class TestApply(unittest.TestCase):
             self.assertRaises(TypeError, f.apply, args)
 
 
+class LongFixedDimTests(unittest.TestCase):
+
+    def test_steps_random(self):
+        # Test random steps.
+        skip_if(SKIP_LONG, "use --long argument to enable these tests")
+
+        for dtype, _ in DTYPE_TEST_CASES:
+            for _ in range(1000):
+                s = dtype
+                ndim = randrange(1, 10)
+
+                for n in range(ndim):
+                    shape = randrange(1, 100)
+                    step = randrange(-100, 100)
+                    s = "fixed(shape=%s, step=%s) * %s" % (shape, step, s)
+
+                t = ndt(s)
+                self.assertTrue(verify_datasize(t))
+
+    def test_steps_brute_force(self):
+        # Test all possible shapes and steps within a range.
+        skip_if(SKIP_BRUTE_FORCE, "use --all argument to enable these tests")
+
+        for dtype, _ in DTYPE_TEST_CASES:
+            for m in range(10):
+                for i in range(-10, 10):
+                    s = "fixed(shape=%s, step=%s) * %s" % (m, i, dtype)
+                    t = ndt(s)
+                    self.assertTrue(verify_datasize(t))
+
+            for m in range(10):
+                for n in range(10):
+                    for i in range(-10, 10):
+                        for j in range(-10, 10):
+                            s = """fixed(shape=%s, step=%s) *
+                                   fixed(shape=%s, step=%s) * %s
+                                """ % (m, i, n, j, dtype)
+                            t = ndt(s)
+                            self.assertTrue(verify_datasize(t))
+
+            for m in range(3):
+                for n in range(3):
+                    for p in range(3):
+                        for i in range(-5, 5):
+                            for j in range(-5, 5):
+                                for k in range(-5, 5):
+                                    s = """fixed(shape=%s, step=%s) *
+                                           fixed(shape=%s, step=%s) *
+                                           fixed(shape=%s, step=%s) * %s
+                                        """ % (m, i, n, j, p, k, dtype)
+                                    t = ndt(s)
+                                    self.assertTrue(verify_datasize(t))
+
+
 ALL_TESTS = [
   TestModule,
   TestFunction,
@@ -1590,13 +1658,18 @@ ALL_TESTS = [
   TestConstruction,
   TestError,
   TestApply,
+  LongFixedDimTests,
 ]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--failfast", action="store_true",
                         help="stop the test run on first error")
+    parser.add_argument('--long', action="store_true", help="run long slice tests")
+    parser.add_argument('--all', action="store_true", help="run brute force tests")
     args = parser.parse_args()
+    SKIP_LONG = not (args.long or args.all)
+    SKIP_BRUTE_FORCE = not args.all
 
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()

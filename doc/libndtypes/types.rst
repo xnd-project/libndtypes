@@ -133,3 +133,89 @@ Concrete fields
 These fields are only defined for concrete types.  For internal reasons
 (facilitating copying etc.) they are initialized to zero for abstract
 types.
+
+
+Type constructor functions
+--------------------------
+
+All functions in this section steal their arguments.  On success, heap
+allocated memory like *type* and *name* arguments belong to the return
+value.
+
+On error, all arguments are deallocated within the respective functions.
+
+
+Special types
+--------------
+
+The types in this section all have some property that makes them different
+from the regular types.
+
+.. topic:: ndt_option
+
+.. code-block:: c
+
+   ndt_t *ndt_option(ndt_t *type);
+
+This constructor is unique in that it does *not* create a new type with an
+:macro:`Option` tag, but sets the :macro:`NDT_OPTION` flag of its argument.
+
+The reason is that having a separate :macro:`Option` tag complicates the
+type traversal when using libndtypes.
+
+The function returns its argument and cannot fail.
+
+
+.. topic:: ndt_module
+
+.. code-block:: c
+
+   ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
+
+The module type is for implementing type name spaces and is always abstract.
+Used in type checking.
+
+
+.. topic:: ndt_function
+
+.. code-block:: c
+
+   ndt_t *ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx);
+
+The function type is used for declaring function signatures.
+Used in type checking.
+
+
+.. topic:: ndt_void
+
+.. code-block:: c
+
+   ndt_t *ndt_void(ndt_context_t *ctx)
+
+Currently only used as the empty return value in function signatures.
+
+
+Regular types
+-------------
+
+.. topic:: ndt_fixed_dim
+
+.. code-block:: c
+
+   ndt_t *ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx);
+
+*type* is either a dtype or the rest of the dimensions.
+
+*shape* is the dimension size and must be a natural number.
+
+ *step* is the amount to add to the linear index in order to move one
+dimension element dimension to the next. *step* may be negative.
+
+
+If *step* is :macro:`INT64_MAX`, the steps are computed from the dimensions
+shapes and the resulting array is C-contiguous. This is the regular case.
+
+If *step* is given, it is used without further checks. This is mostly useful
+for slicing. The computed *datasize* is the minimum datasize such that all
+index combinations are within the bounds of the allocated memory.
+
