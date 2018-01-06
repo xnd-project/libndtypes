@@ -155,7 +155,7 @@ enum ndt_offsets {
 typedef struct {
     int num_offset_arrays;               /* number of offset arrays */
     int32_t num_offsets[NDT_MAX_DIM];    /* lengths of the offset arrays */
-    int32_t *offset_arrays[NDT_MAX_DIM]; /* offset arrays (NULL or valid pointer) */
+    int32_t *offset_arrays[NDT_MAX_DIM]; /* offset arrays */
 } ndt_meta_t;
 
 
@@ -675,7 +675,7 @@ NDTYPES_API ndt_t *ndt_typevar(char *name, ndt_context_t *ctx);
  */
 NDTYPES_API ndt_t *ndt_from_file(const char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
-NDTYPES_API ndt_t * ndt_from_bpformat(const char *input, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_from_bpformat(const char *input, ndt_context_t *ctx);
 
 
 /*
