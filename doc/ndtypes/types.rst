@@ -1,7 +1,7 @@
 .. meta::
    :robots: index,follow
-   :description: libndtypes datashape specification
-   :keywords: libndtypes, datashape, specification
+   :description: ndtypes datashape specification
+   :keywords: ndtypes, datashape, specification
 
 .. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 

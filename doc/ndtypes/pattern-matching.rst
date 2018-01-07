@@ -1,7 +1,7 @@
 .. meta::
    :robots: index,follow
-   :description: libndtypes datashape pattern matching
-   :keywords: libndtypes, datashape, pattern matching
+   :description: ndtypes pattern matching
+   :keywords: ndtypes, pattern matching
 
 .. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 

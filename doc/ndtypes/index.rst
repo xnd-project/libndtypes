@@ -15,5 +15,6 @@ ndtypes is a Python module based on libndtypes.
 
 .. toctree::
 
+   quickstart.rst
    types.rst
    pattern-matching.rst
