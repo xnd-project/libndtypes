@@ -28,16 +28,16 @@ small container libraries that can traverse memory without type erasure.
 
 .. toctree::
 
+   init.rst
    context.rst
+   types.rst
+   predicates.rst
+   functions.rst
+   typedef.rst
+   io.rst
    encodings.rst
    fields-values.rst
-   init.rst
-   io.rst
    memory.rst
-   predicates.rst
-   typedef.rst
-   types.rst
-   type-functions.rst
    util.rst
 
 

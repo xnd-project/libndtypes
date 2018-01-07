@@ -5,8 +5,8 @@
    :description: libndtypes documentation
 
 
-Type functions
-==============
+Functions
+=========
 
 Most library functions are for creating types. The functions in this section
 operate *on* types.
