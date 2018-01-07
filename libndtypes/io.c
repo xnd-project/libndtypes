@@ -1473,7 +1473,7 @@ ndt_strtod(const char *v, ndt_context_t *ctx)
 /******************************************************************************/
 
 char *
-ndt_as_string(ndt_t *t, ndt_context_t *ctx)
+ndt_as_string(const ndt_t *t, ndt_context_t *ctx)
 {
     buf_t buf = {0, 0, NULL};
     char *s;
@@ -1502,7 +1502,7 @@ ndt_as_string(ndt_t *t, ndt_context_t *ctx)
 }
 
 char *
-ndt_indent(ndt_t *t, ndt_context_t *ctx)
+ndt_indent(const ndt_t *t, ndt_context_t *ctx)
 {
     buf_t buf = {0, 0, NULL};
     char *s;
@@ -1531,7 +1531,7 @@ ndt_indent(ndt_t *t, ndt_context_t *ctx)
 }
 
 char *
-ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx)
+ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx)
 {
     buf_t buf = {0, 0, NULL};
     char *s;

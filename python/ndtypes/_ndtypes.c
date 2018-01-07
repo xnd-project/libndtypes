@@ -496,7 +496,7 @@ ndtype_ast_repr(PyObject *self, PyObject *args UNUSED)
     PyObject *res;
     char *cp;
 
-    cp = ndt_as_string_with_meta(NDT(self), &ctx);
+    cp = ndt_ast_repr(NDT(self), &ctx);
     if (cp == NULL) {
         return seterr(&ctx);
     }

@@ -570,9 +570,9 @@ NDTYPES_API float ndt_strtof(const char *v, ndt_context_t *ctx);
 NDTYPES_API double ndt_strtod(const char *v, ndt_context_t *ctx);
 
 /*** Type to string conversion ***/
-NDTYPES_API char *ndt_as_string(ndt_t *t, ndt_context_t *ctx);
-NDTYPES_API char *ndt_as_string_with_meta(ndt_t *t, ndt_context_t *ctx);
-NDTYPES_API char *ndt_indent(ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_as_string(const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_indent(const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx);
 
 
 /*****************************************************************************/

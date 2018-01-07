@@ -148,4 +148,37 @@ Convert string *v* to a double.
 
 If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
 
+
 If *v* is out of range, set :macro:`NDT_ValueError`.
+
+
+Output
+------
+
+.. topic:: ndt_as_string
+
+.. code-block:: c
+
+   char *ndt_as_string(const ndt_t *t, ndt_context_t *ctx);
+
+Convert *t* to its string representation.  This currently omits some layout
+details like alignment, packing or Fortran layout.
+
+
+.. topic:: ndt_indent
+
+.. code-block:: c
+
+   char *ndt_indent(const ndt_t *t, ndt_context_t *ctx);
+
+Same as :func:`ndt_as_string`, but indent the result.
+
+
+.. topic:: ndt_ast_repr
+
+.. code-block:: c
+
+   char *ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx);
+
+Return the representation of the abstract syntax tree of the input type.
+This representation includes all low level details.

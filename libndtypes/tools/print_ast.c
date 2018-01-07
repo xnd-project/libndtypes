@@ -76,7 +76,7 @@ main(int argc, char **argv)
     }
     assert(!ndt_err_occurred(ctx));
 
-    s = ndt_as_string_with_meta(t, ctx);
+    s = ndt_ast_repr(t, ctx);
     ndt_del(t);
     if (s == NULL) {
         ndt_err_fprint(stderr, ctx);
