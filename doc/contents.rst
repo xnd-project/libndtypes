@@ -47,4 +47,10 @@ Type grammar.
    grammar/grammar.rst
 
 
+Releases
+--------
 
+.. toctree::
+   :maxdepth: 1
+
+   releases/index.rst
