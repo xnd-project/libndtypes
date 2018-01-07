@@ -55,9 +55,6 @@ This is not as difficult as it sounds.  One approach that utilizes a resource
 manager object is implemented in the Python ndtypes module.
 
 
-From PEP-3118 string
---------------------
-
 .. topic:: ndt_from_bpformat
 
 .. code-block:: c
@@ -71,4 +68,84 @@ The outer dimensions specified by the `Py_buffer` shape member need to
 be created separately.
 
 
+Range-checked input of primitive types
+--------------------------------------
 
+.. topic:: ndt_strtobool
+
+.. code-block:: c
+
+   bool ndt_strtobool(const char *v, ndt_context_t *ctx);
+
+Convert string *v* to a bool. *v* must be "true" or "false". Return *0*
+and set :macro:`NDT_InvalidArgumentError` if the conversion fails.
+
+
+.. topic:: ndt_strtochar
+
+.. code-block:: c
+
+   char ndt_strtochar(const char *v, ndt_context_t *ctx);
+
+Convert string *v* to a char. *v* must have length *1*.  Return *0* and
+set :macro:`NDT_InvalidArgumentError` if the conversion fails.
+
+
+
+.. topic:: ndt_strtol
+
+.. code-block:: c
+
+   char ndt_strtol(const char *v, ndt_context_t *ctx);
+
+Convert string *v* to a long. In case of an error, use the return value
+from :func:`strtol`.
+
+If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+
+If *v* is out of range, set :macro:`NDT_ValueError`.
+
+
+.. code-block:: c
+
+   long long ndt_strtoll(const char *v, long long min, long long max, ndt_context_t *ctx);
+
+Convert string *v* to a long long.
+
+If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+
+If *v* is not in the range [*min*, *max*] , set :macro:`NDT_ValueError`.
+
+
+
+.. code-block:: c
+
+   unsigned long long ndt_strtoll(const char *v, long long min, long long max, ndt_context_t *ctx);
+
+Convert string *v* to an unsigned long long.
+
+If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+
+If *v* is not in the range [*min*, *max*] , set :macro:`NDT_ValueError`.
+
+
+.. code-block:: c
+
+   float ndt_strtof(const char *v, ndt_context_t *ctx);
+
+Convert string *v* to a float.
+
+If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+
+If *v* is out of range, set :macro:`NDT_ValueError`.
+
+
+.. code-block:: c
+
+   double ndt_strtod(const char *v, ndt_context_t *ctx);
+
+Convert string *v* to a double.
+
+If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+
+If *v* is out of range, set :macro:`NDT_ValueError`.
