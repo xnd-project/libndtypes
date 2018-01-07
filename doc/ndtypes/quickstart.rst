@@ -12,8 +12,8 @@ Quick Start
 Install
 -------
 
-Prerequisites for installing from source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Prerequisites
+~~~~~~~~~~~~~
 
 Python2 is not supported. If not already present, install the Python3
 development packages:
