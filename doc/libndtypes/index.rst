@@ -1,13 +1,13 @@
 .. meta::
    :robots: index, follow
    :description: libndtypes documentation
-   :keywords: datashape, libndtypes, C, Python, array computing
+   :keywords: libndtypes, C, Python, array computing
 
 .. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 
 
-libndtypes - C library
-----------------------
+libndtypes
+----------
 
 libndtypes implements the type part of a compiler frontend.  It can describe
 C types needed for array computing and additionally includes symbolic types

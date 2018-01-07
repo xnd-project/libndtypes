@@ -1,8 +1,8 @@
-
-
 .. meta::
    :robots: index,follow
    :description: libndtypes documentation
+
+.. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 
 
 Memory handling

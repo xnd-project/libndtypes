@@ -6,7 +6,8 @@
 .. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 
 
-ndtypes-python
---------------
+ndtypes
+-------
+
 
 

@@ -13,8 +13,10 @@ ndtypes is a package for typing raw memory blocks using a close variant
 of the datashape type language.
 
 
-libndtypes - C library
-----------------------
+Libndtypes
+----------
+
+C library.
 
 .. toctree::
    :maxdepth: 1
@@ -22,16 +24,27 @@ libndtypes - C library
    libndtypes/index.rst
 
 
-ndtypes - Python module
------------------------
+Ndtypes
+-------
 
-ndtypes implements Python bindings for libndtypes.
+Python bindings for libndtypes.
 
 
 .. toctree::
    :maxdepth: 1
 
-   ndtypes-python/index.rst
+   ndtypes/index.rst
+
+
+Grammar
+-------
+
+Type grammar.
+
+.. toctree::
+   :maxdepth: 1
+
+   grammar/grammar.rst
 
 
 
