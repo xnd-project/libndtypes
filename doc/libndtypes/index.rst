@@ -1,7 +1,7 @@
 .. meta::
    :robots: index, follow
    :description: libndtypes documentation
-   :keywords: libndtypes, C, Python, array computing
+   :keywords: libndtypes, C, array computing
 
 .. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 
