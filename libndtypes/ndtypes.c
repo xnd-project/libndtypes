@@ -516,7 +516,6 @@ int
 ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx)
 {
     if (ndt_typedef_add(name, type, ctx) < 0) {
-        ndt_del(type);
         return -1;
     }
 

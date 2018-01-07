@@ -696,7 +696,7 @@ NDTYPES_API ndt_t *ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *
 
 NDTYPES_API int ndt_init(ndt_context_t *ctx);
 NDTYPES_API void ndt_finalize(void);
-NDTYPES_API int ndt_typedef_add(const char *name, const ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef_add(const char *name, ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 
 

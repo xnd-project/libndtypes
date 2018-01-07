@@ -113,7 +113,7 @@ typedef_trie_del(typedef_trie_t *t)
 }
 
 int
-ndt_typedef_add(const char *key, const ndt_t *value, ndt_context_t *ctx)
+ndt_typedef_add(const char *key, ndt_t *value, ndt_context_t *ctx)
 {
     typedef_trie_t *t = typedef_map;
     const unsigned char *cp;
@@ -124,12 +124,14 @@ ndt_typedef_add(const char *key, const ndt_t *value, ndt_context_t *ctx)
         if (i == UCHAR_MAX) {
             ndt_err_format(ctx, NDT_ValueError,
                            "invalid character in typedef: '%c'", *cp);
+            ndt_del(value);
             return -1;
         }
 
         if (t->next[i] == NULL) {
             typedef_trie_t *u = typedef_trie_new(ctx);
             if (u == NULL) {
+                ndt_del(value);
                 return -1;
             }
             t->next[i] = u;
@@ -142,6 +144,7 @@ ndt_typedef_add(const char *key, const ndt_t *value, ndt_context_t *ctx)
 
     if (t->value) {
         ndt_err_format(ctx, NDT_ValueError, "duplicate typedef '%s'", key);
+        ndt_del(value);
         return -1;
     }
 
