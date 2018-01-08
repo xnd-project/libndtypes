@@ -6,30 +6,13 @@
 .. sectionauthor:: Stefan Krah <skrah at bytereef.org>
 
 
-.. _datashape:
-
-#########
-Datashape
-#########
-
-In this section we will be using the :py:mod:`ndtypes` module (See:
-`ndtypes <https://github.com/plures/ndtypes>`_) to demonstrate the
-capabilities of datashape. The rest of this document assumes that the
-:py:mod:`ndtypes` module has been imported:
-
-.. code-block:: py
-
-   from ndtypes import ndt
-
-
 .. _types:
 
-*****
+#####
 Types
-*****
+#####
 
-The set of all datashape types comprises :ref:`dtypes <dtypes>` and
-:ref:`arrays <arrays>`.
+The set of all types comprises :ref:`dtypes <dtypes>` and :ref:`arrays <arrays>`.
 
 
 .. _dtypes:
