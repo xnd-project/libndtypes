@@ -15,7 +15,7 @@ add_function_parentheses = False
 pygments_style = 'sphinx'
 exclude_patterns = ['doc']
 
-html_title = 'plures project'
+html_title = 'Python module'
 #html_logo = None
 #html_favicon = None
 #html_static_path = ['_static']

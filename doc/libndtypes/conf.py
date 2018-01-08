@@ -2,7 +2,7 @@ import sys, os, docutils
 
 master_doc = 'index'
 
-project = 'ndtypes'
+project = 'libndtypes'
 copyright = '2016-2017, Plures Project'
 version = 'XYZ' # RELEASE_VERSION
 release = 'XYZ'
@@ -15,7 +15,7 @@ add_function_parentheses = False
 pygments_style = 'sphinx'
 exclude_patterns = ['doc']
 
-html_title = 'plures project'
+html_title = 'libndtypes'
 #html_logo = None
 #html_favicon = None
 #html_static_path = ['_static']
