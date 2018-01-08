@@ -66,9 +66,11 @@ MULi64(int64_t a, int64_t b, bool *overflow)
 static inline int64_t
 ABSi64(int64_t a, bool *overflow)
 {
-    int64_t b = a >= 0 ? a : (int64_t)(-((uint64_t)a));
-    *overflow |= a == INT64_MIN;
-    return b;
+    if (a == INT64_MIN) {
+        *overflow = 1;
+        return INT64_MIN;
+    }
+    return a >= 0 ? a : -a;
 }
 
 static inline uint16_t
@@ -106,9 +108,11 @@ MULi64(int64_t a, int64_t b, bool *overflow)
 static inline int64_t
 ABSi64(int64_t a, bool *overflow)
 {
-    int64_t b = a >= 0 ? a : (int64_t)(-((uint64_t)a));
-    *overflow |= a == INT64_MIN;
-    return b;
+    if (a == INT64_MIN) {
+        *overflow = 1;
+        return INT64_MIN;
+    }
+    return a >= 0 ? a : -a;
 }
 
 static inline uint16_t
