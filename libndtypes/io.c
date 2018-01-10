@@ -643,7 +643,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
         case Bytes: {
             if (t->Bytes.target_align == 1) {
-                n = ndt_snprintf(ctx, buf, "bytes()");
+                n = ndt_snprintf(ctx, buf, "bytes");
             }
             else {
                 n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
