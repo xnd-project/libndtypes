@@ -18,3 +18,4 @@ ndtypes is a Python module based on libndtypes.
    quickstart.rst
    types.rst
    pattern-matching.rst
+   buffer-protocol.rst
