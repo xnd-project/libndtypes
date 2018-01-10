@@ -1,21 +1,12 @@
 
-Experimental Datashape C library.
+libndtypes implements the type part of a compiler frontend. It can describe C types needed for array computing and additionally includes symbolic types for the purposes of pattern matching.
 
-Datashape is a specification language to describe any data-structure relevant for analytic computing.   See http://datashape.readthedocs.io/en/latest/
+libndtypes has the concept of abstract and concrete types. Concrete types contain the exact data layout and all sizes that are required to access subtypes or individual elements in memory.
 
-Datashape is a generalization of NumPy's dtype and Python's struct-syntax for describing buffers.
+Abstract types are for pattern matching and include functions, symbolic dimensions and type variables. Module support is planned at a later stage.
 
-This library is a C-implementation of a parser for the Datashape specification to enable any language to easily parse data-shape 
-and use it to describe function dispatch as well as data-interchange.
+Concrete types with rich layout information make it possible to write relatively small container libraries that can traverse memory without type erasure.
 
-Sometimes one speaks of High-level Datashape to describe machine-independent general "schemas".  
+http://ndtypes.readthedocs.io/en/latest/
 
-Low-level data-shape must be sufficiently specific to describe exactly the bits that 
-are laid out in a storage substrate (memory or disk). 
-
-To accomplish the latter, datashape has the concept of a datshape "template" and potentially arbitrary "meta-data" that is necessary to complete the low-level specification.  For example, in an N-d array like NumPy, the meta-data would be the specific strides and possibly the shape.
-
-An important use-case of this library is to support function dispatch to implementations for analytic computation (see libgufunc).
-
-
-
+libndtypes uses the datashape specification language to describe any data-structure relevant for analytic computing. See http://ndtypes.readthedocs.io/en/latest/ndtypes/types.html
