@@ -1440,6 +1440,9 @@ class TestBufferProtocol(unittest.TestCase):
                 f = modifier + fmt
                 self.assertRaises(ValueError, ndt.from_format, f)
 
+        t = ndt.from_format('c')
+        self.assertEqual(t, ndt("fixed_bytes(size=1)"))
+
     def test_primitive(self):
         standard = [
           '?',

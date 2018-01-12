@@ -71,12 +71,20 @@ add_uint16(uint16_t a, uint16_t b, ndt_context_t *ctx)
 }
 
 static ndt_t *
+single_byte(ndt_context_t *ctx)
+{
+    uint16_opt_t align = {None, 0};
+
+    return ndt_fixed_bytes(1, align, ctx);
+}
+
+static ndt_t *
 primitive_native(char dtype, ndt_context_t *ctx)
 {
     switch (dtype) {
     case '?': return ndt_primitive(Bool, 0, ctx);
 
-    case 'c': return ndt_primitive(Int8, 0, ctx);
+    case 'c': return single_byte(ctx);
     case 'b': return ndt_primitive(Int8, 0, ctx);
     case 'B': return ndt_primitive(Uint8, 0, ctx);
 
@@ -110,40 +118,36 @@ primitive_native(char dtype, ndt_context_t *ctx)
 static ndt_t *
 primitive_fixed(char dtype, uint32_t flags, ndt_context_t *ctx)
 {
-    enum ndt tag;
-
     switch (dtype) {
-    case '?': tag = Bool; break;
+    case '?': return ndt_primitive(Bool, flags, ctx);
 
-    case 'c': tag = Int8; break;
-    case 'b': tag = Int8; break;
-    case 'B': tag = Uint8; break;
+    case 'c': return single_byte(ctx);
+    case 'b': return ndt_primitive(Int8, flags, ctx);
+    case 'B': return ndt_primitive(Uint8, flags, ctx);
 
-    case 'h': tag = Int16; break;
-    case 'i': tag = Int32; break;
-    case 'l': tag = Int32; break;
-    case 'q': tag = Int64; break;
+    case 'h': return ndt_primitive(Int16, flags, ctx);
+    case 'i': return ndt_primitive(Int32, flags, ctx);
+    case 'l': return ndt_primitive(Int32, flags, ctx);
+    case 'q': return ndt_primitive(Int64, flags, ctx);
 
-    case 'H': tag = Uint16; break;
-    case 'I': tag = Uint32; break;
-    case 'L': tag = Uint32; break;
-    case 'Q': tag = Uint64; break;
+    case 'H': return ndt_primitive(Uint16, flags, ctx);
+    case 'I': return ndt_primitive(Uint32, flags, ctx);
+    case 'L': return ndt_primitive(Uint32, flags, ctx);
+    case 'Q': return ndt_primitive(Uint64, flags, ctx);
 
-    case 'e': tag = Float16; break;
-    case 'f': tag = Float32; break;
-    case 'd': tag = Float64; break;
+    case 'e': return ndt_primitive(Float16, flags, ctx);
+    case 'f': return ndt_primitive(Float32, flags, ctx);
+    case 'd': return ndt_primitive(Float64, flags, ctx);
 
-    case 'E': tag = Complex32; break;
-    case 'F': tag = Complex64; break;
-    case 'D': tag = Complex128; break;
+    case 'E': return ndt_primitive(Complex32, flags, ctx);
+    case 'F': return ndt_primitive(Complex64, flags, ctx);
+    case 'D': return ndt_primitive(Complex128, flags, ctx);
 
     default:
         ndt_err_format(ctx, NDT_ValueError,
             "invalid or unsupported dtype '%c'", dtype);
         return NULL;
     }
-
-    return ndt_primitive(tag, flags, ctx);
 }
 
 static ndt_t *
