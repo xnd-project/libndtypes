@@ -544,7 +544,7 @@ check_type_invariants(const ndt_t *type, ndt_context_t *ctx)
     }
 
     if (type->ndim >= NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_TypeError, "ndim > %u", NDT_MAX_DIM);
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %d", NDT_MAX_DIM);
         return 0;
     }
 
@@ -574,7 +574,7 @@ check_abstract_var_invariants(const ndt_t *type, ndt_context_t *ctx)
     }
 
     if (type->ndim >= NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_TypeError, "ndim > %u", NDT_MAX_DIM);
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %d", NDT_MAX_DIM);
         return 0;
     }
 
@@ -611,7 +611,7 @@ check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ct
     }
 
     if (type->ndim >= NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_TypeError, "ndim > %u", NDT_MAX_DIM);
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %d", NDT_MAX_DIM);
         return 0;
     }
 
@@ -1440,7 +1440,7 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
         if (fields[i].Concrete.explicit_pad) {
             if (fields[i].Concrete.pad != pad[i]) {
                 ndt_err_format(ctx, NDT_ValueError,
-                    "field %zu has invalid padding, natural padding is %" PRIi16
+                    "field %" PRIi64 " has invalid padding, natural padding is %" PRIi16
                     ", got %" PRIi16 "\n",
                      i, pad[i], fields[i].Concrete.pad);
                 return -1;
