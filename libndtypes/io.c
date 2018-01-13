@@ -950,6 +950,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             n = ast_datashape(buf, t->Function.pos, d+4+2, 1, ctx);
+            if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
@@ -958,6 +959,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             n = ast_datashape(buf, t->Function.kwds, d+5+2, 1, ctx);
+            if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
@@ -988,6 +990,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             n = ndt_snprintf_d(ctx, buf, d+2, "shape=%" PRIi64, t->FixedDim.shape);
+            if (n < 0) return -1;
 
             if (ndt_is_abstract(t)) {
                 n = ndt_snprintf(ctx, buf, ",\n");
