@@ -66,7 +66,7 @@ jmp_buf ndt_lexerror;
 static ndt_t *
 _ndt_from_fp(ndt_meta_t *m, FILE *fp, ndt_context_t *ctx)
 {
-    volatile yyscan_t scanner;
+    volatile yyscan_t scanner = NULL;
     ndt_t *ast = NULL;
     int ret;
 
