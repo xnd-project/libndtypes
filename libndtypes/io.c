@@ -443,8 +443,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "%s:: ", t->Module.name);
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Module.type, d, ctx);
-            return n;
+            return datashape(buf, t->Module.type, d, ctx);
         }
 
         case Function: {
@@ -486,32 +485,28 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ") -> ");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->Function.ret, d, ctx);
-            return n;
+            return datashape(buf, t->Function.ret, d, ctx);
         }
 
         case FixedDim: {
             n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
             if (n < 0) return -1;
 
-            n = datashape(buf, t->FixedDim.type, d, ctx);
-            return n;
+            return datashape(buf, t->FixedDim.type, d, ctx);
         }
 
         case VarDim: {
             n = ndt_snprintf(ctx, buf, "var * ");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->VarDim.type, d, ctx);
-            return n;
+            return datashape(buf, t->VarDim.type, d, ctx);
         }
 
         case SymbolicDim: {
             n = ndt_snprintf(ctx, buf, "%s * ", t->SymbolicDim.name);
             if (n < 0) return -1;
 
-            n = datashape(buf, t->SymbolicDim.type, d, ctx);
-            return n;
+            return datashape(buf, t->SymbolicDim.type, d, ctx);
         }
 
         case EllipsisDim: {
@@ -519,8 +514,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
                     t->EllipsisDim.name ? t->EllipsisDim.name : "");
             if (n < 0) return -1;
 
-            n = datashape(buf, t->EllipsisDim.type, d, ctx);
-            return n;
+            return datashape(buf, t->EllipsisDim.type, d, ctx);
         }
 
         case Tuple: {
@@ -539,8 +533,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
                 if (n < 0) return -1;
             }
 
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
+            return ndt_snprintf(ctx, buf, ")");
         }
 
         case Record: {
@@ -574,8 +567,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
                 if (n < 0) return -1;
             }
 
-            n = ndt_snprintf(ctx, buf, "}");
-            return n;
+            return ndt_snprintf(ctx, buf, "}");
         }
 
         case Ref: {
@@ -585,8 +577,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = datashape(buf, t->Ref.type, d, ctx);
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
+            return ndt_snprintf(ctx, buf, ")");
         }
 
         case Constr: {
@@ -596,13 +587,11 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = datashape(buf, t->Constr.type, d, ctx);
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
+            return ndt_snprintf(ctx, buf, ")");
         }
 
         case Nominal: {
-            n = ndt_snprintf(ctx, buf, "%s", t->Nominal.name);
-            return n;
+            return ndt_snprintf(ctx, buf, "%s", t->Nominal.name);
         }
 
         case Categorical: {
@@ -612,54 +601,48 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = categorical(buf, t->Categorical.types, t->Categorical.ntypes, ctx);
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, ")");
-            return n;
+            return ndt_snprintf(ctx, buf, ")");
         }
 
         case FixedString: {
             if (t->FixedString.encoding == Utf8) {
-                n = ndt_snprintf(ctx, buf, "fixed_string(%" PRIi64 ")",
-                                 t->FixedString.size);
+                return ndt_snprintf(ctx, buf, "fixed_string(%" PRIi64 ")",
+                                    t->FixedString.size);
             }
             else {
-                n = ndt_snprintf(ctx, buf, "fixed_string(%" PRIi64 ", %s)",
-                                 t->FixedString.size,
-                                 ndt_encoding_as_string(t->FixedString.encoding));
+                return ndt_snprintf(ctx, buf, "fixed_string(%" PRIi64 ", %s)",
+                                    t->FixedString.size,
+                                    ndt_encoding_as_string(t->FixedString.encoding));
             }
-            return n;
         }
 
         case FixedBytes: {
             if (t->FixedBytes.align == 1) {
-                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%" PRIi64 ")",
-                                 t->FixedBytes.size);
+                return ndt_snprintf(ctx, buf, "fixed_bytes(size=%" PRIi64 ")",
+                                    t->FixedBytes.size);
             }
             else {
-                n = ndt_snprintf(ctx, buf, "fixed_bytes(size=%" PRIi64 ", align=%" PRIu8 ")",
-                                 t->FixedBytes.size, t->FixedBytes.align);
+                return ndt_snprintf(ctx, buf, "fixed_bytes(size=%" PRIi64 ", align=%" PRIu8 ")",
+                                    t->FixedBytes.size, t->FixedBytes.align);
             }
-            return n;
         }
 
         case Bytes: {
             if (t->Bytes.target_align == 1) {
-                n = ndt_snprintf(ctx, buf, "bytes");
+                return ndt_snprintf(ctx, buf, "bytes");
             }
             else {
-                n = ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
+                return ndt_snprintf(ctx, buf, "bytes(align=%" PRIu8 ")", t->Bytes.target_align);
             }
-            return n;
         }
 
         case Char: {
-            n = ndt_snprintf(ctx, buf, "char(%s)",
-                          ndt_encoding_as_string(t->Char.encoding));
-            return n;
+            return ndt_snprintf(ctx, buf, "char(%s)",
+                                ndt_encoding_as_string(t->Char.encoding));
         }
 
         case Typevar: {
-            n = ndt_snprintf(ctx, buf, "%s", t->Typevar.name);
-            return n;
+            return ndt_snprintf(ctx, buf, "%s", t->Typevar.name);
         }
 
         case AnyKind:
@@ -676,8 +659,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         case FixedStringKind:
         case FixedBytesKind:
         case String:
-            n = ndt_snprintf(ctx, buf, "%s", ndt_type_keyword(t));
-            return n;
+            return ndt_snprintf(ctx, buf, "%s", ndt_type_keyword(t));
     }
 
     /* NOT REACHED: tags should be exhaustive. */
@@ -1139,7 +1121,6 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             else {
                 n = ast_variadic_flag(buf, t->Record.flag, d+2, ctx);
                 if (n < 0) return -1;
-
             }
 
             n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
