@@ -23,7 +23,7 @@ Stable API
    char *ndt_strdup(const char *s, ndt_context_t *ctx);
 
 Same as :func:`strdup`, but uses libndtypes's custom allocators.  On failure,
-set an error in the context and return :macro:`NULL`.  The result must be
+set an error in the context and return :c:macro:`NULL`.  The result must be
 deallocated using :func:`ndt_free`.
 
 
@@ -34,7 +34,7 @@ deallocated using :func:`ndt_free`.
    char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
 
 Print to a string allocated by libndtypes's custom allocators.  On failure,
-set an error in the context and return :macro:`NULL`.  The result must be 
+set an error in the context and return :c:macro:`NULL`.  The result must be 
 deallocated using :func:`ndt_free`.
 
 
@@ -45,7 +45,7 @@ deallocated using :func:`ndt_free`.
    bool ndt_strtobool(const char *v, ndt_context_t *ctx);
 
 Convert string *v* to a bool. *v* must be "true" or "false". Return *0*
-and set :macro:`NDT_InvalidArgumentError` if the conversion fails.
+and set :c:macro:`NDT_InvalidArgumentError` if the conversion fails.
 
 
 .. topic:: ndt_strtochar
@@ -55,7 +55,7 @@ and set :macro:`NDT_InvalidArgumentError` if the conversion fails.
    char ndt_strtochar(const char *v, ndt_context_t *ctx);
 
 Convert string *v* to a char. *v* must have length *1*.  Return *0* and
-set :macro:`NDT_InvalidArgumentError` if the conversion fails.
+set :c:macro:`NDT_InvalidArgumentError` if the conversion fails.
 
 
 
@@ -68,9 +68,9 @@ set :macro:`NDT_InvalidArgumentError` if the conversion fails.
 Convert string *v* to a long. In case of an error, use the return value
 from :func:`strtol`.
 
-If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+If *v* is not an integer, set :c:macro:`NDT_InvalidArgumentError`.
 
-If *v* is out of range, set :macro:`NDT_ValueError`.
+If *v* is out of range, set :c:macro:`NDT_ValueError`.
 
 
 .. code-block:: c
@@ -79,9 +79,9 @@ If *v* is out of range, set :macro:`NDT_ValueError`.
 
 Convert string *v* to a long long.
 
-If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+If *v* is not an integer, set :c:macro:`NDT_InvalidArgumentError`.
 
-If *v* is not in the range [*min*, *max*] , set :macro:`NDT_ValueError`.
+If *v* is not in the range [*min*, *max*] , set :c:macro:`NDT_ValueError`.
 
 
 
@@ -91,9 +91,9 @@ If *v* is not in the range [*min*, *max*] , set :macro:`NDT_ValueError`.
 
 Convert string *v* to an unsigned long long.
 
-If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+If *v* is not an integer, set :c:macro:`NDT_InvalidArgumentError`.
 
-If *v* is not in the range [*min*, *max*] , set :macro:`NDT_ValueError`.
+If *v* is not in the range [*min*, *max*] , set :c:macro:`NDT_ValueError`.
 
 
 .. code-block:: c
@@ -102,9 +102,9 @@ If *v* is not in the range [*min*, *max*] , set :macro:`NDT_ValueError`.
 
 Convert string *v* to a float.
 
-If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+If *v* is not an integer, set :c:macro:`NDT_InvalidArgumentError`.
 
-If *v* is out of range, set :macro:`NDT_ValueError`.
+If *v* is out of range, set :c:macro:`NDT_ValueError`.
 
 
 .. code-block:: c
@@ -113,10 +113,10 @@ If *v* is out of range, set :macro:`NDT_ValueError`.
 
 Convert string *v* to a double.
 
-If *v* is not an integer, set :macro:`NDT_InvalidArgumentError`.
+If *v* is not an integer, set :c:macro:`NDT_InvalidArgumentError`.
 
 
-If *v* is out of range, set :macro:`NDT_ValueError`.
+If *v* is out of range, set :c:macro:`NDT_ValueError`.
 
 
 Unstable API

@@ -9,7 +9,7 @@ Types
 =====
 
 Types are implemented as a tagged union.  For the defined type enum values
-it is best to refer to :macro:`ndtypes.h` directly or to search the constructor
+it is best to refer to :c:macro:`ndtypes.h` directly or to search the constructor
 functions below.
 
 
@@ -53,11 +53,11 @@ Flags
 The endian flags are set if a type has explicit endianness. If native order
 is used, they are unset.
 
-:macro:`NDT_OPTION` is set if a type itself is optional.
+:c:macro:`NDT_OPTION` is set if a type itself is optional.
 
-:macro:`NDT_SUBTREE_OPTION` is set if any subtree of a type is optional.
+:c:macro:`NDT_SUBTREE_OPTION` is set if any subtree of a type is optional.
 
-:macro:`NDT_ELLIPSIS` is set if the tail of a dimension sequence contains
+:c:macro:`NDT_ELLIPSIS` is set if the tail of a dimension sequence contains
 an ellipsis dimension.  The flag is not propagated to an outer array with
 a dtype that contains an inner array with an ellipsis.
 
@@ -107,7 +107,7 @@ Abstract fields
     };
 
 These fields are always defined for both abstract and concrete types.
-:macro:`FixedDim` is just an example field.  Refer to :macro:`ndtypes.h`
+:c:macro:`FixedDim` is just an example field.  Refer to :c:macro:`ndtypes.h`
 directly for the complete set of fields.
 
 
@@ -158,9 +158,9 @@ from the regular types.
    ndt_t *ndt_option(ndt_t *type);
 
 This constructor is unique in that it does *not* create a new type with an
-:macro:`Option` tag, but sets the :macro:`NDT_OPTION` flag of its argument.
+:c:macro:`Option` tag, but sets the :c:macro:`NDT_OPTION` flag of its argument.
 
-The reason is that having a separate :macro:`Option` tag complicates the
+The reason is that having a separate :c:macro:`Option` tag complicates the
 type traversal when using libndtypes.
 
 The function returns its argument and cannot fail.
@@ -222,7 +222,7 @@ Dimension types
 the next dimension element. *step* may be negative.
 
 
-If *step* is :macro:`INT64_MAX`, the steps are computed from the dimensions
+If *step* is :c:macro:`INT64_MAX`, the steps are computed from the dimensions
 shapes and the resulting array is C-contiguous. This is the regular case.
 
 If *step* is given, it is used without further checks. This is mostly useful
@@ -271,11 +271,11 @@ and use the same addressing scheme as the Arrow data format.
 
 Offset arrays can be very large, so copying must be avoided. For ease of
 use, libndtypes supports creating offset arrays from a datashape string.
-In that case, *flag* must be set to :macro:`InternalOffsets` and the offsets
+In that case, *flag* must be set to :c:macro:`InternalOffsets` and the offsets
 are managed by the type.
 
 However, in the most common case offsets are generated and managed elsewhere.
-In that case, *flag* must be set to :macro:`ExternalOffsets`.
+In that case, *flag* must be set to :c:macro:`ExternalOffsets`.
 
 
 The offset-based scheme makes it hard to store a sliced var dimension or
@@ -465,7 +465,7 @@ String, bytes, char
    ndt_t *ndt_string(ndt_context_t *ctx);
 
 Create a string type. The value representation in memory is a pointer to a
-:macro:`NUL`-terminated UTF-8 string.
+:c:macro:`NUL`-terminated UTF-8 string.
 
 
 .. topic:: ndt_bytes
@@ -475,7 +475,7 @@ Create a string type. The value representation in memory is a pointer to a
    ndt_t *ndt_bytes(uint16_opt_t target_align, ndt_context_t *ctx);
 
 Create a bytes type. The value representation in memory is a struct containing
-an :macro:`int64_t` *size* field and a pointer to :macro:`uint8_t`.
+an :c:macro:`int64_t` *size* field and a pointer to :c:macro:`uint8_t`.
 
 The alignment of the pointer value is *target_align*.
 
@@ -541,7 +541,7 @@ Numbers
    ndt_t *ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx);
 
 Create a number type according to the given enum value. *flags* can be
-:macro:`NDT_LITTLE_ENDIAN` or :macro:`NDT_BIG_ENDIAN`.
+:c:macro:`NDT_LITTLE_ENDIAN` or :c:macro:`NDT_BIG_ENDIAN`.
 
 If no endian flag is given, native order is assumed.
 

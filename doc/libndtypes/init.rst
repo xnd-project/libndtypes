@@ -45,4 +45,4 @@ On error, deallocate *type* and return *-1*.  Return *0* otherwise.
    const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 
 Try to find the type associated with  *name* in the typedef table.  On success,
-return a const pointer to the type, :macro:`NULL` otherwise.
+return a const pointer to the type, :c:macro:`NULL` otherwise.

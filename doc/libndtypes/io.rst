@@ -46,7 +46,7 @@ for creating types.
    ndt_t *ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_t *ctx);
 
 Create a concrete var dimension using the external offset arrays given
-in the :macro:`ndt_meta_t` struct.
+in the :c:macro:`ndt_meta_t` struct.
 
 The application is responsible for keeping the offset arrays alive while the
 type *and all copies of the type* exist.

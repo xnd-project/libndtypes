@@ -48,7 +48,7 @@ Functions
                           uint16_opt_t pack, uint16_opt_t pad, ndt_context_t *ctx);
 
 
-Create a new field.  For tuples, *name* is :macro:`NULL`.  The `align`
+Create a new field.  For tuples, *name* is :c:macro:`NULL`.  The `align`
 and `pack` options are mutually exclusive and have exactly the same
 function as *gcc's* `aligned` and `packed` attributes when applied to
 individual fields.
@@ -120,7 +120,7 @@ It remains to be seen if such an added complexity is useful.
    ndt_value_t *ndt_value_from_number(enum ndt_value tag, char *v, ndt_context_t *ctx);
 
 Construct a number or boolean value from a string.  *tag* must be one of
-:macro:`ValBool`, :macro:`ValInt64`, or :macro:`ValFloat64`.
+:c:macro:`ValBool`, :c:macro:`ValInt64`, or :c:macro:`ValFloat64`.
 
 
 .. topic:: ndt_value_from_string
@@ -129,7 +129,7 @@ Construct a number or boolean value from a string.  *tag* must be one of
 
    ndt_value_t *ndt_value_from_string(char *v, ndt_context_t *ctx);
 
-Construct a :macro:`ValString` value from a string.
+Construct a :c:macro:`ValString` value from a string.
 
 
 .. topic:: *ndt_value_na
@@ -138,7 +138,7 @@ Construct a :macro:`ValString` value from a string.
 
    ndt_value_t *ndt_value_na(ndt_context_t *ctx);
 
-Construct the :macro:`NA` value.
+Construct the :c:macro:`NA` value.
 
 
 .. topic:: ndt_value_equal
@@ -147,7 +147,7 @@ Construct the :macro:`NA` value.
 
    int ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y);
 
-Determine if two values are equal.  :macro:`NA` compares not equal to
+Determine if two values are equal. :c:macro:`NA` compares not equal to
 itself.
 
 
@@ -157,7 +157,7 @@ itself.
 
    ndt_value_mem_equal(const ndt_value_t *x, const ndt_value_t *y);
 
-Determine if two values are structurally equal.  :macro:`NA` compares
+Determine if two values are structurally equal. :c:macro:`NA` compares
 equal to itself.
 
 
@@ -167,7 +167,7 @@ equal to itself.
 
    int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
 
-Compare values according to a sorting order.  :macro:`NA` compares equal
+Compare values according to a sorting order. :c:macro:`NA` compares equal
 to itself.
 
 

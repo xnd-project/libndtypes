@@ -97,7 +97,7 @@ Clear an error.
 
    void *ndt_memory_error(ndt_context_t *ctx);
 
-Convenience function.  Set :macro:`NDT_MemoryError` and return :macro:`NULL`;
+Convenience function.  Set :c:macro:`NDT_MemoryError` and return :c:macro:`NULL`;
 
 
 .. topic:: ndt_err_as_string
@@ -116,7 +116,7 @@ Get the string representation of an error constant.
    const char *ndt_context_msg(ndt_context_t *ctx);
 
 Get the current error string.  It is safe to call this function if no
-error has occurred, in which case the string is :macro:`Success`.
+error has occurred, in which case the string is :c:macro:`Success`.
 
 
 .. topic:: ndt_err_fprint
