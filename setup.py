@@ -177,10 +177,18 @@ setup (
     keywords = ["ndtypes", "array computing", "data description"],
     platforms = ["Many"],
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "Intended Audience :: End Users/Desktop",
+        "Intended Audience :: Financial and Insurance Industry",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: BSD License",
         "Programming Language :: C",
-        "Programming Language :: Python :: 3"
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+        "Topic :: Scientific/Engineering :: Mathematics",
+        "Topic :: Software Development"
     ],
     package_dir = {"": "python"},
     packages = ["ndtypes"],
