@@ -274,3 +274,27 @@ pattern type.  Used in type checking.\n\
     >>> p.match(c2)\n\
     False\n\
 \n");
+
+PyDoc_STRVAR(doc_pformat,
+"pformat($self, /)\n--\n\n\
+Return a formatted string representation.\n\
+\n\
+    >>> t = ndt(\"{a: {x: uint8, y: int64}, b: (string, bytes)}\")\n\
+    >>> t.pformat()\n\
+    '{\\n  a : {\\n    x : uint8,\\n    y : int64\\n  },\\n  b : (string, bytes)\\n}'\n\
+\n");
+
+PyDoc_STRVAR(doc_pprint,
+"pprint($self, /)\n--\n\n\
+Print a formatted string representation to stdout.\n\
+\n\
+    >>> t = ndt(\"{a: {x: uint8, y: int64}, b: (string, bytes)}\")\n\
+    >>> t.pprint()\n\
+    {\n\
+      a : {\n\
+        x : uint8,\n\
+        y : int64\n\
+      },\n\
+      b : (string, bytes)\n\
+    }\n\
+\n");

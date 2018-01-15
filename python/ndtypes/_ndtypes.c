@@ -474,7 +474,7 @@ ndtype_repr(PyObject *self)
 }
 
 static PyObject *
-ndtype_indent(PyObject *self, PyObject *args UNUSED)
+ndtype_pformat(PyObject *self, PyObject *args UNUSED)
 {
     NDT_STATIC_CONTEXT(ctx);
     PyObject *res;
@@ -488,6 +488,24 @@ ndtype_indent(PyObject *self, PyObject *args UNUSED)
     res = PyUnicode_FromString(cp);
     ndt_free(cp);
     return res;
+}
+
+static PyObject *
+ndtype_pprint(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    char *cp;
+
+    cp = ndt_indent(NDT(self), &ctx);
+    if (cp == NULL) {
+        return seterr(&ctx);
+    }
+
+    printf("%s\n", cp);
+    fflush(stdout);
+
+    ndt_free(cp);
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -785,7 +803,8 @@ static PyMethodDef ndtype_methods [] =
   { "apply", (PyCFunction)ndtype_apply, METH_O, NULL },
 
   /* Other functions */
-  { "pretty", (PyCFunction)ndtype_indent, METH_NOARGS, NULL },
+  { "pformat", (PyCFunction)ndtype_pformat, METH_NOARGS, doc_pformat },
+  { "pprint", (PyCFunction)ndtype_pprint, METH_NOARGS, doc_pprint },
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, doc_ast_repr },
 
   /* Class methods */
