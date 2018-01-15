@@ -767,29 +767,29 @@ static PyGetSetDef ndtype_getsets [] =
 static PyMethodDef ndtype_methods [] =
 {
   /* Boolean functions */
-  { "isoptional", (PyCFunction)ndtype_ndt_is_optional, METH_NOARGS, NULL },
-  { "isabstract", (PyCFunction)ndtype_ndt_is_abstract, METH_NOARGS, NULL },
-  { "isconcrete", (PyCFunction)ndtype_ndt_is_concrete, METH_NOARGS, NULL },
-  { "isscalar", (PyCFunction)ndtype_ndt_is_scalar, METH_NOARGS, NULL },
-  { "issigned", (PyCFunction)ndtype_ndt_is_signed, METH_NOARGS, NULL },
-  { "isunsigned", (PyCFunction)ndtype_ndt_is_unsigned, METH_NOARGS, NULL },
-  { "isfloat", (PyCFunction)ndtype_ndt_is_float, METH_NOARGS, NULL },
-  { "iscomplex", (PyCFunction)ndtype_ndt_is_complex, METH_NOARGS, NULL },
+  { "isoptional", (PyCFunction)ndtype_ndt_is_optional, METH_NOARGS, doc_isoptional },
+  { "isabstract", (PyCFunction)ndtype_ndt_is_abstract, METH_NOARGS, doc_isabstract },
+  { "isconcrete", (PyCFunction)ndtype_ndt_is_concrete, METH_NOARGS, doc_isconcrete },
+  { "isscalar", (PyCFunction)ndtype_ndt_is_scalar, METH_NOARGS, doc_isscalar },
+  { "issigned", (PyCFunction)ndtype_ndt_is_signed, METH_NOARGS, doc_issigned },
+  { "isunsigned", (PyCFunction)ndtype_ndt_is_unsigned, METH_NOARGS, doc_isunsigned },
+  { "isfloat", (PyCFunction)ndtype_ndt_is_float, METH_NOARGS, doc_isfloat },
+  { "iscomplex", (PyCFunction)ndtype_ndt_is_complex, METH_NOARGS, doc_iscomplex },
 
   /* Boolean functions on array types */
-  { "is_c_contiguous", (PyCFunction)ndtype_ndt_is_c_contiguous, METH_NOARGS, NULL },
-  { "is_f_contiguous", (PyCFunction)ndtype_ndt_is_f_contiguous, METH_NOARGS, NULL },
+  { "is_c_contiguous", (PyCFunction)ndtype_ndt_is_c_contiguous, METH_NOARGS, doc_is_c_contiguous },
+  { "is_f_contiguous", (PyCFunction)ndtype_ndt_is_f_contiguous, METH_NOARGS, doc_is_f_contiguous },
 
   /* Binary functions */
-  { "match", (PyCFunction)ndtype_match, METH_O, NULL },
+  { "match", (PyCFunction)ndtype_match, METH_O, doc_match },
   { "apply", (PyCFunction)ndtype_apply, METH_O, NULL },
 
   /* Other functions */
   { "pretty", (PyCFunction)ndtype_indent, METH_NOARGS, NULL },
-  { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, NULL },
+  { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, doc_ast_repr },
 
   /* Class methods */
-  { "from_format", (PyCFunction)ndtype_from_format, METH_O|METH_CLASS, NULL },
+  { "from_format", (PyCFunction)ndtype_from_format, METH_O|METH_CLASS, doc_from_format },
 
   /* Special methods */
   { "__copy__", ndtype_copy, METH_NOARGS, NULL },
