@@ -800,7 +800,7 @@ static PyMethodDef ndtype_methods [] =
 
   /* Binary functions */
   { "match", (PyCFunction)ndtype_match, METH_O, doc_match },
-  { "apply", (PyCFunction)ndtype_apply, METH_O, NULL },
+  { "apply", (PyCFunction)ndtype_apply, METH_O, "method likely to change" },
 
   /* Other functions */
   { "pformat", (PyCFunction)ndtype_pformat, METH_NOARGS, doc_pformat },
