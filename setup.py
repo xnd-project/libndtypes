@@ -125,7 +125,7 @@ def ndtypes_ext():
     sources = ["python/ndtypes/_ndtypes.c"]
 
     if sys.platform == "win32":
-        libraries = ["libndtypes-0.1.0.dll"]
+        libraries = ["libndtypes-0.2.0b1.dll"]
         extra_compile_args = ["/DIMPORT"]
         extra_link_args = []
         runtime_library_dirs = []

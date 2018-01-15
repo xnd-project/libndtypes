@@ -14,10 +14,10 @@ cd ..
 nmake /nologo clean
 nmake /nologo
 
-copy /y libndtypes-0.1.0.lib ..\vcbuild\dist32
-copy /y libndtypes-0.1.0.dll ..\vcbuild\dist32
-copy /y libndtypes-0.1.0.dll.lib ..\vcbuild\dist32
-copy /y libndtypes-0.1.0.dll.exp ..\vcbuild\dist32
+copy /y libndtypes-0.2.0b1.lib ..\vcbuild\dist32
+copy /y libndtypes-0.2.0b1.dll ..\vcbuild\dist32
+copy /y libndtypes-0.2.0b1.dll.lib ..\vcbuild\dist32
+copy /y libndtypes-0.2.0b1.dll.exp ..\vcbuild\dist32
 copy /y ndtypes.h ..\vcbuild\dist32
 
 cd tests
