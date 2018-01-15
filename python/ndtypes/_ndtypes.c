@@ -34,6 +34,7 @@
 #include <Python.h>
 #include <stdlib.h>
 #include "ndtypes.h"
+#include "docstrings.h"
 
 #define NDTYPES_MODULE
 #include "pyndtypes.h"
@@ -754,12 +755,12 @@ ndtype_align(PyObject *self, PyObject *args UNUSED)
 
 static PyGetSetDef ndtype_getsets [] =
 {
-  { "ndim", (getter)ndtype_ndim, NULL, NULL, NULL},
-  { "datasize", (getter)ndtype_datasize, NULL, NULL, NULL},
-  { "align", (getter)ndtype_align, NULL, NULL, NULL},
-  { "itemsize", (getter)ndtype_itemsize, NULL, NULL, NULL},
-  { "shape", (getter)ndtype_shape, NULL, NULL, NULL},
-  { "strides", (getter)ndtype_strides, NULL, NULL, NULL},
+  { "align", (getter)ndtype_align, NULL, doc_align, NULL},
+  { "datasize", (getter)ndtype_datasize, NULL, doc_datasize, NULL},
+  { "itemsize", (getter)ndtype_itemsize, NULL, doc_itemsize, NULL},
+  { "ndim", (getter)ndtype_ndim, NULL, doc_ndim, NULL},
+  { "shape", (getter)ndtype_shape, NULL, doc_shape, NULL},
+  { "strides", (getter)ndtype_strides, NULL, doc_strides, NULL},
   {NULL}
 };
 
@@ -1010,7 +1011,7 @@ static PyMethodDef _ndtypes_methods [] =
 static struct PyModuleDef ndtypes_module = {
     PyModuleDef_HEAD_INIT,        /* m_base */
     "_ndtypes",                   /* m_name */
-    NULL,                         /* m_doc */
+    doc_module,                   /* m_doc */
     -1,                           /* m_size */
     _ndtypes_methods,             /* m_methods */
     NULL,                         /* m_slots */
