@@ -170,7 +170,7 @@ def ndtypes_ext():
 
 setup (
     name = "ndtypes",
-    version = "0.1",
+    version = "0.2.0b1",
     description = DESCRIPTION,
     url = "https://github.com/plures/ndtypes",
     license = "BSD License",
