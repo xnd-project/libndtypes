@@ -639,7 +639,7 @@ static yyconst flex_int32_t yy_rule_can_match_eol[69] =
 /*
  * BSD 3-Clause License
  *
- * Copyright (c) 2017, plures
+ * Copyright (c) 2017-2018, plures
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
