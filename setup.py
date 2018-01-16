@@ -77,7 +77,7 @@ LIBNDTYPESDIR = "%s/ndtypes" % get_python_lib()
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
 ARCH = platform.architecture()[0]
-BUILD_ALL = True
+BUILD_ALL = "build" in sys.argv or "install" in sys.argv
 WITH_VALGRIND = False
 
 
@@ -133,7 +133,6 @@ if len(sys.argv) == 3 and sys.argv[1] == "install" and \
 elif len(sys.argv) == 2:
     if sys.argv[1] == 'module':
        sys.argv[1] = 'build'
-       BUILD_ALL = False
     if sys.argv[1] == 'test':
         module_path = get_module_path()
         python_path = os.getenv('PYTHONPATH')
@@ -216,6 +215,8 @@ setup (
     description = DESCRIPTION,
     long_description = LONG_DESCRIPTION,
     url = "https://github.com/plures/ndtypes",
+    author = 'Stefan Krah',
+    author_email = 'skrah@bytereef.org',
     license = "BSD License",
     keywords = ["ndtypes", "array computing", "data description"],
     platforms = ["Many"],
