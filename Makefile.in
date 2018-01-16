@@ -69,7 +69,7 @@ distclean: FORCE
 	rm -f config.h config.log config.status Makefile
 	rm -rf build
 	cd python && rm -rf __pycache__
-	cd python/ndtypes && rm -f *.so $(LIBSTATIC) $(LIBSHARED) $(LIBSONAME) $(LIBNAME)
+	cd python/ndtypes && rm -f *.so $(LIBSTATIC) $(LIBSHARED) $(LIBSONAME) $(LIBNAME) ndtypes.h
 	cd python/ndtypes && rm -rf __pycache__
 
 FORCE:
