@@ -125,6 +125,8 @@ if len(sys.argv) == 3 and sys.argv[1] == "install" and \
         "--install-data=" + localdir,
         "--install-headers=" + localdir]
 
+    LIBNDTYPESDIR = "%s/ndtypes" % localdir
+
     if sys.platform == "darwin": # homebrew bug
         sys.argv.append("--prefix=")
 
