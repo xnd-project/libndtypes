@@ -31,6 +31,7 @@
 #
 
 from distutils.core import setup, Extension
+from distutils.sysconfig import get_python_lib
 from glob import glob
 import platform
 import sys, os
@@ -68,6 +69,10 @@ Links
 * http://xnd.readthedocs.io/en/latest/
 """
 
+LIBNAME = "libndtypes.so"
+LIBSONAME = "libndtypes.so.0"
+LIBSHARED = "libndtypes.so.0.2.0b1"
+LIBNDTYPESDIR = "%s/ndtypes" % get_python_lib()
 
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
@@ -94,6 +99,14 @@ def copy_ext():
         pathlist = glob("build/lib.*/ndtypes/_ndtypes.*.so")
     if pathlist:
         shutil.copy2(pathlist[0], "python/ndtypes")
+
+def make_symlinks():
+    if sys.platform == "win32":
+        return
+    os.chdir(LIBNDTYPESDIR)
+    os.chmod(LIBSHARED, 0o755)
+    os.system("ln -sf %s %s" % (LIBSHARED, LIBSONAME))
+    os.system("ln -sf %s %s" % (LIBSHARED, LIBNAME))
 
 
 if "--with-valgrind" in sys.argv:
@@ -227,3 +240,4 @@ setup (
 )
 
 copy_ext()
+make_symlinks()
