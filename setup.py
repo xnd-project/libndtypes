@@ -222,7 +222,7 @@ setup (
     ],
     package_dir = {"": "python"},
     packages = ["ndtypes"],
-    package_data = {"ndtypes": ["libndtypes*"]},
+    package_data = {"ndtypes": ["libndtypes*", "ndtypes.h"]},
     ext_modules = [ndtypes_ext()],
 )
 
