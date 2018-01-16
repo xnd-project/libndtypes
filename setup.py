@@ -38,8 +38,35 @@ import subprocess
 import shutil
 
 
-DESCRIPTION = \
-    """Dynamic types for data description and in-memory computations"""
+DESCRIPTION =  """\
+Dynamic types for data description and in-memory computations.\
+"""
+
+LONG_DESCRIPTION = """
+Overview
+--------
+
+The ``ndtypes`` module is the Python interface to the ``libndtypes`` library.
+``libndtypes`` implements dynamic types relevant for scientific computing.
+
+These types contain full memory layout information and are used both for type
+checking and  accessing values in memory.
+
+Types are specified using a close variant of the datashape language.
+
+``ndtypes`` supports other container modules.  It displays types, performs
+type checking, and the concrete type layout information is used to traverse
+memory.
+
+As an example, ``xnd`` is a container module that is based on ``ndtypes``.
+
+Links
+-----
+
+* https://github.com/plures/
+* http://ndtypes.readthedocs.io/en/latest/
+* http://xnd.readthedocs.io/en/latest/
+"""
 
 
 PY_MAJOR = sys.version_info[0]
@@ -172,6 +199,7 @@ setup (
     name = "ndtypes",
     version = "0.2.0b1",
     description = DESCRIPTION,
+    long_description = LONG_DESCRIPTION,
     url = "https://github.com/plures/ndtypes",
     license = "BSD License",
     keywords = ["ndtypes", "array computing", "data description"],
