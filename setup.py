@@ -69,9 +69,16 @@ Links
 * http://xnd.readthedocs.io/en/latest/
 """
 
-LIBNAME = "libndtypes.so"
-LIBSONAME = "libndtypes.so.0"
-LIBSHARED = "libndtypes.so.0.2.0b1"
+
+if sys.platform == "darwin":
+    LIBNAME = "libndtypes.dylib"
+    LIBSONAME = "libndtypes.0.dylib"
+    LIBSHARED = "libndtypes.0.2.0b1.dylib"
+else:
+    LIBNAME = "libndtypes.so"
+    LIBSONAME = "libndtypes.so.0"
+    LIBSHARED = "libndtypes.so.0.2.0b1"
+
 LIBNDTYPESDIR = "%s/ndtypes" % get_python_lib()
 
 PY_MAJOR = sys.version_info[0]
