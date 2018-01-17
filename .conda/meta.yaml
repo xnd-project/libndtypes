@@ -1,0 +1,17 @@
+package:
+  name: ndtypes
+  version: 0.2.0.b1
+
+requirements:
+  build:
+    - python >=3.6
+  run:
+    - python >=3.6
+
+test:
+  imports:
+    - ndtypes
+
+about:
+  home: https://github.com/plures/
+  license: BSD
