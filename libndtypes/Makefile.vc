@@ -26,6 +26,7 @@ CFLAGS_FOR_PARSER_SHARED = $(COMMON_CFLAGS_FOR_PARSER) $(OPT_SHARED)
 
 default: $(LIBSTATIC) $(LIBSHARED)
 	copy /y ndtypes.h ..\python\ndtypes
+	copy /y $(LIBIMPORT) ..\python\ndtypes
 	copy /y $(LIBSHARED) ..\python\ndtypes
 
 
