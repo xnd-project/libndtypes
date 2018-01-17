@@ -35,8 +35,8 @@ import unittest, gc
 import weakref, struct
 from copy import copy
 from ndtypes import ndt, typedef, MAX_DIM
-from support import *
-from randtype import *
+from ndt_support import *
+from ndt_randtype import *
 
 
 SKIP_LONG = True
