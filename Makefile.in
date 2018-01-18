@@ -69,7 +69,7 @@ distclean: FORCE
 	cd libndtypes/tests && if [ -f Makefile ]; then $(MAKE) distclean; else exit 0; fi
 	rm -f config.h config.log config.status Makefile
 	rm -rf build dist MANIFEST record.txt
-	cd python && rm -rf __pycache__
+	cd python && rm -rf __pycache__ ndtypes.egg-info
 	cd python/ndtypes && rm -f *.so $(LIBSTATIC) $(LIBSHARED) $(LIBSONAME) $(LIBNAME) ndtypes.h
 	cd python/ndtypes && rm -rf __pycache__
 
