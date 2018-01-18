@@ -30,7 +30,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from setuptools import setup, Extension
+
+if "bdist_wheel" in sys.argv:
+    from setuptools import setup, Extension
+else:
+    from distutils.core import setup, Extension
+
 from distutils.sysconfig import get_python_lib
 from glob import glob
 import platform
@@ -85,7 +90,7 @@ PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
 ARCH = platform.architecture()[0]
 BUILD_ALL = \
-  "build" in sys.argv or "install" in sys.argv or "bdist_wheel" in sys.argv
+    "build" in sys.argv or "install" in sys.argv or "bdist_wheel" in sys.argv
 WITH_VALGRIND = False
 
 
