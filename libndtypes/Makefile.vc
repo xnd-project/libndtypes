@@ -236,6 +236,7 @@ clean: FORCE
 	if exist "..\build\" rd /q /s "..\build\"
 	if exist "..\dist\" rd /q /s "..\dist\"
 	if exist "..\MANIFEST" del "..\MANIFEST"
+	if exist "..\record.txt" del "..\record.txt"
 	cd ..\python\ndtypes && del *.lib *.dll *.pyd ndtypes.h 2>NUL
 	cd compat && nmake clean
 
