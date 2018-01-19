@@ -9,8 +9,8 @@ requirements:
     - python >=3.6
 
 test:
-  imports:
-    - ndtypes
+  commands:
+    - python -m ndtypes.test.test_ndtypes
 
 about:
   home: https://github.com/plures/
