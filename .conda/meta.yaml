@@ -8,10 +8,6 @@ requirements:
   run:
     - python >=3.6
 
-test:
-  imports:
-    - ndtypes
-
 about:
   home: https://github.com/plures/
   license: BSD
