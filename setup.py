@@ -114,12 +114,6 @@ def copy_ext():
     if pathlist:
         shutil.copy2(pathlist[0], "python/ndtypes")
 
-def copy_tests():
-    os.makedirs("python/ndtypes/test", exist_ok=True)
-    shutil.copy("python/test_ndtypes.py", "python/ndtypes/test")
-    shutil.copy("python/ndt_support.py", "python/ndtypes/test")
-    shutil.copy("python/ndt_randtype.py", "python/ndtypes/test")
-
 def make_symlinks():
     if sys.platform == "win32" or "install" not in sys.argv:
         return
@@ -229,8 +223,6 @@ def ndtypes_ext():
       runtime_library_dirs = runtime_library_dirs
     )
 
-copy_tests()
-
 setup (
     name = "ndtypes",
     version = "0.2.0b1",
@@ -260,7 +252,7 @@ setup (
     ],
     package_dir = {"": "python"},
     packages = ["ndtypes"],
-    package_data = {"ndtypes": ["libndtypes*", "ndtypes.h", "pyndtypes.h", "test/*"]},
+    package_data = {"ndtypes": ["libndtypes*", "ndtypes.h", "pyndtypes.h"]},
     ext_modules = [ndtypes_ext()],
 )
 
