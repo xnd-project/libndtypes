@@ -40,6 +40,10 @@
 #include "attr.h"
 
 
+/* LOCAL SCOPE */
+NDT_PRAGMA(NDT_HIDE_SYMBOLS_START)
+
+
 /*****************************************************************************/
 /*                        Functions used in the lexer                        */
 /*****************************************************************************/
@@ -81,6 +85,10 @@ ndt_t *mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx);
 ndt_t *mk_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, ndt_context_t *ctx);
+
+
+/* END LOCAL SCOPE */
+NDT_PRAGMA(NDT_HIDE_SYMBOLS_END)
 
 
 #endif /*  PARSEFUNCS_H */
