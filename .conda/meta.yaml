@@ -5,6 +5,9 @@ package:
 requirements:
   build:
     - python >=3.6
+    - bison  # [not win]
+    - flex  # [not win]
+    - m4  # [not win]
   run:
     - python >=3.6
 
