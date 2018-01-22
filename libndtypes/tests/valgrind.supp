@@ -43,7 +43,7 @@
    Memcheck:Leak
    match-leak-kinds: indirect
    ...
-   fun:bp_scan_buffer
+   fun:ndt_bp_scan_buffer
    fun:ndt_from_bpformat
 }
 
@@ -52,7 +52,7 @@
    Memcheck:Leak
    match-leak-kinds: possible
    ...
-   fun:bp_scan_buffer
+   fun:ndt_bp_scan_buffer
    fun:ndt_from_bpformat
 }
 
@@ -61,6 +61,6 @@
    Memcheck:Leak
    match-leak-kinds: definite
    ...
-   fun:bp_scan_buffer
+   fun:ndt_bp_scan_buffer
    fun:ndt_from_bpformat
 }

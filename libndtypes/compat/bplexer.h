@@ -1,6 +1,6 @@
-#ifndef bpHEADER_H
-#define bpHEADER_H 1
-#define bpIN_HEADER 1
+#ifndef ndt_bpHEADER_H
+#define ndt_bpHEADER_H 1
+#define ndt_bpIN_HEADER 1
 
 #line 6 "bplexer.h"
 
@@ -204,25 +204,25 @@ struct yy_buffer_state
 	};
 #endif /* !YY_STRUCT_YY_BUFFER_STATE */
 
-void bprestart (FILE *input_file ,yyscan_t yyscanner );
-void bp_switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-YY_BUFFER_STATE bp_create_buffer (FILE *file,int size ,yyscan_t yyscanner );
-void bp_delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void bp_flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void bppush_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-void bppop_buffer_state (yyscan_t yyscanner );
+void ndt_bprestart (FILE *input_file ,yyscan_t yyscanner );
+void ndt_bp_switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
+YY_BUFFER_STATE ndt_bp_create_buffer (FILE *file,int size ,yyscan_t yyscanner );
+void ndt_bp_delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
+void ndt_bp_flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
+void ndt_bppush_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
+void ndt_bppop_buffer_state (yyscan_t yyscanner );
 
-YY_BUFFER_STATE bp_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
-YY_BUFFER_STATE bp_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE bp_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
+YY_BUFFER_STATE ndt_bp_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
+YY_BUFFER_STATE ndt_bp_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
+YY_BUFFER_STATE ndt_bp_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
 
-void *bpalloc (yy_size_t ,yyscan_t yyscanner );
-void *bprealloc (void *,yy_size_t ,yyscan_t yyscanner );
-void bpfree (void * ,yyscan_t yyscanner );
+void *ndt_bpalloc (yy_size_t ,yyscan_t yyscanner );
+void *ndt_bprealloc (void *,yy_size_t ,yyscan_t yyscanner );
+void ndt_bpfree (void * ,yyscan_t yyscanner );
 
 /* Begin user sect3 */
 
-#define bpwrap(n) 1
+#define ndt_bpwrap(n) 1
 #define YY_SKIP_YYWRAP
 
 #define yytext_ptr yytext_r
@@ -243,46 +243,46 @@ void bpfree (void * ,yyscan_t yyscanner );
 
 #define YY_EXTRA_TYPE ndt_context_t *
 
-int bplex_init (yyscan_t* scanner);
+int ndt_bplex_init (yyscan_t* scanner);
 
-int bplex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
+int ndt_bplex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
 
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int bplex_destroy (yyscan_t yyscanner );
+int ndt_bplex_destroy (yyscan_t yyscanner );
 
-int bpget_debug (yyscan_t yyscanner );
+int ndt_bpget_debug (yyscan_t yyscanner );
 
-void bpset_debug (int debug_flag ,yyscan_t yyscanner );
+void ndt_bpset_debug (int debug_flag ,yyscan_t yyscanner );
 
-YY_EXTRA_TYPE bpget_extra (yyscan_t yyscanner );
+YY_EXTRA_TYPE ndt_bpget_extra (yyscan_t yyscanner );
 
-void bpset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
+void ndt_bpset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
 
-FILE *bpget_in (yyscan_t yyscanner );
+FILE *ndt_bpget_in (yyscan_t yyscanner );
 
-void bpset_in  (FILE * in_str ,yyscan_t yyscanner );
+void ndt_bpset_in  (FILE * in_str ,yyscan_t yyscanner );
 
-FILE *bpget_out (yyscan_t yyscanner );
+FILE *ndt_bpget_out (yyscan_t yyscanner );
 
-void bpset_out  (FILE * out_str ,yyscan_t yyscanner );
+void ndt_bpset_out  (FILE * out_str ,yyscan_t yyscanner );
 
-int bpget_leng (yyscan_t yyscanner );
+int ndt_bpget_leng (yyscan_t yyscanner );
 
-char *bpget_text (yyscan_t yyscanner );
+char *ndt_bpget_text (yyscan_t yyscanner );
 
-int bpget_lineno (yyscan_t yyscanner );
+int ndt_bpget_lineno (yyscan_t yyscanner );
 
-void bpset_lineno (int line_number ,yyscan_t yyscanner );
+void ndt_bpset_lineno (int line_number ,yyscan_t yyscanner );
 
-YYSTYPE * bpget_lval (yyscan_t yyscanner );
+YYSTYPE * ndt_bpget_lval (yyscan_t yyscanner );
 
-void bpset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
+void ndt_bpset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
 
-       YYLTYPE *bpget_lloc (yyscan_t yyscanner );
+       YYLTYPE *ndt_bpget_lloc (yyscan_t yyscanner );
     
-        void bpset_lloc (YYLTYPE * yylloc_param ,yyscan_t yyscanner );
+        void ndt_bpset_lloc (YYLTYPE * yylloc_param ,yyscan_t yyscanner );
     
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -290,9 +290,9 @@ void bpset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int bpwrap (yyscan_t yyscanner );
+extern "C" int ndt_bpwrap (yyscan_t yyscanner );
 #else
-extern int bpwrap (yyscan_t yyscanner );
+extern int ndt_bpwrap (yyscan_t yyscanner );
 #endif
 #endif
 
@@ -329,10 +329,10 @@ static int yy_flex_strlen (yyconst char * ,yyscan_t yyscanner);
 #ifndef YY_DECL
 #define YY_DECL_IS_OURS 1
 
-extern int bplex \
+extern int ndt_bplex \
                (YYSTYPE * yylval_param,YYLTYPE * yylloc_param ,yyscan_t yyscanner);
 
-#define YY_DECL int bplex \
+#define YY_DECL int ndt_bplex \
                (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner)
 #endif /* !YY_DECL */
 
@@ -354,5 +354,5 @@ extern int bplex \
 
 
 #line 357 "bplexer.h"
-#undef bpIN_HEADER
-#endif /* bpHEADER_H */
+#undef ndt_bpIN_HEADER
+#endif /* ndt_bpHEADER_H */

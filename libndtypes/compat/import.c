@@ -40,7 +40,7 @@
 
 
 #ifdef YYDEBUG
-int bpdebug = 1;
+int ndt_bpdebug = 1;
 #endif
 
 
@@ -75,19 +75,19 @@ ndt_from_bpformat(const char *input, ndt_context_t *ctx)
     buffer[size+1] = '\0';
 
     if (setjmp(ndt_bp_lexerror) == 0) {
-        if (bplex_init_extra(ctx, (yyscan_t *)&scanner) != 0) {
+        if (ndt_bplex_init_extra(ctx, (yyscan_t *)&scanner) != 0) {
             ndt_err_format(ctx, NDT_LexError, "lexer initialization failed");
             ndt_free(buffer);
             return NULL;
         }
 
-        state = bp_scan_buffer(buffer, size+2, scanner);
+        state = ndt_bp_scan_buffer(buffer, size+2, scanner);
         state->yy_bs_lineno = 1;
         state->yy_bs_column = 1;
 
-        ret = bpparse(scanner, &ast, ctx);
-        bp_delete_buffer(state, scanner);
-        bplex_destroy(scanner);
+        ret = ndt_bpparse(scanner, &ast, ctx);
+        ndt_bp_delete_buffer(state, scanner);
+        ndt_bplex_destroy(scanner);
         ndt_free(buffer);
 
         if (ret == 2) {
@@ -101,7 +101,7 @@ ndt_from_bpformat(const char *input, ndt_context_t *ctx)
             ndt_free(state);
         }
         if (scanner) {
-            bplex_destroy(scanner);
+            ndt_bplex_destroy(scanner);
         }
         ndt_free(buffer);
         ndt_err_format(ctx, NDT_MemoryError, "flex: internal lexer error");

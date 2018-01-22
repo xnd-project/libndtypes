@@ -60,11 +60,11 @@
 
 
 /* Substitute the variable and function names.  */
-#define yyparse         bpparse
-#define yylex           bplex
-#define yyerror         bperror
-#define yydebug         bpdebug
-#define yynerrs         bpnerrs
+#define yyparse         ndt_bpparse
+#define yylex           ndt_bplex
+#define yyerror         ndt_bperror
+#define yydebug         ndt_bpdebug
+#define yynerrs         ndt_bpnerrs
 
 
 /* Copy the first part of user declarations.  */
@@ -360,14 +360,14 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 
 /* In a future release of Bison, this section will be replaced
    by #include "bpgrammar.h".  */
-#ifndef YY_BP_BPGRAMMAR_H_INCLUDED
-# define YY_BP_BPGRAMMAR_H_INCLUDED
+#ifndef YY_NDT_BP_BPGRAMMAR_H_INCLUDED
+# define YY_NDT_BP_BPGRAMMAR_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
 #endif
 #if YYDEBUG
-extern int bpdebug;
+extern int ndt_bpdebug;
 #endif
 /* "%code requires" blocks.  */
 #line 273 "bpgrammar.y" /* yacc.c:355  */
@@ -446,7 +446,7 @@ struct YYLTYPE
 
 
 
-int bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
+int ndt_bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
 #line 283 "bpgrammar.y" /* yacc.c:355  */
 
@@ -456,7 +456,7 @@ int bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
 
 #line 458 "bpgrammar.c" /* yacc.c:355  */
 
-#endif /* !YY_BP_BPGRAMMAR_H_INCLUDED  */
+#endif /* !YY_NDT_BP_BPGRAMMAR_H_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 

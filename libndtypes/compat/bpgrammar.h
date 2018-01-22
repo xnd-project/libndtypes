@@ -30,14 +30,14 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_BP_BPGRAMMAR_H_INCLUDED
-# define YY_BP_BPGRAMMAR_H_INCLUDED
+#ifndef YY_NDT_BP_BPGRAMMAR_H_INCLUDED
+# define YY_NDT_BP_BPGRAMMAR_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
 #endif
 #if YYDEBUG
-extern int bpdebug;
+extern int ndt_bpdebug;
 #endif
 /* "%code requires" blocks.  */
 #line 273 "bpgrammar.y" /* yacc.c:1909  */
@@ -116,7 +116,7 @@ struct YYLTYPE
 
 
 
-int bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
+int ndt_bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
 #line 283 "bpgrammar.y" /* yacc.c:1909  */
 
@@ -126,4 +126,4 @@ int bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
 
 #line 128 "bpgrammar.h" /* yacc.c:1909  */
 
-#endif /* !YY_BP_BPGRAMMAR_H_INCLUDED  */
+#endif /* !YY_NDT_BP_BPGRAMMAR_H_INCLUDED  */

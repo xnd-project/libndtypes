@@ -50,7 +50,7 @@ Makefile bplexer.c
 
 bplexer.c:\
 Makefile bplexer.l ../ndtypes.h
-	flex -o bplexer.c -Pbp --header-file=bplexer.h bplexer.l
+	flex -o bplexer.c -Pndt_bp --header-file=bplexer.h bplexer.l
 
 # Bison generated files
 bpgrammar.h:\
@@ -58,7 +58,7 @@ Makefile bpgrammar.c
 
 bpgrammar.c:\
 Makefile bpgrammar.y ../ndtypes.h
-	bison -Wall -o bpgrammar.c -pbp --defines=bpgrammar.h bpgrammar.y
+	bison -Wall -o bpgrammar.c -pndt_bp --defines=bpgrammar.h bpgrammar.y
 
 
 FORCE:
