@@ -56,10 +56,6 @@ fprintf_to_longjmp(const char *fmt, const char *msg, yyscan_t yyscanner)
     longjmp(ndt_lexerror, 1);
 }
 
-#undef yyalloc
-#undef yyrealloc
-#undef yyfree
-
 void *
 yyalloc(size_t size, yyscan_t yyscanner)
 {

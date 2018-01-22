@@ -569,10 +569,6 @@ fprintf_to_longjmp(const char *fmt, const char *msg, yyscan_t yyscanner)
     longjmp(ndt_bp_lexerror, 1);
 }
 
-#undef bpalloc
-#undef bprealloc
-#undef bpfree
-
 void *
 bpalloc(size_t size,yyscan_t yyscanner)
 {
@@ -599,7 +595,7 @@ bpfree(void *ptr,yyscan_t yyscanner)
 
 #define YY_NO_INPUT 1
 
-#line 603 "bplexer.c"
+#line 599 "bplexer.c"
 
 #define INITIAL 0
 #define FIELDNAME 1
@@ -842,10 +838,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 111 "bplexer.l"
+#line 107 "bplexer.l"
 
 
-#line 849 "bplexer.c"
+#line 845 "bplexer.c"
 
     yylval = yylval_param;
 
@@ -942,7 +938,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 113 "bplexer.l"
+#line 109 "bplexer.l"
 {
 yycolumn = 1;
 
@@ -958,189 +954,189 @@ yycolumn = 1;
 
 case 2:
 YY_RULE_SETUP
-#line 126 "bplexer.l"
+#line 122 "bplexer.l"
 { yylval->uchar = '?'; return DTYPE; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 127 "bplexer.l"
+#line 123 "bplexer.l"
 { yylval->uchar = 'c'; return DTYPE; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 128 "bplexer.l"
+#line 124 "bplexer.l"
 { yylval->uchar = 'b'; return DTYPE; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 129 "bplexer.l"
+#line 125 "bplexer.l"
 { yylval->uchar = 'B'; return DTYPE; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 130 "bplexer.l"
+#line 126 "bplexer.l"
 { yylval->uchar = 'h'; return DTYPE; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 131 "bplexer.l"
+#line 127 "bplexer.l"
 { yylval->uchar = 'H'; return DTYPE; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 132 "bplexer.l"
+#line 128 "bplexer.l"
 { yylval->uchar = 'i'; return DTYPE; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 133 "bplexer.l"
+#line 129 "bplexer.l"
 { yylval->uchar = 'I'; return DTYPE; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 134 "bplexer.l"
+#line 130 "bplexer.l"
 { yylval->uchar = 'l'; return DTYPE; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 135 "bplexer.l"
+#line 131 "bplexer.l"
 { yylval->uchar = 'L'; return DTYPE; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 136 "bplexer.l"
+#line 132 "bplexer.l"
 { yylval->uchar = 'q'; return DTYPE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 137 "bplexer.l"
+#line 133 "bplexer.l"
 { yylval->uchar = 'Q'; return DTYPE; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 138 "bplexer.l"
+#line 134 "bplexer.l"
 { yylval->uchar = 'n'; return DTYPE; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 139 "bplexer.l"
+#line 135 "bplexer.l"
 { yylval->uchar = 'N'; return DTYPE; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 140 "bplexer.l"
+#line 136 "bplexer.l"
 { yylval->uchar = 'e'; return DTYPE; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 141 "bplexer.l"
+#line 137 "bplexer.l"
 { yylval->uchar = 'f'; return DTYPE; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 142 "bplexer.l"
+#line 138 "bplexer.l"
 { yylval->uchar = 'd'; return DTYPE; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 143 "bplexer.l"
+#line 139 "bplexer.l"
 { yylval->uchar = 'E'; return DTYPE; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 144 "bplexer.l"
+#line 140 "bplexer.l"
 { yylval->uchar = 'F'; return DTYPE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 145 "bplexer.l"
+#line 141 "bplexer.l"
 { yylval->uchar = 'D'; return DTYPE; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 147 "bplexer.l"
+#line 143 "bplexer.l"
 { return PAD; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 148 "bplexer.l"
+#line 144 "bplexer.l"
 { return RECORD; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 149 "bplexer.l"
+#line 145 "bplexer.l"
 { return BYTES; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 151 "bplexer.l"
+#line 147 "bplexer.l"
 { return AT; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 152 "bplexer.l"
+#line 148 "bplexer.l"
 { return EQUAL; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 153 "bplexer.l"
+#line 149 "bplexer.l"
 { return LESS; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 154 "bplexer.l"
+#line 150 "bplexer.l"
 { return GREATER; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 155 "bplexer.l"
+#line 151 "bplexer.l"
 { return BANG; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 156 "bplexer.l"
+#line 152 "bplexer.l"
 { return COMMA; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 157 "bplexer.l"
+#line 153 "bplexer.l"
 { BEGIN(FIELDNAME); return COLON; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 158 "bplexer.l"
+#line 154 "bplexer.l"
 { return LPAREN; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 159 "bplexer.l"
+#line 155 "bplexer.l"
 { return RPAREN; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 160 "bplexer.l"
+#line 156 "bplexer.l"
 { return LBRACE; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 161 "bplexer.l"
+#line 157 "bplexer.l"
 { return RBRACE; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 163 "bplexer.l"
+#line 159 "bplexer.l"
 { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return INTEGER; }
 	YY_BREAK
 
 
 case 37:
 YY_RULE_SETUP
-#line 167 "bplexer.l"
+#line 163 "bplexer.l"
 { BEGIN(INITIAL); return COLON; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 168 "bplexer.l"
+#line 164 "bplexer.l"
 { yylval->string = ndt_strdup(yytext, ctx); if (yylval->string == NULL) return ERRTOKEN; return NAME; }
 	YY_BREAK
 
@@ -1148,31 +1144,31 @@ YY_RULE_SETUP
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 172 "bplexer.l"
+#line 168 "bplexer.l"
 { yycolumn = 1; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 173 "bplexer.l"
+#line 169 "bplexer.l"
 {} /* ignore */
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 174 "bplexer.l"
+#line 170 "bplexer.l"
 {} /* ignore */
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 175 "bplexer.l"
+#line 171 "bplexer.l"
 { return ERRTOKEN; }
 	YY_BREAK
 
 case 43:
 YY_RULE_SETUP
-#line 179 "bplexer.l"
+#line 175 "bplexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1176 "bplexer.c"
+#line 1172 "bplexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(FIELDNAME):
 	yyterminate();
@@ -2296,7 +2292,7 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 179 "bplexer.l"
+#line 175 "bplexer.l"
 
 
 
