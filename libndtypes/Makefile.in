@@ -203,7 +203,7 @@ Makefile lexer.c
 
 lexer.c:\
 Makefile lexer.l ndtypes.h parsefuncs.h
-	flex -o lexer.c --header-file=lexer.h lexer.l
+	flex -o lexer.c -Pndt_yy --header-file=lexer.h lexer.l
 
 # Bison generated files
 grammar.h:\
@@ -211,7 +211,7 @@ Makefile grammar.c
 
 grammar.c:\
 Makefile grammar.y ndtypes.h parsefuncs.h ndtypes.h
-	bison -Wall -o grammar.c --defines=grammar.h grammar.y
+	bison -Wall -o grammar.c -pndt_yy --defines=grammar.h grammar.y
 
 
 # compat directory

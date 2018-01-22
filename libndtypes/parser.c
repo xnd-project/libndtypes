@@ -41,7 +41,7 @@
 
 
 #ifdef YYDEBUG
-int yydebug = 1;
+int ndt_yydebug = 1;
 #endif
 
 
@@ -71,17 +71,17 @@ _ndt_from_fp(ndt_meta_t *m, FILE *fp, ndt_context_t *ctx)
     int ret;
 
     if (setjmp(ndt_lexerror) == 0) {
-        if (yylex_init_extra(ctx, (yyscan_t *)&scanner) != 0) {
+        if (ndt_yylex_init_extra(ctx, (yyscan_t *)&scanner) != 0) {
             ndt_err_format(ctx, NDT_LexError, "lexer initialization failed");
             return NULL;
         }
 
         if (fp != stdin) {
-            yyset_in(fp, scanner);
+            ndt_yyset_in(fp, scanner);
         }
 
-        ret = yyparse(scanner, &ast, m, ctx);
-        yylex_destroy(scanner);
+        ret = ndt_yyparse(scanner, &ast, m, ctx);
+        ndt_yylex_destroy(scanner);
 
         if (ret == 2) {
             ndt_err_format(ctx, NDT_MemoryError, "out of memory");
@@ -91,7 +91,7 @@ _ndt_from_fp(ndt_meta_t *m, FILE *fp, ndt_context_t *ctx)
     }
     else {
         if (scanner) {
-            yylex_destroy(scanner);
+            ndt_yylex_destroy(scanner);
         }
         ndt_err_format(ctx, NDT_MemoryError,
             "out of memory (most likely) or internal lexer error");
@@ -160,19 +160,19 @@ _ndt_from_string(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
     buffer[size+1] = '\0';
 
     if (setjmp(ndt_lexerror) == 0) {
-        if (yylex_init_extra(ctx, (yyscan_t *)&scanner) != 0) {
+        if (ndt_yylex_init_extra(ctx, (yyscan_t *)&scanner) != 0) {
             ndt_err_format(ctx, NDT_LexError, "lexer initialization failed");
             ndt_free(buffer);
             return NULL;
         }
 
-        state = yy_scan_buffer(buffer, size+2, scanner);
+        state = ndt_yy_scan_buffer(buffer, size+2, scanner);
         state->yy_bs_lineno = 1;
         state->yy_bs_column = 1;
 
-        ret = yyparse(scanner, &ast, m, ctx);
-        yy_delete_buffer(state, scanner);
-        yylex_destroy(scanner);
+        ret = ndt_yyparse(scanner, &ast, m, ctx);
+        ndt_yy_delete_buffer(state, scanner);
+        ndt_yylex_destroy(scanner);
         ndt_free(buffer);
 
         if (ret == 2) {
@@ -186,7 +186,7 @@ _ndt_from_string(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
             ndt_free(state);
         }
         if (scanner) {
-            yylex_destroy(scanner);
+            ndt_yylex_destroy(scanner);
         }
         ndt_free(buffer);
         ndt_err_format(ctx, NDT_MemoryError, "flex: internal lexer error");
