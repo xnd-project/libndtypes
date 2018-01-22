@@ -36,9 +36,6 @@
 #include "lexer.h"
 
 
-#undef yyerror
-#undef yylex
-
 void
 yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta,
         ndt_context_t *ctx, const char *msg)
