@@ -122,7 +122,7 @@ yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta,
 int
 yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 {
-    return lexfunc(val, loc, scanner, ctx);
+    return ndt_yylexfunc(val, loc, scanner, ctx);
 }
 
 #line 129 "grammar.c" /* yacc.c:339  */
@@ -284,8 +284,8 @@ int ndt_yyparse (yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t 
 /* "%code provides" blocks.  */
 #line 67 "grammar.y" /* yacc.c:355  */
 
-  #define YY_DECL extern int lexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
-  extern int lexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
+  #define YY_DECL extern int ndt_yylexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
+  extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx, const char *msg);
 
 #line 292 "grammar.c" /* yacc.c:355  */

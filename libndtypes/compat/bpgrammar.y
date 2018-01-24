@@ -50,7 +50,7 @@ yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx,
 int
 yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 {
-    return yylexfunc(val, loc, scanner, ctx);
+    return ndt_bplexfunc(val, loc, scanner, ctx);
 }
 
 static uint16_t
@@ -281,8 +281,8 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 }
 
 %code provides {
-  #define YY_DECL extern int yylexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
-  extern int yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
+  #define YY_DECL extern int ndt_bplexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
+  extern int ndt_bplexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
 }
 
