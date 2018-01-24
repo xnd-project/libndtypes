@@ -40,7 +40,7 @@
 extern int ndt_yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 58 "grammar.y" /* yacc.c:1909  */
+#line 57 "grammar.y" /* yacc.c:1909  */
 
   #include "ndtypes.h"
   #include "seq.h"
@@ -128,7 +128,7 @@ extern int ndt_yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 87 "grammar.y" /* yacc.c:1909  */
+#line 86 "grammar.y" /* yacc.c:1909  */
 
     ndt_t *ndt;
     ndt_field_t *field;
@@ -167,7 +167,7 @@ struct YYLTYPE
 
 int ndt_yyparse (yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
-#line 67 "grammar.y" /* yacc.c:1909  */
+#line 66 "grammar.y" /* yacc.c:1909  */
 
   #define YY_DECL extern int ndt_yylexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);

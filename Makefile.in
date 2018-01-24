@@ -26,6 +26,10 @@ default: FORCE
 	$(INSTALL) -m 755 libndtypes/$(LIBSHARED) python/ndtypes
 	cd python/ndtypes && ln -sf $(LIBSHARED) $(LIBSONAME) && ln -sf $(LIBSHARED) $(LIBNAME)
 
+parser: FORCE
+	cd libndtypes && $(MAKE) parser
+	cd libndtypes/compat && $(MAKE) parser
+
 runtest: default
 	cd libndtypes/tests && $(MAKE)
 

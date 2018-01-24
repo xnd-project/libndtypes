@@ -44,21 +44,9 @@ Makefile import.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c import.c -o .objs/import.o
 
 
-# Flex generated files
-bplexer.h:\
-Makefile bplexer.c
-
-bplexer.c:\
-Makefile bplexer.l ../ndtypes.h
-	flex -o bplexer.c -Pndt_bp --header-file=bplexer.h bplexer.l
-
-# Bison generated files
-bpgrammar.h:\
-Makefile bpgrammar.c
-
-bpgrammar.c:\
-Makefile bpgrammar.y ../ndtypes.h
+parser: FORCE
 	bison -Wall -o bpgrammar.c -pndt_bp --defines=bpgrammar.h bpgrammar.y
+	flex -o bplexer.c -Pndt_bp --header-file=bplexer.h bplexer.l
 
 
 FORCE:
