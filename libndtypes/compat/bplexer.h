@@ -2,9 +2,9 @@
 #define ndt_bpHEADER_H 1
 #define ndt_bpIN_HEADER 1
 
-#line 6 "bplexer.h"
+#line 5 "bplexer.h"
 
-#line 8 "bplexer.h"
+#line 7 "bplexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -12,10 +12,244 @@
 
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
-#define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 35
+#define YY_FLEX_MINOR_VERSION 6
+#define YY_FLEX_SUBMINOR_VERSION 4
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
+#endif
+
+#ifdef yy_create_buffer
+#define ndt_bp_create_buffer_ALREADY_DEFINED
+#else
+#define yy_create_buffer ndt_bp_create_buffer
+#endif
+
+#ifdef yy_delete_buffer
+#define ndt_bp_delete_buffer_ALREADY_DEFINED
+#else
+#define yy_delete_buffer ndt_bp_delete_buffer
+#endif
+
+#ifdef yy_scan_buffer
+#define ndt_bp_scan_buffer_ALREADY_DEFINED
+#else
+#define yy_scan_buffer ndt_bp_scan_buffer
+#endif
+
+#ifdef yy_scan_string
+#define ndt_bp_scan_string_ALREADY_DEFINED
+#else
+#define yy_scan_string ndt_bp_scan_string
+#endif
+
+#ifdef yy_scan_bytes
+#define ndt_bp_scan_bytes_ALREADY_DEFINED
+#else
+#define yy_scan_bytes ndt_bp_scan_bytes
+#endif
+
+#ifdef yy_init_buffer
+#define ndt_bp_init_buffer_ALREADY_DEFINED
+#else
+#define yy_init_buffer ndt_bp_init_buffer
+#endif
+
+#ifdef yy_flush_buffer
+#define ndt_bp_flush_buffer_ALREADY_DEFINED
+#else
+#define yy_flush_buffer ndt_bp_flush_buffer
+#endif
+
+#ifdef yy_load_buffer_state
+#define ndt_bp_load_buffer_state_ALREADY_DEFINED
+#else
+#define yy_load_buffer_state ndt_bp_load_buffer_state
+#endif
+
+#ifdef yy_switch_to_buffer
+#define ndt_bp_switch_to_buffer_ALREADY_DEFINED
+#else
+#define yy_switch_to_buffer ndt_bp_switch_to_buffer
+#endif
+
+#ifdef yypush_buffer_state
+#define ndt_bppush_buffer_state_ALREADY_DEFINED
+#else
+#define yypush_buffer_state ndt_bppush_buffer_state
+#endif
+
+#ifdef yypop_buffer_state
+#define ndt_bppop_buffer_state_ALREADY_DEFINED
+#else
+#define yypop_buffer_state ndt_bppop_buffer_state
+#endif
+
+#ifdef yyensure_buffer_stack
+#define ndt_bpensure_buffer_stack_ALREADY_DEFINED
+#else
+#define yyensure_buffer_stack ndt_bpensure_buffer_stack
+#endif
+
+#ifdef yylex
+#define ndt_bplex_ALREADY_DEFINED
+#else
+#define yylex ndt_bplex
+#endif
+
+#ifdef yyrestart
+#define ndt_bprestart_ALREADY_DEFINED
+#else
+#define yyrestart ndt_bprestart
+#endif
+
+#ifdef yylex_init
+#define ndt_bplex_init_ALREADY_DEFINED
+#else
+#define yylex_init ndt_bplex_init
+#endif
+
+#ifdef yylex_init_extra
+#define ndt_bplex_init_extra_ALREADY_DEFINED
+#else
+#define yylex_init_extra ndt_bplex_init_extra
+#endif
+
+#ifdef yylex_destroy
+#define ndt_bplex_destroy_ALREADY_DEFINED
+#else
+#define yylex_destroy ndt_bplex_destroy
+#endif
+
+#ifdef yyget_debug
+#define ndt_bpget_debug_ALREADY_DEFINED
+#else
+#define yyget_debug ndt_bpget_debug
+#endif
+
+#ifdef yyset_debug
+#define ndt_bpset_debug_ALREADY_DEFINED
+#else
+#define yyset_debug ndt_bpset_debug
+#endif
+
+#ifdef yyget_extra
+#define ndt_bpget_extra_ALREADY_DEFINED
+#else
+#define yyget_extra ndt_bpget_extra
+#endif
+
+#ifdef yyset_extra
+#define ndt_bpset_extra_ALREADY_DEFINED
+#else
+#define yyset_extra ndt_bpset_extra
+#endif
+
+#ifdef yyget_in
+#define ndt_bpget_in_ALREADY_DEFINED
+#else
+#define yyget_in ndt_bpget_in
+#endif
+
+#ifdef yyset_in
+#define ndt_bpset_in_ALREADY_DEFINED
+#else
+#define yyset_in ndt_bpset_in
+#endif
+
+#ifdef yyget_out
+#define ndt_bpget_out_ALREADY_DEFINED
+#else
+#define yyget_out ndt_bpget_out
+#endif
+
+#ifdef yyset_out
+#define ndt_bpset_out_ALREADY_DEFINED
+#else
+#define yyset_out ndt_bpset_out
+#endif
+
+#ifdef yyget_leng
+#define ndt_bpget_leng_ALREADY_DEFINED
+#else
+#define yyget_leng ndt_bpget_leng
+#endif
+
+#ifdef yyget_text
+#define ndt_bpget_text_ALREADY_DEFINED
+#else
+#define yyget_text ndt_bpget_text
+#endif
+
+#ifdef yyget_lineno
+#define ndt_bpget_lineno_ALREADY_DEFINED
+#else
+#define yyget_lineno ndt_bpget_lineno
+#endif
+
+#ifdef yyset_lineno
+#define ndt_bpset_lineno_ALREADY_DEFINED
+#else
+#define yyset_lineno ndt_bpset_lineno
+#endif
+
+#ifdef yyget_column
+#define ndt_bpget_column_ALREADY_DEFINED
+#else
+#define yyget_column ndt_bpget_column
+#endif
+
+#ifdef yyset_column
+#define ndt_bpset_column_ALREADY_DEFINED
+#else
+#define yyset_column ndt_bpset_column
+#endif
+
+#ifdef yywrap
+#define ndt_bpwrap_ALREADY_DEFINED
+#else
+#define yywrap ndt_bpwrap
+#endif
+
+#ifdef yyget_lval
+#define ndt_bpget_lval_ALREADY_DEFINED
+#else
+#define yyget_lval ndt_bpget_lval
+#endif
+
+#ifdef yyset_lval
+#define ndt_bpset_lval_ALREADY_DEFINED
+#else
+#define yyset_lval ndt_bpset_lval
+#endif
+
+#ifdef yyget_lloc
+#define ndt_bpget_lloc_ALREADY_DEFINED
+#else
+#define yyget_lloc ndt_bpget_lloc
+#endif
+
+#ifdef yyset_lloc
+#define ndt_bpset_lloc_ALREADY_DEFINED
+#else
+#define yyset_lloc ndt_bpset_lloc
+#endif
+
+#ifdef yyalloc
+#define ndt_bpalloc_ALREADY_DEFINED
+#else
+#define yyalloc ndt_bpalloc
+#endif
+
+#ifdef yyrealloc
+#define ndt_bprealloc_ALREADY_DEFINED
+#else
+#define yyrealloc ndt_bprealloc
+#endif
+
+#ifdef yyfree
+#define ndt_bpfree_ALREADY_DEFINED
+#else
+#define yyfree ndt_bpfree
 #endif
 
 /* First, we deal with  platform-specific or compiler-specific issues. */
@@ -88,29 +322,23 @@ typedef unsigned int flex_uint32_t;
 #define UINT32_MAX             (4294967295U)
 #endif
 
+#ifndef SIZE_MAX
+#define SIZE_MAX               (~(size_t)0)
+#endif
+
 #endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
-#ifdef __cplusplus
+/* begin standard C++ headers. */
 
-/* The "const" storage-class-modifier is valid. */
-#define YY_USE_CONST
-
-#else	/* ! __cplusplus */
-
-/* C99 requires __STDC__ to be defined as 1. */
-#if defined (__STDC__)
-
-#define YY_USE_CONST
-
-#endif	/* defined (__STDC__) */
-#endif	/* ! __cplusplus */
-
-#ifdef YY_USE_CONST
+/* TODO: this is always defined, so inline it */
 #define yyconst const
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define yynoreturn __attribute__((__noreturn__))
 #else
-#define yyconst
+#define yynoreturn
 #endif
 
 /* An opaque pointer. */
@@ -165,7 +393,7 @@ struct yy_buffer_state
 	/* Size of input buffer in bytes, not including room for EOB
 	 * characters.
 	 */
-	yy_size_t yy_buf_size;
+	int yy_buf_size;
 
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
@@ -193,7 +421,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -204,25 +432,25 @@ struct yy_buffer_state
 	};
 #endif /* !YY_STRUCT_YY_BUFFER_STATE */
 
-void ndt_bprestart (FILE *input_file ,yyscan_t yyscanner );
-void ndt_bp_switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-YY_BUFFER_STATE ndt_bp_create_buffer (FILE *file,int size ,yyscan_t yyscanner );
-void ndt_bp_delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void ndt_bp_flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void ndt_bppush_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-void ndt_bppop_buffer_state (yyscan_t yyscanner );
+void yyrestart ( FILE *input_file , yyscan_t yyscanner );
+void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size , yyscan_t yyscanner );
+void yy_delete_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void yy_flush_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void yypush_buffer_state ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+void yypop_buffer_state ( yyscan_t yyscanner );
 
-YY_BUFFER_STATE ndt_bp_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
-YY_BUFFER_STATE ndt_bp_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE ndt_bp_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_string ( const char *yy_str , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len , yyscan_t yyscanner );
 
-void *ndt_bpalloc (yy_size_t ,yyscan_t yyscanner );
-void *ndt_bprealloc (void *,yy_size_t ,yyscan_t yyscanner );
-void ndt_bpfree (void * ,yyscan_t yyscanner );
+void *yyalloc ( yy_size_t , yyscan_t yyscanner );
+void *yyrealloc ( void *, yy_size_t , yyscan_t yyscanner );
+void yyfree ( void * , yyscan_t yyscanner );
 
 /* Begin user sect3 */
 
-#define ndt_bpwrap(n) 1
+#define ndt_bpwrap(yyscanner) (/*CONSTCOND*/1)
 #define YY_SKIP_YYWRAP
 
 #define yytext_ptr yytext_r
@@ -243,46 +471,50 @@ void ndt_bpfree (void * ,yyscan_t yyscanner );
 
 #define YY_EXTRA_TYPE ndt_context_t *
 
-int ndt_bplex_init (yyscan_t* scanner);
+int yylex_init (yyscan_t* scanner);
 
-int ndt_bplex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
+int yylex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_t* scanner);
 
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int ndt_bplex_destroy (yyscan_t yyscanner );
+int yylex_destroy ( yyscan_t yyscanner );
 
-int ndt_bpget_debug (yyscan_t yyscanner );
+int yyget_debug ( yyscan_t yyscanner );
 
-void ndt_bpset_debug (int debug_flag ,yyscan_t yyscanner );
+void yyset_debug ( int debug_flag , yyscan_t yyscanner );
 
-YY_EXTRA_TYPE ndt_bpget_extra (yyscan_t yyscanner );
+YY_EXTRA_TYPE yyget_extra ( yyscan_t yyscanner );
 
-void ndt_bpset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
+void yyset_extra ( YY_EXTRA_TYPE user_defined , yyscan_t yyscanner );
 
-FILE *ndt_bpget_in (yyscan_t yyscanner );
+FILE *yyget_in ( yyscan_t yyscanner );
 
-void ndt_bpset_in  (FILE * in_str ,yyscan_t yyscanner );
+void yyset_in  ( FILE * _in_str , yyscan_t yyscanner );
 
-FILE *ndt_bpget_out (yyscan_t yyscanner );
+FILE *yyget_out ( yyscan_t yyscanner );
 
-void ndt_bpset_out  (FILE * out_str ,yyscan_t yyscanner );
+void yyset_out  ( FILE * _out_str , yyscan_t yyscanner );
 
-int ndt_bpget_leng (yyscan_t yyscanner );
+			int yyget_leng ( yyscan_t yyscanner );
 
-char *ndt_bpget_text (yyscan_t yyscanner );
+char *yyget_text ( yyscan_t yyscanner );
 
-int ndt_bpget_lineno (yyscan_t yyscanner );
+int yyget_lineno ( yyscan_t yyscanner );
 
-void ndt_bpset_lineno (int line_number ,yyscan_t yyscanner );
+void yyset_lineno ( int _line_number , yyscan_t yyscanner );
 
-YYSTYPE * ndt_bpget_lval (yyscan_t yyscanner );
+int yyget_column  ( yyscan_t yyscanner );
 
-void ndt_bpset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
+void yyset_column ( int _column_no , yyscan_t yyscanner );
 
-       YYLTYPE *ndt_bpget_lloc (yyscan_t yyscanner );
+YYSTYPE * yyget_lval ( yyscan_t yyscanner );
+
+void yyset_lval ( YYSTYPE * yylval_param , yyscan_t yyscanner );
+
+       YYLTYPE *yyget_lloc ( yyscan_t yyscanner );
     
-        void ndt_bpset_lloc (YYLTYPE * yylloc_param ,yyscan_t yyscanner );
+        void yyset_lloc ( YYLTYPE * yylloc_param , yyscan_t yyscanner );
     
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -290,18 +522,18 @@ void ndt_bpset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int ndt_bpwrap (yyscan_t yyscanner );
+extern "C" int yywrap ( yyscan_t yyscanner );
 #else
-extern int ndt_bpwrap (yyscan_t yyscanner );
+extern int yywrap ( yyscan_t yyscanner );
 #endif
 #endif
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char *,yyconst char *,int ,yyscan_t yyscanner);
+static void yy_flex_strncpy ( char *, const char *, int , yyscan_t yyscanner);
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * ,yyscan_t yyscanner);
+static int yy_flex_strlen ( const char * , yyscan_t yyscanner);
 #endif
 
 #ifndef YY_NO_INPUT
@@ -329,10 +561,10 @@ static int yy_flex_strlen (yyconst char * ,yyscan_t yyscanner);
 #ifndef YY_DECL
 #define YY_DECL_IS_OURS 1
 
-extern int ndt_bplex \
-               (YYSTYPE * yylval_param,YYLTYPE * yylloc_param ,yyscan_t yyscanner);
+extern int yylex \
+               (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner);
 
-#define YY_DECL int ndt_bplex \
+#define YY_DECL int yylex \
                (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner)
 #endif /* !YY_DECL */
 
@@ -350,9 +582,154 @@ extern int ndt_bplex \
 #undef YY_DECL
 #endif
 
+#ifndef ndt_bp_create_buffer_ALREADY_DEFINED
+#undef yy_create_buffer
+#endif
+#ifndef ndt_bp_delete_buffer_ALREADY_DEFINED
+#undef yy_delete_buffer
+#endif
+#ifndef ndt_bp_scan_buffer_ALREADY_DEFINED
+#undef yy_scan_buffer
+#endif
+#ifndef ndt_bp_scan_string_ALREADY_DEFINED
+#undef yy_scan_string
+#endif
+#ifndef ndt_bp_scan_bytes_ALREADY_DEFINED
+#undef yy_scan_bytes
+#endif
+#ifndef ndt_bp_init_buffer_ALREADY_DEFINED
+#undef yy_init_buffer
+#endif
+#ifndef ndt_bp_flush_buffer_ALREADY_DEFINED
+#undef yy_flush_buffer
+#endif
+#ifndef ndt_bp_load_buffer_state_ALREADY_DEFINED
+#undef yy_load_buffer_state
+#endif
+#ifndef ndt_bp_switch_to_buffer_ALREADY_DEFINED
+#undef yy_switch_to_buffer
+#endif
+#ifndef ndt_bppush_buffer_state_ALREADY_DEFINED
+#undef yypush_buffer_state
+#endif
+#ifndef ndt_bppop_buffer_state_ALREADY_DEFINED
+#undef yypop_buffer_state
+#endif
+#ifndef ndt_bpensure_buffer_stack_ALREADY_DEFINED
+#undef yyensure_buffer_stack
+#endif
+#ifndef ndt_bplex_ALREADY_DEFINED
+#undef yylex
+#endif
+#ifndef ndt_bprestart_ALREADY_DEFINED
+#undef yyrestart
+#endif
+#ifndef ndt_bplex_init_ALREADY_DEFINED
+#undef yylex_init
+#endif
+#ifndef ndt_bplex_init_extra_ALREADY_DEFINED
+#undef yylex_init_extra
+#endif
+#ifndef ndt_bplex_destroy_ALREADY_DEFINED
+#undef yylex_destroy
+#endif
+#ifndef ndt_bpget_debug_ALREADY_DEFINED
+#undef yyget_debug
+#endif
+#ifndef ndt_bpset_debug_ALREADY_DEFINED
+#undef yyset_debug
+#endif
+#ifndef ndt_bpget_extra_ALREADY_DEFINED
+#undef yyget_extra
+#endif
+#ifndef ndt_bpset_extra_ALREADY_DEFINED
+#undef yyset_extra
+#endif
+#ifndef ndt_bpget_in_ALREADY_DEFINED
+#undef yyget_in
+#endif
+#ifndef ndt_bpset_in_ALREADY_DEFINED
+#undef yyset_in
+#endif
+#ifndef ndt_bpget_out_ALREADY_DEFINED
+#undef yyget_out
+#endif
+#ifndef ndt_bpset_out_ALREADY_DEFINED
+#undef yyset_out
+#endif
+#ifndef ndt_bpget_leng_ALREADY_DEFINED
+#undef yyget_leng
+#endif
+#ifndef ndt_bpget_text_ALREADY_DEFINED
+#undef yyget_text
+#endif
+#ifndef ndt_bpget_lineno_ALREADY_DEFINED
+#undef yyget_lineno
+#endif
+#ifndef ndt_bpset_lineno_ALREADY_DEFINED
+#undef yyset_lineno
+#endif
+#ifndef ndt_bpget_column_ALREADY_DEFINED
+#undef yyget_column
+#endif
+#ifndef ndt_bpset_column_ALREADY_DEFINED
+#undef yyset_column
+#endif
+#ifndef ndt_bpwrap_ALREADY_DEFINED
+#undef yywrap
+#endif
+#ifndef ndt_bpget_lval_ALREADY_DEFINED
+#undef yyget_lval
+#endif
+#ifndef ndt_bpset_lval_ALREADY_DEFINED
+#undef yyset_lval
+#endif
+#ifndef ndt_bpget_lloc_ALREADY_DEFINED
+#undef yyget_lloc
+#endif
+#ifndef ndt_bpset_lloc_ALREADY_DEFINED
+#undef yyset_lloc
+#endif
+#ifndef ndt_bpalloc_ALREADY_DEFINED
+#undef yyalloc
+#endif
+#ifndef ndt_bprealloc_ALREADY_DEFINED
+#undef yyrealloc
+#endif
+#ifndef ndt_bpfree_ALREADY_DEFINED
+#undef yyfree
+#endif
+#ifndef ndt_bptext_ALREADY_DEFINED
+#undef yytext
+#endif
+#ifndef ndt_bpleng_ALREADY_DEFINED
+#undef yyleng
+#endif
+#ifndef ndt_bpin_ALREADY_DEFINED
+#undef yyin
+#endif
+#ifndef ndt_bpout_ALREADY_DEFINED
+#undef yyout
+#endif
+#ifndef ndt_bp_flex_debug_ALREADY_DEFINED
+#undef yy_flex_debug
+#endif
+#ifndef ndt_bplineno_ALREADY_DEFINED
+#undef yylineno
+#endif
+#ifndef ndt_bptables_fload_ALREADY_DEFINED
+#undef yytables_fload
+#endif
+#ifndef ndt_bptables_destroy_ALREADY_DEFINED
+#undef yytables_destroy
+#endif
+#ifndef ndt_bpTABLES_NAME_ALREADY_DEFINED
+#undef yyTABLES_NAME
+#endif
+
 #line 175 "bplexer.l"
 
 
-#line 357 "bplexer.h"
+#line 733 "bplexer.h"
 #undef ndt_bpIN_HEADER
 #endif /* ndt_bpHEADER_H */
