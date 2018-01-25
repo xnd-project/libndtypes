@@ -1,0 +1,12 @@
+
+
+Beta release v0.2.0b2
+=====================
+
+   - Fix build issues with recent versions of flex.
+
+   - Disable parser regeneration in the default build.
+
+   - Hide global symbols that are not part of the API.
+
+   - Add separate conda builds for the library and the Python module.

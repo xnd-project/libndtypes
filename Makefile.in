@@ -79,6 +79,7 @@ distclean: FORCE
 	cd python && rm -rf __pycache__ ndtypes.egg-info
 	cd python/ndtypes && rm -f *.so $(LIBSTATIC) $(LIBSHARED) $(LIBSONAME) $(LIBNAME) ndtypes.h
 	cd python/ndtypes && rm -rf __pycache__
+	cd .conda/ndtypes && rm -rf test
 
 FORCE:
 
