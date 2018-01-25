@@ -2,6 +2,10 @@ package:
   name: libndtypes
   version: 0.2.0b2
 
+requirements:
+  build:
+   - toolchain
+
 test:
   skip: True  # tests are in build.sh
 
