@@ -630,6 +630,7 @@ CONFIGURE_CFLAGS
 NDT_OPT
 NDT_WARN
 LD
+NDT_INSTALL_DOCS
 NDT_SYS_BIG_ENDIAN
 INSTALL
 INSTALL_DATA
@@ -702,6 +703,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_valgrind
+with_docs
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1325,6 +1327,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-valgrind         enable exact memcheck
+  --with-docs             install documentation - enabled by default
 
 Some influential environment variables:
   CC          C compiler command
@@ -3891,6 +3894,27 @@ fi
 
 
 fi
+
+# Without documentation:
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-docs" >&5
+$as_echo_n "checking for --with-docs... " >&6; }
+
+# Check whether --with-docs was given.
+if test "${with_docs+set}" = set; then :
+  withval=$with_docs;
+else
+  with_docs=yes
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_docs" >&5
+$as_echo "$with_docs" >&6; }
+if test "$with_docs" = yes; then
+   NDT_INSTALL_DOCS="install_docs"
+else
+   NDT_INSTALL_DOCS=""
+fi
+
+
 
 # Compiler dependent settings:
 NDT_WARN=

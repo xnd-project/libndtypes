@@ -49,14 +49,17 @@ coverage: FORCE
 	cd libndtypes/tests && @LIBRARY_PATH@=.. ./runtest
 	cd libndtypes && for file in *.c; do gcov -l "$$file" > /dev/null 2>&1; done
 
+install: install_libs @NDT_INSTALL_DOCS@
 
-install: FORCE
+install_libs: FORCE
 	$(INSTALL) -d -m 755 $(DESTDIR)$(includedir)
 	$(INSTALL) -m 644 libndtypes/ndtypes.h $(DESTDIR)$(includedir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libdir)
 	$(INSTALL) -m 644 libndtypes/$(LIBSTATIC) $(DESTDIR)$(libdir)
 	$(INSTALL) -m 755 libndtypes/$(LIBSHARED) $(DESTDIR)$(libdir)
 	cd $(DESTDIR)$(libdir) && ln -sf $(LIBSHARED) $(LIBSONAME) && ln -sf $(LIBSHARED) $(LIBNAME)
+
+install_docs: FORCE
 	$(INSTALL) -d -m 755 $(DESTDIR)$(docdir)
 	cp -R doc/* $(DESTDIR)$(docdir)
 

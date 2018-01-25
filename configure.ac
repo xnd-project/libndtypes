@@ -86,6 +86,20 @@ if test "$with_valgrind" != no; then
     )
 fi
 
+# Without documentation:
+AC_MSG_CHECKING([for --with-docs])
+AC_ARG_WITH([docs],
+  AS_HELP_STRING([--with-docs], [install documentation - enabled by default]),,
+  with_docs=yes)
+AC_MSG_RESULT([$with_docs])
+if test "$with_docs" = yes; then
+   NDT_INSTALL_DOCS="install_docs"
+else
+   NDT_INSTALL_DOCS=""
+fi
+
+AC_SUBST(NDT_INSTALL_DOCS)
+
 # Compiler dependent settings:
 NDT_WARN=
 NDT_OPT="-O2 -g"
