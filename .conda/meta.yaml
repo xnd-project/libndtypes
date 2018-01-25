@@ -1,6 +1,6 @@
 package:
   name: ndtypes
-  version: 0.2.0b1
+  version: 0.2.0b2
 
 requirements:
   build:

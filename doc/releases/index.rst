@@ -15,5 +15,6 @@ Releases.
 .. toctree::
 
    v0.2.0b1.rst
+   v0.2.0b2.rst
 
 

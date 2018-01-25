@@ -54,8 +54,8 @@ Otherwise:
 
 .. code-block:: sh
 
-   tar xvzf ndtypes-0.2.0b1.tar.gz
-   cd ndtypes-0.2.0b1
+   tar xvzf ndtypes-0.2.0b2.tar.gz
+   cd ndtypes-0.2.0b2
    python3 setup.py install
 
 

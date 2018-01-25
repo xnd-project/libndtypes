@@ -1,6 +1,6 @@
 
 AC_PREREQ([2.67])
-AC_INIT(ndtypes, 0.2.0b1, plures@anaconda.com, ndtypes, https://github.com/plures/)
+AC_INIT(ndtypes, 0.2.0b2, plures@anaconda.com, ndtypes, https://github.com/plures/)
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([
   Makefile
@@ -19,14 +19,14 @@ case $ac_sys_system in
         LIBRARY_PATH="DYLD_LIBRARY_PATH"
         LIBNAME="libndtypes.dylib"
         LIBSONAME="libndtypes.0.dylib"
-        LIBSHARED="libndtypes.0.2.0b1.dylib"
+        LIBSHARED="libndtypes.0.2.0b2.dylib"
         CONFIGURE_LDFLAGS="-dynamiclib -install_name @rpath/$LIBSONAME -compatibility_version 0.2 -current_version 0.2.0"
         ;;
     *)
         LIBRARY_PATH="LD_LIBRARY_PATH"
         LIBNAME="libndtypes.so"
         LIBSONAME="libndtypes.so.0"
-        LIBSHARED="libndtypes.so.0.2.0b1"
+        LIBSHARED="libndtypes.so.0.2.0b2"
         CONFIGURE_LDFLAGS="-shared -Wl,-soname,$LIBSONAME"
         ;;
 esac
