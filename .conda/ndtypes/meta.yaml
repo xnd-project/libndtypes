@@ -10,10 +10,10 @@ test:
 
 requirements:
   build:
-    - libndtypes-0.2.0b2
+    - libndtypes ==0.2.0b2
     - python >=3.6
   run:
-    - libndtypes-0.2.0b2
+    - libndtypes ==0.2.0b2
     - python >=3.6
 
 about:
