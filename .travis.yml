@@ -6,8 +6,6 @@ language: C
 matrix:
   include:
     - compiler: gcc
-      before_script:
-        - export CC=gcc-4.9
       script:
         - ./configure
         - make parser
@@ -16,8 +14,6 @@ matrix:
         - python3 setup.py test
 
     - compiler: gcc
-      before_script:
-        - export CC=gcc-4.9
       script:
         - ./configure --with-valgrind
         - make parser
