@@ -66,6 +66,7 @@ matrix:
         - bash Miniconda3-latest-Linux-x86_64.sh -b
         - export PATH=$HOME/miniconda3/bin:$PATH
         - conda install --yes conda-build
+        - conda update -n base conda
       script:
         - conda build .conda/libndtypes
         - conda build .conda/ndtypes
