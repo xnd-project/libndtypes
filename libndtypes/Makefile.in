@@ -196,6 +196,10 @@ Makefile values.c ndtypes.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c values.c -o .objs/values.o
 
 
+# Without these, GNU make automatically builds the parser.
+%.c: %.y
+%.c: %.l
+
 parser: FORCE
 	bison -Wall -o grammar.c -pndt_yy --defines=grammar.h grammar.y
 	flex -o lexer.c -Pndt_yy --header-file=lexer.h lexer.l

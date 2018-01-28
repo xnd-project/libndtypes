@@ -8,7 +8,6 @@ matrix:
     - compiler: gcc
       script:
         - ./configure
-        - make parser
         - make check
         - python3 setup.py module
         - python3 setup.py test
