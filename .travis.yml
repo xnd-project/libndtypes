@@ -14,6 +14,8 @@ matrix:
         - python3 setup.py test
 
     - compiler: gcc
+      before_script:
+        - sudo apt-get install valgrind
       script:
         - ./configure --with-valgrind
         - make parser
