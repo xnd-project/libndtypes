@@ -203,7 +203,7 @@ def ndtypes_ext():
             os.chdir("..")
 
     else:
-        libraries = ["ndtypes"]
+        libraries = [":libndtypes.so.0.2.0b2"]
         extra_compile_args = ["-Wextra", "-Wno-missing-field-initializers", "-std=c11"]
         if sys.platform == "darwin":
             extra_link_args = ["-Wl,-rpath,@loader_path"]
