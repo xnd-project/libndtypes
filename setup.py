@@ -85,7 +85,12 @@ else:
     LIBSONAME = "libndtypes.so.0"
     LIBSHARED = "libndtypes.so.0.2.0b2"
 
-LIBNDTYPESDIR = "%s/ndtypes" % get_python_lib()
+if "install" in sys.argv or "bdist_wheel" in sys.argv:
+    LIBNDTYPESDIR = "%s/ndtypes" % get_python_lib()
+    INSTALL_LIBS = True
+else:
+    LIBNDTYPESDIR = "../python/ndtypes"
+    INSTALL_LIBS = False
 
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
@@ -254,9 +259,11 @@ setup (
     ],
     package_dir = {"": "python"},
     packages = ["ndtypes"],
-    package_data = {"ndtypes": ["libndtypes*", "ndtypes.h", "pyndtypes.h"]},
+    package_data = {"ndtypes": ["libndtypes*", "ndtypes.h", "pyndtypes.h"] if INSTALL_LIBS else []},
     ext_modules = [ndtypes_ext()],
 )
 
 copy_ext()
-make_symlinks()
+
+if INSTALL_LIBS:
+    make_symlinks()
