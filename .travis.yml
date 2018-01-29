@@ -36,14 +36,11 @@ matrix:
       os: osx
       compiler: clang
       before_install:
-        - brew update
-        - brew install bison; brew link bison --force
         - brew install python3
       before_script:
         - export CC=clang
       script:
         - ./configure
-        - make parser
         - make check
         - python3 setup.py module
         - python3 setup.py test
