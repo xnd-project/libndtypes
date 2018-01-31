@@ -120,8 +120,6 @@ def copy_ext():
         shutil.copy2(pathlist[0], "python/ndtypes")
 
 def make_symlinks():
-    if sys.platform == "win32" or "install" not in sys.argv:
-        return
     os.chdir(LIBNDTYPESDIR)
     os.chmod(LIBSHARED, 0o755)
     os.system("ln -sf %s %s" % (LIBSHARED, LIBSONAME))
@@ -267,5 +265,5 @@ setup (
 
 copy_ext()
 
-if INSTALL_LIBS:
+if INSTALL_LIBS and sys.platform != "win32":
     make_symlinks()
