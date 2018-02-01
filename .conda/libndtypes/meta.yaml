@@ -2,9 +2,16 @@ package:
   name: libndtypes
   version: 0.2.0b2
 
+build:
+  number: {{ GIT_DESCRIBE_NUMBER }}
+  string: {{ GIT_BUILD_STR }}
+
 test:
   skip: True  # tests are in build.sh
 
 about:
   home: https://github.com/plures/
   license: BSD 3-clause
+
+source:
+  git_url: ../../
