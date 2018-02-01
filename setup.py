@@ -259,7 +259,9 @@ setup (
     ],
     package_dir = {"": "python"},
     packages = ["ndtypes"],
-    package_data = {"ndtypes": ["libndtypes*", "ndtypes.h", "pyndtypes.h"] if INSTALL_LIBS else []},
+    package_data = {"ndtypes": ["libndtypes*", "ndtypes.h", "pyndtypes.h"]
+                               if INSTALL_LIBS
+                               else ["pyndtypes.h"]},
     ext_modules = [ndtypes_ext()],
 )
 
