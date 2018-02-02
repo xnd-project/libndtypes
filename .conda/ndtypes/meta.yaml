@@ -25,4 +25,4 @@ about:
   license: BSD 3-clause
 
 source:
-  git_url: ../../
+  git_url: https://github.com/plures/ndtypes.git
