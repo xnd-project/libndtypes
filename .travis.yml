@@ -47,6 +47,7 @@ matrix:
 
     - compiler: conda
       install:
+        - cd ..
         - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
         - bash Miniconda3-latest-Linux-x86_64.sh -b
         - export PATH=$HOME/miniconda3/bin:$PATH
@@ -54,6 +55,28 @@ matrix:
         - conda install --yes conda-build
         - conda install --yes anaconda-client
       script:
+        - cd ndtypes
+        - conda build .conda/libndtypes
+        - conda build .conda/ndtypes
+        - export LIBNDTYPES=`conda build --output .conda/libndtypes`
+        - export NDTYPES=`conda build --output .conda/ndtypes`
+        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $LIBNDTYPES --user plures --channel plures; fi
+        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $NDTYPES --user plures --channel plures; fi
+
+    - language: objective-c
+      os: osx
+      compiler: conda
+      install:
+        - cd ..
+        - wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+        - bash Miniconda3-latest-MacOSX-x86_64.sh -b
+        - export PATH=$HOME/miniconda3/bin:$PATH
+        - export CC=clang
+        - conda update --yes conda
+        - conda install --yes conda-build
+        - conda install --yes anaconda-client
+      script:
+        - cd ndtypes
         - conda build .conda/libndtypes
         - conda build .conda/ndtypes
         - export LIBNDTYPES=`conda build --output .conda/libndtypes`
