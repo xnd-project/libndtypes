@@ -52,6 +52,7 @@ matrix:
         - export PATH=$HOME/miniconda3/bin:$PATH
         - conda update --yes conda
         - conda install --yes conda-build
+        - conda install --yes anaconda-client
       script:
         - conda build .conda/libndtypes
         - conda build .conda/ndtypes
