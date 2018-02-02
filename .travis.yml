@@ -60,8 +60,8 @@ matrix:
         - conda build .conda/ndtypes
         - export LIBNDTYPES=`conda build --output .conda/libndtypes`
         - export NDTYPES=`conda build --output .conda/ndtypes`
-        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $LIBNDTYPES --user plures --channel plures; fi
-        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $NDTYPES --user plures --channel plures; fi
+        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $LIBNDTYPES --user plures; fi
+        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $NDTYPES --user plures; fi
 
     - language: objective-c
       os: osx
@@ -81,8 +81,8 @@ matrix:
         - conda build .conda/ndtypes
         - export LIBNDTYPES=`conda build --output .conda/libndtypes`
         - export NDTYPES=`conda build --output .conda/ndtypes`
-        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $LIBNDTYPES --user plures --channel plures; fi
-        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $NDTYPES --user plures --channel plures; fi
+        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $LIBNDTYPES --user plures; fi
+        - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $NDTYPES --user plures; fi
 
 env:
   global:
