@@ -18,8 +18,8 @@ build_script:
   - ps: $NDTYPES = (conda build --output .conda/ndtypes) | Out-String
 
 on_success:
-  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { cmd /C anaconda --token $env:anaconda_token upload "$LIBNDTYPES" --user plures --channel main "2>&1" }
-  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { cmd /C anaconda --token $env:anaconda_token upload "$NDTYPES" --user plures --channel main "2>&1" }
+  - if not defined APPVEYOR_PULL_REQUEST_NUMBER (anaconda --token "%anaconda_token%" upload "%LIBNDTYPES%" --user plures --channel main)
+  - if not defined APPVEYOR_PULL_REQUEST_NUMBER (anaconda --token "%anaconda_token%" upload "%NDTYPES%" --user plures --channel main)
 
 environment:
   anaconda_token:
