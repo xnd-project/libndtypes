@@ -11,6 +11,6 @@ build_script:
   - SET PATH=C:\Py;C:\Py\Scripts;C:\Py\Library\bin;%PATH%
   - conda update --yes conda
   - conda install --yes conda-build
-  - conda install --yes anaconda_client
+  - conda install --yes anaconda-client
   - conda-build .conda/libndtypes
   - conda-build .conda/ndtypes
