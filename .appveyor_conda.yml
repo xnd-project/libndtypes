@@ -9,8 +9,8 @@ build_script:
   - ps: Start-FileDownload "https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe" C:\Miniconda.exe
   - cmd: C:\Miniconda.exe /S /D=C:\Py
   - SET PATH=C:\Py;C:\Py\Scripts;C:\Py\Library\bin;%PATH%
-  - conda --yes update conda
-  - conda --yes install conda-build
-  - conda --yes install anaconda_client
+  - conda update --yes conda
+  - conda install --yes conda-build
+  - conda install --yes anaconda_client
   - conda-build .conda/libndtypes
   - conda-build .conda/ndtypes
