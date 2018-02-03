@@ -1,0 +1,15 @@
+skip_tags: true
+
+matrix:
+  fast_finish: true
+
+os: Visual Studio 2015
+
+build_script:
+  - ps: Start-FileDownload "https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe" C:\Miniconda.exe
+  - cmd: C:\Miniconda.exe /S
+  - conda --yes update conda
+  - conda --yes install conda-build
+  - conda --yes install anaconda_client
+  - conda-build .conda/libndtypes
+  - conda-build .conda/ndtypes
