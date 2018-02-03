@@ -14,14 +14,12 @@ build_script:
   - conda install --yes anaconda-client
   - conda-build .conda/libndtypes
   - conda-build .conda/ndtypes
-  - conda build --output .conda/libndtypes > tmp_libndtypes
-  - conda build --output .conda/ndtypes > tmp_ndtypes
-  - set /p LIBNDTYPES=<tmp_libndtypes
-  - set /p NDTYPES=<tmp_ndtypes
+  - ps: $env:LIBNDTYPES = (conda build --output .conda/libndtypes)
+  - ps: $env:NDTYPES = (conda build --output .conda/libndtypes)
 
 on_success:
-  - if not defined APPVEYOR_PULL_REQUEST_NUMBER (anaconda --token $env:anaconda_token upload %LIBNDTYPES% --user plures --channel main)
-  - if not defined APPVEYOR_PULL_REQUEST_NUMBER (anaconda --token $env:anaconda_token upload %NDTYPES% --user plures --channel main)
+  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { cmd /C anaconda --token $env:anaconda_token upload $env:LIBNDTYPES --user plures --channel main "2>&1" }
+  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { cmd /C anaconda --token $env:anaconda_token upload $env:NDTYPES --user plures --channel main "2>&1" }
 
 environment:
   anaconda_token:
