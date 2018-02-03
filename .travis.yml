@@ -83,8 +83,8 @@ matrix:
         - conda build .conda/ndtypes
         - export LIBNDTYPES=`conda build --output .conda/libndtypes`
         - export NDTYPES=`conda build --output .conda/ndtypes`
-        - anaconda --token $ANACONDA_TOKEN upload $LIBNDTYPES --user plures --channel main; fi
-        - anaconda --token $ANACONDA_TOKEN upload $NDTYPES --user plures --channel main; fi
+        - anaconda --token $ANACONDA_TOKEN upload $LIBNDTYPES --user plures --channel main
+        - anaconda --token $ANACONDA_TOKEN upload $NDTYPES --user plures --channel main
 
 env:
   global:
