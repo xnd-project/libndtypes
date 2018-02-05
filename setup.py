@@ -79,11 +79,11 @@ Links
 if sys.platform == "darwin":
     LIBNAME = "libndtypes.dylib"
     LIBSONAME = "libndtypes.0.dylib"
-    LIBSHARED = "libndtypes.0.2.0b2.dylib"
+    LIBSHARED = "libndtypes.0.2.0dev3.dylib"
 else:
     LIBNAME = "libndtypes.so"
     LIBSONAME = "libndtypes.so.0"
-    LIBSHARED = "libndtypes.so.0.2.0b2"
+    LIBSHARED = "libndtypes.so.0.2.0dev3"
 
 if "install" in sys.argv or "bdist_wheel" in sys.argv:
     LIBNDTYPESDIR = "%s/ndtypes" % get_python_lib()
@@ -185,7 +185,7 @@ def ndtypes_ext():
     sources = ["python/ndtypes/_ndtypes.c"]
 
     if sys.platform == "win32":
-        libraries = ["libndtypes-0.2.0b2.dll"]
+        libraries = ["libndtypes-0.2.0dev3.dll"]
         extra_compile_args = ["/DIMPORT"]
         extra_link_args = []
         runtime_library_dirs = []
@@ -232,7 +232,7 @@ def ndtypes_ext():
 
 setup (
     name = "ndtypes",
-    version = "0.2.0b2",
+    version = "0.2.0dev3",
     description = DESCRIPTION,
     long_description = LONG_DESCRIPTION,
     url = "https://github.com/plures/ndtypes",

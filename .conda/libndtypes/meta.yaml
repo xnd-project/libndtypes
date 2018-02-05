@@ -1,6 +1,6 @@
 package:
   name: libndtypes
-  version: 0.2.0b2
+  version: 0.2.0dev3
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}

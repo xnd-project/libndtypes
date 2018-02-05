@@ -3,9 +3,9 @@
 #                Visual C (nmake) Makefile for libndtypes
 # ======================================================================
 
-LIBSTATIC = libndtypes-0.2.0b2.lib
-LIBIMPORT = libndtypes-0.2.0b2.dll.lib
-LIBSHARED = libndtypes-0.2.0b2.dll
+LIBSTATIC = libndtypes-0.2.0dev3.lib
+LIBIMPORT = libndtypes-0.2.0dev3.dll.lib
+LIBSHARED = libndtypes-0.2.0dev3.dll
 
 OPT = /MT /Ox /GS /EHsc
 OPT_SHARED = /DEXPORT /MD /Ox /GS /EHsc /Fo.objs^\

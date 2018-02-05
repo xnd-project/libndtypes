@@ -1,8 +1,8 @@
 
 SRCDIR = ..
 
-LIBSTATIC = libndtypes-0.2.0b2.lib
-LIBSHARED = libndtypes-0.2.0b2.dll.lib
+LIBSTATIC = libndtypes-0.2.0dev3.lib
+LIBSHARED = libndtypes-0.2.0dev3.dll.lib
 
 
 CC = cl.exe
