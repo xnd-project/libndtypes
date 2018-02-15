@@ -45,7 +45,7 @@ matrix:
         - python3 setup.py module
         - python3 setup.py test
 
-    - compiler: python
+    - compiler: gcc
       script:
         - python3 setup.py build
         - python3 setup.py test
