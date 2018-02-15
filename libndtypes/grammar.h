@@ -142,8 +142,9 @@ union YYSTYPE
     uint32_t uint32;
     char *string;
     ndt_string_seq_t *string_seq;
+    ndt_type_seq_t *type_seq;
 
-#line 147 "grammar.h" /* yacc.c:1909  */
+#line 148 "grammar.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -175,6 +176,6 @@ int ndt_yyparse (yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t 
   extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx, const char *msg);
 
-#line 179 "grammar.h" /* yacc.c:1909  */
+#line 180 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_NDT_YY_GRAMMAR_H_INCLUDED  */

@@ -54,8 +54,6 @@ static const char *
 ndt_type_keyword(const ndt_t *t)
 {
     switch (t->tag) {
-    case Void: return "void";
-
     case AnyKind: return "Any";
     case FixedDim: return "fixed";
     case VarDim: return "var";
@@ -118,7 +116,6 @@ ndt_type_name(const ndt_t *t)
     switch (t->tag) {
     case Module: return "Module";
     case Function: return "Function";
-    case Void: return "Void";
 
     case AnyKind: return "Any";
 
@@ -276,6 +273,52 @@ indent(ndt_context_t *ctx, buf_t *buf, int n)
 /******************************************************************************/
 
 static int datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx);
+
+static int
+function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
+{
+    int64_t i;
+    int n;
+
+    assert(t->tag == Function);
+
+    if (t->Function.in == 0) {
+        n = ndt_snprintf(ctx, buf, "void");
+        if (n < 0) return -1;
+    }
+    else {
+        for (i = 0; i < t->Function.in; i++) {
+            if (i >= 1) {
+                n = ndt_snprintf(ctx, buf, ", ");
+                if (n < 0) return -1;
+            }
+
+            n = datashape(buf, t->Function.types[i], d, ctx);
+            if (n < 0) return -1;
+        }
+    }
+
+    n = ndt_snprintf(ctx, buf, " -> ");
+    if (n < 0) return -1;
+
+    if (t->Function.out == 0) {
+        n = ndt_snprintf(ctx, buf, "void");
+        if (n < 0) return -1;
+    }
+    else {
+        for (i = t->Function.in; i < t->Function.shape; i++) {
+            if (i >= t->Function.in + 1) {
+                n = ndt_snprintf(ctx, buf, ", ");
+                if (n < 0) return -1;
+            }
+
+            n = datashape(buf, t->Function.types[i], d, ctx);
+            if (n < 0) return -1;
+        }
+    }
+
+    return 0;
+}
 
 static int
 tuple_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
@@ -447,45 +490,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         }
 
         case Function: {
-            ndt_t *pos = t->Function.pos;
-            ndt_t *kwds = t->Function.kwds;
-
-            n = ndt_snprintf(ctx, buf, "(");
-            if (n < 0) return -1;
-
-            if (pos->Tuple.shape > 0) {
-                n = tuple_fields(buf, pos, d, ctx);
-                if (n < 0) return -1;
-
-                n = comma_variadic_flag(buf, pos->Tuple.flag, INT_MIN, ctx);
-                if (n < 0) return -1;
-            }
-            else {
-                n = variadic_flag(buf, pos->Tuple.flag, ctx);
-                if (n < 0) return -1;
-            }
-
-            if (kwds->Record.shape > 0) {
-                if (pos->Tuple.flag == Variadic || pos->Tuple.shape > 0) {
-                    n = ndt_snprintf(ctx, buf, ", ");
-                    if (n < 0) return -1;
-                }
-
-                n = record_fields(buf, kwds, INT_MIN, ctx);
-                if (n < 0) return -1;
-
-                n = comma_variadic_flag(buf, kwds->Record.flag, INT_MIN, ctx);
-                if (n < 0) return -1;
-            }
-            else {
-                n = variadic_flag(buf, kwds->Record.flag, ctx);
-                if (n < 0) return -1;
-            }
-
-            n = ndt_snprintf(ctx, buf, ") -> ");
-            if (n < 0) return -1;
-
-            return datashape(buf, t->Function.ret, d, ctx);
+            return function_types(buf, t, d, ctx);
         }
 
         case FixedDim: {
@@ -647,7 +652,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
         case AnyKind:
         case ScalarKind:
-        case Void: case Bool:
+        case Bool:
         case SignedKind:
         case Int8: case Int16: case Int32: case Int64:
         case UnsignedKind:
@@ -746,6 +751,55 @@ ast_common_attributes_with_newline(buf_t *buf, const ndt_t *t, int d,
     if (n < 0) return -1;
 
     return ndt_snprintf(ctx, buf, "\n");
+}
+
+static int
+ast_function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
+{
+    int64_t i;
+    int n;
+
+    assert(t->tag == Function);
+
+    for (i = 0; i < t->Function.in; i++) {
+        if (i >= 1) {
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+        }
+
+        n = ndt_snprintf_d(ctx, buf, d, "ParamIn(\n");
+        if (n < 0) return -1;
+
+        n = ndt_snprintf_d(ctx, buf, d+2, "type=");
+        if (n < 0) return -1;
+
+        n = ast_datashape(buf, t->Function.types[i], d+5+2, 1, ctx);
+        if (n < 0) return -1;
+
+        n = ndt_snprintf_d(ctx, buf, d, ")");
+        if (n < 0) return -1;
+    }
+
+    for (i = 0; i < t->Function.shape; i++) {
+        if (i >= 1) {
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+        }
+
+        n = ndt_snprintf_d(ctx, buf, d, "ParamOut(\n");
+        if (n < 0) return -1;
+
+        n = ndt_snprintf_d(ctx, buf, d+2, "type=");
+        if (n < 0) return -1;
+
+        n = ast_datashape(buf, t->Function.types[i], d+5+2, 1, ctx);
+        if (n < 0) return -1;
+
+        n = ndt_snprintf_d(ctx, buf, d, ")");
+        if (n < 0) return -1;
+    }
+
+    return 0;
 }
 
 static int
@@ -925,40 +979,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
         }
 
         case Function: {
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Function(\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "pos=");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->Function.pos, d+4+2, 1, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "kwds=");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->Function.kwds, d+5+2, 1, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "ret=");
-            if (n < 0) return -1;
-
-            n = ast_datashape(buf, t->Function.ret, d+4+2, 1, ctx);
-            if (n < 0) return -1;
-
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-
-            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, ")");
+            return ast_function_types(buf, t, d+2, ctx);
         }
 
         case FixedDim: {
@@ -1271,7 +1292,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
         }
 
         case AnyKind: case ScalarKind:
-        case Void: case Bool:
+        case Bool:
         case SignedKind:
         case Int8: case Int16: case Int32: case Int64:
         case UnsignedKind:

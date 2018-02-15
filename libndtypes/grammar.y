@@ -96,13 +96,13 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
     uint32_t uint32;
     char *string;
     ndt_string_seq_t *string_seq;
+    ndt_type_seq_t *type_seq;
 }
 
 %start input
 %type <ndt> input
 %type <ndt> datashape
 %type <ndt> datashape_or_module
-%type <ndt> datashape_or_void
 %type <ndt> dimensions
 %type <ndt> dimensions_nooption
 %type <ndt> dimensions_tail
@@ -135,6 +135,9 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %type <string> untyped_value
 %type <string_seq> untyped_value_seq
+
+%type <type_seq> type_seq
+%type <type_seq> type_seq_or_void
 
 %type <attribute> attribute
 %type <attribute_seq> attribute_seq
@@ -185,6 +188,7 @@ ERRTOKEN
 %destructor { ndt_attr_seq_del($$); } <attribute_seq>
 %destructor { ndt_free($$); } <string>
 %destructor { ndt_string_seq_del($$); } <string_seq>
+%destructor { ndt_type_seq_del($$); } <type_seq>
 
 %%
 
@@ -194,6 +198,7 @@ input:
 /* types (optionally with module qualifier) */
 datashape_or_module:
   datashape                        { $$ = $1; }
+| function_type                    { $$ = $1; }
 | NAME_UPPER COLON COLON datashape { $$ = ndt_module($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 /* types */
@@ -226,7 +231,6 @@ dtype:
 | scalar                                 { $$ = $1; }
 | tuple_type                             { $$ = $1; }
 | record_type                            { $$ = $1; }
-| function_type                          { $$ = $1; }
 | NAME_LOWER                             { $$ = ndt_nominal($1, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LPAREN datashape RPAREN     { $$ = ndt_constr($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LPAREN attribute_seq RPAREN { (void)$1; (void)$3; ndt_free($1); ndt_attr_seq_del($3); $$ = NULL;
@@ -389,18 +393,13 @@ untyped_value:
 | FLOATNUMBER { $$ = $1; if ($$ == NULL) YYABORT; }
 | STRINGLIT   { $$ = $1; if ($$ == NULL) YYABORT; }
 
-datashape_or_void:
-  datashape { $$ = $1; if ($$ == NULL) YYABORT; }
-| VOID      { $$ = ndt_void(ctx); if ($$ == NULL) YYABORT; }
-
 function_type:
-  tuple_type RARROW datashape_or_void
-    { $$ = mk_function_from_tuple($3, $1, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN record_field_seq comma_variadic_flag RPAREN RARROW datashape_or_void
-    { $$ = mk_function($6, Nonvariadic, NULL, $3, $2, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN ELLIPSIS COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape_or_void
-    { $$ = mk_function($8, Variadic, NULL, $5, $4, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN tuple_field_seq COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape_or_void
-    { $$ = mk_function($8, Nonvariadic, $2, $5, $4, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN tuple_field_seq COMMA ELLIPSIS COMMA record_field_seq comma_variadic_flag RPAREN RARROW datashape_or_void
-    { $$ = mk_function($10, Variadic, $2, $7, $6, ctx); if ($$ == NULL) YYABORT; }
+  type_seq_or_void RARROW type_seq_or_void { $$ = mk_function($1, $3, ctx); if ($$ == NULL) YYABORT; }
+
+type_seq_or_void:
+  type_seq { $$ = $1; if ($$ == NULL) YYABORT; }
+| VOID     { $$ = ndt_type_seq_empty(ctx); if ($$ == NULL) YYABORT; }
+
+type_seq:
+  datashape                { $$ = ndt_type_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
+| type_seq COMMA datashape { $$ = ndt_type_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }

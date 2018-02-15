@@ -36,6 +36,7 @@
 
 
 const match_testcase_t match_tests[] = {
+
   { "2395344366 * Any",
     "2395344366 * Any",
     1 },
@@ -1984,48 +1985,16 @@ const match_testcase_t match_tests[] = {
     "?() -> (Any, ...)",
     1 },
 
-  { "10 * (a : Any, ...) -> Any",
-    "10 * (a : Any, ...) -> Any",
+  { "10 * (Any, ...) -> Any",
+    "10 * (Any, ...) -> Any",
     1 },
 
-  { "(a : Any) -> int64",
-    "(a : Any) -> int64",
+  { "Any -> int64",
+    "Any -> int64",
     1 },
 
-  { "10 * (a : Any, ...) -> Any",
-    "10 * (a : Any, ...) -> Any",
-    1 },
-
-  { "(a : Any, ...) -> Any",
-    "(a : Any, ...) -> Any",
-    1 },
-
-  { "?(a : Any, ...) -> Any",
-    "?(a : Any, ...) -> Any",
-    1 },
-
-  { "10 * (x : int64, a : Any, ...) -> Any",
-    "10 * (x : int64, a : Any, ...) -> Any",
-    1 },
-
-  { "(x : int64, a : Any, ...) -> Any",
-    "(x : int64, a : Any, ...) -> Any",
-    1 },
-
-  { "?(x : int64, a : Any, ...) -> Any",
-    "?(x : int64, a : Any, ...) -> Any",
-    1 },
-
-  { "10 * (x : int64, x : int64, a : Any, ...) -> Any",
-    "10 * (x : int64, x : int64, a : Any, ...) -> Any",
-    1 },
-
-  { "(x : int64, x : int64, a : Any, ...) -> Any",
-    "(x : int64, x : int64, a : Any, ...) -> Any",
-    1 },
-
-  { "?(x : int64, x : int64, a : Any, ...) -> Any",
-    "?(x : int64, x : int64, a : Any, ...) -> Any",
+  { "10 * Any, float64 -> Any",
+    "10 * float32, float64-> Any",
     1 },
 
   { "10 * (Any) -> Any",
@@ -2063,186 +2032,6 @@ const match_testcase_t match_tests[] = {
 
   { "?(Any, ...) -> Any",
     "?(Any, ...) -> Any",
-    1 },
-
-  { "10 * (Any, a : Any) -> Any",
-    "10 * (Any, a : Any) -> Any",
-    1 },
-
-  { "(Any, a : Any) -> Any",
-    "(Any, a : Any) -> Any",
-    1 },
-
-  { "?(Any, a : Any) -> Any",
-    "?(Any, a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, ..., a : Any) -> Any",
-    "10 * (Any, ..., a : Any) -> Any",
-    1 },
-
-  { "(Any, ..., a : Any) -> Any",
-    "(Any, ..., a : Any) -> Any",
-    1 },
-
-  { "?(Any, ..., a : Any) -> Any",
-    "?(Any, ..., a : Any) -> Any",
-    1 },
-
-  { "10 * (int64, Any, a : Any) -> Any",
-    "10 * (int64, Any, a : Any) -> Any",
-    1 },
-
-  { "(int64, Any, a : Any) -> Any",
-    "(int64, Any, a : Any) -> Any",
-    1 },
-
-  { "?(int64, Any, a : Any) -> Any",
-    "?(int64, Any, a : Any) -> Any",
-    1 },
-
-  { "10 * (int64, Any, ..., a : Any) -> Any",
-    "10 * (int64, Any, ..., a : Any) -> Any",
-    1 },
-
-  { "(int64, Any, ..., a : Any) -> Any",
-    "(int64, Any, ..., a : Any) -> Any",
-    1 },
-
-  { "?(int64, Any, ..., a : Any) -> Any",
-    "?(int64, Any, ..., a : Any) -> Any",
-    1 },
-
-  { "10 * (int64, int64, Any, a : Any) -> Any",
-    "10 * (int64, int64, Any, a : Any) -> Any",
-    1 },
-
-  { "(int64, int64, Any, a : Any) -> Any",
-    "(int64, int64, Any, a : Any) -> Any",
-    1 },
-
-  { "?(int64, int64, Any, a : Any) -> Any",
-    "?(int64, int64, Any, a : Any) -> Any",
-    1 },
-
-  { "10 * (int64, int64, Any, ..., a : Any) -> Any",
-    "10 * (int64, int64, Any, ..., a : Any) -> Any",
-    1 },
-
-  { "(int64, int64, Any, ..., a : Any) -> Any",
-    "(int64, int64, Any, ..., a : Any) -> Any",
-    1 },
-
-  { "?(int64, int64, Any, ..., a : Any) -> Any",
-    "?(int64, int64, Any, ..., a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, a : Any) -> Any",
-    "10 * (Any, a : Any) -> Any",
-    1 },
-
-  { "(Any, a : Any) -> Any",
-    "(Any, a : Any) -> Any",
-    1 },
-
-  { "?(Any, a : Any) -> Any",
-    "?(Any, a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, x : int64, a : Any) -> Any",
-    "10 * (Any, x : int64, a : Any) -> Any",
-    1 },
-
-  { "(Any, x : int64, a : Any) -> Any",
-    "(Any, x : int64, a : Any) -> Any",
-    1 },
-
-  { "?(Any, x : int64, a : Any) -> Any",
-    "?(Any, x : int64, a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, x : int64, x : int64, a : Any) -> Any",
-    "10 * (Any, x : int64, x : int64, a : Any) -> Any",
-    1 },
-
-  { "(Any, x : int64, x : int64, a : Any) -> Any",
-    "(Any, x : int64, x : int64, a : Any) -> Any",
-    1 },
-
-  { "?(Any, x : int64, x : int64, a : Any) -> Any",
-    "?(Any, x : int64, x : int64, a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, a : Any) -> Any",
-    "10 * (Any, a : Any) -> Any",
-    1 },
-
-  { "(Any, a : Any) -> Any",
-    "(Any, a : Any) -> Any",
-    1 },
-
-  { "?(Any, a : Any) -> Any",
-    "?(Any, a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, ..., a : Any) -> Any",
-    "10 * (Any, ..., a : Any) -> Any",
-    1 },
-
-  { "(Any, ..., a : Any) -> Any",
-    "(Any, ..., a : Any) -> Any",
-    1 },
-
-  { "?(Any, ..., a : Any) -> Any",
-    "?(Any, ..., a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, a : Any) -> Any",
-    "10 * (Any, a : Any) -> Any",
-    1 },
-
-  { "(Any, a : Any) -> Any",
-    "(Any, a : Any) -> Any",
-    1 },
-
-  { "?(Any, a : Any) -> Any",
-    "?(Any, a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, ..., a : Any) -> Any",
-    "10 * (Any, ..., a : Any) -> Any",
-    1 },
-
-  { "(Any, ..., a : Any) -> Any",
-    "(Any, ..., a : Any) -> Any",
-    1 },
-
-  { "?(Any, ..., a : Any) -> Any",
-    "?(Any, ..., a : Any) -> Any",
-    1 },
-
-  { "10 * (Any, a : Any, ...) -> Any",
-    "10 * (Any, a : Any, ...) -> Any",
-    1 },
-
-  { "(Any, a : Any, ...) -> Any",
-    "(Any, a : Any, ...) -> Any",
-    1 },
-
-  { "?(Any, a : Any, ...) -> Any",
-    "?(Any, a : Any, ...) -> Any",
-    1 },
-
-  { "10 * (Any, ..., a : Any, ...) -> Any",
-    "10 * (Any, ..., a : Any, ...) -> Any",
-    1 },
-
-  { "(Any, ..., a : Any, ...) -> Any",
-    "(Any, ..., a : Any, ...) -> Any",
-    1 },
-
-  { "?(Any, ..., a : Any, ...) -> Any",
-    "?(Any, ..., a : Any, ...) -> Any",
     1 },
 
   { "10 * Up",
@@ -2490,8 +2279,8 @@ const match_testcase_t match_tests[] = {
     "(...) -> (...)",
     1 },
 
-  { "(..., a : int64, ...) -> complex128",
-    "(..., a : int64, ...) -> complex128",
+  { "(int64, ...) -> complex128",
+    "(int64, ...) -> complex128",
     1 },
 
   { "() -> int32",
@@ -2506,26 +2295,6 @@ const match_testcase_t match_tests[] = {
     "(int32, float64) -> int32",
     1 },
 
-  { "(scale : float64) -> int32",
-    "(scale : float64) -> int32",
-    1 },
-
-  { "(scale : float64, color : float64) -> int32",
-    "(scale : float64, color : float64) -> int32",
-    1 },
-
-  { "(int32, scale : float64) -> int32",
-    "(int32, scale : float64) -> int32",
-    1 },
-
-  { "(int32, scale : float64, color : float64) -> int32",
-    "(int32, scale : float64, color : float64) -> int32",
-    1 },
-
-  { "(int32, float32, scale : float64, color : float64) -> int32",
-    "(int32, float32, scale : float64, color : float64) -> int32",
-    1 },
-
   { "(...) -> int32",
     "(...) -> int32",
     1 },
@@ -2537,47 +2306,6 @@ const match_testcase_t match_tests[] = {
   { "(int32, float32, ...) -> int32",
     "(int32, float32, ...) -> int32",
     1 },
-
-  { "(scale : float64, ...) -> int32",
-    "(scale : float64, ...) -> int32",
-    1 },
-
-  { "(scale : float64, color : float64, ...) -> int32",
-    "(scale : float64, color : float64, ...) -> int32",
-    1 },
-
-  { "(..., scale : float64) -> int32",
-    "(..., scale : float64) -> int32",
-    1 },
-
-  { "(int32, ..., scale : float64) -> int32",
-    "(int32, ..., scale : float64) -> int32",
-    1 },
-
-  { "(int32, float32, ..., scale : float64) -> int32",
-    "(int32, float32, ..., scale : float64) -> int32",
-    1 },
-
-  { "(int32, scale : float64, ...) -> int32",
-    "(int32, scale : float64, ...) -> int32",
-    1 },
-
-  { "(int32, float32, scale : float64, color : float64, ...) -> int32",
-    "(int32, float32, scale : float64, color : float64, ...) -> int32",
-    1 },
-
-  { "(..., scale : float64, ...) -> int32",
-    "(..., scale : float64, ...) -> int32",
-    1 },
-
-  { "(int32, ..., scale : float64, color : float64, ...) -> int32",
-    "(int32, ..., scale : float64, color : float64, ...) -> int32",
-    1 },
-
-  { "(int32, float32, ..., scale : float64, color : float64, ...) -> int32",
-    "(int32, float32, ..., scale : float64, color : float64, ...) -> int32",
-    1 },
-
 
   { "10 * defined_t",
     "10 * defined_t",
@@ -2595,15 +2323,6 @@ const match_testcase_t match_tests[] = {
     "defined_t",
     1 },
 
-  { "(int32, float32, ..., scale : defined_t, color : float64, ...) -> defined_t",
-    "(int32, float32, ..., scale : defined_t, color : float64, ...) -> defined_t",
-    1 },
-
-  { "(a : ref({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
-    "(a : ref({b : defined_t, c : (defined_t, int16) -> float64})) -> defined_t",
-    1 },
-
-
   { "10 * foo_t",
     "10 * foo_t",
     1 },
@@ -2618,14 +2337,6 @@ const match_testcase_t match_tests[] = {
 
   { "foo_t",
     "foo_t",
-    1 },
-
-  { "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
-    "(int32, float32, ..., scale : defined_t, color : float64, ...) -> foo_t",
-    1 },
-
-  { "(a : ref({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
-    "(a : ref({b : defined_t, c : (foo_t, int16) -> float64})) -> foo_t",
     1 },
 
   { "10 * foo_t",
@@ -2792,33 +2503,6 @@ const match_testcase_t match_tests[] = {
 
   { "(Dims... * M * N * T, Dims... * N * P * T)",
     "(2 * 3 * int64, 2 * 10 * int64)", 0 },
-
-#if 0
-  /* ndarray */
-  { "[10 * 2 * int64, style='ndarray']",
-    "[10 * 2 * int64, style='ndarray']", 1 },
-
-  { "[10 * 2 * int32, style='ndarray']",
-    "[10 * 2 * int64, style='ndarray']", 0 },
-
-  { "[10 * N * int64, style='ndarray']",
-    "[10 * 2 * int64, style='ndarray']", 1 },
-
-  { "[10 * 2 * int64, style='ndarray']",
-    "[10 * N * int64, style='ndarray']", 0 },
-
-  { "[N * M * int64, style='ndarray']",
-    "[10 * 2 * int64, style='ndarray']", 1 },
-
-  { "[10 * 2 * int64, order='F', style='ndarray']",
-    "[10 * 2 * int64, order='F', style='ndarray']", 1 },
-
-  { "[10 * 2 * int64, order='C', style='ndarray']",
-    "[10 * 2 * int64, order='F', style='ndarray']", 0 },
-
-  { "[10 * 2 * int64, order='F', style='ndarray']",
-    "[10 * 2 * int64, order='C', style='ndarray']", 0 },
-#endif
 
   /* END MANUALLY GENERATED */
 

@@ -165,6 +165,12 @@ typedef struct {
     char **ptr;
 } ndt_string_seq_t;
 
+typedef struct {
+    int64_t len;
+    int64_t reserved;
+    ndt_t **ptr;
+} ndt_type_seq_t;
+
 
 ndt_field_seq_t *ndt_field_seq_new(ndt_field_t *, ndt_context_t *ctx);
 void ndt_field_seq_del(ndt_field_seq_t *);
@@ -180,6 +186,12 @@ ndt_string_seq_t *ndt_string_seq_new(char *, ndt_context_t *ctx);
 void ndt_string_seq_del(ndt_string_seq_t *);
 ndt_string_seq_t *ndt_string_seq_append(ndt_string_seq_t *, char *, ndt_context_t *ctx);
 ndt_string_seq_t *ndt_string_seq_finalize(ndt_string_seq_t *);
+
+ndt_type_seq_t *ndt_type_seq_empty(ndt_context_t *ctx);
+ndt_type_seq_t *ndt_type_seq_new(ndt_t *, ndt_context_t *ctx);
+void ndt_type_seq_del(ndt_type_seq_t *);
+ndt_type_seq_t *ndt_type_seq_append(ndt_type_seq_t *, ndt_t *, ndt_context_t *ctx);
+ndt_type_seq_t *ndt_type_seq_finalize(ndt_type_seq_t *);
 
 
 #endif /* SEQ_H */

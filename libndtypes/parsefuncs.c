@@ -129,45 +129,37 @@ mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
 /*****************************************************************************/
 
 ndt_t *
-mk_function(ndt_t *ret,
-            enum ndt_variadic tflag, ndt_field_seq_t *tseq,
-            enum ndt_variadic rflag, ndt_field_seq_t *rseq,
-            ndt_context_t *ctx)
+mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, ndt_context_t *ctx)
 {
-    ndt_t *pos = NULL;
-    ndt_t *kwds = NULL;
+    ndt_t *types[NDT_MAX_ARGS];
+    int64_t nin = in->len;
+    int64_t nout = out->len;
+    int64_t shape, i;
 
-    pos = mk_tuple(tflag, tseq, NULL, ctx);
-    if (pos == NULL) {
-        ndt_del(ret);
-        ndt_field_seq_del(rseq);
+    shape = nin + nout;
+
+    if (shape > NDT_MAX_ARGS) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "maximum number of function arguments is %d", NDT_MAX_ARGS);
+        ndt_type_seq_del(in);
+        ndt_type_seq_del(out);
         return NULL;
     }
 
-    kwds = mk_record(rflag, rseq, NULL, ctx);
-    if (kwds == NULL) {
-        ndt_del(ret);
-        ndt_del(pos);
-        return NULL;
+    for (i = 0; i < nin; i++) {
+        types[i] = in->ptr[i];
     }
 
-    return ndt_function(ret, pos, kwds, ctx);
-}
-
-ndt_t *
-mk_function_from_tuple(ndt_t *ret, ndt_t *pos, ndt_context_t *ctx)
-{
-    ndt_t *kwds = NULL;
-    uint16_opt_t align = {None, 0};
-
-    kwds = ndt_record(Nonvariadic, NULL, 0, align, align, ctx);
-    if (kwds == NULL) {
-        ndt_del(ret);
-        ndt_del(pos);
-        return NULL;
+    for (i = 0; i < nout; i++) {
+        types[nin+i] = out->ptr[i];
     }
 
-    return ndt_function(ret, pos, kwds, ctx);
+    ndt_free(in->ptr);
+    ndt_free(in);
+    ndt_free(out->ptr);
+    ndt_free(out);
+
+    return ndt_function(types, shape, nin, nout, ctx);
 }
 
 ndt_t *

@@ -151,3 +151,119 @@ ndt_string_seq_finalize(ndt_string_seq_t *seq)
 
     return seq;
 }
+
+
+/*****************************************************************************/
+/*                                Type sequences                             */
+/*****************************************************************************/
+
+ndt_type_seq_t *
+ndt_type_seq_empty(ndt_context_t *ctx)
+{
+    ndt_type_seq_t *seq;
+
+    seq = ndt_alloc_size(sizeof *seq);
+    if (seq == NULL) {
+        return ndt_memory_error(ctx);
+    }
+
+    seq->len = 0;
+    seq->reserved = 0;
+    seq->ptr = NULL;
+
+    return seq;
+}
+
+ndt_type_seq_t *
+ndt_type_seq_new(ndt_t *elt, ndt_context_t *ctx)
+{
+    ndt_type_seq_t *seq;
+    ndt_t **ptr;
+
+    seq = ndt_alloc_size(sizeof *seq);
+    if (seq == NULL) {
+        ndt_del(elt);
+        return ndt_memory_error(ctx);
+    }
+
+    ptr = ndt_alloc_size(2 * (sizeof *ptr));
+    if (ptr == NULL) {
+        ndt_free(seq);
+        ndt_del(elt);
+        return ndt_memory_error(ctx);
+    }
+
+    ptr[0] = elt;
+    seq->len = 1;
+    seq->reserved = 2;
+    seq->ptr = ptr;
+
+    return seq;
+}
+
+void
+ndt_type_seq_del(ndt_type_seq_t *seq)
+{
+    if (seq != NULL) {
+        ndt_type_array_del(seq->ptr, seq->len);
+        ndt_free(seq);
+    }
+}
+
+static int
+ndt_type_seq_grow(ndt_type_seq_t *seq, ndt_context_t *ctx)
+{
+    ndt_t **ptr;
+
+    ptr = ndt_realloc(seq->ptr, seq->reserved, 2 * (sizeof *ptr));
+    if (ptr == NULL) {
+        ndt_err_format(ctx, NDT_MemoryError, "out of memory");
+        return -1;
+    }
+
+    seq->ptr = ptr;
+    seq->reserved = 2 * seq->reserved;
+
+    return 0;
+}
+
+ndt_type_seq_t *
+ndt_type_seq_append(ndt_type_seq_t *seq, ndt_t *elt, ndt_context_t *ctx)
+{
+    assert(seq->len <= seq->reserved);
+
+    if (seq->len == seq->reserved) {
+        if (ndt_type_seq_grow(seq, ctx) < 0) {
+            ndt_type_seq_del(seq);
+            ndt_free(elt);
+            return NULL;
+        }
+    }
+
+    seq->ptr[seq->len] = elt;
+    seq->len++;
+
+    return seq;
+}
+
+ndt_type_seq_t *
+ndt_type_seq_finalize(ndt_type_seq_t *seq)
+{
+    ndt_t **ptr;
+
+    if (seq == NULL) {
+        return NULL;
+    }
+
+    assert(seq->len <= seq->reserved);
+
+    ptr = ndt_realloc(seq->ptr, seq->len, sizeof *ptr);
+    if (ptr == NULL) {
+        return seq; /* seq is still valid */
+    }
+
+    seq->ptr = ptr;
+    seq->reserved = seq->len;
+
+    return seq;
+}

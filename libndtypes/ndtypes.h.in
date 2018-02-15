@@ -103,6 +103,8 @@
 /*****************************************************************************/
 
 #define NDT_MAX_DIM 128
+#define NDT_MAX_ARGS 128
+
 #define NDT_LITTLE_ENDIAN  0x00000001U
 #define NDT_BIG_ENDIAN     0x00000002U
 #define NDT_OPTION         0x00000004U
@@ -187,9 +189,6 @@ enum ndt {
 
   /* Function */
   Function,
-
-  /* No return value */
-  Void,
 
   /* Any */
   AnyKind,
@@ -318,9 +317,10 @@ struct _ndt {
         } Module;
 
         struct {
-            ndt_t *ret;
-            ndt_t *pos;
-            ndt_t *kwds;
+            int64_t in;
+            int64_t out;
+            int64_t shape;
+            ndt_t **types;
         } Function;
 
         struct {
@@ -517,6 +517,10 @@ NDTYPES_API int ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y);
 NDTYPES_API int ndt_value_mem_equal(const ndt_value_t *x, const ndt_value_t *y);
 NDTYPES_API int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
 
+/* Type array */
+NDTYPES_API void ndt_type_array_clear(ndt_t **types, int64_t shape);
+NDTYPES_API void ndt_type_array_del(ndt_t **types, int64_t shape);
+
 
 /*****************************************************************************/
 /*                               Encodings                                   */
@@ -561,7 +565,12 @@ NDTYPES_API ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
 
 NDTYPES_API int ndt_equal(const ndt_t *t, const ndt_t *u);
 NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
+NDTYPES_API int ndt_typecheck(ndt_t *out[NDT_MAX_ARGS],
+                              int *outer_dims,
+                              const ndt_t *signature,
+                              ndt_t *in[],
+                              int nin,
+                              ndt_context_t *ctx);
 
 NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
 
@@ -599,6 +608,7 @@ NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 /*****************************************************************************/
 
 NDTYPES_API ndt_t *ndt_new(enum ndt tag, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_function_new(int64_t shape, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_tuple_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_record_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API void ndt_del(ndt_t *t);
@@ -611,8 +621,7 @@ NDTYPES_API void ndt_del(ndt_t *t);
 /* Special types */
 NDTYPES_API ndt_t *ndt_option(ndt_t *type);
 NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_void(ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_function(ndt_t * const *types, int64_t shape, int64_t in, int64_t out, ndt_context_t *ctx);
 
 /* Any */
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);

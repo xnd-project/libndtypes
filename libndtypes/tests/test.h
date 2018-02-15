@@ -51,9 +51,12 @@ typedef struct {
 
 typedef struct {
     const char *signature;
-    const char *args;
-    const char *expected;
-    int outer_dims;
+    const char *in[128];
+    const char *out[128];
+    int nin;
+    int nout;
+    int outer;
+    bool success;
 } typecheck_testcase_t;
 
 

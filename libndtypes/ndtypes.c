@@ -503,6 +503,27 @@ ndt_field_array_del(ndt_field_t *fields, int64_t shape)
     ndt_free(fields);
 }
 
+void
+ndt_type_array_clear(ndt_t **types, int64_t shape)
+{
+    int64_t i;
+
+    if (types == NULL) {
+        return;
+    }
+
+    for (i = 0; i < shape; i++) {
+        ndt_del(types[i]);
+    }
+}
+
+void
+ndt_type_array_del(ndt_t **types, int64_t shape)
+{
+    ndt_type_array_clear(types, shape);
+    ndt_free(types);
+}
+
 
 /*****************************************************************************/
 /*                                Typedef                                    */
@@ -674,6 +695,35 @@ ndt_new_extra(enum ndt tag, int64_t n, ndt_context_t *ctx)
 }
 
 ndt_t *
+ndt_function_new(int64_t shape, ndt_context_t *ctx)
+{
+    ndt_t *t = NULL;
+    bool overflow = 0;
+    int64_t extra, i;
+
+    extra = MULi64(shape, sizeof(ndt_t *), &overflow);
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError, "function size too large");
+        return NULL;
+    }
+
+    t = ndt_new_extra(Function, extra, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+
+    t->Function.shape = shape;
+    t->Function.types = (ndt_t **)t->extra;
+
+    for (i = 0; i < shape; i++) {
+        t->Function.types[i] = NULL;
+    }
+
+    return t;
+}
+
+ndt_t *
 ndt_tuple_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
 {
     ndt_t *t = NULL;
@@ -788,9 +838,10 @@ ndt_del(ndt_t *t)
     }
 
     case Function: {
-        ndt_del(t->Function.ret);
-        ndt_del(t->Function.pos);
-        ndt_del(t->Function.kwds);
+        int64_t i;
+        for (i = 0; i < t->Function.shape; i++) {
+            ndt_del(t->Function.types[i]);
+        }
         goto free_type;
     }
 
@@ -865,7 +916,6 @@ ndt_del(ndt_t *t)
         goto free_type;
     }
 
-    case Void:
     case AnyKind: case ScalarKind:
     case FixedStringKind: case FixedString:
     case FixedBytesKind: case FixedBytes:
@@ -926,34 +976,31 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
 
 /* Abstract function signatures */
 ndt_t *
-ndt_function(ndt_t *ret, ndt_t *pos, ndt_t *kwds, ndt_context_t *ctx)
+ndt_function(ndt_t * const *types, int64_t shape, int64_t in, int64_t out,
+             ndt_context_t *ctx)
 {
     ndt_t *t;
+    int64_t i;
+
+    assert(0 <= in && 0 <= out && shape == in+out);
 
     /* abstract type */
-    t = ndt_new(Function, ctx);
+    t = ndt_function_new(shape, ctx);
     if (t == NULL) {
-        ndt_del(ret);
-        ndt_del(pos);
-        ndt_del(kwds);
+        for (i = 0; i < shape; i++) {
+            ndt_del(types[i]);
+        }
         return NULL;
     }
-    t->Function.ret = ret;
-    t->Function.pos = pos;
-    t->Function.kwds = kwds;
+    t->Function.in = in;
+    t->Function.out = out;
 
-    t->flags |= ndt_subtree_flags(ret);
-    t->flags |= ndt_subtree_flags(pos);
-    t->flags |= ndt_subtree_flags(kwds);
+    for (i = 0; i < shape; i++) {
+        t->Function.types[i] = types[i];
+        t->flags |= ndt_subtree_flags(types[i]);
+    }
 
     return t;
-}
-
-/* Abstract empty return value */
-ndt_t *
-ndt_void(ndt_context_t *ctx)
-{
-    return ndt_new(Void, ctx);
 }
 
 ndt_t *

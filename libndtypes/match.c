@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdarg.h>
@@ -299,7 +300,7 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         if (n <= 0) return n;
 
         return match_datashape(pdtype, cdtype, tbl, ctx);
-    case Void: case Bool:
+    case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
     case Float16: case Float32: case Float64:
@@ -345,15 +346,22 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     case Record:
         if (c->tag != Record) return 0;
         return match_record_fields(p, c, tbl, ctx);
-    case Function:
-        if (c->tag != Function) return 0;
-        n = match_datashape(p->Function.ret, c->Function.ret, tbl, ctx);
-        if (n <= 0) return n;
+    case Function: {
+        int64_t i;
+        if (c->tag != Function ||
+            c->Function.in != p->Function.in ||
+            c->Function.out != p->Function.out ||
+            c->Function.shape != p->Function.shape) {
+            return 0;
+        }
 
-        n = match_datashape(p->Function.pos, c->Function.pos, tbl, ctx);
-        if (n <= 0) return n;
+        for (i = 0; i < p->Function.shape; i++) {
+            n = match_datashape(p->Function.types[i], c->Function.types[i], tbl, ctx);
+            if (n <= 0) return n;
+        }
 
-        return match_datashape(p->Function.kwds, c->Function.kwds, tbl, ctx);
+        return 1;
+    }
     case Typevar:
         if (c->tag == Typevar) {
             symtable_entry_t entry = { .tag = SymbolEntry,
@@ -524,67 +532,92 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
  * signature 'f'.  On success, infer and return the concrete return
  * type.
  */
-ndt_t *
-ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx)
+int
+ndt_typecheck(ndt_t *out[NDT_MAX_ARGS],
+              int *outer_dims,
+              const ndt_t *sig,
+              ndt_t **in,
+              int nin,
+              ndt_context_t *ctx)
 {
     symtable_t *tbl;
-    ndt_t *return_type, *t;
-    int ret;
+    ndt_t *t;
+    int64_t i, k;
+    int ret, nout;
 
-    if (f->tag != Function) {
-        ndt_err_format(ctx, NDT_ValueError, "expected function type");
-        return NULL;
+    if (sig->tag != Function) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "signature must be a function type");
+        return -1;
     }
 
-    if (f->Function.kwds->Record.shape != 0) {
-        ndt_err_format(ctx, NDT_NotImplementedError, "kwargs not implemented");
-        return NULL;
+    if (nin != sig->Function.in) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "expected %" PRIi64 " arguments, got %d", sig->Function.in, nin);
+        return -1;
     }
 
-    if (!ndt_is_concrete(args)) {
-        ndt_err_format(ctx, NDT_ValueError, "expected concrete argument types");
-        return NULL;
+    for (i = 0; i < nin; i++) {
+        if (!ndt_is_concrete(in[i])) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "type checking requires concrete argument types");
+            return -1;
+        }
     }
 
     tbl = symtable_new(ctx);
     if (tbl == NULL) {
-        return NULL;
+        return -1;
     }
 
-    ret = match_datashape(f->Function.pos, args, tbl, ctx);
-    if (ret <= 0) {
-        symtable_del(tbl);
-        if (ret == 0) {
-            ndt_err_format(ctx, NDT_TypeError,
-                           "argument types do not match");
+    for (i = 0; i < nin; i++) {
+        ret = match_datashape(sig->Function.types[i], in[i], tbl, ctx);
+        if (ret <= 0) {
+            symtable_del(tbl);
+
+            if (ret == 0) {
+                ndt_err_format(ctx, NDT_TypeError,
+                    "argument types do not match");
+            }
+
+            return -1;
         }
-        return NULL;
     }
 
-    return_type = ndt_substitute(f->Function.ret, tbl, ctx);
+    nout = sig->Function.out;
+    for (i = 0; i < nout; i++) {
+        out[i] = ndt_substitute(sig->Function.types[nin+i], tbl, ctx);
+        if (out[i] == NULL) {
+            for (k = 0; k < i; k++) {
+                ndt_del(out[k]);
+            }
+            symtable_del(tbl);
+            return -1;
+        }
+    }
+
+    /* XXX */
     *outer_dims = 0;
 
-    if (return_type != NULL) {
-        t = f->Function.ret;
-        if (t->tag == Ref) t = t->Ref.type;
+    t = sig->Function.types[0];
 
-        if (t->tag == EllipsisDim) {
-            const char *name = t->EllipsisDim.name;
+    if (t->tag == EllipsisDim) {
+        const char *name = t->EllipsisDim.name;
 
-            if (name != NULL) {
-                symtable_entry_t v = symtable_find(tbl, name);
+        if (name != NULL) {
+            symtable_entry_t v = symtable_find(tbl, name);
 
-                switch (v.tag) {
-                case DimListEntry:
-                    *outer_dims = v.DimListEntry.size;
-                    break;
-                default:
-                    break;
-                }
+            switch (v.tag) {
+            case DimListEntry:
+                *outer_dims = v.DimListEntry.size;
+                break;
+            default:
+                break;
             }
         }
     }
+    /* END XXX */
 
     symtable_del(tbl);
-    return return_type;
+    return nout;
 }

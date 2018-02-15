@@ -616,41 +616,70 @@ ndtype_match(PyObject *self, PyObject *other)
 }
 
 static PyObject *
-ndtype_apply(PyObject *self, PyObject *other)
+ndtype_apply(PyObject *self, PyObject *args)
 {
     NDT_STATIC_CONTEXT(ctx);
-    PyObject *return_type, *outer_dims;
-    PyObject *res;
-    ndt_t *t;
+    ndt_t *sig = NDT(self);
+    ndt_t *in[NDT_MAX_ARGS];
+    ndt_t *out[NDT_MAX_ARGS];
+    PyObject *res, *list, *outer_dims;
     int k = -1;
+    Py_ssize_t nin, nout;
+    Py_ssize_t i;
 
-    if (!Ndt_Check(other)) {
-        PyErr_SetString(PyExc_TypeError, "argument must be 'ndt'");
+    if (!PyTuple_Check(args) && !PyList_Check(args)) {
+        PyErr_SetString(PyExc_TypeError, "arguments must be a tuple or a list");
         return NULL;
     }
 
-    t = ndt_typecheck(NDT(self), NDT(other), &k, &ctx);
-    if (t == NULL) {
+    nin = PySequence_Fast_GET_SIZE(args);
+    if (nin > NDT_MAX_ARGS) {
+        PyErr_Format(PyExc_ValueError,
+            "maximum number of arguments is %d", NDT_MAX_ARGS);
+        return NULL;
+    }
+
+    for (i = 0; i < nin; i++) {
+        PyObject *tmp = PySequence_Fast_GET_ITEM(args, i);
+        if (!Ndt_Check(tmp)) {
+            PyErr_Format(PyExc_TypeError, "argument types must be ndt");
+            return NULL;
+        }
+        in[i] = NDT(tmp);
+    }
+
+    nout = ndt_typecheck(out, &k, sig, in, nin, &ctx);
+    if (nout < 0) {
         return seterr(&ctx);
     }
 
-    return_type = ndtype_alloc(&Ndt_Type);
-    if (return_type == NULL) {
-        ndt_del(t);
+    list = PyList_New(nout);
+    if (list == NULL) {
+        ndt_type_array_clear(out, nout);
         return NULL;
     }
-    NDT(return_type) = t;
+
+    for (i = 0; i < nout; i++) {
+        PyObject *x = ndtype_alloc(&Ndt_Type);
+        if (x == NULL) {
+            ndt_type_array_clear(out+i, nout-i);
+            Py_DECREF(list);
+            return NULL;
+        }
+        NDT(x) = out[i];
+        PyList_SET_ITEM(list, i, x);
+    }
 
     outer_dims = PyLong_FromLong(k);
     if (outer_dims == NULL) {
-        Py_DECREF(return_type);
+        Py_DECREF(list);
         return NULL;
     }
 
-    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, self, other,
-                                        return_type, outer_dims, NULL);
+    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, self, args,
+                                        list, outer_dims, NULL);
 
-    Py_DECREF(return_type);
+    Py_DECREF(list);
     Py_DECREF(outer_dims);
     return res;
 }

@@ -86,6 +86,34 @@ ndt_copy_var_dim(const ndt_t *t, ndt_context_t *ctx)
 }
 
 static ndt_t *
+ndt_copy_function(const ndt_t *t, ndt_context_t *ctx)
+{
+    ndt_t *u;
+    int64_t i;
+
+    assert(t->tag == Function);
+
+    u = ndt_function_new(t->Function.shape, ctx);
+    if (u == NULL) {
+        return NULL;
+    }
+    u->Function.in = t->Function.in;
+    u->Function.out = t->Function.out;
+
+    copy_common(u, t);
+
+    for (i = 0; i < t->Function.shape; i++) {
+        u->Function.types[i] = ndt_copy(t->Function.types[i], ctx);
+        if (u->Function.types[i] == NULL) {
+            ndt_del(u);
+            return NULL;
+        }
+    }
+
+    return u;
+}
+
+static ndt_t *
 ndt_copy_tuple(const ndt_t *t, ndt_context_t *ctx)
 {
     ndt_t *u;
@@ -324,28 +352,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     }
 
     case Function: {
-        ndt_t *ret, *pos, *kwds;
-
-        ret = ndt_copy(t->Function.ret, ctx);
-        if (ret == NULL) {
-            return NULL;
-        }
-
-        pos = ndt_copy(t->Function.pos, ctx);
-        if (pos == NULL) {
-            ndt_del(ret);
-            return NULL;
-        }
-
-        kwds = ndt_copy(t->Function.kwds, ctx);
-        if (pos == NULL) {
-            ndt_del(ret);
-            ndt_del(kwds);
-            return NULL;
-        }
-
-        u = ndt_function(ret, pos, kwds, ctx);
-        goto copy_common_fields;
+        return ndt_copy_function(t, ctx);
     }
 
     case Module: {
@@ -371,7 +378,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     case SignedKind: case UnsignedKind:
     case FloatKind: case ComplexKind:
     case FixedStringKind: case FixedBytesKind:
-    case Void: case Bool:
+    case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
     case Float16: case Float32: case Float64:
