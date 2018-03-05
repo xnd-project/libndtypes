@@ -95,31 +95,30 @@ extern int ndt_yydebug;
     FIXED = 293,
     VAR = 294,
     COMMA = 295,
-    DOT = 296,
-    COLON = 297,
-    LPAREN = 298,
-    RPAREN = 299,
-    LBRACE = 300,
-    RBRACE = 301,
-    LBRACK = 302,
-    RBRACK = 303,
-    STAR = 304,
-    ELLIPSIS = 305,
-    RARROW = 306,
-    EQUAL = 307,
-    LESS = 308,
-    GREATER = 309,
-    QUESTIONMARK = 310,
-    BANG = 311,
-    AMPERSAND = 312,
-    BAR = 313,
-    ERRTOKEN = 314,
-    INTEGER = 315,
-    FLOATNUMBER = 316,
-    STRINGLIT = 317,
-    NAME_LOWER = 318,
-    NAME_UPPER = 319,
-    NAME_OTHER = 320
+    COLON = 296,
+    LPAREN = 297,
+    RPAREN = 298,
+    LBRACE = 299,
+    RBRACE = 300,
+    LBRACK = 301,
+    RBRACK = 302,
+    STAR = 303,
+    ELLIPSIS = 304,
+    RARROW = 305,
+    EQUAL = 306,
+    LESS = 307,
+    GREATER = 308,
+    QUESTIONMARK = 309,
+    BANG = 310,
+    AMPERSAND = 311,
+    BAR = 312,
+    ERRTOKEN = 313,
+    INTEGER = 314,
+    FLOATNUMBER = 315,
+    STRINGLIT = 316,
+    NAME_LOWER = 317,
+    NAME_UPPER = 318,
+    NAME_OTHER = 319
   };
 #endif
 
@@ -144,7 +143,7 @@ union YYSTYPE
     ndt_string_seq_t *string_seq;
     ndt_type_seq_t *type_seq;
 
-#line 148 "grammar.h" /* yacc.c:1909  */
+#line 147 "grammar.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -176,6 +175,6 @@ int ndt_yyparse (yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t 
   extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx, const char *msg);
 
-#line 180 "grammar.h" /* yacc.c:1909  */
+#line 179 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_NDT_YY_GRAMMAR_H_INCLUDED  */
