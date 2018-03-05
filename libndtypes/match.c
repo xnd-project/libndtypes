@@ -108,105 +108,129 @@ resolve_sym(const char *key, symtable_entry_t w,
 }
 
 static int
+resolve_dimension_list(const char *name,
+                       const ndt_t *c[], int ellipsis_pos, int size,
+                       symtable_t *tbl, ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+    int i;
+
+    if (name == NULL) {
+        return 1;
+    }
+
+    v.tag = DimListEntry;
+    v.DimListEntry.size = size;
+    v.DimListEntry.dims = ndt_alloc(size, sizeof *v.DimListEntry.dims);
+
+    if (v.DimListEntry.dims == NULL) {
+        (void)ndt_memory_error(ctx);
+        return -1;
+    }
+
+    for (i = 0; i < size; i++) {
+        switch(c[i]->tag) {
+        case FixedDim: case VarDim:
+            v.DimListEntry.dims[i] = c[ellipsis_pos+i];
+            break;
+        default:
+            ndt_free((void *)v.DimListEntry.dims);
+            return 0;
+        }
+    }
+
+    return resolve_sym(name, v, tbl, ctx);
+}
+
+static int
+match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
+             ndt_context_t *ctx)
+{
+    switch (p->tag) {
+    case FixedDim: {
+        return c->tag == FixedDim && p->FixedDim.shape == c->FixedDim.shape;
+    }
+
+    case VarDim: {
+        return c->tag == VarDim;
+    }
+
+    case SymbolicDim: {
+        symtable_entry_t v;
+
+        switch (c->tag) {
+        case FixedDim:
+            v.tag = ShapeEntry;
+            v.ShapeEntry = c->FixedDim.shape;
+            break;
+
+        case SymbolicDim:
+            v.tag = SymbolEntry;
+            v.SymbolEntry = c->SymbolicDim.name; /* borrowed */
+            break;
+
+        default:
+            return 0;
+        }
+
+        return resolve_sym(p->SymbolicDim.name, v, tbl, ctx);
+    }
+
+    case EllipsisDim: {
+        ndt_err_format(ctx, NDT_RuntimeError, "unexpected ellipsis");
+        return -1;
+    }
+
+    default: /* NOT REACHED */
+        ndt_internal_error("not a dimension");
+    }
+}
+
+static int
+match_dimensions_rev(const ndt_t *p[], int pshape, int ellipsis_pos,
+                     const ndt_t *c[], int cshape,
+                     symtable_t *tbl, ndt_context_t *ctx)
+{
+    int n, i, k;
+
+    if (cshape < pshape) {
+        return 0;
+    }
+
+    for (i=pshape-1, k=cshape-1; i>=0 && k>=0; i--, k--) {
+        if (i == ellipsis_pos) {
+            assert(p[i]->tag == EllipsisDim);
+            return resolve_dimension_list(p[i]->EllipsisDim.name, c,
+                                          ellipsis_pos, k+1-ellipsis_pos,
+                                          tbl, ctx);
+        }
+
+        n = match_single(p[i], c[k], tbl, ctx);
+        if (n <= 0) return n;
+    }
+
+    /* NOT REACHED */
+    ndt_internal_error("incorrect ellipsis position");
+}
+
+static int
 match_dimensions(const ndt_t *p[], int pshape,
                  const ndt_t *c[], int cshape,
                  symtable_t *tbl, ndt_context_t *ctx)
 {
-    symtable_entry_t v;
-    int step = 1;
-    int i, j, k, tmp;
-    int n;
+    int n, i;
 
-    for (i=0, k=0; i!=pshape && k!=cshape; i+=step, k+=step) {
+    for (i = 0; i < pshape && i < cshape; i++) {
         switch (p[i]->tag) {
         case EllipsisDim:
-            if (i == pshape-step) {
-                if (p[i]->EllipsisDim.name != NULL) {
-                    int size = abs(cshape-k);
-
-                    if (size == 1 && c[k]->tag == EllipsisDim) {
-                        if (c[k]->EllipsisDim.name != NULL) {
-                            v.tag = SymbolEntry;
-                            v.SymbolEntry = c[k]->EllipsisDim.name; /* borrowed */
-                            goto resolve;
-                        }
-                        return 0;
-                    }
-
-                    v.tag = DimListEntry;
-                    v.DimListEntry.size = size;
-                    v.DimListEntry.dims = ndt_alloc(size, sizeof *v.DimListEntry.dims);
-
-                    if (v.DimListEntry.dims == NULL) {
-                        (void)ndt_memory_error(ctx);
-                        return -1;
-                    }
-
-                    for (j = k; j != cshape; j+=step) {
-                        switch(c[k]->tag) {
-                        case FixedDim: case VarDim:
-                            v.DimListEntry.dims[abs(k-j)] = c[j];
-                            break;
-                        default:
-                            ndt_free((void *)v.DimListEntry.dims);
-                            return 0;
-                        }
-                    }
-
-                resolve:
-                    return resolve_sym(p[i]->EllipsisDim.name, v, tbl, ctx);
-                }
-
-                return 1;
-            }
-
-            tmp = pshape; pshape = i-1; i = tmp;
-            tmp = cshape; cshape = k-1; k = tmp;
-            step = -1;
-            break;
-
-        case FixedDim:
-            if (c[k]->tag == FixedDim && p[i]->FixedDim.shape == c[k]->FixedDim.shape)
-                break;
-            return 0;
-        case SymbolicDim:
-            switch (c[k]->tag) {
-            case FixedDim:
-                v.tag = ShapeEntry;
-                v.ShapeEntry = c[k]->FixedDim.shape;
-                break;
-            case SymbolicDim:
-                v.tag = SymbolEntry;
-                v.SymbolEntry = c[k]->SymbolicDim.name; /* borrowed */
-                break;
-            default:
-                return 0;
-            }
-            n = resolve_sym(p[i]->SymbolicDim.name, v, tbl, ctx);
-            if (n == 1)
-                break;
-            return n;
-        case VarDim:
-            if (c[k]->tag == VarDim)
-                break;
-            return 0;
+            return match_dimensions_rev(p, pshape, i, c, cshape, tbl, ctx);
         default:
-            /* NOT REACHED */
-            ndt_internal_error("not a dimension");
+            n = match_single(p[i], c[i], tbl, ctx);
+            if (n <= 0) return n;
         }
     }
 
-    if (k == cshape && pshape != i && p[i]->tag == EllipsisDim) {
-        if (p[i]->EllipsisDim.name != NULL) {
-            v.tag = DimListEntry;
-            v.DimListEntry.size = 0;
-            v.DimListEntry.dims = NULL;
-            return resolve_sym(p[i]->EllipsisDim.name, v, tbl, ctx);
-        }
-       return 1;
-    }
-
-    return i == pshape && k == cshape;
+    return i == pshape && i == cshape;
 }
 
 static int
@@ -341,9 +365,11 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         if (c->tag != Ref) return 0;
         return match_datashape(p->Ref.type, c->Ref.type, tbl, ctx);
     case Tuple:
+        if (p->Tuple.flag == Variadic) return 0;
         if (c->tag != Tuple) return 0;
         return match_tuple_fields(p, c, tbl, ctx);
     case Record:
+        if (p->Tuple.flag == Variadic) return 0;
         if (c->tag != Record) return 0;
         return match_record_fields(p, c, tbl, ctx);
     case Function: {
@@ -395,6 +421,10 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
 {
     symtable_t *tbl;
     int ret;
+
+    if (ndt_is_abstract(c)) {
+        return 0;
+    }
 
     tbl = symtable_new(ctx);
     if (tbl == NULL) {
@@ -468,7 +498,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
         switch (v.tag) {
         case DimListEntry:
-            for (i = 0; i < v.DimListEntry.size; i++) {
+            for (i = v.DimListEntry.size-1; i >= 0; i--) {
                 w = v.DimListEntry.dims[i];
                 switch (w->tag) {
                 case FixedDim:

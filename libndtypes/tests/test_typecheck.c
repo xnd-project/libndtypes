@@ -36,6 +36,7 @@
 
 
 const typecheck_testcase_t typecheck_tests[] = {
+
   { .signature = "void -> float32",
     .in        = {NULL},
     .out       = {"float32"},
@@ -80,8 +81,16 @@ const typecheck_testcase_t typecheck_tests[] = {
     .in        = {"2 * 3 * int64", "3 * 10 * int64"},
     .out       = {"2 * 10 * int64"},
     .nin       = 2,
-    .nout      = 1,
+    .nout      = 0,
     .outer     = 0,
+    .success   = false },
+
+  { .signature = "Dims... *M*N*T, Dims... *N*P*T -> Dims... *M*P*T",
+    .in        = {"100 * 2 * 3 * int64", "100 * 3 * 10 * int64"},
+    .out       = {"100 * 2 * 10 * int64"},
+    .nin       = 2,
+    .nout      = 1,
+    .outer     = 1,
     .success   = true },
 
   { .signature = "Dims... *M*N*T, Dims... *N*P*T -> Dims... *M*P*T",
@@ -101,11 +110,11 @@ const typecheck_testcase_t typecheck_tests[] = {
     .success   = false },
 
   { .signature = "Dims... * M*N*T, Dims... * N*P*T -> Dims... *M*T",
-    .in        = {"2 * 3 * int64", "3 * 10 * int64"},
-    .out       = {"2 * int64"},
+    .in        = {"10 * 2 * 3 * int64", "10 * 3 * 10 * int64"},
+    .out       = {"10 * 2 * int64"},
     .nin       = 2,
     .nout      = 1,
-    .outer     = 0,
+    .outer     = 1,
     .success   = true },
 
   { .signature = "Dims... * M*T, Dims... * N*T -> Dims... * M*T",
@@ -149,11 +158,11 @@ const typecheck_testcase_t typecheck_tests[] = {
     .success   = false },
 
   { .signature = "Dims... * M*N*T, Dims... *N*P*T -> Dims... *M*P*T",
-    .in        = {"2 * 3 * int64", "3 * 10 * int64"},
-    .out       = {"2 * 10 * int64"},
+    .in        = {"100 * 2 * 3 * int64", "100 * 3 * 10 * int64"},
+    .out       = {"100 * 2 * 10 * int64"},
     .nin       = 2,
     .nout      = 1,
-    .outer     = 0,
+    .outer     = 1,
     .success   = true },
 
   { .signature = "Dims... * M*N*T, Dims... *N*P*T -> Dims... *M*P*T",
@@ -178,6 +187,14 @@ const typecheck_testcase_t typecheck_tests[] = {
     .nin       = 2,
     .nout      = 1,
     .outer     = 4,
+    .success   = true },
+
+  { .signature = "D... * int64 -> D... * int64",
+    .in        = {"2 * 3 * int64"},
+    .out       = {"2 * 3 * int64"},
+    .nin       = 1,
+    .nout      = 1,
+    .outer     = 2,
     .success   = true },
 
   { NULL, {NULL}, {NULL}, 0, 0, 0, false }
