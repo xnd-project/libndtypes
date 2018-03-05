@@ -481,7 +481,7 @@ class TestSymbolicDim(unittest.TestCase):
 class TestEllipsisDim(unittest.TestCase):
 
     def test_ellipsis_dim_predicates(self):
-        t = ndt("2 * ... * complex128")
+        t = ndt("... * 2 * complex128")
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
