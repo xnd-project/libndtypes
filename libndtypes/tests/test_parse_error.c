@@ -27831,6 +27831,10 @@ const char *parse_error_tests[] = {
   "10 * 2 * (... * int64)",
   "10 * 2 * (int64, {a: string, b: ... * 10 * float64})",
 
+  "2 * Dims... * uint8",
+  "10 * 2 * (Dims... * int64)",
+  "(Dims... * M * N * T, Dims... * N * P * T)",
+
   /* END MANUALLY GENERATED */
 
   NULL

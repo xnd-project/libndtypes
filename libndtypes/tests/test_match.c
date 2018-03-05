@@ -2104,59 +2104,14 @@ const match_testcase_t match_tests[] = {
   { "... * 2 * 3 * int64",
     "20 * 100 * 2 * 3 * int64", 1 },
 
-  { "(Dims... * 2 * 3 * int64, Dims... * 2 * 3 * int64)",
-    "(2 * 2 * 3 * int64, 2 * 2 * 3 * int64)", 1 },
-
   { "A... * float64",
     "10 * float64", 1 },
-
-  { "(A... * float64, A... * float64)",
-    "(10 * float64, 10 * float64)", 1 },
 
   { "A... * float64",
     "3 * 5 * float64", 1 },
 
   { "A... * float64",
     "2 * 3 * float64", 1 },
-
-  { "(A... * float64, A... * float64) -> A... * float64",
-    "(3 * 5 * float64, 3 * 5 * float64) -> 3 * 5 * float64", 0 },
-
-  { "(A... * float64, A... * float32, B... * float32)",
-    "(2 * float64, 2 * 30 * float32, 3 * 30 * float32)", 0 },
-
-  { "(A... * float64, A... * float64)",
-    "(3 * 5 * float64, 3 * 5 * float64)", 1 },
-
-  { "(3 * A... * float64, 3 * A... * float64)",
-    "(3 * 5 * 10 * float64, 3 * 5 * 10 * float64)", 1 },
-
-  { "(A... * float64, A... * float64)",
-    "(3 * 5 * float64, 3 * 4 * float64)", 0 },
-
-  { "(A... * float64, A... * float64)",
-    "(3 * 5 * float64, 3 * 5 * 6 * float64)", 0 },
-
-  { "(A... * float64, A... * float32, B... * float32)",
-    "(2 * float64, 3 * float32, 3 * float32)", 0 },
-
-  { "(A... * float64, A... * float32, B... * float32)",
-    "(3 * 2 * float64, 3 * 2 * float32, 3 * float32)", 1 },
-
-  { "(3 * A... * float64, 3 * A... * float64)",
-    "(3 * 5 * 10 *  float64, 3 * 5 * 2 * 10 * float64)", 0 },
-
-  { "(A... * float64, A... * float64)",
-    "(B... * float64, A... * float64)", 0 },
-
-  { "(A... * float64, A... * float64)",
-    "(A... * float64, B... * float64)", 0 },
-
-  { "(A... * float64,  B... * float64,  C... * float64,    A... * float64)",
-    "(B... * float64,  C... * float64,  3 * 10 * float64,  3 * 11 * float64)", 0 },
-
-  { "(A... * float64,  B... * float64,  C... * float64,    A... * float64)",
-    "(B... * float64,  C... * float64,  3 * 10 * float64,  3 * 10 * float64)", 0 },
 
   { "(A * float64,  B * float64,  C * float64,  A * float64)",
     "(B * float64,  C * float64,  3 * float64,  3 * float64)", 0 },
@@ -2169,12 +2124,6 @@ const match_testcase_t match_tests[] = {
 
   { "... * M * N * T",
     "10 * 2 * 3 * int64", 1 },
-
-  { "(Dims... * M * N * T, Dims... * N * P * T)",
-    "(2 * 2 * 3 * int64, 2 * 3 * 10 * int64)", 1 },
-
-  { "(Dims... * M * N * T, Dims... * N * P * T)",
-    "(2 * 2 * 3 * int64, 2 * 2 * 10 * int64)", 0 },
 
   /* END MANUALLY GENERATED */
 
