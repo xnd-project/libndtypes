@@ -27826,6 +27826,11 @@ const char *parse_error_tests[] = {
   "4611686018427387904 * 2 uint8",
   "2 * 4611686018427387904 * uint8",
 
+  /* Ellipsis restrictions */
+  "2 * ... * uint8",
+  "10 * 2 * (... * int64)",
+  "10 * 2 * (int64, {a: string, b: ... * 10 * float64})",
+
   /* END MANUALLY GENERATED */
 
   NULL

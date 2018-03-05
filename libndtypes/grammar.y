@@ -103,7 +103,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> input
 %type <ndt> datashape
 %type <ndt> datashape_or_module
-%type <ndt> dimensions_with_broadcast
+%type <ndt> datashape_with_broadcast
 %type <ndt> dimensions
 %type <ndt> dimensions_nooption
 %type <ndt> dimensions_tail
@@ -198,20 +198,20 @@ input:
 
 /* types (optionally with module qualifier) */
 datashape_or_module:
-  datashape                        { $$ = $1; }
-| function_type                    { $$ = $1; }
-| NAME_UPPER COLON COLON datashape { $$ = ndt_module($1, $4, ctx); if ($$ == NULL) YYABORT; }
+  datashape_with_broadcast                        { $$ = $1; }
+| function_type                                   { $$ = $1; }
+| NAME_UPPER COLON COLON datashape_with_broadcast { $$ = ndt_module($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 /* types */
-datashape:
-  dimensions_with_broadcast      { $$ = $1; }
-| BANG dimensions_with_broadcast { $$ = mk_fortran($2, ctx); if ($$ == NULL) YYABORT; }
-| dtype                          { $$ = $1; }
-| QUESTIONMARK dtype             { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
-
-dimensions_with_broadcast:
-  dimensions                    { $$ = $1; }
+datashape_with_broadcast:
+  datashape                     { $$ = $1; }
 | ELLIPSIS STAR dimensions_tail { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
+
+datashape:
+  dimensions         { $$ = $1; }
+| BANG dimensions    { $$ = mk_fortran($2, ctx); if ($$ == NULL) YYABORT; }
+| dtype              { $$ = $1; }
+| QUESTIONMARK dtype { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 
 dimensions:
   dimensions_nooption              { $$ = $1; }
@@ -405,5 +405,5 @@ type_seq_or_void:
 | VOID     { $$ = ndt_type_seq_empty(ctx); if ($$ == NULL) YYABORT; }
 
 type_seq:
-  datashape                { $$ = ndt_type_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
-| type_seq COMMA datashape { $$ = ndt_type_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  datashape_with_broadcast                { $$ = ndt_type_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
+| type_seq COMMA datashape_with_broadcast { $$ = ndt_type_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
