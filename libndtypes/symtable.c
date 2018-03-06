@@ -242,6 +242,7 @@ symtable_free_entry(symtable_entry_t entry)
        ndt_free((void *)entry.DimListEntry.dims);
        return;
     case Unbound: case ShapeEntry: case SymbolEntry: case TypeEntry:
+    case BroadcastEntry:
        return;
     }
 

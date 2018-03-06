@@ -45,6 +45,8 @@
 
 static int match_datashape(const ndt_t *, const ndt_t *, symtable_t *, ndt_context_t *);
 static int match_dimensions(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
+static int match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl, ndt_context_t *ctx);
+static ndt_t *ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx);
 
 
 static int
@@ -76,6 +78,9 @@ symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
         return match_dimensions(v->DimListEntry.dims, v->DimListEntry.size,
                                 w->DimListEntry.dims, w->DimListEntry.size,
                                 tbl, ctx);
+    case BroadcastEntry:
+        /* NOT REACHED: function is not used for broadcasting. */
+        return 0;
     case Unbound:
         /* NOT REACHED: 'v' is always bound. */
         return 0;
@@ -108,16 +113,57 @@ resolve_sym(const char *key, symtable_entry_t w,
 }
 
 static int
+resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
+{
+    const char *key = "00_ELLIPSIS";
+    symtable_entry_t v;
+    int64_t vsize, wsize;
+    int64_t n;
+    int i, k;
+
+    v = symtable_find(tbl, key);
+    if (v.tag == Unbound) {
+        if (symtable_add(tbl, key, w, ctx) < 0) {
+            symtable_free_entry(w);
+            return -1;
+        }
+        return 1;
+    }
+
+    vsize = v.BroadcastEntry.size;
+    wsize = w.BroadcastEntry.size;
+
+    for (i=vsize-1, k=wsize-1; i>=0 && k>=0; i--, k--) {
+        n = v.BroadcastEntry.dims[i];
+        if (v.BroadcastEntry.dims[i] != w.BroadcastEntry.dims[i]) {
+            if (v.BroadcastEntry.dims[i] == 1) {
+                n = w.BroadcastEntry.dims[k];
+            }
+            else if (w.BroadcastEntry.dims[i] == 1) {
+                n = v.BroadcastEntry.dims[k];
+            }
+            else {
+                return 0;
+            }
+        }
+        v.BroadcastEntry.dims[i<k ? k : i] = n;
+    }
+    for (; k >= 0; k--) {
+        v.BroadcastEntry.dims[k] = w.BroadcastEntry.dims[k];
+    }
+
+    v.BroadcastEntry.size = vsize >= wsize ? vsize : wsize;
+
+    return 1;
+}
+
+static int
 resolve_dimension_list(const char *name,
                        const ndt_t *c[], int ellipsis_pos, int size,
                        symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
     int i;
-
-    if (name == NULL) {
-        return 1;
-    }
 
     v.tag = DimListEntry;
     v.DimListEntry.size = size;
@@ -140,6 +186,29 @@ resolve_dimension_list(const char *name,
     }
 
     return resolve_sym(name, v, tbl, ctx);
+}
+
+static int
+resolve_broadcast(const ndt_t *c[], int size, symtable_t *tbl,
+                  ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+    int i;
+
+    v.tag = BroadcastEntry;
+    v.BroadcastEntry.size = size;
+
+    for (i = 0; i < size; i++) {
+        switch(c[i]->tag) {
+        case FixedDim:
+            v.BroadcastEntry.dims[i] = c[i]->FixedDim.shape;
+            break;
+        default:
+            return 0;
+        }
+    }
+
+    return resolve_sym_broadcast(v, tbl, ctx);
 }
 
 static int
@@ -200,9 +269,14 @@ match_dimensions_rev(const ndt_t *p[], int pshape, int ellipsis_pos,
     for (i=pshape-1, k=cshape-1; i>=0 && k>=0; i--, k--) {
         if (i == ellipsis_pos) {
             assert(p[i]->tag == EllipsisDim);
-            return resolve_dimension_list(p[i]->EllipsisDim.name, c,
-                                          ellipsis_pos, k+1-ellipsis_pos,
-                                          tbl, ctx);
+            if (p[i]->EllipsisDim.name == NULL) {
+                return resolve_broadcast(c, k+1-ellipsis_pos, tbl, ctx);
+            }
+            else {
+                return resolve_dimension_list(p[i]->EllipsisDim.name, c,
+                                              ellipsis_pos, k+1-ellipsis_pos,
+                                              tbl, ctx);
+            }
         }
 
         n = match_single(p[i], c[k], tbl, ctx);
@@ -441,14 +515,59 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
 /*                        Experimental section                        */
 /**********************************************************************/
 
-/* For demonstration: only handles fixed, symbolic, int64 */
 static ndt_t *
-ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
+substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
     const ndt_t *w;
     ndt_t *u;
     int i;
+
+    assert(t->tag == EllipsisDim && t->EllipsisDim.name != NULL);
+
+    u = ndt_substitute(t->EllipsisDim.type, tbl, ctx);
+    if (u == NULL) {
+        return NULL;
+    }
+
+    v = symtable_find(tbl, t->EllipsisDim.name);
+
+    switch (v.tag) {
+    case DimListEntry: {
+        for (i = v.DimListEntry.size-1; i >= 0; i--) {
+            w = v.DimListEntry.dims[i];
+            switch (w->tag) {
+            case FixedDim:
+                u = ndt_fixed_dim(u, w->FixedDim.shape, INT64_MAX, ctx);
+                if (u == NULL) {
+                    return NULL;
+                }
+                break;
+
+           default:
+               ndt_err_format(ctx, NDT_NotImplementedError,
+                   "substitution not implemented for this type");
+               ndt_del(u);
+               return NULL;
+            }
+        }
+
+        return u;
+    }
+
+    default:
+        ndt_err_format(ctx, NDT_ValueError,
+            "variable not found or has incorrect type");
+        return NULL;
+    }
+}
+
+/* For demonstration: only handles fixed, symbolic, int64 */
+static ndt_t *
+ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+    ndt_t *u;
 
     switch (t->tag) {
     case FixedDim:
@@ -488,43 +607,8 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
                 "cannot substitute unnamed ellipsis dimension");
             return NULL;
         }
-
-        u = ndt_substitute(t->EllipsisDim.type, tbl, ctx);
-        if (u == NULL) {
-            return NULL;
-        }
-
-        v = symtable_find(tbl, t->EllipsisDim.name);
-
-        switch (v.tag) {
-        case DimListEntry:
-            for (i = v.DimListEntry.size-1; i >= 0; i--) {
-                w = v.DimListEntry.dims[i];
-                switch (w->tag) {
-                case FixedDim:
-
-                    assert(ndt_is_concrete(w));
-
-                    u = ndt_fixed_dim(u, w->FixedDim.shape, INT64_MAX, ctx);
-                    if (u == NULL) {
-                        return NULL;
-                    }
-
-                    break;
-               default:
-                   ndt_err_format(ctx, NDT_NotImplementedError,
-                       "substitution not implemented for this type");
-                   ndt_del(u);
-                   return NULL;
-                }
-            }
-
-            return u;
-
-        default:
-            ndt_err_format(ctx, NDT_ValueError,
-                "variable is not found or has incorrect type");
-            return NULL;
+        else {
+            return substitute_named_ellipsis(t, tbl, ctx);
         }
 
     case Typevar:

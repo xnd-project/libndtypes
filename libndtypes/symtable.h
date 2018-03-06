@@ -44,7 +44,8 @@ enum symtable_entry {
   ShapeEntry,
   SymbolEntry,
   TypeEntry,
-  DimListEntry
+  DimListEntry,
+  BroadcastEntry
 };
 
 typedef struct {
@@ -53,12 +54,18 @@ typedef struct {
 } dim_list_t;
 
 typedef struct {
+    int size;
+    int64_t dims[NDT_MAX_DIM];
+}  broadcast_list_t;
+
+typedef struct {
   enum symtable_entry tag;
   union {
     int64_t ShapeEntry;
     const char *SymbolEntry;
     const ndt_t *TypeEntry;
     dim_list_t DimListEntry;
+    broadcast_list_t BroadcastEntry;
   };
 } symtable_entry_t;
 
