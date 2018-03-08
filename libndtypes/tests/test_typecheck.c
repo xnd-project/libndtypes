@@ -81,9 +81,9 @@ const typecheck_testcase_t typecheck_tests[] = {
     .in        = {"2 * 3 * int64", "3 * 10 * int64"},
     .out       = {"2 * 10 * int64"},
     .nin       = 2,
-    .nout      = 0,
+    .nout      = 1,
     .outer     = 0,
-    .success   = false },
+    .success   = true },
 
   { .signature = "Dims... *M*N*T, Dims... *N*P*T -> Dims... *M*P*T",
     .in        = {"100 * 2 * 3 * int64", "100 * 3 * 10 * int64"},

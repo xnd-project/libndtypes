@@ -45,6 +45,7 @@
 
 static int match_datashape(const ndt_t *, const ndt_t *, symtable_t *, ndt_context_t *);
 static int match_dimensions(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
+static int match_dimensions_rev(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
 static int match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl, ndt_context_t *ctx);
 static ndt_t *ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx);
 
@@ -158,8 +159,7 @@ resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 }
 
 static int
-resolve_dimension_list(const char *name,
-                       const ndt_t *c[], int ellipsis_pos, int size,
+resolve_dimension_list(const char *name, const ndt_t *c[], int size,
                        symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
@@ -177,7 +177,7 @@ resolve_dimension_list(const char *name,
     for (i = 0; i < size; i++) {
         switch(c[i]->tag) {
         case FixedDim: case VarDim:
-            v.DimListEntry.dims[i] = c[ellipsis_pos+i];
+            v.DimListEntry.dims[i] = c[i];
             break;
         default:
             ndt_free((void *)v.DimListEntry.dims);
@@ -256,35 +256,39 @@ match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
 }
 
 static int
-match_dimensions_rev(const ndt_t *p[], int pshape, int ellipsis_pos,
+resolve_ellipsis(const char *name, const ndt_t *c[], int64_t cshape,
+                 symtable_t *tbl, ndt_context_t *ctx)
+{
+    if (name == NULL) {
+        return resolve_broadcast(c, cshape, tbl, ctx);
+    }
+    else {
+        return resolve_dimension_list(name, c, cshape, tbl, ctx);
+    }
+}
+
+static int
+match_dimensions_rev(const ndt_t *p[], int pshape,
                      const ndt_t *c[], int cshape,
                      symtable_t *tbl, ndt_context_t *ctx)
 {
     int n, i, k;
 
-    if (cshape < pshape) {
-        return 0;
-    }
+    assert(p[0]->tag == EllipsisDim);
 
     for (i=pshape-1, k=cshape-1; i>=0 && k>=0; i--, k--) {
-        if (i == ellipsis_pos) {
-            assert(p[i]->tag == EllipsisDim);
-            if (p[i]->EllipsisDim.name == NULL) {
-                return resolve_broadcast(c, k+1-ellipsis_pos, tbl, ctx);
-            }
-            else {
-                return resolve_dimension_list(p[i]->EllipsisDim.name, c,
-                                              ellipsis_pos, k+1-ellipsis_pos,
-                                              tbl, ctx);
-            }
+        if (i == 0) {
+            return resolve_ellipsis(p[0]->EllipsisDim.name, c, k+1, tbl, ctx);
         }
-
         n = match_single(p[i], c[k], tbl, ctx);
         if (n <= 0) return n;
     }
 
-    /* NOT REACHED */
-    ndt_internal_error("incorrect ellipsis position");
+    if (i == 0 && k == -1) {
+        return resolve_ellipsis(p[0]->EllipsisDim.name, c, 0, tbl, ctx);
+    }
+
+    return i <= 0 && k == -1;
 }
 
 static int
@@ -294,14 +298,13 @@ match_dimensions(const ndt_t *p[], int pshape,
 {
     int n, i;
 
+    if (pshape > 0 && p[0]->tag == EllipsisDim) {
+        return match_dimensions_rev(p, pshape, c, cshape, tbl, ctx);
+    }
+
     for (i = 0; i < pshape && i < cshape; i++) {
-        switch (p[i]->tag) {
-        case EllipsisDim:
-            return match_dimensions_rev(p, pshape, i, c, cshape, tbl, ctx);
-        default:
-            n = match_single(p[i], c[i], tbl, ctx);
-            if (n <= 0) return n;
-        }
+        n = match_single(p[i], c[i], tbl, ctx);
+        if (n <= 0) return n;
     }
 
     return i == pshape && i == cshape;
@@ -388,9 +391,9 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     switch (p->tag) {
     case AnyKind:
         return 1;
-    case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
-        if (!is_array(c)) return 0;
-
+    case FixedDim: case SymbolicDim: case VarDim:
+        if (!is_array(c)) return 0; /* fall through */
+    case EllipsisDim:
         pn = ndt_dims_dtype(pdims, &pdtype, p);
         cn = ndt_dims_dtype(cdims, &cdtype, c);
 
