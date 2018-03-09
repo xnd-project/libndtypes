@@ -211,6 +211,15 @@ ndt_hash(ndt_t *t, ndt_context_t *ctx)
 /*                           Apply spec (unstable API)                       */
 /*****************************************************************************/
 
+const ndt_apply_spec_t ndt_apply_spec_empty = {
+  .tag = Xnd,
+  .nout = 0,
+  .nbroadcast = 0,
+  .outer_dims = 0,
+  .out = {NULL},
+  .broadcast = {NULL}
+};
+
 ndt_apply_spec_t *
 ndt_apply_spec_new(ndt_context_t *ctx)
 {
@@ -222,13 +231,14 @@ ndt_apply_spec_new(ndt_context_t *ctx)
     }
     spec->tag = Xnd;
     spec->nout = 0;
+    spec->nbroadcast = 0;
     spec->outer_dims = 0;
 
     return spec;
 }
 
 void
-ndt_apply_spec_del(ndt_apply_spec_t *spec)
+ndt_apply_spec_clear(ndt_apply_spec_t *spec)
 {
     int i;
 
@@ -236,10 +246,28 @@ ndt_apply_spec_del(ndt_apply_spec_t *spec)
         return;
     }
 
+    for (i = 0; i < spec->nbroadcast; i++) {
+        ndt_del(spec->broadcast[i]);
+    }
+
     for (i = 0; i < spec->nout; i++) {
         ndt_del(spec->out[i]);
     }
 
+    spec->tag = Xnd;
+    spec->nout = 0;
+    spec->nbroadcast = 0;
+    spec->outer_dims = 0;
+}
+
+void
+ndt_apply_spec_del(ndt_apply_spec_t *spec)
+{
+    if (spec == NULL) {
+        return;
+    }
+
+    ndt_apply_spec_clear(spec);
     ndt_free(spec);
 }
 

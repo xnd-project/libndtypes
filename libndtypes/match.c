@@ -649,41 +649,44 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
  * signature 'f'.  On success, infer and return the concrete return
  * type.
  */
-ndt_apply_spec_t *
-ndt_typecheck(const ndt_t *sig, ndt_t **in, int nin, ndt_context_t *ctx)
+int
+ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
+              const int nin, ndt_context_t *ctx)
 {
-    ndt_apply_spec_t *spec;
-    ndt_t *out[NDT_MAX_ARGS];
     symtable_t *tbl;
     ndt_t *t;
-    int64_t i, k;
-    int ret, nout;
-    int outer_dims;
     int inner_dims;
+    int ret;
+    int64_t i;
+
+    assert(spec->tag == Xnd);
+    assert(spec->nout == 0);
+    assert(spec->nbroadcast == 0);
+    assert(spec->outer_dims == 0);
 
     if (sig->tag != Function) {
         ndt_err_format(ctx, NDT_ValueError,
             "signature must be a function type");
-        return NULL;
+        return -1;
     }
 
     if (nin != sig->Function.in) {
         ndt_err_format(ctx, NDT_ValueError,
             "expected %" PRIi64 " arguments, got %d", sig->Function.in, nin);
-        return NULL;
+        return -1;
     }
 
     for (i = 0; i < nin; i++) {
-        if (!ndt_is_concrete(in[i])) {
+        if (ndt_is_abstract(in[i])) {
             ndt_err_format(ctx, NDT_ValueError,
                 "type checking requires concrete argument types");
-            return NULL;
+            return -1;
         }
     }
 
     tbl = symtable_new(ctx);
     if (tbl == NULL) {
-        return NULL;
+        return -1;
     }
 
     for (i = 0; i < nin; i++) {
@@ -696,25 +699,21 @@ ndt_typecheck(const ndt_t *sig, ndt_t **in, int nin, ndt_context_t *ctx)
                     "argument types do not match");
             }
 
-            return NULL;
+            return -1;
         }
     }
 
-    nout = sig->Function.out;
-    for (i = 0; i < nout; i++) {
-        out[i] = ndt_substitute(sig->Function.types[nin+i], tbl, ctx);
-        if (out[i] == NULL) {
-            for (k = 0; k < i; k++) {
-                ndt_del(out[k]);
-            }
+    for (i = 0; i < sig->Function.out; i++) {
+        spec->out[i] = ndt_substitute(sig->Function.types[nin+i], tbl, ctx);
+        if (spec->out[i] == NULL) {
+            ndt_apply_spec_clear(spec);
             symtable_del(tbl);
-            return NULL;
+            return -1;
         }
+        spec->nout++;
     }
 
     /* XXX */
-    outer_dims = 0;
-
     t = sig->Function.types[0];
 
     if (t->tag == EllipsisDim) {
@@ -725,7 +724,7 @@ ndt_typecheck(const ndt_t *sig, ndt_t **in, int nin, ndt_context_t *ctx)
 
             switch (v.tag) {
             case DimListEntry:
-                outer_dims = v.DimListEntry.size;
+                spec->outer_dims = v.DimListEntry.size;
                 break;
             default:
                 break;
@@ -736,19 +735,7 @@ ndt_typecheck(const ndt_t *sig, ndt_t **in, int nin, ndt_context_t *ctx)
 
     symtable_del(tbl);
 
-    spec = ndt_apply_spec_new(ctx);
-    if (spec == NULL) {
-        ndt_type_array_clear(out, nout);
-        return NULL;
-    }
-
-    for (i = 0; i < nout; i++) {
-        spec->out[i] = out[i];
-    }
-    spec->nout = nout;
-    spec->outer_dims = outer_dims;
-
-    inner_dims = t->ndim - outer_dims;
+    inner_dims = t->ndim - spec->outer_dims;
 
     if (ndt_is_c_contiguous(t)) {
         spec->tag = inner_dims == 0 ? Elementwise : C;
@@ -763,5 +750,5 @@ ndt_typecheck(const ndt_t *sig, ndt_t **in, int nin, ndt_context_t *ctx)
         spec->tag = Xnd;
     }
 
-    return spec;
+    return 0;
 }

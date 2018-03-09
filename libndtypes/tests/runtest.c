@@ -692,10 +692,10 @@ test_match(void)
     return 0;
 }
 
-static ndt_t **
+static const ndt_t **
 types_from_string(const char * const *s, int n, ndt_context_t *ctx)
 {
-    ndt_t **types;
+    const ndt_t **types;
     int i;
 
     types = ndt_calloc(n, sizeof *types);
@@ -706,7 +706,7 @@ types_from_string(const char * const *s, int n, ndt_context_t *ctx)
     for (i = 0; i < n; i++) {
         types[i] = ndt_from_string(s[i], ctx);
         if (types[i] == NULL) {
-            ndt_type_array_del(types, i);
+            ndt_type_array_del((ndt_t **)types, i);
             return NULL;
         }
     }
@@ -718,13 +718,14 @@ static int
 validate_typecheck_test(const typecheck_testcase_t *test,
                         const ndt_t *sig,
                         ndt_apply_spec_t *spec,
+                        int ret,
                         ndt_context_t *ctx)
 {
-    ndt_t **expected_out;
+    const ndt_t **expected_out;
     int64_t i;
 
     if (!test->success) {
-        if (spec == NULL) {
+        if (ret == -1) {
             return 0;
         }
         ndt_err_format(ctx, NDT_RuntimeError,
@@ -755,12 +756,12 @@ validate_typecheck_test(const typecheck_testcase_t *test,
         if (!ndt_equal(spec->out[i], expected_out[i])) {
             ndt_err_format(ctx, NDT_RuntimeError,
                 "test_typecheck: return value %d: expected %s", i, test->out[i]);
-            ndt_type_array_del(expected_out, sig->Function.out);
+            ndt_type_array_del((ndt_t **)expected_out, sig->Function.out);
             return -1;
         }
     }
 
-    ndt_type_array_del(expected_out, sig->Function.out);
+    ndt_type_array_del((ndt_t **)expected_out, sig->Function.out);
 
     return 0;
 }
@@ -769,10 +770,10 @@ static int
 test_typecheck(void)
 {
     NDT_STATIC_CONTEXT(ctx);
-    ndt_apply_spec_t *spec;
+    ndt_apply_spec_t spec = ndt_apply_spec_empty;
     const typecheck_testcase_t *test;
-    ndt_t *sig = NULL;
-    ndt_t **in = NULL;
+    const ndt_t *sig = NULL;
+    const ndt_t **in = NULL;
     int count = 0;
     int ret = -1;
 
@@ -793,15 +794,15 @@ test_typecheck(void)
             ndt_err_clear(&ctx);
 
             ndt_set_alloc_fail();
-            spec = ndt_typecheck(sig, in, test->nin, &ctx);
+            ret = ndt_typecheck(&spec, sig, in, test->nin, &ctx);
             ndt_set_alloc();
 
             if (ctx.err != NDT_MemoryError) {
                 break;
             }
 
-            if (spec != NULL) {
-                ndt_apply_spec_del(spec);
+            ndt_apply_spec_clear(&spec);
+            if (ret != -1) {
                 ndt_err_format(&ctx, NDT_RuntimeError,
                     "test_typecheck: expect nout == -1 after MemoryError\n"
                     "test_typecheck: \"%s\"\n", test->signature);
@@ -810,10 +811,10 @@ test_typecheck(void)
         }
 
         ndt_err_clear(&ctx);
-        ret = validate_typecheck_test(test, sig, spec, &ctx);
-        ndt_type_array_del(in, test->nin);
-        ndt_apply_spec_del(spec);
-        ndt_del(sig);
+        ret = validate_typecheck_test(test, sig, &spec, ret, &ctx);
+        ndt_type_array_del((ndt_t **)in, test->nin);
+        ndt_apply_spec_clear(&spec);
+        ndt_del((ndt_t *)sig);
 
         if (ret < 0) {
             goto error;

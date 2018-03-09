@@ -620,8 +620,8 @@ ndtype_apply(PyObject *self, PyObject *args)
 {
     NDT_STATIC_CONTEXT(ctx);
     ndt_t *sig = NDT(self);
-    ndt_t *in[NDT_MAX_ARGS];
-    ndt_apply_spec_t *spec;
+    const ndt_t *in[NDT_MAX_ARGS];
+    ndt_apply_spec_t spec;
     PyObject *res, *list;
     PyObject *outer_dims;
     PyObject *tag;
@@ -646,41 +646,39 @@ ndtype_apply(PyObject *self, PyObject *args)
             PyErr_Format(PyExc_TypeError, "argument types must be ndt");
             return NULL;
         }
-        in[i] = NDT(tmp);
+        in[i] = CONST_NDT(tmp);
     }
 
-    spec = ndt_typecheck(sig, in, nin, &ctx);
-    if (spec == NULL) {
+    spec = ndt_apply_spec_empty;
+    if (ndt_typecheck(&spec, sig, in, nin, &ctx) < 0) {
         return seterr(&ctx);
     }
 
-    list = PyList_New(spec->nout);
+    list = PyList_New(spec.nout);
     if (list == NULL) {
-        ndt_apply_spec_del(spec);
+        ndt_apply_spec_clear(&spec);
         return NULL;
     }
 
-    for (i = 0; i < spec->nout; i++) {
+    for (i = 0; i < spec.nout; i++) {
         PyObject *x = ndtype_alloc(&Ndt_Type);
         if (x == NULL) {
-            ndt_apply_spec_del(spec);
+            ndt_apply_spec_clear(&spec);
             Py_DECREF(list);
             return NULL;
         }
-        NDT(x) = spec->out[i];
-        spec->out[i] = NULL;
+        NDT(x) = spec.out[i];
+        spec.out[i] = NULL; spec.nout--;
         PyList_SET_ITEM(list, i, x);
     }
 
-    tag = PyUnicode_FromString(ndt_apply_tag_as_string(spec));
+    tag = PyUnicode_FromString(ndt_apply_tag_as_string(&spec));
     if (tag == NULL) {
-        ndt_free(spec);
         Py_DECREF(list);
         return NULL;
     }
 
-    outer_dims = PyLong_FromLong(spec->outer_dims);
-    ndt_free(spec);
+    outer_dims = PyLong_FromLong(spec.outer_dims);
     if (outer_dims == NULL) {
         Py_DECREF(tag);
         Py_DECREF(list);
