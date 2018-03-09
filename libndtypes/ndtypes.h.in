@@ -497,9 +497,9 @@ typedef struct {
     ndt_t *out[NDT_MAX_ARGS];
 } ndt_apply_spec_t;
 
-ndt_apply_spec_t *ndt_apply_spec_new(ndt_context_t *ctx);
-void ndt_apply_spec_del(ndt_apply_spec_t *spec);
-const char *ndt_apply_tag_as_string(ndt_apply_spec_t *spec);
+NDTYPES_API ndt_apply_spec_t *ndt_apply_spec_new(ndt_context_t *ctx);
+NDTYPES_API void ndt_apply_spec_del(ndt_apply_spec_t *spec);
+NDTYPES_API const char *ndt_apply_tag_as_string(ndt_apply_spec_t *spec);
 
 
 /*****************************************************************************/
