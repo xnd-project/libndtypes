@@ -621,10 +621,11 @@ ndtype_apply(PyObject *self, PyObject *args)
     NDT_STATIC_CONTEXT(ctx);
     ndt_t *sig = NDT(self);
     ndt_t *in[NDT_MAX_ARGS];
-    ndt_t *out[NDT_MAX_ARGS];
-    PyObject *res, *list, *outer_dims;
-    int k = -1;
-    Py_ssize_t nin, nout;
+    ndt_apply_spec_t *spec;
+    PyObject *res, *list;
+    PyObject *outer_dims;
+    PyObject *tag;
+    Py_ssize_t nin;
     Py_ssize_t i;
 
     if (!PyTuple_Check(args) && !PyList_Check(args)) {
@@ -648,37 +649,48 @@ ndtype_apply(PyObject *self, PyObject *args)
         in[i] = NDT(tmp);
     }
 
-    nout = ndt_typecheck(out, &k, sig, in, nin, &ctx);
-    if (nout < 0) {
+    spec = ndt_typecheck(sig, in, nin, &ctx);
+    if (spec == NULL) {
         return seterr(&ctx);
     }
 
-    list = PyList_New(nout);
+    list = PyList_New(spec->nout);
     if (list == NULL) {
-        ndt_type_array_clear(out, nout);
+        ndt_apply_spec_del(spec);
         return NULL;
     }
 
-    for (i = 0; i < nout; i++) {
+    for (i = 0; i < spec->nout; i++) {
         PyObject *x = ndtype_alloc(&Ndt_Type);
         if (x == NULL) {
-            ndt_type_array_clear(out+i, nout-i);
+            ndt_apply_spec_del(spec);
             Py_DECREF(list);
             return NULL;
         }
-        NDT(x) = out[i];
+        NDT(x) = spec->out[i];
+        spec->out[i] = NULL;
         PyList_SET_ITEM(list, i, x);
     }
 
-    outer_dims = PyLong_FromLong(k);
-    if (outer_dims == NULL) {
+    tag = PyUnicode_FromString(ndt_apply_tag_as_string(spec));
+    if (tag == NULL) {
+        ndt_free(spec);
         Py_DECREF(list);
         return NULL;
     }
 
-    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, self, args,
-                                        list, outer_dims, NULL);
+    outer_dims = PyLong_FromLong(spec->outer_dims);
+    ndt_free(spec);
+    if (outer_dims == NULL) {
+        Py_DECREF(tag);
+        Py_DECREF(list);
+        return NULL;
+    }
 
+    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, self, tag,
+                                       args, list, outer_dims, NULL);
+
+    Py_DECREF(tag);
     Py_DECREF(list);
     Py_DECREF(outer_dims);
     return res;
@@ -1107,7 +1119,7 @@ PyInit__ndtypes(void)
 
     ApplySpec = (PyTypeObject *)PyObject_CallMethod(collections,
                                     "namedtuple", "(ss)", "ApplySpec",
-                                    "func args ret outer_dims");
+                                    "func tag args ret outer_dims");
     if (ApplySpec == NULL) {
         goto error;
     }

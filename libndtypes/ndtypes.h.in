@@ -143,18 +143,6 @@ enum ndt_variadic {
   Variadic
 };
 
-
-/*
- * Fixed dimensions in ndarray representation.
- */
-typedef struct {
-    int ndim;
-    int64_t itemsize;
-    int64_t shape[NDT_MAX_DIM];
-    int64_t strides[NDT_MAX_DIM];
-} ndt_ndarray_t;
-
-
 /* Ownership flag for var dim offsets */
 enum ndt_offsets {
   InternalOffsets,
@@ -481,6 +469,39 @@ NDTYPES_API const char *ndt_context_msg(ndt_context_t *ctx);
 NDTYPES_API void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 
 
+/******************************************************************************/
+/*                        Array conversions and properties                    */
+/******************************************************************************/
+
+/* These may go into xnd at some point. */
+
+typedef struct {
+    int ndim;
+    int64_t itemsize;
+    int64_t shape[NDT_MAX_DIM];
+    int64_t strides[NDT_MAX_DIM];
+} ndt_ndarray_t;
+
+enum ndt_apply {
+    Elementwise,
+    C,
+    Fortran,
+    Strided,
+    Xnd
+};
+
+typedef struct {
+    enum ndt_apply tag;
+    int outer_dims;
+    int nout;
+    ndt_t *out[NDT_MAX_ARGS];
+} ndt_apply_spec_t;
+
+ndt_apply_spec_t *ndt_apply_spec_new(ndt_context_t *ctx);
+void ndt_apply_spec_del(ndt_apply_spec_t *spec);
+const char *ndt_apply_tag_as_string(ndt_apply_spec_t *spec);
+
+
 /*****************************************************************************/
 /*                               Utilities                                   */
 /*****************************************************************************/
@@ -565,12 +586,7 @@ NDTYPES_API ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
 
 NDTYPES_API int ndt_equal(const ndt_t *t, const ndt_t *u);
 NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
-NDTYPES_API int ndt_typecheck(ndt_t *out[NDT_MAX_ARGS],
-                              int *outer_dims,
-                              const ndt_t *signature,
-                              ndt_t *in[],
-                              int nin,
-                              ndt_context_t *ctx);
+NDTYPES_API ndt_apply_spec_t *ndt_typecheck(const ndt_t *signature, ndt_t *in[], int nin, ndt_context_t *ctx);
 
 NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
 

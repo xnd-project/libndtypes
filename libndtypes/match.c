@@ -649,42 +649,41 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
  * signature 'f'.  On success, infer and return the concrete return
  * type.
  */
-int
-ndt_typecheck(ndt_t *out[NDT_MAX_ARGS],
-              int *outer_dims,
-              const ndt_t *sig,
-              ndt_t **in,
-              int nin,
-              ndt_context_t *ctx)
+ndt_apply_spec_t *
+ndt_typecheck(const ndt_t *sig, ndt_t **in, int nin, ndt_context_t *ctx)
 {
+    ndt_apply_spec_t *spec;
+    ndt_t *out[NDT_MAX_ARGS];
     symtable_t *tbl;
     ndt_t *t;
     int64_t i, k;
     int ret, nout;
+    int outer_dims;
+    int inner_dims;
 
     if (sig->tag != Function) {
         ndt_err_format(ctx, NDT_ValueError,
             "signature must be a function type");
-        return -1;
+        return NULL;
     }
 
     if (nin != sig->Function.in) {
         ndt_err_format(ctx, NDT_ValueError,
             "expected %" PRIi64 " arguments, got %d", sig->Function.in, nin);
-        return -1;
+        return NULL;
     }
 
     for (i = 0; i < nin; i++) {
         if (!ndt_is_concrete(in[i])) {
             ndt_err_format(ctx, NDT_ValueError,
                 "type checking requires concrete argument types");
-            return -1;
+            return NULL;
         }
     }
 
     tbl = symtable_new(ctx);
     if (tbl == NULL) {
-        return -1;
+        return NULL;
     }
 
     for (i = 0; i < nin; i++) {
@@ -697,7 +696,7 @@ ndt_typecheck(ndt_t *out[NDT_MAX_ARGS],
                     "argument types do not match");
             }
 
-            return -1;
+            return NULL;
         }
     }
 
@@ -709,12 +708,12 @@ ndt_typecheck(ndt_t *out[NDT_MAX_ARGS],
                 ndt_del(out[k]);
             }
             symtable_del(tbl);
-            return -1;
+            return NULL;
         }
     }
 
     /* XXX */
-    *outer_dims = 0;
+    outer_dims = 0;
 
     t = sig->Function.types[0];
 
@@ -726,7 +725,7 @@ ndt_typecheck(ndt_t *out[NDT_MAX_ARGS],
 
             switch (v.tag) {
             case DimListEntry:
-                *outer_dims = v.DimListEntry.size;
+                outer_dims = v.DimListEntry.size;
                 break;
             default:
                 break;
@@ -736,5 +735,33 @@ ndt_typecheck(ndt_t *out[NDT_MAX_ARGS],
     /* END XXX */
 
     symtable_del(tbl);
-    return nout;
+
+    spec = ndt_apply_spec_new(ctx);
+    if (spec == NULL) {
+        ndt_type_array_clear(out, nout);
+        return NULL;
+    }
+
+    for (i = 0; i < nout; i++) {
+        spec->out[i] = out[i];
+    }
+    spec->nout = nout;
+    spec->outer_dims = outer_dims;
+
+    inner_dims = t->ndim - outer_dims;
+
+    if (ndt_is_c_contiguous(t)) {
+        spec->tag = inner_dims == 0 ? Elementwise : C;
+    }
+    else if (ndt_is_f_contiguous(t)) {
+        spec->tag = inner_dims == 0 ? Elementwise : Fortran;
+    }
+    else if (ndt_is_ndarray(t)) {
+        spec->tag = Strided;
+    }
+    else {
+        spec->tag = Xnd;
+    }
+
+    return spec;
 }

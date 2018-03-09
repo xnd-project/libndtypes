@@ -205,3 +205,55 @@ ndt_hash(ndt_t *t, ndt_context_t *ctx)
 
     return x;
 }
+
+
+/*****************************************************************************/
+/*                           Apply spec (unstable API)                       */
+/*****************************************************************************/
+
+ndt_apply_spec_t *
+ndt_apply_spec_new(ndt_context_t *ctx)
+{
+    ndt_apply_spec_t *spec;
+
+    spec = ndt_calloc(1, sizeof *spec);
+    if (spec == NULL) {
+        return ndt_memory_error(ctx);
+    }
+    spec->tag = Xnd;
+    spec->nout = 0;
+    spec->outer_dims = 0;
+
+    return spec;
+}
+
+void
+ndt_apply_spec_del(ndt_apply_spec_t *spec)
+{
+    int i;
+
+    if (spec == NULL) {
+        return;
+    }
+
+    for (i = 0; i < spec->nout; i++) {
+        ndt_del(spec->out[i]);
+    }
+
+    ndt_free(spec);
+}
+
+const char *
+ndt_apply_tag_as_string(ndt_apply_spec_t *spec)
+{
+    switch (spec->tag) {
+    case Elementwise: return "Elementwise";
+    case C: return "C";
+    case Fortran: return "Fortran";
+    case Strided: return "Strided";
+    case Xnd: return "Xnd";
+    }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid tag");
+}

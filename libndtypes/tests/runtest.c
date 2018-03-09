@@ -717,16 +717,14 @@ types_from_string(const char * const *s, int n, ndt_context_t *ctx)
 static int
 validate_typecheck_test(const typecheck_testcase_t *test,
                         const ndt_t *sig,
-                        ndt_t *out[NDT_MAX_ARGS],
-                        int nout,
-                        int outer_dims,
+                        ndt_apply_spec_t *spec,
                         ndt_context_t *ctx)
 {
     ndt_t **expected_out;
     int64_t i;
 
     if (!test->success) {
-        if (nout == -1) {
+        if (spec == NULL) {
             return 0;
         }
         ndt_err_format(ctx, NDT_RuntimeError,
@@ -735,16 +733,16 @@ validate_typecheck_test(const typecheck_testcase_t *test,
         return -1;
     }
 
-    if (nout != sig->Function.out || nout != test->nout) {
+    if (spec->nout != sig->Function.out || spec->nout != test->nout) {
         ndt_err_format(ctx, NDT_RuntimeError,
             "test_typecheck: expected nout==test->nout==%d, got nout==%d and "
-            "test->nout==%d\n", sig->Function.out, nout, test->nout);
+            "test->nout==%d\n", sig->Function.out, spec->nout, test->nout);
         return -1;
     }
 
-    if (outer_dims != test->outer) {
+    if (spec->outer_dims != test->outer) {
         ndt_err_format(ctx, NDT_RuntimeError,
-            "test_typecheck: expected outer==%d, got %d\n", outer_dims, test->outer);
+            "test_typecheck: expected outer==%d, got %d\n", spec->outer_dims, test->outer);
         return -1;
     }
 
@@ -753,8 +751,8 @@ validate_typecheck_test(const typecheck_testcase_t *test,
         return -1;
     }
 
-    for (i = 0; i < nout; i++) {
-        if (!ndt_equal(out[i], expected_out[i])) {
+    for (i = 0; i < spec->nout; i++) {
+        if (!ndt_equal(spec->out[i], expected_out[i])) {
             ndt_err_format(ctx, NDT_RuntimeError,
                 "test_typecheck: return value %d: expected %s", i, test->out[i]);
             ndt_type_array_del(expected_out, sig->Function.out);
@@ -771,14 +769,12 @@ static int
 test_typecheck(void)
 {
     NDT_STATIC_CONTEXT(ctx);
-    ndt_t *out[NDT_MAX_ARGS];
+    ndt_apply_spec_t *spec;
     const typecheck_testcase_t *test;
     ndt_t *sig = NULL;
     ndt_t **in = NULL;
     int count = 0;
     int ret = -1;
-    int outer_dims;
-    int nout;
 
     for (test = typecheck_tests; test->signature != NULL; test++) {
         sig = ndt_from_string(test->signature, &ctx);
@@ -797,14 +793,15 @@ test_typecheck(void)
             ndt_err_clear(&ctx);
 
             ndt_set_alloc_fail();
-            nout = ndt_typecheck(out, &outer_dims, sig, in, test->nin, &ctx);
+            spec = ndt_typecheck(sig, in, test->nin, &ctx);
             ndt_set_alloc();
 
             if (ctx.err != NDT_MemoryError) {
                 break;
             }
 
-            if (nout != -1) {
+            if (spec != NULL) {
+                ndt_apply_spec_del(spec);
                 ndt_err_format(&ctx, NDT_RuntimeError,
                     "test_typecheck: expect nout == -1 after MemoryError\n"
                     "test_typecheck: \"%s\"\n", test->signature);
@@ -813,9 +810,9 @@ test_typecheck(void)
         }
 
         ndt_err_clear(&ctx);
-        ret = validate_typecheck_test(test, sig, out, nout, outer_dims, &ctx);
+        ret = validate_typecheck_test(test, sig, spec, &ctx);
         ndt_type_array_del(in, test->nin);
-        ndt_type_array_clear(out, nout);
+        ndt_apply_spec_del(spec);
         ndt_del(sig);
 
         if (ret < 0) {
