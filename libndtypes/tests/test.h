@@ -53,12 +53,10 @@ typedef struct {
     const char *signature;
     const char *in[128];
     const char *out[128];
-    int nin;
-    int nout;
-    int outer;
+    const char *broadcast[128];
+    int outer_dims;
     bool success;
 } typecheck_testcase_t;
-
 
 extern const char *parse_tests[];
 extern const char *parse_roundtrip_tests[];

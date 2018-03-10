@@ -479,6 +479,7 @@ typedef struct {
     int64_t itemsize;
     int64_t shape[NDT_MAX_DIM];
     int64_t strides[NDT_MAX_DIM];
+    int64_t steps[NDT_MAX_DIM];
 } ndt_ndarray_t;
 
 /* This may go into gumath at some point. */

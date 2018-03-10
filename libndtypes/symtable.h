@@ -85,6 +85,7 @@ void symtable_del(symtable_t *t);
 int symtable_add(symtable_t *t, const char *key, const symtable_entry_t entry,
                  ndt_context_t *ctx);
 symtable_entry_t symtable_find(const symtable_t *t, const char *key);
+symtable_entry_t *symtable_find_ptr(symtable_t *t, const char *key);
 
 
 /* END LOCAL SCOPE */

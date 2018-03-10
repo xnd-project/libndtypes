@@ -146,7 +146,7 @@ ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t 
 int
 ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
 {
-    int ndim;
+    int n;
 
     assert(t->ndim <= NDT_MAX_DIM);
 
@@ -168,12 +168,13 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
     a->ndim = t->ndim;
     a->itemsize = t->Concrete.FixedDim.itemsize;
 
-    for (ndim=0; t->ndim > 0; ndim++, t=t->FixedDim.type) {
-        a->shape[ndim] = t->FixedDim.shape;
-        a->strides[ndim] = t->Concrete.FixedDim.step * a->itemsize;
+    for (n=0; t->ndim > 0; n++, t=t->FixedDim.type) {
+        a->shape[n] = t->FixedDim.shape;
+        a->strides[n] = t->Concrete.FixedDim.step * a->itemsize;
+        a->steps[n] = t->Concrete.FixedDim.step;
     }
 
-    return 0;
+    return n;
 }
 
 /* Unoptimized hash function for experimenting. */

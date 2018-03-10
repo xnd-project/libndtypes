@@ -639,6 +639,52 @@ check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ct
     return 1;
 }
 
+static int
+strcmp_null(const char *s, const char *t)
+{
+    if (s == NULL) {
+        return t == NULL;
+    }
+    return t != NULL && strcmp(s, t) == 0;
+}
+
+static int
+check_function_invariants(ndt_t * const *types, int64_t shape, ndt_context_t *ctx)
+{
+    int64_t count = 0;
+    int i;
+
+    if (shape == 0) {
+        return 1;
+    }
+
+    for (i = 0; i < shape; i++) {
+        if (types[i]->tag == EllipsisDim) {
+            count++;
+        }
+    }
+
+    if (count == 0) {
+        return 1;
+    }
+    if (count != shape) {
+        goto error;
+    }
+
+    for (i = 1; i < shape; i++) {
+        if (!strcmp_null(types[0]->EllipsisDim.name, types[i]->EllipsisDim.name)) {
+            goto error;
+        }
+    }
+
+    return 1;
+
+error:
+    ndt_err_format(ctx, NDT_ValueError,
+        "invalid combination of ellipsis dimensions");
+    return 0;
+}
+
 
 /******************************************************************************/
 /*                         Type allocation/deallocation                       */
@@ -984,6 +1030,10 @@ ndt_function(ndt_t * const *types, int64_t shape, int64_t in, int64_t out,
 
     assert(0 <= in && 0 <= out && shape == in+out);
 
+    if (!check_function_invariants(types, shape, ctx)) {
+        return NULL;
+    }
+
     /* abstract type */
     t = ndt_function_new(shape, ctx);
     if (t == NULL) {
@@ -997,7 +1047,7 @@ ndt_function(ndt_t * const *types, int64_t shape, int64_t in, int64_t out,
 
     for (i = 0; i < shape; i++) {
         t->Function.types[i] = types[i];
-        t->flags |= ndt_subtree_flags(types[i]);
+        t->flags |= ndt_dim_flags(types[i]);
     }
 
     return t;

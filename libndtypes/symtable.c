@@ -326,3 +326,23 @@ symtable_find(const symtable_t *t, const char *key)
     return t->entry;
 }
 
+symtable_entry_t *
+symtable_find_ptr(symtable_t *t, const char *key)
+{
+    const unsigned char *cp;
+    int i;
+
+    for (cp = (const unsigned char *)key; *cp != '\0'; cp++) {
+        i = code[*cp];
+        if (i == UCHAR_MAX) {
+            return NULL; /* NOT REACHED */
+        }
+
+        if (t->next[i] == NULL) {
+            return NULL;
+        }
+        t = t->next[i];
+    }
+
+    return &t->entry;
+}

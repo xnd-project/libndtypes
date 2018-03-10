@@ -117,13 +117,13 @@ static int
 resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 {
     const char *key = "00_ELLIPSIS";
-    symtable_entry_t v;
+    symtable_entry_t *v;
     int64_t vsize, wsize;
-    int64_t n;
+    int64_t n, m;
     int i, k;
 
-    v = symtable_find(tbl, key);
-    if (v.tag == Unbound) {
+    v = symtable_find_ptr(tbl, key);
+    if (v == NULL) {
         if (symtable_add(tbl, key, w, ctx) < 0) {
             symtable_free_entry(w);
             return -1;
@@ -131,29 +131,27 @@ resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
         return 1;
     }
 
-    vsize = v.BroadcastEntry.size;
+    vsize = v->BroadcastEntry.size;
     wsize = w.BroadcastEntry.size;
 
     for (i=vsize-1, k=wsize-1; i>=0 && k>=0; i--, k--) {
-        n = v.BroadcastEntry.dims[i];
-        if (v.BroadcastEntry.dims[i] != w.BroadcastEntry.dims[i]) {
-            if (v.BroadcastEntry.dims[i] == 1) {
-                n = w.BroadcastEntry.dims[k];
+        n = v->BroadcastEntry.dims[i];
+        m = w.BroadcastEntry.dims[k];
+        if (n != m) {
+            if (n == 1) {
+                n = m;
             }
-            else if (w.BroadcastEntry.dims[i] == 1) {
-                n = v.BroadcastEntry.dims[k];
-            }
-            else {
+            else if (m != 1) {
                 return 0;
             }
         }
-        v.BroadcastEntry.dims[i<k ? k : i] = n;
+        v->BroadcastEntry.dims[i<k ? k : i] = n;
     }
     for (; k >= 0; k--) {
-        v.BroadcastEntry.dims[k] = w.BroadcastEntry.dims[k];
+        v->BroadcastEntry.dims[k] = w.BroadcastEntry.dims[k];
     }
 
-    v.BroadcastEntry.size = vsize >= wsize ? vsize : wsize;
+    v->BroadcastEntry.size = vsize >= wsize ? vsize : wsize;
 
     return 1;
 }
@@ -565,6 +563,102 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
     }
 }
 
+static ndt_t *
+broadcast(const ndt_t *t, const int64_t *shape,
+          int64_t outer_dims, int inner_dims,
+          bool use_max, ndt_context_t *ctx)
+{
+    ndt_ndarray_t u;
+    const ndt_t *dtype;
+    ndt_t *v;
+    int i, ndim;
+
+    ndim = ndt_as_ndarray(&u, t, ctx);
+    if (ndim < 0) {
+        return NULL;
+    }
+
+    dtype = ndt_dtype(t);
+    v = ndt_copy(dtype, ctx);
+    if (v == NULL) {
+        return NULL;
+    }
+
+    for (i=ndim-1; i>=ndim-inner_dims; i--) {
+        v = ndt_fixed_dim(v, u.shape[i], u.steps[i], ctx);
+        if (v == NULL) {
+            return NULL;
+        }
+    }
+
+    for (; i >= 0; i--) {
+        v = ndt_fixed_dim(v, u.shape[i], u.shape[i] == 1 ? 0 : u.steps[i], ctx);
+        if (v == NULL) {
+            return NULL;
+        }
+    }
+
+    for (i = outer_dims+inner_dims-ndim-1; i >= 0; i--) {
+        if (use_max) {
+            v = ndt_fixed_dim(v, shape[i], INT64_MAX, ctx);
+        }
+        else {
+            v = ndt_fixed_dim(v, 1, 0, ctx);
+        }
+        if (v == NULL) {
+            return NULL;
+        }
+    }
+
+    return v;
+}
+
+static int
+broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
+              const ndt_t *in[], const int nin,
+              const symtable_t *tbl, ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+    ndt_t *u;
+    int outer_dims;
+    int inner_dims;
+    int i;
+
+    v = symtable_find(tbl, "00_ELLIPSIS");
+    if (v.tag != BroadcastEntry) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "unexpected missing unnamed ellipsis entry");
+        return -1;
+    }
+
+    outer_dims = v.BroadcastEntry.size;
+
+    for (i = 0; i < nin; i++) {
+        inner_dims = sig->Function.types[i]->ndim-1;
+        spec->broadcast[i] = broadcast(in[i], v.BroadcastEntry.dims,
+                                       outer_dims, inner_dims, false, ctx);
+        if (spec->broadcast[i] == NULL) {
+            return -1;
+        }
+        spec->nbroadcast++;
+    }
+
+    for (i = 0; i < spec->nout; i++) {
+        inner_dims = sig->Function.types[nin+i]->ndim-1;
+        u = broadcast(spec->out[i], v.BroadcastEntry.dims, outer_dims,
+                      inner_dims, true, ctx);
+        if (u == NULL) {
+            return -1;
+        }
+        ndt_del(spec->out[i]);
+        spec->out[i] = u;
+    }
+
+    spec->outer_dims = outer_dims;
+
+    return 0;
+}
+
 /* For demonstration: only handles fixed, symbolic, int64 */
 static ndt_t *
 ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
@@ -606,9 +700,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
     case EllipsisDim:
         if (t->EllipsisDim.name == NULL) {
-            ndt_err_format(ctx, NDT_ValueError,
-                "cannot substitute unnamed ellipsis dimension");
-            return NULL;
+            return ndt_substitute(t->EllipsisDim.type, tbl, ctx);
         }
         else {
             return substitute_named_ellipsis(t, tbl, ctx);
@@ -655,7 +747,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
 {
     symtable_t *tbl;
     ndt_t *t;
-    int inner_dims;
+    const char *name;
     int ret;
     int64_t i;
 
@@ -713,42 +805,39 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
         spec->nout++;
     }
 
-    /* XXX */
-    t = sig->Function.types[0];
+    if (sig->flags & NDT_ELLIPSIS) {
+        if (sig->Function.shape == 0 || sig->Function.types[0]->tag != EllipsisDim) {
+            ndt_err_format(ctx, NDT_RuntimeError,
+               "unexpected configuration of ellipsis flag and function types");
+            ndt_apply_spec_clear(spec);
+            symtable_del(tbl);
+            return -1;
+        }
 
-    if (t->tag == EllipsisDim) {
-        const char *name = t->EllipsisDim.name;
+        t = sig->Function.types[0];
+        name = t->EllipsisDim.name;
 
         if (name != NULL) {
             symtable_entry_t v = symtable_find(tbl, name);
-
-            switch (v.tag) {
-            case DimListEntry:
-                spec->outer_dims = v.DimListEntry.size;
-                break;
-            default:
-                break;
+            if (v.tag != DimListEntry) {
+                ndt_err_format(ctx, NDT_RuntimeError,
+                    "unexpected missing dimension list entry");
+                ndt_apply_spec_clear(spec);
+                symtable_del(tbl);
+                return -1;
+            }
+            spec->outer_dims = v.DimListEntry.size;
+        }
+        else {
+            if (broadcast_all(spec, sig, in, nin, tbl, ctx) < 0) {
+                ndt_apply_spec_clear(spec);
+                symtable_del(tbl);
+                return -1;
             }
         }
     }
-    /* END XXX */
 
     symtable_del(tbl);
-
-    inner_dims = t->ndim - spec->outer_dims;
-
-    if (ndt_is_c_contiguous(t)) {
-        spec->tag = inner_dims == 0 ? Elementwise : C;
-    }
-    else if (ndt_is_f_contiguous(t)) {
-        spec->tag = inner_dims == 0 ? Elementwise : Fortran;
-    }
-    else if (ndt_is_ndarray(t)) {
-        spec->tag = Strided;
-    }
-    else {
-        spec->tag = Xnd;
-    }
 
     return 0;
 }
