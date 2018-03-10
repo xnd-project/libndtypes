@@ -298,7 +298,7 @@ function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         }
     }
 
-    n = ndt_snprintf(ctx, buf, " -> ");
+    n = ndt_snprintf(ctx, buf, t->flags & NDT_ELEMENTWISE ? " => " : " -> ");
     if (n < 0) return -1;
 
     if (t->Function.out == 0) {

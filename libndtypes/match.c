@@ -708,6 +708,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
         }
     }
 
+    ndt_select_kernel_strategy(spec, sig, in, nin);
     symtable_del(tbl);
 
     return 0;

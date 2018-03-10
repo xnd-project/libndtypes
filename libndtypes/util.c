@@ -286,3 +286,70 @@ ndt_apply_tag_as_string(ndt_apply_spec_t *spec)
     /* NOT REACHED: tags should be exhaustive. */
     ndt_internal_error("invalid tag");
 }
+
+
+/*****************************************************************************/
+/*                     Optimized kernel strategy (unstable API)              */
+/*****************************************************************************/
+
+static bool
+all_c_contiguous(const ndt_t *types[], int n)
+{
+    for (int i = 0; i < n; i++) {
+        if (!ndt_is_c_contiguous(types[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool
+all_f_contiguous(const ndt_t *types[], int n)
+{
+    for (int i = 0; i < n; i++) {
+        if (!ndt_is_f_contiguous(types[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool
+all_ndarray(const ndt_t *types[], int n)
+{
+    for (int i = 0; i < n; i++) {
+        if (!ndt_is_ndarray(types[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void
+ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[], int nin)
+{
+    const ndt_t **out = (const ndt_t **)spec->out;
+
+    assert(sig->tag == Function);
+
+    if (spec->nbroadcast > 0) {
+        in = (const ndt_t **)spec->broadcast;
+        nin = spec->nbroadcast;
+    }
+
+    if (all_c_contiguous(in, nin) && all_c_contiguous(out, spec->nout)) {
+        spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : C;
+    }
+    else if (all_f_contiguous(in, nin) && all_f_contiguous(out, spec->nout)) {
+        spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : Fortran;
+    }
+    else if (all_ndarray(in, nin) && all_ndarray(out, spec->nout)) {
+        spec->tag = Strided;
+    }
+    else {
+        spec->tag = Xnd;
+    }
+}
