@@ -608,9 +608,9 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
 }
 
 /*
- * Check the concrete function arguments 'args' against the function
- * signature 'f'.  On success, infer and return the concrete return
- * type.
+ * Check the concrete function arguments 'in' against the function
+ * signature 'sig'.  On success, infer and return the concrete return
+ * types and the (possibly broadcasted) 'in' types.
  */
 int
 ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
