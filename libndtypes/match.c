@@ -41,13 +41,13 @@
 #include <assert.h>
 #include "ndtypes.h"
 #include "symtable.h"
+#include "substitute.h"
 
 
 static int match_datashape(const ndt_t *, const ndt_t *, symtable_t *, ndt_context_t *);
 static int match_dimensions(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
 static int match_dimensions_rev(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
 static int match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl, ndt_context_t *ctx);
-static ndt_t *ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx);
 
 
 static int
@@ -511,58 +511,6 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
     return ret;
 }
 
-
-/**********************************************************************/
-/*                        Experimental section                        */
-/**********************************************************************/
-
-static ndt_t *
-substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
-{
-    symtable_entry_t v;
-    const ndt_t *w;
-    ndt_t *u;
-    int i;
-
-    assert(t->tag == EllipsisDim && t->EllipsisDim.name != NULL);
-
-    u = ndt_substitute(t->EllipsisDim.type, tbl, ctx);
-    if (u == NULL) {
-        return NULL;
-    }
-
-    v = symtable_find(tbl, t->EllipsisDim.name);
-
-    switch (v.tag) {
-    case DimListEntry: {
-        for (i = v.DimListEntry.size-1; i >= 0; i--) {
-            w = v.DimListEntry.dims[i];
-            switch (w->tag) {
-            case FixedDim:
-                u = ndt_fixed_dim(u, w->FixedDim.shape, INT64_MAX, ctx);
-                if (u == NULL) {
-                    return NULL;
-                }
-                break;
-
-           default:
-               ndt_err_format(ctx, NDT_NotImplementedError,
-                   "substitution not implemented for this type");
-               ndt_del(u);
-               return NULL;
-            }
-        }
-
-        return u;
-    }
-
-    default:
-        ndt_err_format(ctx, NDT_ValueError,
-            "variable not found or has incorrect type");
-        return NULL;
-    }
-}
-
 static ndt_t *
 broadcast(const ndt_t *t, const int64_t *shape,
           int64_t outer_dims, int inner_dims,
@@ -657,83 +605,6 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
     spec->outer_dims = outer_dims;
 
     return 0;
-}
-
-/* For demonstration: only handles fixed, symbolic, int64 */
-static ndt_t *
-ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
-{
-    symtable_entry_t v;
-    ndt_t *u;
-
-    switch (t->tag) {
-    case FixedDim:
-        u = ndt_substitute(t->FixedDim.type, tbl, ctx);
-        if (u == NULL) {
-            return NULL;
-        }
-
-        assert(ndt_is_concrete(u));
-
-        return ndt_fixed_dim(u, t->FixedDim.shape, t->Concrete.FixedDim.step,
-                             ctx);
-
-    case SymbolicDim:
-        v = symtable_find(tbl, t->SymbolicDim.name);
-
-        switch (v.tag) {
-        case ShapeEntry:
-            u = ndt_substitute(t->SymbolicDim.type, tbl, ctx);
-            if (u == NULL) {
-                return NULL;
-            }
-
-            assert(ndt_is_concrete(u));
-
-            return ndt_fixed_dim(u, v.ShapeEntry, INT64_MAX, ctx);
-
-        default:
-            ndt_err_format(ctx, NDT_ValueError,
-                "variable is not found or has incorrect type");
-            return NULL;
-        }
-
-    case EllipsisDim:
-        if (t->EllipsisDim.name == NULL) {
-            return ndt_substitute(t->EllipsisDim.type, tbl, ctx);
-        }
-        else {
-            return substitute_named_ellipsis(t, tbl, ctx);
-        }
-
-    case Typevar:
-        v = symtable_find(tbl, t->Typevar.name);
-        switch (v.tag) {
-        case TypeEntry:
-            return ndt_substitute(v.TypeEntry, tbl, ctx);
-
-        default:
-            ndt_err_format(ctx, NDT_ValueError,
-                "variable is not found or has incorrect type");
-            return NULL;
-        }
-
-    case Ref:
-        u = ndt_substitute(t->Ref.type, tbl, ctx);
-        if (u == NULL) {
-            return NULL;
-        }
-
-        return ndt_ref(u, ctx);
-
-    case Int64: case Float32: case Float64:
-        return ndt_primitive(t->tag, t->flags, ctx);
-
-    default:
-        ndt_err_format(ctx, NDT_NotImplementedError,
-            "substitution not implemented for this type");
-        return NULL;
-    }
 }
 
 /*

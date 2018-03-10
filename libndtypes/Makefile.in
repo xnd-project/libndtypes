@@ -33,14 +33,14 @@ default: $(LIBSTATIC) $(LIBSHARED)
 
 
 OBJS = alloc.o attr.o context.o copy.o encodings.o equal.o grammar.o io.o \
-       lexer.o match.o ndtypes.o parsefuncs.o parser.o seq.o symtable.o util.o \
-       values.o
+       lexer.o match.o ndtypes.o parsefuncs.o parser.o seq.o substitute.o \
+       symtable.o util.o values.o
 
 SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/context.o .objs/copy.o \
               .objs/encodings.o .objs/equal.o .objs/grammar.o .objs/io.o \
               .objs/lexer.o .objs/match.o .objs/ndtypes.o .objs/parsefuncs.o \
-              .objs/parser.o .objs/seq.o .objs/symtable.o .objs/util.o \
-              .objs/values.o
+              .objs/parser.o .objs/seq.o .objs/substitute.o .objs/symtable.o \
+              .objs/util.o .objs/values.o
 
 
 COMPAT_OBJS = compat/bpgrammar.o compat/bplexer.o compat/import.o
@@ -170,6 +170,14 @@ Makefile seq.c ndtypes.h seq.h
 .objs/seq.o:\
 Makefile seq.c ndtypes.h seq.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c seq.c -o .objs/seq.o
+
+substitute.o:\
+Makefile substitute.c ndtypes.h substitute.h symtable.h
+	$(CC) $(NDT_CFLAGS) -c substitute.c
+
+.objs/substitute.o:\
+Makefile substitute.c ndtypes.h substitute.h symtable.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c substitute.c -o .objs/substitute.o
 
 symtable.o:\
 Makefile symtable.c ndtypes.h symtable.h
