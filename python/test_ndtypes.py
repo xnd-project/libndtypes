@@ -1549,28 +1549,29 @@ class TestApply(unittest.TestCase):
         # Type checking and return type inference for function applications.
 
         # Function type:
-        f = ndt("Dims... * N * M * int64, Dims... * M * P * int64 -> Dims... * N * P * float64")
+        sig = ndt("Dims... * N * M * int64, Dims... * M * P * int64 -> Dims... * N * P * float64")
+
 
         # Argument types:
-        args = [ndt("20 * 2 * 3 * int64"), ndt("20 * 3 * 4 * int64")]
+        in_types = [ndt("20 * 2 * 3 * int64"), ndt("20 * 3 * 4 * int64")]
 
-        spec = f.apply(args)
-        self.assertEqual(spec.func, f)
-        self.assertEqual(spec.args, args)
-        self.assertSequenceEqual(spec.ret, [ndt("20 * 2 * 4 * float64")])
+        spec = sig.apply(in_types)
+        self.assertEqual(spec.sig, sig)
+        self.assertEqual(spec.in_types, in_types)
+        self.assertSequenceEqual(spec.out_types, [ndt("20 * 2 * 4 * float64")])
         self.assertEqual(spec.outer_dims, 1)
 
     def test_apply_error(self):
 
-        f = ndt("Dims... * N * M * int64, Dims... * M * P * int64 -> Dims... * N * P * float64")
+        sig = ndt("Dims... * N * M * int64, Dims... * M * P * int64 -> Dims... * N * P * float64")
 
         lst = [["20 * 2 * 3 * int8", "20 * 3 * 4 * int64"],
                ["10 * 2 * 3 * int64", "20 * 3 * 4 * int64"],
                ["20 * 2 * 100 * int64", "20 * 3 * 4 * int64"]]
 
         for l in lst:
-            args = [ndt(x) for x in l]
-            self.assertRaises(TypeError, f.apply, args)
+            in_types = [ndt(x) for x in l]
+            self.assertRaises(TypeError, sig.apply, in_types)
 
 
 class LongFixedDimTests(unittest.TestCase):
