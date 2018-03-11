@@ -315,3 +315,14 @@ DTYPE_TEST_CASES = [
    ("Some(?complex64)", Mem(itemsize=8, align=4)),
    ("Some(?complex128)", Mem(itemsize=16, align=8)),
 ]
+
+def genindices(factor):
+    for i in range(4):
+        yield (factor * i,)
+    for i in range(4):
+        for j in range(4):
+            yield (factor * i, factor * j)
+    for i in range(4):
+        for j in range(4):
+            for k in range(4):
+                yield (factor * i, factor * j, factor * k)

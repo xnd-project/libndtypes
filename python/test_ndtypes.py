@@ -37,6 +37,13 @@ from copy import copy
 from ndtypes import ndt, typedef, MAX_DIM
 from ndt_support import *
 from ndt_randtype import *
+from random import random
+
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 
 SKIP_LONG = True
@@ -1574,6 +1581,69 @@ class TestApply(unittest.TestCase):
             self.assertRaises(TypeError, sig.apply, in_types)
 
 
+def from_shape_strides(shape, strides):
+    s = "float64"
+    for n, m in zip(reversed(shape), reversed(strides)):
+        s = "fixed(shape=%s, step=%s) * %s" % (n, m//8, s)
+    return ndt(s)
+
+class TestBroadcast(unittest.TestCase):
+
+    def test_broadcast(self):
+
+        skip_if(np is None, "test requires numpy")
+        skip_if(SKIP_LONG, "use --long argument to enable these tests")
+
+        sig = ndt("... * float64, ... * float64 -> ... * float64")
+
+        for xshape in genindices(1):
+          for yshape in genindices(1):
+            for xstrides in genindices(8):
+              for ystrides in genindices(8):
+
+                if (random() < 0.99):
+                    continue
+
+                try:
+                  x = np.ndarray(shape=xshape, strides=xstrides)
+                except ValueError:
+                  continue
+
+                try:
+                  y = np.ndarray(shape=yshape, strides=ystrides)
+                except ValueError:
+                  continue
+
+                try:
+                  xx, yy = np.broadcast_arrays(x, y)
+                except ValueError:
+                  continue
+
+                t = from_shape_strides(xshape, xstrides)
+                u = from_shape_strides(yshape, ystrides)
+                spec = sig.apply([t, u])
+                tt, uu = spec.in_broadcast
+
+                self.assertEqual(tt.shape, xx.shape)
+                self.assertEqual(uu.shape, yy.shape)
+
+                self.assertEqual(len(tt.strides), len(xx.strides))
+                for i in range(len(tt.strides)):
+                    if tt.shape[i] <= 1:
+                        # numpy has strange rules for strides in this case.
+                        self.assertEqual(tt.strides[i], 0)
+                    else:
+                        self.assertEqual(tt.strides[i], xx.strides[i])
+
+                self.assertEqual(len(uu.strides), len(yy.strides))
+                for i in range(len(uu.strides)):
+                    if uu.shape[i] <= 1:
+                        # numpy has strange rules for strides in this case.
+                        self.assertEqual(uu.strides[i], 0)
+                    else:
+                        self.assertEqual(uu.strides[i], yy.strides[i])
+
+
 class LongFixedDimTests(unittest.TestCase):
 
     def test_steps_random(self):
@@ -1667,6 +1737,7 @@ ALL_TESTS = [
   TestConstruction,
   TestError,
   TestApply,
+  TestBroadcast,
   LongFixedDimTests,
 ]
 

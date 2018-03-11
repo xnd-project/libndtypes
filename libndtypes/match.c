@@ -137,9 +137,12 @@ resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
     for (i=vsize-1, k=wsize-1; i>=0 && k>=0; i--, k--) {
         n = v->BroadcastEntry.dims[i];
         m = w.BroadcastEntry.dims[k];
-        if (n != m) {
+        if (m != n) {
             if (n == 1) {
                 n = m;
+            }
+            else if (m == 0) {
+                n = 0;
             }
             else if (m != 1) {
                 return 0;
@@ -519,7 +522,9 @@ broadcast(const ndt_t *t, const int64_t *shape,
     ndt_ndarray_t u;
     const ndt_t *dtype;
     ndt_t *v;
-    int i, ndim;
+    int64_t step;
+    int ndim;
+    int i, k;
 
     ndim = ndt_as_ndarray(&u, t, ctx);
     if (ndim < 0) {
@@ -539,19 +544,20 @@ broadcast(const ndt_t *t, const int64_t *shape,
         }
     }
 
-    for (; i >= 0; i--) {
-        v = ndt_fixed_dim(v, u.shape[i], u.shape[i] == 1 ? 0 : u.steps[i], ctx);
+    for (k=outer_dims-1; i>=0 && k>=0; i--, k--) {
+        step = u.shape[i]<=1 ? 0 : u.steps[i];
+        v = ndt_fixed_dim(v, shape[k], step, ctx);
         if (v == NULL) {
             return NULL;
         }
     }
 
-    for (i = outer_dims+inner_dims-ndim-1; i >= 0; i--) {
+    for (; k>=0; k--) {
         if (use_max) {
-            v = ndt_fixed_dim(v, shape[i], INT64_MAX, ctx);
+            v = ndt_fixed_dim(v, shape[k], INT64_MAX, ctx);
         }
         else {
-            v = ndt_fixed_dim(v, shape[i], 0, ctx);
+            v = ndt_fixed_dim(v, shape[k], 0, ctx);
         }
         if (v == NULL) {
             return NULL;
@@ -593,8 +599,8 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
 
     for (i = 0; i < spec->nout; i++) {
         inner_dims = sig->Function.types[nin+i]->ndim-1;
-        u = broadcast(spec->out[i], v.BroadcastEntry.dims, outer_dims,
-                      inner_dims, true, ctx);
+        u = broadcast(spec->out[i], v.BroadcastEntry.dims,
+                      outer_dims, inner_dims, true, ctx);
         if (u == NULL) {
             return -1;
         }
