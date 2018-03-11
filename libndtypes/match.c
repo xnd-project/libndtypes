@@ -551,7 +551,7 @@ broadcast(const ndt_t *t, const int64_t *shape,
             v = ndt_fixed_dim(v, shape[i], INT64_MAX, ctx);
         }
         else {
-            v = ndt_fixed_dim(v, 1, 0, ctx);
+            v = ndt_fixed_dim(v, shape[i], 0, ctx);
         }
         if (v == NULL) {
             return NULL;

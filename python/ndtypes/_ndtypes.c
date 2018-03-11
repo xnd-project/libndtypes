@@ -622,9 +622,8 @@ ndtype_apply(PyObject *self, PyObject *args)
     ndt_t *sig = NDT(self);
     const ndt_t *in[NDT_MAX_ARGS];
     ndt_apply_spec_t spec;
-    PyObject *res, *list;
-    PyObject *outer_dims;
-    PyObject *tag;
+    PyObject *tag = NULL, *out = NULL, *broadcast = NULL, *outer_dims = NULL;
+    PyObject *res = NULL;
     Py_ssize_t nin;
     Py_ssize_t i;
 
@@ -654,43 +653,58 @@ ndtype_apply(PyObject *self, PyObject *args)
         return seterr(&ctx);
     }
 
-    list = PyList_New(spec.nout);
-    if (list == NULL) {
-        ndt_apply_spec_clear(&spec);
+    tag = PyUnicode_FromString(ndt_apply_tag_as_string(&spec));
+    if (tag == NULL) {
         return NULL;
     }
 
-    for (i = 0; i < spec.nout; i++) {
+    out = PyList_New(spec.nout);
+    if (out == NULL) {
+        ndt_apply_spec_clear(&spec);
+        goto finish;
+    }
+
+    for (i=spec.nout-1; i >= 0; i--) {
         PyObject *x = ndtype_alloc(&Ndt_Type);
         if (x == NULL) {
             ndt_apply_spec_clear(&spec);
-            Py_DECREF(list);
-            return NULL;
+            goto finish;
         }
         NDT(x) = spec.out[i];
         spec.out[i] = NULL; spec.nout--;
-        PyList_SET_ITEM(list, i, x);
+        PyList_SET_ITEM(out, i, x);
     }
 
-    tag = PyUnicode_FromString(ndt_apply_tag_as_string(&spec));
-    if (tag == NULL) {
-        Py_DECREF(list);
-        return NULL;
+    broadcast = PyList_New(spec.nbroadcast);
+    if (broadcast == NULL) {
+        ndt_apply_spec_clear(&spec);
+        goto finish;
+    }
+
+    for (i=spec.nbroadcast-1; i >= 0; i--) {
+        PyObject *x = ndtype_alloc(&Ndt_Type);
+        if (x == NULL) {
+            ndt_apply_spec_clear(&spec);
+            goto finish;
+        }
+        NDT(x) = spec.broadcast[i];
+        spec.broadcast[i] = NULL; spec.nbroadcast--;
+        PyList_SET_ITEM(broadcast, i, x);
     }
 
     outer_dims = PyLong_FromLong(spec.outer_dims);
     if (outer_dims == NULL) {
-        Py_DECREF(tag);
-        Py_DECREF(list);
-        return NULL;
+        goto finish;
     }
 
-    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, self, tag,
-                                       args, list, outer_dims, NULL);
+    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, tag, self,
+                                       args, broadcast, out, outer_dims, NULL);
 
-    Py_DECREF(tag);
-    Py_DECREF(list);
-    Py_DECREF(outer_dims);
+finish:
+    Py_XDECREF(tag);
+    Py_XDECREF(out);
+    Py_XDECREF(broadcast);
+    Py_XDECREF(outer_dims);
     return res;
 }
 
@@ -1117,7 +1131,7 @@ PyInit__ndtypes(void)
 
     ApplySpec = (PyTypeObject *)PyObject_CallMethod(collections,
                                     "namedtuple", "(ss)", "ApplySpec",
-                                    "func tag args ret outer_dims");
+                                    "tag sig in_types in_broadcast out_types outer_dims");
     if (ApplySpec == NULL) {
         goto error;
     }

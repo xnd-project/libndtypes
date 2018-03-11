@@ -57,12 +57,13 @@ Python types relevant for scientific computing directly to memory.
 def _pretty_repr(self):
     return """\
 ApplySpec(
-  func=%r,
-  tag=%r
-  args=%r,
-  ret=%r,
+  tag=%r,
+  sig=%r,
+  in_types=%r,
+  in_broadcast=%r,
+  out_types=%r,
   outer_dims=%r
-)""" % (self.func, self.tag, self.args, self.ret, self.outer_dims)
+)""" % (self.tag, self.sig, self.in_types, self.in_broadcast, self.out_types, self.outer_dims)
 
 from . import _ndtypes
 _ndtypes.ApplySpec.__repr__ = _pretty_repr
