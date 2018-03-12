@@ -110,8 +110,7 @@
 #define NDT_OPTION         0x00000004U
 #define NDT_SUBTREE_OPTION 0x00000008U
 #define NDT_ELLIPSIS       0x00000010U
-#define NDT_FORTRAN        0x00000020U
-#define NDT_ELEMENTWISE    0x00000040U
+#define NDT_ELEMENTWISE    0x00000020U
 
 
 /* Types: ndt_t */
@@ -509,8 +508,9 @@ NDTYPES_API void ndt_apply_spec_clear(ndt_apply_spec_t *spec);
 NDTYPES_API void ndt_apply_spec_del(ndt_apply_spec_t *spec);
 NDTYPES_API const char *ndt_apply_tag_as_string(ndt_apply_spec_t *spec);
 
-NDTYPES_API void ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
-                                            const ndt_t *in[], int nin);
+NDTYPES_API int ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
+                                           const ndt_t *in[], int nin,
+                                           ndt_context_t *ctx);
 
 
 /*****************************************************************************/
@@ -577,6 +577,7 @@ NDTYPES_API int ndt_subtree_is_optional(const ndt_t *t);
 NDTYPES_API int ndt_is_ndarray(const ndt_t *t);
 NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);
 NDTYPES_API int ndt_is_f_contiguous(const ndt_t *t);
+NDTYPES_API int ndt_really_fortran(const ndt_t *t);
 
 NDTYPES_API int ndt_is_scalar(const ndt_t *t);
 NDTYPES_API int ndt_is_signed(const ndt_t *t);

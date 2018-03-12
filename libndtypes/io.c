@@ -450,7 +450,7 @@ categorical(buf_t *buf, ndt_value_t *mem, int64_t ntypes, ndt_context_t *ctx)
 static int
 fortran(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 {
-    if (t->flags & NDT_FORTRAN) {
+    if (ndt_really_fortran(t)) {
         return ndt_snprintf(ctx, buf, "!");
     }
 

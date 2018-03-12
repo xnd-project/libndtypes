@@ -317,15 +317,20 @@ all_c_contiguous(const ndt_t *types[], int n)
 }
 
 static bool
-all_f_contiguous(const ndt_t *types[], int n)
+really_fortran(const ndt_t *types[], int n)
 {
+    bool fortran = false;
+
     for (int i = 0; i < n; i++) {
         if (!ndt_is_f_contiguous(types[i])) {
             return false;
         }
+        if (!ndt_is_c_contiguous(types[i])) {
+            fortran = true;
+        }
     }
 
-    return true;
+    return fortran;
 }
 
 static bool
@@ -340,10 +345,13 @@ all_ndarray(const ndt_t *types[], int n)
     return true;
 }
 
-void
-ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[], int nin)
+int
+ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
+                           const ndt_t *in[], int nin,
+                           ndt_context_t *ctx)
 {
     const ndt_t **out = (const ndt_t **)spec->out;
+    int i;
 
     assert(sig->tag == Function);
 
@@ -358,7 +366,16 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t
     else if (all_c_contiguous(in, nin) && all_c_contiguous(out, spec->nout)) {
         spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : C;
     }
-    else if (all_f_contiguous(in, nin) && all_f_contiguous(out, spec->nout)) {
+    else if (really_fortran(in, nin) && all_c_contiguous(out, spec->nout)) {
+        for (i=spec->nout-1; i>=0; i--) {
+            ndt_t *t = spec->out[i];
+            ndt_t *u = ndt_to_fortran(t, ctx);
+            if (u == NULL) {
+                return -1;
+            }
+            ndt_del(t);
+            spec->out[i] = u;
+        }
         spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : Fortran;
     }
     else if (all_ndarray(in, nin) && all_ndarray(out, spec->nout)) {
@@ -367,4 +384,6 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t
     else {
         spec->tag = Xnd;
     }
+
+    return 0;
 }

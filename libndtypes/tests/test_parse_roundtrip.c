@@ -338,9 +338,8 @@ const char *parse_roundtrip_tests[] = {
   "2 * 10 * >float64",
 
   /* Fortran */
-  "!3 * uint8",
   "!2 * 3 * uint8",
-  "!2 * 3 * {a : !10 * 20 * int64, b : !10 * float64}",
+  "!2 * 3 * {a : !10 * 20 * int64, b : !10 * 2 * float64}",
 
   /* Overflow */
   "9223372036854775807 * uint8",

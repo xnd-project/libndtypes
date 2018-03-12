@@ -216,6 +216,12 @@ ndt_is_f_contiguous(const ndt_t *t)
     return 1;
 }
 
+int
+ndt_really_fortran(const ndt_t *t)
+{
+    return ndt_is_f_contiguous(t) && !ndt_is_c_contiguous(t);
+}
+
 /* Scalar */
 int
 ndt_is_scalar(const ndt_t *t)
@@ -1138,8 +1144,6 @@ _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 ndt_t *
 ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
 {
-    ndt_t *u;
-
     if (!ndt_is_c_contiguous(t)) {
         ndt_err_format(ctx, NDT_TypeError,
             "array must be C-contiguous for conversion to Fortran order");
@@ -1150,13 +1154,7 @@ ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
         return ndt_copy(t, ctx);
     }
 
-    u = _ndt_to_fortran(t, 1, ctx);
-    if (u == NULL) {
-        return NULL;
-    }
-    u->flags |= NDT_FORTRAN;
-
-    return u;
+    return _ndt_to_fortran(t, 1, ctx);
 }
 
 ndt_t *

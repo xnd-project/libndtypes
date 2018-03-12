@@ -368,6 +368,14 @@ BROADCAST_TEST_CASES = [
         outer_dims = 1),
 
     ApplySpec(
+        tag = 'Fortran',
+        sig = ndt("... * uint8 -> ... * float64"),
+        in_types = [ndt("!2 * 3 * uint8")],
+        out_types = [ndt("!2 * 3 * float64")],
+        in_broadcast = [ndt("!2 * 3 * uint8")],
+        outer_dims = 2),
+
+    ApplySpec(
         tag = 'Strided',
         sig = ndt("... * uint8 -> ... * float64"),
         in_types = [ndt("fixed(shape=2, step=10) * uint8")],
