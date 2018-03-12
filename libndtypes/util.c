@@ -293,6 +293,18 @@ ndt_apply_tag_as_string(ndt_apply_spec_t *spec)
 /*****************************************************************************/
 
 static bool
+all_scalar(const ndt_t *types[], int n)
+{
+    for (int i = 0; i < n; i++) {
+        if (!ndt_is_scalar(types[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool
 all_c_contiguous(const ndt_t *types[], int n)
 {
     for (int i = 0; i < n; i++) {
@@ -340,7 +352,10 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t
         nin = spec->nbroadcast;
     }
 
-    if (all_c_contiguous(in, nin) && all_c_contiguous(out, spec->nout)) {
+    if (all_scalar(in, nin) && all_scalar(out, spec->nout)) {
+        spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : C;
+    }
+    else if (all_c_contiguous(in, nin) && all_c_contiguous(out, spec->nout)) {
         spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : C;
     }
     else if (all_f_contiguous(in, nin) && all_f_contiguous(out, spec->nout)) {

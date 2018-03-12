@@ -36,6 +36,7 @@ import sys
 from itertools import accumulate, count, product
 from collections import namedtuple
 from random import randrange
+from ndtypes import ndt, ApplySpec
 from _testbuffer import get_sizeof_void_p
 
 
@@ -332,3 +333,45 @@ def genindices(factor):
         for j in range(4):
             for k in range(4):
                 yield (factor * i, factor * j, factor * k)
+
+BROADCAST_TEST_CASES = [
+    ApplySpec(
+        tag = 'Elementwise',
+        sig = ndt("uint8 => float64"),
+        in_types = [ndt("uint8")],
+        out_types = [ndt("float64")],
+        in_broadcast = [],
+        outer_dims = 0),
+
+    ApplySpec(
+        tag = 'C',
+        sig = ndt("uint8 -> float64"),
+        in_types = [ndt("uint8")],
+        out_types = [ndt("float64")],
+        in_broadcast = [],
+        outer_dims = 0),
+
+    ApplySpec(
+        tag = 'Elementwise',
+        sig = ndt("... * uint8 => ... * float64"),
+        in_types = [ndt("2 * uint8")],
+        out_types = [ndt("2 * float64")],
+        in_broadcast = [ndt("2 * uint8")],
+        outer_dims = 1),
+
+    ApplySpec(
+        tag = 'C',
+        sig = ndt("... * uint8 -> ... * float64"),
+        in_types = [ndt("2 * uint8")],
+        out_types = [ndt("2 * float64")],
+        in_broadcast = [ndt("2 * uint8")],
+        outer_dims = 1),
+
+    ApplySpec(
+        tag = 'Strided',
+        sig = ndt("... * uint8 -> ... * float64"),
+        in_types = [ndt("fixed(shape=2, step=10) * uint8")],
+        out_types = [ndt("2 * float64")],
+        in_broadcast = [ndt("fixed(shape=2, step=10) * uint8")],
+        outer_dims = 1)
+]

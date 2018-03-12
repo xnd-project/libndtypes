@@ -34,7 +34,7 @@ import sys, argparse
 import unittest, gc
 import weakref, struct
 from copy import copy
-from ndtypes import ndt, typedef, MAX_DIM
+from ndtypes import ndt, typedef, MAX_DIM, ApplySpec
 from ndt_support import *
 from ndt_randtype import *
 from random import random
@@ -1590,6 +1590,15 @@ def from_shape_strides(shape, strides):
 class TestBroadcast(unittest.TestCase):
 
     def test_broadcast(self):
+
+        for c in BROADCAST_TEST_CASES:
+            spec = c.sig.apply(c.in_types)
+
+            self.assertEqual(len(spec), len(c))
+            for v, u in zip(spec, c):
+                self.assertEqual(v, u)
+
+    def test_against_numpy(self):
 
         skip_if(np is None, "test requires numpy")
         skip_if(SKIP_LONG, "use --long argument to enable these tests")
