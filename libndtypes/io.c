@@ -448,6 +448,16 @@ categorical(buf_t *buf, ndt_value_t *mem, int64_t ntypes, ndt_context_t *ctx)
 }
 
 static int
+fortran(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+{
+    if (t->flags & NDT_FORTRAN) {
+        return ndt_snprintf(ctx, buf, "!");
+    }
+
+    return 1;
+}
+
+static int
 option(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 {
     if (ndt_is_optional(t)) {
@@ -474,6 +484,9 @@ static int
 datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
     int n;
+
+    n = fortran(buf, t, ctx);
+    if (n < 0) return -1;
 
     n = option(buf, t, ctx);
     if (n < 0) return -1;
