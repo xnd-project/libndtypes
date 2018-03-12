@@ -316,7 +316,13 @@ DTYPE_TEST_CASES = [
    ("Some(?complex128)", Mem(itemsize=16, align=8)),
 ]
 
+# ======================================================================
+#                              Broadcasting
+# ======================================================================
+
 def genindices(factor):
+    for i in range(4):
+        yield ()
     for i in range(4):
         yield (factor * i,)
     for i in range(4):

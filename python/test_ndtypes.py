@@ -1601,6 +1601,9 @@ class TestBroadcast(unittest.TestCase):
             for xstrides in genindices(8):
               for ystrides in genindices(8):
 
+                if len(xshape) != len(xstrides) or len(yshape) != len(ystrides):
+                    continue
+
                 if (random() < 0.99):
                     continue
 
