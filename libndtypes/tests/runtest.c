@@ -749,11 +749,11 @@ validate_typecheck_test(const typecheck_testcase_t *test,
         return -1;
     }
 
-    if (spec->nout != sig->Function.out ||
+    if (spec->nout != sig->Function.nout ||
         spec->nout != out.size) {
         ndt_err_format(ctx, NDT_RuntimeError,
             "test_typecheck: expected nout==test->nout==%d, got nout==%d and "
-            "test->nout==%d\n", sig->Function.out, spec->nout, out.size);
+            "test->nout==%d\n", sig->Function.nout, spec->nout, out.size);
         return -1;
     }
 

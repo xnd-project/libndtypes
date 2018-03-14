@@ -54,13 +54,13 @@ ndt_common_equal(const ndt_t *t, const ndt_t *u)
 }
 
 static int
-function_types_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
+function_types_equal(const ndt_t *t, const ndt_t *u, int64_t nargs)
 {
     int64_t i;
 
     assert(t->tag == Function && u->tag == Function);
 
-    for (i = 0; i < shape; i++) {
+    for (i = 0; i < nargs; i++) {
         if (!ndt_equal(t->Function.types[i], u->Function.types[i])) {
             return 0;
         }
@@ -149,13 +149,13 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
     }
 
     case Function: {
-        if (t->Function.in != u->Function.in ||
-            t->Function.out != u->Function.out ||
-            t->Function.shape != u->Function.shape) {
+        if (t->Function.nin != u->Function.nin ||
+            t->Function.nout != u->Function.nout ||
+            t->Function.nargs != u->Function.nargs) {
             return 0;
         }
 
-        return function_types_equal(t, u, t->Function.shape);
+        return function_types_equal(t, u, t->Function.nargs);
     }
 
     case FixedDim: {

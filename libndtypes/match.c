@@ -453,13 +453,13 @@ match_datashape(const ndt_t *p, const ndt_t *c,
     case Function: {
         int64_t i;
         if (c->tag != Function ||
-            c->Function.in != p->Function.in ||
-            c->Function.out != p->Function.out ||
-            c->Function.shape != p->Function.shape) {
+            c->Function.nin != p->Function.nin ||
+            c->Function.nout != p->Function.nout ||
+            c->Function.nargs != p->Function.nargs) {
             return 0;
         }
 
-        for (i = 0; i < p->Function.shape; i++) {
+        for (i = 0; i < p->Function.nargs; i++) {
             n = match_datashape(p->Function.types[i], c->Function.types[i], tbl, ctx);
             if (n <= 0) return n;
         }
@@ -639,9 +639,9 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
         return -1;
     }
 
-    if (nin != sig->Function.in) {
+    if (nin != sig->Function.nin) {
         ndt_err_format(ctx, NDT_ValueError,
-            "expected %" PRIi64 " arguments, got %d", sig->Function.in, nin);
+            "expected %" PRIi64 " arguments, got %d", sig->Function.nin, nin);
         return -1;
     }
 
@@ -672,7 +672,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
         }
     }
 
-    for (i = 0; i < sig->Function.out; i++) {
+    for (i = 0; i < sig->Function.nout; i++) {
         spec->out[i] = ndt_substitute(sig->Function.types[nin+i], tbl, ctx);
         if (spec->out[i] == NULL) {
             ndt_apply_spec_clear(spec);
@@ -683,7 +683,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
     }
 
     if (sig->flags & NDT_ELLIPSIS) {
-        if (sig->Function.shape == 0 || sig->Function.types[0]->tag != EllipsisDim) {
+        if (sig->Function.nargs == 0 || sig->Function.types[0]->tag != EllipsisDim) {
             ndt_err_format(ctx, NDT_RuntimeError,
                "unexpected configuration of ellipsis flag and function types");
             ndt_apply_spec_clear(spec);

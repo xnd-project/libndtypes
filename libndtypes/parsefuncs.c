@@ -134,11 +134,11 @@ mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, uint32_t flags, ndt_context
     ndt_t *types[NDT_MAX_ARGS];
     int64_t nin = in->len;
     int64_t nout = out->len;
-    int64_t shape, i;
+    int64_t nargs, i;
 
-    shape = nin + nout;
+    nargs = nin + nout;
 
-    if (shape > NDT_MAX_ARGS) {
+    if (nargs > NDT_MAX_ARGS) {
         ndt_err_format(ctx, NDT_ValueError,
             "maximum number of function arguments is %d", NDT_MAX_ARGS);
         ndt_type_seq_del(in);
@@ -159,7 +159,7 @@ mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, uint32_t flags, ndt_context
     ndt_free(out->ptr);
     ndt_free(out);
 
-    return ndt_function(types, shape, nin, nout, flags, ctx);
+    return ndt_function(types, nargs, nin, nout, flags, ctx);
 }
 
 ndt_t *

@@ -306,9 +306,9 @@ struct _ndt {
         } Module;
 
         struct {
-            int64_t in;
-            int64_t out;
-            int64_t shape;
+            int64_t nin;
+            int64_t nout;
+            int64_t nargs;
             ndt_t **types;
         } Function;
 
@@ -637,7 +637,7 @@ NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
 /*****************************************************************************/
 
 NDTYPES_API ndt_t *ndt_new(enum ndt tag, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_function_new(int64_t shape, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_function_new(int64_t nargs, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_tuple_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_record_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx);
 NDTYPES_API void ndt_del(ndt_t *t);
@@ -650,7 +650,7 @@ NDTYPES_API void ndt_del(ndt_t *t);
 /* Special types */
 NDTYPES_API ndt_t *ndt_option(ndt_t *type);
 NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_function(ndt_t * const *types, int64_t shape, int64_t in, int64_t out,
+NDTYPES_API ndt_t *ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
                                 uint32_t flags, ndt_context_t *ctx);
 
 /* Any */

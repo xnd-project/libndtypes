@@ -655,16 +655,16 @@ strcmp_null(const char *s, const char *t)
 }
 
 static int
-check_function_invariants(ndt_t * const *types, int64_t shape, ndt_context_t *ctx)
+check_function_invariants(ndt_t * const *types, int64_t nargs, ndt_context_t *ctx)
 {
     int64_t count = 0;
     int i;
 
-    if (shape == 0) {
+    if (nargs == 0) {
         return 1;
     }
 
-    for (i = 0; i < shape; i++) {
+    for (i = 0; i < nargs; i++) {
         if (types[i]->tag == EllipsisDim) {
             count++;
         }
@@ -673,11 +673,11 @@ check_function_invariants(ndt_t * const *types, int64_t shape, ndt_context_t *ct
     if (count == 0) {
         return 1;
     }
-    if (count != shape) {
+    if (count != nargs) {
         goto error;
     }
 
-    for (i = 1; i < shape; i++) {
+    for (i = 1; i < nargs; i++) {
         if (!strcmp_null(types[0]->EllipsisDim.name, types[i]->EllipsisDim.name)) {
             goto error;
         }
@@ -747,13 +747,13 @@ ndt_new_extra(enum ndt tag, int64_t n, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_function_new(int64_t shape, ndt_context_t *ctx)
+ndt_function_new(int64_t nargs, ndt_context_t *ctx)
 {
     ndt_t *t = NULL;
     bool overflow = 0;
     int64_t extra, i;
 
-    extra = MULi64(shape, sizeof(ndt_t *), &overflow);
+    extra = MULi64(nargs, sizeof(ndt_t *), &overflow);
 
     if (overflow) {
         ndt_err_format(ctx, NDT_ValueError, "function size too large");
@@ -765,10 +765,10 @@ ndt_function_new(int64_t shape, ndt_context_t *ctx)
         return NULL;
     }
 
-    t->Function.shape = shape;
+    t->Function.nargs = nargs;
     t->Function.types = (ndt_t **)t->extra;
 
-    for (i = 0; i < shape; i++) {
+    for (i = 0; i < nargs; i++) {
         t->Function.types[i] = NULL;
     }
 
@@ -891,7 +891,7 @@ ndt_del(ndt_t *t)
 
     case Function: {
         int64_t i;
-        for (i = 0; i < t->Function.shape; i++) {
+        for (i = 0; i < t->Function.nargs; i++) {
             ndt_del(t->Function.types[i]);
         }
         goto free_type;
@@ -1028,31 +1028,31 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
 
 /* Abstract function signatures */
 ndt_t *
-ndt_function(ndt_t * const *types, int64_t shape, int64_t in, int64_t out,
+ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
              uint32_t flags, ndt_context_t *ctx)
 {
     ndt_t *t;
     int64_t i;
 
-    assert(0 <= in && 0 <= out && shape == in+out);
+    assert(0 <= nin && 0 <= nout && nargs == nin+nout);
 
-    if (!check_function_invariants(types, shape, ctx)) {
+    if (!check_function_invariants(types, nargs, ctx)) {
         return NULL;
     }
 
     /* abstract type */
-    t = ndt_function_new(shape, ctx);
+    t = ndt_function_new(nargs, ctx);
     if (t == NULL) {
-        for (i = 0; i < shape; i++) {
+        for (i = 0; i < nargs; i++) {
             ndt_del(types[i]);
         }
         return NULL;
     }
     t->flags |= flags;
-    t->Function.in = in;
-    t->Function.out = out;
+    t->Function.nin = nin;
+    t->Function.nout = nout;
 
-    for (i = 0; i < shape; i++) {
+    for (i = 0; i < nargs; i++) {
         t->Function.types[i] = types[i];
         t->flags |= ndt_dim_flags(types[i]);
     }

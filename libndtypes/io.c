@@ -282,12 +282,12 @@ function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
     assert(t->tag == Function);
 
-    if (t->Function.in == 0) {
+    if (t->Function.nin == 0) {
         n = ndt_snprintf(ctx, buf, "void");
         if (n < 0) return -1;
     }
     else {
-        for (i = 0; i < t->Function.in; i++) {
+        for (i = 0; i < t->Function.nin; i++) {
             if (i >= 1) {
                 n = ndt_snprintf(ctx, buf, ", ");
                 if (n < 0) return -1;
@@ -301,13 +301,13 @@ function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
     n = ndt_snprintf(ctx, buf, t->flags & NDT_ELEMENTWISE ? " => " : " -> ");
     if (n < 0) return -1;
 
-    if (t->Function.out == 0) {
+    if (t->Function.nout == 0) {
         n = ndt_snprintf(ctx, buf, "void");
         if (n < 0) return -1;
     }
     else {
-        for (i = t->Function.in; i < t->Function.shape; i++) {
-            if (i >= t->Function.in + 1) {
+        for (i = t->Function.nin; i < t->Function.nargs; i++) {
+            if (i >= t->Function.nin + 1) {
                 n = ndt_snprintf(ctx, buf, ", ");
                 if (n < 0) return -1;
             }
@@ -774,7 +774,7 @@ ast_function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
     assert(t->tag == Function);
 
-    for (i = 0; i < t->Function.in; i++) {
+    for (i = 0; i < t->Function.nin; i++) {
         if (i >= 1) {
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
@@ -793,7 +793,7 @@ ast_function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         if (n < 0) return -1;
     }
 
-    for (i = 0; i < t->Function.shape; i++) {
+    for (i = 0; i < t->Function.nargs; i++) {
         if (i >= 1) {
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;

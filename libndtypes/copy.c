@@ -93,16 +93,16 @@ ndt_copy_function(const ndt_t *t, ndt_context_t *ctx)
 
     assert(t->tag == Function);
 
-    u = ndt_function_new(t->Function.shape, ctx);
+    u = ndt_function_new(t->Function.nargs, ctx);
     if (u == NULL) {
         return NULL;
     }
-    u->Function.in = t->Function.in;
-    u->Function.out = t->Function.out;
+    u->Function.nin = t->Function.nin;
+    u->Function.nout = t->Function.nout;
 
     copy_common(u, t);
 
-    for (i = 0; i < t->Function.shape; i++) {
+    for (i = 0; i < t->Function.nargs; i++) {
         u->Function.types[i] = ndt_copy(t->Function.types[i], ctx);
         if (u->Function.types[i] == NULL) {
             ndt_del(u);
