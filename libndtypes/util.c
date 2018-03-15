@@ -276,7 +276,6 @@ const char *
 ndt_apply_tag_as_string(ndt_apply_spec_t *spec)
 {
     switch (spec->tag) {
-    case Elementwise: return "Elementwise";
     case C: return "C";
     case Fortran: return "Fortran";
     case Strided: return "Strided";
@@ -361,10 +360,10 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
     }
 
     if (all_scalar(in, nin) && all_scalar(out, spec->nout)) {
-        spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : C;
+        spec->tag = C;
     }
     else if (all_c_contiguous(in, nin) && all_c_contiguous(out, spec->nout)) {
-        spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : C;
+        spec->tag = C;
     }
     else if (really_fortran(in, nin) && all_c_contiguous(out, spec->nout)) {
         for (i=spec->nout-1; i>=0; i--) {
@@ -376,7 +375,7 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
             ndt_del(t);
             spec->out[i] = u;
         }
-        spec->tag = sig->flags & NDT_ELEMENTWISE ? Elementwise : Fortran;
+        spec->tag = Fortran;
     }
     else if (all_ndarray(in, nin) && all_ndarray(out, spec->nout)) {
         spec->tag = Strided;

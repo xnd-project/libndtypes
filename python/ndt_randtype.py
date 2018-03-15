@@ -336,28 +336,12 @@ def genindices(factor):
 
 BROADCAST_TEST_CASES = [
     ApplySpec(
-        tag = 'Elementwise',
-        sig = ndt("uint8 => float64"),
-        in_types = [ndt("uint8")],
-        out_types = [ndt("float64")],
-        in_broadcast = [],
-        outer_dims = 0),
-
-    ApplySpec(
         tag = 'C',
         sig = ndt("uint8 -> float64"),
         in_types = [ndt("uint8")],
         out_types = [ndt("float64")],
         in_broadcast = [],
         outer_dims = 0),
-
-    ApplySpec(
-        tag = 'Elementwise',
-        sig = ndt("... * uint8 => ... * float64"),
-        in_types = [ndt("2 * uint8")],
-        out_types = [ndt("2 * float64")],
-        in_broadcast = [ndt("2 * uint8")],
-        outer_dims = 1),
 
     ApplySpec(
         tag = 'C',
@@ -383,19 +367,9 @@ BROADCAST_TEST_CASES = [
         in_broadcast = [ndt("fixed(shape=2, step=10) * uint8")],
         outer_dims = 1),
 
-    # Kernel is not elementwise (single arrow: ->)
     ApplySpec(
         tag = 'C',
         sig = ndt("... * N * uint8 -> ... * N * float64"),
-        in_types = [ndt("2 * 3 * uint8")],
-        out_types = [ndt("2 * 3 * float64")],
-        in_broadcast = [ndt("2 * 3 * uint8")],
-        outer_dims = 1),
-
-    # Kernel is elementwise (double arrow: =>)
-    ApplySpec(
-        tag = 'Elementwise',
-        sig = ndt("... * N * uint8 => ... * N * float64"),
         in_types = [ndt("2 * 3 * uint8")],
         out_types = [ndt("2 * 3 * float64")],
         in_broadcast = [ndt("2 * 3 * uint8")],

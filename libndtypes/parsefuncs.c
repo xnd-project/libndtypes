@@ -129,7 +129,7 @@ mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
 /*****************************************************************************/
 
 ndt_t *
-mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, uint32_t flags, ndt_context_t *ctx)
+mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, ndt_context_t *ctx)
 {
     ndt_t *types[NDT_MAX_ARGS];
     int64_t nin = in->len;
@@ -159,7 +159,7 @@ mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, uint32_t flags, ndt_context
     ndt_free(out->ptr);
     ndt_free(out);
 
-    return ndt_function(types, nargs, nin, nout, flags, ctx);
+    return ndt_function(types, nargs, nin, nout, ctx);
 }
 
 ndt_t *

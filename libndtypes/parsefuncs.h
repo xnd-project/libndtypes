@@ -64,7 +64,7 @@ ndt_attr_t *mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *c
 /*                    Parser functions for creating types                    */
 /*****************************************************************************/
 
-ndt_t *mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, uint32_t flags, ndt_context_t *ctx);
+ndt_t *mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, ndt_context_t *ctx);
 
 ndt_t *mk_fortran(ndt_t *type, ndt_context_t *ctx);
 ndt_t *mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx);

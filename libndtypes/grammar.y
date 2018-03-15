@@ -171,7 +171,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 FIXED VAR
 
 COMMA COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
-RARROW EQUAL LESS GREATER QUESTIONMARK BANG AMPERSAND BAR DOUBLEARROW
+RARROW EQUAL LESS GREATER QUESTIONMARK BANG AMPERSAND BAR
 ERRTOKEN
 
 %token <string>
@@ -398,8 +398,7 @@ untyped_value:
 | STRINGLIT   { $$ = $1; if ($$ == NULL) YYABORT; }
 
 function_type:
-  type_seq_or_void RARROW type_seq_or_void      { $$ = mk_function($1, $3, 0, ctx); if ($$ == NULL) YYABORT; }
-| type_seq_or_void DOUBLEARROW type_seq_or_void { $$ = mk_function($1, $3, NDT_ELEMENTWISE, ctx); if ($$ == NULL) YYABORT; }
+  type_seq_or_void RARROW type_seq_or_void { $$ = mk_function($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 type_seq_or_void:
   type_seq { $$ = $1; if ($$ == NULL) YYABORT; }

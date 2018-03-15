@@ -110,7 +110,6 @@
 #define NDT_OPTION         0x00000004U
 #define NDT_SUBTREE_OPTION 0x00000008U
 #define NDT_ELLIPSIS       0x00000010U
-#define NDT_ELEMENTWISE    0x00000020U
 
 
 /* Types: ndt_t */
@@ -485,7 +484,6 @@ typedef struct {
 
 /* This may go into gumath at some point. */
 enum ndt_apply {
-    Elementwise,
     C,
     Fortran,
     Strided,
@@ -650,8 +648,7 @@ NDTYPES_API void ndt_del(ndt_t *t);
 /* Special types */
 NDTYPES_API ndt_t *ndt_option(ndt_t *type);
 NDTYPES_API ndt_t *ndt_module(char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
-                                uint32_t flags, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout, ndt_context_t *ctx);
 
 /* Any */
 NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);

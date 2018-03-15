@@ -1029,7 +1029,7 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
 /* Abstract function signatures */
 ndt_t *
 ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
-             uint32_t flags, ndt_context_t *ctx)
+             ndt_context_t *ctx)
 {
     ndt_t *t;
     int64_t i;
@@ -1048,7 +1048,6 @@ ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
         }
         return NULL;
     }
-    t->flags |= flags;
     t->Function.nin = nin;
     t->Function.nout = nout;
 

@@ -188,7 +188,6 @@ yycolumn = 1;
 "var"          { return VAR; }
 
 "..."          { return ELLIPSIS; }
-"=>"           { return DOUBLEARROW; }
 "->"           { return RARROW; }
 ","            { return COMMA; }
 ":"            { return COLON; }
