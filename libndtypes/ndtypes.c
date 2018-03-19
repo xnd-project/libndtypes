@@ -549,6 +549,23 @@ ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx)
     return 0;
 }
 
+int
+ndt_typedef_from_string(const char *name, const char *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    t = ndt_from_string(type, ctx);
+    if (t == NULL) {
+        return -1;
+    }
+
+    if (ndt_typedef_add(name, t, ctx) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
 
 /******************************************************************************/
 /*                              Type invariants                               */

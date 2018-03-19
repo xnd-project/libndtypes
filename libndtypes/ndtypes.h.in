@@ -629,6 +629,7 @@ NDTYPES_API char *ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx);
 
 /* Typedef for nominal types */
 NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef_from_string(const char *name, const char *type, ndt_context_t *ctx);
 
 
 /*****************************************************************************/
