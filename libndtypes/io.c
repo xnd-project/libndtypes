@@ -1208,6 +1208,15 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->Nominal.name);
             if (n < 0) return -1;
 
+            n = ndt_snprintf_d(ctx, buf, d+2, "type=");
+            if (n < 0) return -1;
+
+            n = ast_datashape(buf, t->Nominal.type, d+5+2, 1, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "\n");
+            if (n < 0) return -1;
+
             n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
             if (n < 0) return -1;
 

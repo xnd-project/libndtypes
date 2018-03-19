@@ -1789,10 +1789,11 @@ ndt_nominal(char *name, ndt_context_t *ctx)
         return NULL;
     }
     t->Nominal.name = name;
+    t->Nominal.type = type;
+    t->flags = ndt_subtree_flags(type);
 
     /* concrete access */
     t->access = type->access;
-    t->flags = ndt_subtree_flags(type);
     t->datasize = type->datasize;
     t->align = type->align;
 
