@@ -164,6 +164,15 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
         return ndt_constr(name, u, ctx);
     }
 
+    case Nominal: {
+        char *name = ndt_strdup(t->Nominal.name, ctx);
+        if (name == NULL) {
+            return NULL;
+        }
+
+        return ndt_nominal(name, ctx);
+    }
+
     case Ref:
         u = ndt_substitute(t->Ref.type, tbl, ctx);
         if (u == NULL) {
