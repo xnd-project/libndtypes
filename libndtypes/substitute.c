@@ -97,6 +97,10 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
     symtable_entry_t v;
     ndt_t *u;
 
+    if (ndt_is_concrete(t)) {
+        return ndt_copy(t, ctx);
+    }
+
     switch (t->tag) {
     case FixedDim:
         u = ndt_substitute(t->FixedDim.type, tbl, ctx);
