@@ -571,7 +571,7 @@ ndt_typedef_from_string(const char *name, const char *type, ndt_context_t *ctx)
 /*                              Type invariants                               */
 /******************************************************************************/
 
-/* Invariants for all types except for var dimensions. */
+/* Invariants for all types except for var and ellipsis dimensions. */
 static int
 check_type_invariants(const ndt_t *type, ndt_context_t *ctx)
 {
@@ -652,6 +652,24 @@ check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ct
                 "mixing internal and external offsets is not allowed");
             return 0;
         }
+    }
+
+    if (type->ndim >= NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %d", NDT_MAX_DIM);
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Invariants for ellipsis dimensions. */
+static int
+check_ellipsis_invariants(const ndt_t *type, ndt_context_t *ctx)
+{
+    if (type->tag == Module) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "nested module types are not supported");
+        return 0;
     }
 
     if (type->ndim >= NDT_MAX_DIM) {
@@ -1455,7 +1473,7 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     ndt_t *t;
     uint32_t flags;
 
-    if (!check_type_invariants(type, ctx)) {
+    if (!check_ellipsis_invariants(type, ctx)) {
         ndt_free(name);
         ndt_del(type);
         return NULL;
