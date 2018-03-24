@@ -45,6 +45,36 @@
 
 
 static ndt_t *
+var_dim_copy_contiguous(ndt_t *type, const ndt_t *t, ndt_context_t *ctx)
+{
+    int32_t noffsets = t->Concrete.VarDim.noffsets;
+    int32_t *offsets;
+    int64_t shape, start, step;
+    int64_t sum;
+    int64_t i;
+
+    offsets = ndt_alloc(noffsets, sizeof *offsets);
+    if (offsets == NULL) {
+        ndt_del(type);
+        return ndt_memory_error(ctx);
+    }
+
+    for (i=0, sum=0; i < noffsets-1; i++) {
+        offsets[i] = sum;
+
+        shape = ndt_var_indices(&start, &step, t, i, ctx);
+        if (shape == -1) {
+            ndt_free(offsets);
+            return NULL;
+        }
+        sum += shape;
+    }
+    offsets[i] = sum;
+
+    return ndt_var_dim(type, InternalOffsets, noffsets, offsets, 0, NULL, ctx);
+}
+
+static ndt_t *
 substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
@@ -65,13 +95,24 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
     case DimListEntry: {
         for (i = v.DimListEntry.size-1; i >= 0; i--) {
             w = v.DimListEntry.dims[i];
+            assert(ndt_is_concrete(w));
+
             switch (w->tag) {
-            case FixedDim:
+            case FixedDim: {
                 u = ndt_fixed_dim(u, w->FixedDim.shape, INT64_MAX, ctx);
                 if (u == NULL) {
                     return NULL;
                 }
                 break;
+            }
+
+            case VarDim: {
+                u = var_dim_copy_contiguous(u, w, ctx);
+                if (u == NULL) {
+                    return NULL;
+                }
+                break;
+           }
 
            default:
                ndt_err_format(ctx, NDT_NotImplementedError,
@@ -87,6 +128,7 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
     default:
         ndt_err_format(ctx, NDT_ValueError,
             "variable not found or has incorrect type");
+        ndt_del(u);
         return NULL;
     }
 }
@@ -102,16 +144,32 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
     }
 
     switch (t->tag) {
-    case FixedDim:
+    case FixedDim: {
         u = ndt_substitute(t->FixedDim.type, tbl, ctx);
         if (u == NULL) {
             return NULL;
         }
 
-        assert(ndt_is_concrete(u));
-
         return ndt_fixed_dim(u, t->FixedDim.shape, t->Concrete.FixedDim.step,
                              ctx);
+    }
+
+    case VarDim: {
+        u = ndt_substitute(t->VarDim.type, tbl, ctx);
+        if (u == NULL) {
+            return NULL;
+        }
+
+        if (ndt_is_abstract(t)) {
+            t = symtable_find_var_dim(tbl, t->ndim, ctx);
+            if (t == NULL) {
+                ndt_del(u);
+                return NULL;
+            }
+        }
+
+        return var_dim_copy_contiguous(u, t, ctx);
+    }
 
     case SymbolicDim:
         v = symtable_find(tbl, t->SymbolicDim.name);
@@ -122,8 +180,6 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
             if (u == NULL) {
                 return NULL;
             }
-
-            assert(ndt_is_concrete(u));
 
             return ndt_fixed_dim(u, v.ShapeEntry, INT64_MAX, ctx);
 

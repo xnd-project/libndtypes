@@ -241,8 +241,8 @@ symtable_free_entry(symtable_entry_t entry)
     case DimListEntry:
        ndt_free((void *)entry.DimListEntry.dims);
        return;
-    case Unbound: case ShapeEntry: case SymbolEntry: case TypeEntry:
-    case BroadcastEntry:
+    case Unbound: case ShapeEntry: case SymbolEntry: case VarDimEntry:
+    case TypeEntry: case BroadcastEntry:
        return;
     }
 
@@ -345,4 +345,28 @@ symtable_find_ptr(symtable_t *t, const char *key)
     }
 
     return &t->entry;
+}
+
+const ndt_t *
+symtable_find_var_dim(const symtable_t *tbl, int ndim, ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+    char key[10];
+    int n;
+
+    n = snprintf(key, 10, "00%dVAR", ndim);
+    if (n < 0 || n >= 10) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "write failed or buffer too small %s", key);
+        return NULL;
+    }
+
+    v = symtable_find(tbl, key);
+    switch (v.tag) {
+    case VarDimEntry:
+        return v.VarDimEntry.type;
+    default:
+        ndt_err_format(ctx, NDT_RuntimeError, "var dim not found");
+        return NULL;
+    }
 }

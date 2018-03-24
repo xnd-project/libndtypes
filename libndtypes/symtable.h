@@ -43,10 +43,16 @@ enum symtable_entry {
   Unbound,
   ShapeEntry,
   SymbolEntry,
+  VarDimEntry,
   TypeEntry,
   DimListEntry,
   BroadcastEntry
 };
+
+typedef struct {
+    int ndim;
+    const ndt_t *type;
+} var_dim_entry_t;
 
 typedef struct {
     int size;
@@ -64,6 +70,7 @@ typedef struct {
     int64_t ShapeEntry;
     const char *SymbolEntry;
     const ndt_t *TypeEntry;
+    var_dim_entry_t VarDimEntry;
     dim_list_t DimListEntry;
     broadcast_list_t BroadcastEntry;
   };
@@ -86,6 +93,7 @@ int symtable_add(symtable_t *t, const char *key, const symtable_entry_t entry,
                  ndt_context_t *ctx);
 symtable_entry_t symtable_find(const symtable_t *t, const char *key);
 symtable_entry_t *symtable_find_ptr(symtable_t *t, const char *key);
+const ndt_t *symtable_find_var_dim(const symtable_t *tbl, int ndim, ndt_context_t *ctx);
 
 
 /* END LOCAL SCOPE */

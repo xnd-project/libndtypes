@@ -62,6 +62,38 @@ is_array(const ndt_t *t)
 }
 
 static int
+match_concrete_var_dim(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
+{
+    const int32_t noffsets = t->Concrete.VarDim.noffsets;
+    const int64_t itemsize = t->Concrete.VarDim.itemsize;
+    int64_t tshape, ushape;
+    int64_t start, step;
+
+    if (itemsize != u->Concrete.VarDim.itemsize ||
+        noffsets != u->Concrete.VarDim.noffsets) {
+        return 0;
+    }
+
+    for (int64_t i = 0; i < noffsets-1; i++) {
+        tshape = ndt_var_indices(&start, &step, t, i, ctx);
+        if (tshape < 0) {
+            return -1;
+        }
+
+        ushape = ndt_var_indices(&start, &step, u, i, ctx);
+        if (ushape < 0) {
+            return -1;
+        }
+
+        if (tshape != ushape) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int
 symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
                      ndt_context_t *ctx)
 {
@@ -70,6 +102,13 @@ symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
         return w->tag == ShapeEntry && v->ShapeEntry == w->ShapeEntry;
     case SymbolEntry:
         return w->tag == SymbolEntry && strcmp(v->SymbolEntry, w->SymbolEntry) == 0;
+    case VarDimEntry:
+        if (w->tag != VarDimEntry)
+            return 0;
+
+        return match_concrete_var_dim(v->VarDimEntry.type,
+                                      w->VarDimEntry.type,
+                                      ctx);
     case TypeEntry:
         return w->tag == TypeEntry && ndt_equal(v->TypeEntry, w->TypeEntry);
     case DimListEntry:
@@ -111,6 +150,23 @@ resolve_sym(const char *key, symtable_entry_t w,
     n = symtable_entry_equal(&v, &w, tbl, ctx);
     symtable_free_entry(w);
     return n;
+}
+
+static int
+resolve_var_dim(int ndim, symtable_entry_t w, symtable_t *tbl,
+                ndt_context_t *ctx)
+{
+    char key[10];
+    int n;
+
+    n = snprintf(key, 10, "00%dVAR", ndim);
+    if (n < 0 || n >= 10) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "write failed or buffer too small %s", key);
+        return -1;
+    }
+
+    return resolve_sym(key, w, tbl, ctx);
 }
 
 static int
@@ -222,7 +278,20 @@ match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
     }
 
     case VarDim: {
-        return c->tag == VarDim;
+        if (ndt_is_abstract(p)) {
+            symtable_entry_t v;
+
+            if (c->tag != VarDim || c->ndim != p->ndim) {
+                return 0;
+            }
+            v.tag = VarDimEntry;
+            v.VarDimEntry.type = c;
+
+            return resolve_var_dim(c->ndim, v, tbl, ctx);
+        }
+        else {
+            return match_concrete_var_dim(p, c, ctx);
+        }
     }
 
     case SymbolicDim: {

@@ -212,5 +212,51 @@ const typecheck_testcase_t typecheck_tests[] = {
     .outer_dims=3,
     .success=true },
 
+  { .signature="Dims... * var * int64 -> Dims... * var * int64",
+    .in={"var(offsets=[0,2]) * int64"},
+    .out={"var(offsets=[0,2]) * int64"},
+    .broadcast={NULL},
+    .outer_dims=0,
+    .success=true },
+
+  { .signature="Dims... * var * int64 -> Dims... * var * int64",
+    .in={"var(offsets=[0,2]) * var(offsets=[0,4,10]) * int64"},
+    .out={"var(offsets=[0,2]) * var(offsets=[0,4,10]) * int64"},
+    .broadcast={NULL},
+    .outer_dims=1,
+    .success=true },
+
+  { .signature="Dims... * var * int64, Dims... * var * int64 -> Dims... * var * int64",
+    .in={"var(offsets=[0,2]) * int64",
+         "var(offsets=[0,2]) * int64"},
+    .out={"var(offsets=[0,2]) * int64"},
+    .broadcast={NULL},
+    .outer_dims=0,
+    .success=true },
+
+  { .signature="Dims... * var * int64, Dims... * var * int64 -> Dims... * var * int64",
+    .in={"var(offsets=[0,2]) * var(offsets=[0,4,10]) * int64",
+         "var(offsets=[0,2]) * var(offsets=[0,4,10]) * int64"},
+    .out={"var(offsets=[0,2]) * var(offsets=[0,4,10]) * int64"},
+    .broadcast={NULL},
+    .outer_dims=1,
+    .success=true },
+
+  { .signature="Dims... * var * int64, Dims... * var * int64 -> Dims... * var * int64",
+    .in={"var(offsets=[0,2]) * var(offsets=[0,4,11]) * int64",
+         "var(offsets=[0,2]) * var(offsets=[0,4,10]) * int64"},
+    .out={NULL},
+    .broadcast={NULL},
+    .outer_dims=0,
+    .success=false },
+
+  { .signature="Dims... * var * int64, Dims... * var * int64 -> Dims... * var * int64",
+    .in={"var(offsets=[0,3]) * var(offsets=[0,4,10,20]) * int64",
+         "var(offsets=[0,2]) * var(offsets=[0,4,10]) * int64"},
+    .out={NULL},
+    .broadcast={NULL},
+    .outer_dims=0,
+    .success=false },
+
   { NULL, {NULL}, {NULL}, {NULL}, 0, false }
 };
