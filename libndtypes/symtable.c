@@ -347,6 +347,22 @@ symtable_find_ptr(symtable_t *t, const char *key)
     return &t->entry;
 }
 
+int64_t
+symtable_find_shape(const symtable_t *tbl, const char *key, ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+
+    v = symtable_find(tbl, key);
+    switch (v.tag) {
+    case ShapeEntry:
+        return v.ShapeEntry;
+    default:
+        ndt_err_format(ctx, NDT_ValueError,
+            "variable not found or has incorrect type");
+        return -1;
+    }
+}
+
 const ndt_t *
 symtable_find_var_dim(const symtable_t *tbl, int ndim, ndt_context_t *ctx)
 {

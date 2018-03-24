@@ -171,23 +171,19 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
         return var_dim_copy_contiguous(u, t, ctx);
     }
 
-    case SymbolicDim:
-        v = symtable_find(tbl, t->SymbolicDim.name);
-
-        switch (v.tag) {
-        case ShapeEntry:
-            u = ndt_substitute(t->SymbolicDim.type, tbl, ctx);
-            if (u == NULL) {
-                return NULL;
-            }
-
-            return ndt_fixed_dim(u, v.ShapeEntry, INT64_MAX, ctx);
-
-        default:
-            ndt_err_format(ctx, NDT_ValueError,
-                "variable is not found or has incorrect type");
+    case SymbolicDim: {
+        const int64_t shape = symtable_find_shape(tbl, t->SymbolicDim.name, ctx);
+        if (shape < 0) {
             return NULL;
         }
+
+        u = ndt_substitute(t->SymbolicDim.type, tbl, ctx);
+        if (u == NULL) {
+            return NULL;
+        }
+
+        return ndt_fixed_dim(u, shape, INT64_MAX, ctx);
+    }
 
     case EllipsisDim:
         if (t->EllipsisDim.name == NULL) {
