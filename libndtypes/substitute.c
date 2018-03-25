@@ -136,7 +136,6 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
 ndt_t *
 ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 {
-    symtable_entry_t v;
     ndt_t *u;
 
     if (ndt_is_concrete(t)) {
@@ -185,25 +184,23 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
         return ndt_fixed_dim(u, shape, INT64_MAX, ctx);
     }
 
-    case EllipsisDim:
+    case EllipsisDim: {
         if (t->EllipsisDim.name == NULL) {
             return ndt_substitute(t->EllipsisDim.type, tbl, ctx);
         }
         else {
             return substitute_named_ellipsis(t, tbl, ctx);
         }
+    }
 
-    case Typevar:
-        v = symtable_find(tbl, t->Typevar.name);
-        switch (v.tag) {
-        case TypeEntry:
-            return ndt_substitute(v.TypeEntry, tbl, ctx);
-
-        default:
-            ndt_err_format(ctx, NDT_ValueError,
-                "variable is not found or has incorrect type");
+    case Typevar: {
+        const ndt_t *v = symtable_find_typevar(tbl, t->Typevar.name, ctx);
+        if (v == NULL) {
             return NULL;
         }
+
+        return ndt_substitute(v, tbl, ctx);
+    }
 
     case Constr: {
         char *name = ndt_strdup(t->Constr.name, ctx);

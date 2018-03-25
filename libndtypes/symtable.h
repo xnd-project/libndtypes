@@ -94,6 +94,7 @@ int symtable_add(symtable_t *t, const char *key, const symtable_entry_t entry,
 symtable_entry_t symtable_find(const symtable_t *t, const char *key);
 symtable_entry_t *symtable_find_ptr(symtable_t *t, const char *key);
 int64_t symtable_find_shape(const symtable_t *tbl, const char *key, ndt_context_t *ctx);
+const ndt_t *symtable_find_typevar(const symtable_t *tbl, const char *key, ndt_context_t *ctx);
 const ndt_t *symtable_find_var_dim(const symtable_t *tbl, int ndim, ndt_context_t *ctx);
 
 
