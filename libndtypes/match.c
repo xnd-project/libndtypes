@@ -742,7 +742,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
     }
 
     for (i = 0; i < sig->Function.nout; i++) {
-        spec->out[i] = ndt_substitute(sig->Function.types[nin+i], tbl, ctx);
+        spec->out[i] = ndt_substitute(sig->Function.types[nin+i], tbl, false, ctx);
         if (spec->out[i] == NULL) {
             ndt_apply_spec_clear(spec);
             symtable_del(tbl);

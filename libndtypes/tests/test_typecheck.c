@@ -46,10 +46,10 @@ const typecheck_testcase_t typecheck_tests[] = {
 
   { .signature="void -> T",
     .in={NULL},
-    .out={NULL},
+    .out={"T"},
     .broadcast={NULL},
     .outer_dims=0,
-    .success=false },
+    .success=true },
 
   { .signature="T -> T",
     .in={"T"},

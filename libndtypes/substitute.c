@@ -84,7 +84,7 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
 
     assert(t->tag == EllipsisDim && t->EllipsisDim.name != NULL);
 
-    u = ndt_substitute(t->EllipsisDim.type, tbl, ctx);
+    u = ndt_substitute(t->EllipsisDim.type, tbl, true, ctx);
     if (u == NULL) {
         return NULL;
     }
@@ -134,7 +134,8 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
 }
 
 ndt_t *
-ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
+ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
+               ndt_context_t *ctx)
 {
     ndt_t *u;
 
@@ -144,7 +145,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
     switch (t->tag) {
     case FixedDim: {
-        u = ndt_substitute(t->FixedDim.type, tbl, ctx);
+        u = ndt_substitute(t->FixedDim.type, tbl, req_concrete, ctx);
         if (u == NULL) {
             return NULL;
         }
@@ -154,16 +155,25 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
     }
 
     case VarDim: {
-        u = ndt_substitute(t->VarDim.type, tbl, ctx);
+        u = ndt_substitute(t->VarDim.type, tbl, req_concrete, ctx);
         if (u == NULL) {
             return NULL;
         }
 
         if (ndt_is_abstract(t)) {
-            t = symtable_find_var_dim(tbl, t->ndim, ctx);
-            if (t == NULL) {
-                ndt_del(u);
-                return NULL;
+            const ndt_t *v = symtable_find_var_dim(tbl, t->ndim, ctx);
+            if (v == NULL) {
+                if (req_concrete) {
+                    ndt_del(u);
+                    return NULL;
+                }
+                else {
+                    ndt_err_clear(ctx);
+                    return ndt_abstract_var_dim(u, ctx);
+                }
+            }
+            else {
+                t = v;
             }
         }
 
@@ -171,14 +181,26 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
     }
 
     case SymbolicDim: {
-        const int64_t shape = symtable_find_shape(tbl, t->SymbolicDim.name, ctx);
-        if (shape < 0) {
+        u = ndt_substitute(t->SymbolicDim.type, tbl, req_concrete, ctx);
+        if (u == NULL) {
             return NULL;
         }
 
-        u = ndt_substitute(t->SymbolicDim.type, tbl, ctx);
-        if (u == NULL) {
-            return NULL;
+        const int64_t shape = symtable_find_shape(tbl, t->SymbolicDim.name, ctx);
+        if (shape < 0) {
+            if (req_concrete) {
+                ndt_del(u);
+                return NULL;
+            }
+            else {
+                ndt_err_clear(ctx);
+                char *name = ndt_strdup(t->SymbolicDim.name, ctx);
+                if (name == NULL) {
+                    ndt_del(u);
+                    return NULL;
+                }
+                return ndt_symbolic_dim(name, u, ctx);
+            }
         }
 
         return ndt_fixed_dim(u, shape, INT64_MAX, ctx);
@@ -186,7 +208,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 
     case EllipsisDim: {
         if (t->EllipsisDim.name == NULL) {
-            return ndt_substitute(t->EllipsisDim.type, tbl, ctx);
+            return ndt_substitute(t->EllipsisDim.type, tbl, true, ctx);
         }
         else {
             return substitute_named_ellipsis(t, tbl, ctx);
@@ -196,10 +218,20 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
     case Typevar: {
         const ndt_t *v = symtable_find_typevar(tbl, t->Typevar.name, ctx);
         if (v == NULL) {
-            return NULL;
+            if (req_concrete) {
+                return NULL;
+            }
+            else {
+                ndt_err_clear(ctx);
+                char *name = ndt_strdup(t->Typevar.name, ctx);
+                if (name == NULL) {
+                    return NULL;
+                }
+                return ndt_typevar(name, ctx);
+            }
         }
 
-        return ndt_substitute(v, tbl, ctx);
+        return ndt_substitute(v, tbl, req_concrete, ctx);
     }
 
     case Constr: {
@@ -208,7 +240,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
             return NULL;
         }
 
-        u = ndt_substitute(t->Constr.type, tbl, ctx);
+        u = ndt_substitute(t->Constr.type, tbl, req_concrete, ctx);
         if (u == NULL) {
             ndt_free(name);
             return NULL;
@@ -227,7 +259,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
     }
 
     case Ref:
-        u = ndt_substitute(t->Ref.type, tbl, ctx);
+        u = ndt_substitute(t->Ref.type, tbl, req_concrete, ctx);
         if (u == NULL) {
             return NULL;
         }
