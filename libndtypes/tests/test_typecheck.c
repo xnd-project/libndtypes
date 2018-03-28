@@ -258,5 +258,13 @@ const typecheck_testcase_t typecheck_tests[] = {
     .outer_dims=0,
     .success=false },
 
+  { .signature="var * var * (int32, float64), int32 -> var * var * int32",
+    .in={"var(offsets=[0,3]) * var(offsets=[0,4,10,20]) * (int32, float64)",
+         "int32"},
+    .out={"var * var * int32"},
+    .broadcast={NULL},
+    .outer_dims=0,
+    .success=true },
+
   { NULL, {NULL}, {NULL}, {NULL}, 0, false }
 };

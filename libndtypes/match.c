@@ -47,7 +47,7 @@
 static int match_datashape(const ndt_t *, const ndt_t *, symtable_t *, ndt_context_t *);
 static int match_dimensions(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
 static int match_dimensions_rev(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
-static int match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl, ndt_context_t *ctx);
+static int match_single(const ndt_t *p, const ndt_t *c, bool ellipsis, symtable_t *tbl, ndt_context_t *ctx);
 
 
 static int
@@ -269,7 +269,7 @@ resolve_broadcast(const ndt_t *c[], int size, symtable_t *tbl,
 }
 
 static int
-match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
+match_single(const ndt_t *p, const ndt_t *c, bool ellipsis, symtable_t *tbl,
              ndt_context_t *ctx)
 {
     switch (p->tag) {
@@ -284,6 +284,11 @@ match_single(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
             if (c->tag != VarDim || c->ndim != p->ndim) {
                 return 0;
             }
+
+            if (!ellipsis) {
+                return 1;
+            }
+
             v.tag = VarDimEntry;
             v.VarDimEntry.type = c;
 
@@ -350,7 +355,7 @@ match_dimensions_rev(const ndt_t *p[], int pshape,
         if (i == 0) {
             return resolve_ellipsis(p[0]->EllipsisDim.name, c, k+1, tbl, ctx);
         }
-        n = match_single(p[i], c[k], tbl, ctx);
+        n = match_single(p[i], c[k], true, tbl, ctx);
         if (n <= 0) return n;
     }
 
@@ -373,7 +378,7 @@ match_dimensions(const ndt_t *p[], int pshape,
     }
 
     for (i = 0; i < pshape && i < cshape; i++) {
-        n = match_single(p[i], c[i], tbl, ctx);
+        n = match_single(p[i], c[i], false, tbl, ctx);
         if (n <= 0) return n;
     }
 
