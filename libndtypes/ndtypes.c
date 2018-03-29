@@ -1810,13 +1810,6 @@ ndt_nominal(char *name, ndt_context_t *ctx)
         return NULL;
     }
 
-    if (ndt_is_abstract(type)) {
-        ndt_err_format(ctx, NDT_ValueError,
-                       "nominal type must be a concrete type");
-        ndt_free(name);
-        return NULL;
-    }
-
     /* abstract type */
     t = ndt_new(Nominal, ctx);
     if (t == NULL) {
