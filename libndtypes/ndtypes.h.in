@@ -354,7 +354,7 @@ struct _ndt {
 
         struct {
             char *name;
-            const ndt_t *type;
+            ndt_t *type;
         } Nominal;
 
         struct {
@@ -522,6 +522,7 @@ NDTYPES_API char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
 
 /* Type functions (unstable API) */
 NDTYPES_API const ndt_t *ndt_dtype(const ndt_t *t);
+NDTYPES_API const ndt_t *ndt_hidden_dtype(const ndt_t *t);
 NDTYPES_API int ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *t);
 NDTYPES_API int ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API ndt_ssize_t ndt_hash(ndt_t *t, ndt_context_t *ctx);
@@ -681,7 +682,7 @@ NDTYPES_API ndt_t *ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64
 
 NDTYPES_API ndt_t *ndt_ref(ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_nominal(char *name, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_nominal(char *name, ndt_t *type, ndt_context_t *ctx);
 
 /* Scalars */
 NDTYPES_API ndt_t *ndt_scalar_kind(ndt_context_t *ctx);

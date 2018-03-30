@@ -990,6 +990,7 @@ ndt_del(ndt_t *t)
 
     case Nominal: {
         ndt_free(t->Nominal.name);
+        ndt_del(t->Nominal.type);
         goto free_type;
     }
 
@@ -1799,14 +1800,42 @@ ndt_constr(char *name, ndt_t *type, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_nominal(char *name, ndt_context_t *ctx)
+ndt_nominal(char *name, ndt_t *type, ndt_context_t *ctx)
 {
-    const ndt_t *type;
+    const ndt_t *d;
     ndt_t *t;
 
-    type = ndt_typedef_find(name, ctx);
-    if (type == NULL) {
+    d = ndt_typedef_find(name, ctx);
+    if (d == NULL) {
         ndt_free(name);
+        ndt_del(type);
+        return NULL;
+    }
+
+    if (type != NULL) {
+        int ret = ndt_match(d, type, ctx);
+        if (ret <= 0) {
+            if (ret == 0) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "type is not an instance of %s", name);
+            }
+            ndt_free(name);
+            ndt_del(type);
+            return NULL;
+        }
+    }
+    else if (ndt_is_concrete(d)) {
+        type = ndt_copy(d, ctx);
+        if (type == NULL) {
+            ndt_free(name);
+            return NULL;
+        }
+    }
+    else {
+        ndt_err_format(ctx, NDT_ValueError,
+            "typedef instances must be concrete");
+        ndt_free(name);
+        ndt_del(type);
         return NULL;
     }
 
@@ -1814,6 +1843,7 @@ ndt_nominal(char *name, ndt_context_t *ctx)
     t = ndt_new(Nominal, ctx);
     if (t == NULL) {
         ndt_free(name);
+        ndt_del(type);
         return NULL;
     }
     t->Nominal.name = name;

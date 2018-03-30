@@ -235,7 +235,7 @@ dtype:
 | scalar                                 { $$ = $1; }
 | tuple_type                             { $$ = $1; }
 | record_type                            { $$ = $1; }
-| NAME_LOWER                             { $$ = ndt_nominal($1, ctx); if ($$ == NULL) YYABORT; }
+| NAME_LOWER                             { $$ = ndt_nominal($1, NULL, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LPAREN datashape RPAREN     { $$ = ndt_constr($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LPAREN attribute_seq RPAREN { (void)$1; (void)$3; ndt_free($1); ndt_attr_seq_del($3); $$ = NULL;
                                             ndt_err_format(ctx, NDT_NotImplementedError, "general attributes are not implemented");

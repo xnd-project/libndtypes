@@ -255,7 +255,13 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
             return NULL;
         }
 
-        return ndt_nominal(name, ctx);
+        u = ndt_copy(t->Nominal.type, ctx);
+        if (u == NULL) {
+            ndt_free(name);
+            return NULL;
+        }
+
+        return ndt_nominal(name, u, ctx);
     }
 
     case Ref:

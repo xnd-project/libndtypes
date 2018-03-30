@@ -34,7 +34,7 @@ import sys, argparse
 import unittest, gc
 import weakref, struct
 from copy import copy
-from ndtypes import ndt, typedef, MAX_DIM, ApplySpec
+from ndtypes import ndt, typedef, instantiate, MAX_DIM, ApplySpec
 from ndt_support import *
 from ndt_randtype import *
 from random import random
@@ -1656,6 +1656,25 @@ class TestBroadcast(unittest.TestCase):
                         self.assertEqual(uu.strides[i], yy.strides[i])
 
 
+class TestTypedef(unittest.TestCase):
+
+    def test_instantiate(self):
+        typedef("node", "int32")
+        typedef("cost", "int32")
+        typedef("graph", "var * var * (node, cost)")
+
+        self.assertRaises(ValueError, ndt, "graph")
+
+        t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * (node, cost)")
+        u = instantiate("graph", t)
+        self.assertTrue(t.isconcrete())
+
+        t = ndt("var(offsets=[0,2]) * var(offsets=[0,2,3]) * var(offsets=[0,1,2,3]) * (node, cost)")
+        self.assertRaises(ValueError, instantiate, "graph", t)
+
+        self.assertRaises(ValueError, ndt, "graph")
+
+
 class LongFixedDimTests(unittest.TestCase):
 
     def test_steps_random(self):
@@ -1750,6 +1769,7 @@ ALL_TESTS = [
   TestError,
   TestApply,
   TestBroadcast,
+  TestTypedef,
   LongFixedDimTests,
 ]
 

@@ -2155,7 +2155,7 @@ yyreduce:
 
   case 27:
 #line 238 "grammar.y" /* yacc.c:1646  */
-    { (yyval.ndt) = ndt_nominal((yyvsp[0].string), ctx); if ((yyval.ndt) == NULL) YYABORT; }
+    { (yyval.ndt) = ndt_nominal((yyvsp[0].string), NULL, ctx); if ((yyval.ndt) == NULL) YYABORT; }
 #line 2160 "grammar.c" /* yacc.c:1646  */
     break;
 

@@ -126,6 +126,21 @@ ndt_dtype(const ndt_t *t)
     return t;
 }
 
+const ndt_t *
+ndt_hidden_dtype(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Ref:
+        return ndt_hidden_dtype(t->Ref.type);
+    case Constr:
+        return ndt_hidden_dtype(t->Constr.type);
+    case Nominal:
+        return ndt_hidden_dtype(t->Nominal.type);
+    default:
+        return ndt_dtype(t);
+    }
+}
+
 int
 ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *t)
 {

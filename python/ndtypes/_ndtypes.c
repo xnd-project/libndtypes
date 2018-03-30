@@ -813,6 +813,24 @@ ndtype_strides(PyObject *self, PyObject *args UNUSED)
 }
 
 static PyObject *
+ndtype_hidden_dtype(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    const ndt_t *t = NDT(self);
+    const ndt_t *dtype;
+    ndt_t *u;
+
+    dtype = ndt_hidden_dtype(t);
+
+    u = ndt_copy(dtype, &ctx); 
+    if (u == NULL) {
+        return seterr(&ctx);
+    }
+
+    return Ndt_FromType(u);
+}
+
+static PyObject *
 ndtype_align(PyObject *self, PyObject *args UNUSED)
 {
     if (ndt_is_abstract(NDT(self))) {
@@ -832,6 +850,7 @@ static PyGetSetDef ndtype_getsets [] =
   { "ndim", (getter)ndtype_ndim, NULL, doc_ndim, NULL},
   { "shape", (getter)ndtype_shape, NULL, doc_shape, NULL},
   { "strides", (getter)ndtype_strides, NULL, doc_strides, NULL},
+  { "hidden_dtype", (getter)ndtype_hidden_dtype, NULL, doc_strides, NULL},
   {NULL}
 };
 
@@ -1073,9 +1092,53 @@ ndtype_typedef(PyObject *mod UNUSED, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
+static PyObject *
+ndtype_instantiate(PyObject *mod UNUSED, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"name", "type", NULL};
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *name, *type;
+    const char *cname;
+    char *cp;
+    ndt_t *t, *tp;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &name, &type)) {
+        return NULL;
+    }
+
+    cname = PyUnicode_AsUTF8(name);
+    if (cname == NULL) {
+        return NULL;
+    }
+
+    if (!Ndt_Check(type)) {
+        PyErr_SetString(PyExc_TypeError, "type argument must be ndt");
+        return NULL;
+    }
+
+    cp = ndt_strdup(cname, &ctx);
+    if (cp == NULL) {
+        return seterr(&ctx);
+    }
+
+    tp = ndt_copy(NDT(type), &ctx);
+    if (tp == NULL) {
+        ndt_free(cp);
+        return seterr(&ctx);
+    }
+
+    t = ndt_nominal(cp, tp, &ctx);
+    if (t == NULL) {
+        return seterr(&ctx);
+    }
+
+    return Ndt_FromType(t);
+}
+
 static PyMethodDef _ndtypes_methods [] =
 {
   { "typedef", (PyCFunction)ndtype_typedef, METH_VARARGS|METH_KEYWORDS, NULL},
+  { "instantiate", (PyCFunction)ndtype_instantiate, METH_VARARGS|METH_KEYWORDS, NULL},
   { NULL, NULL, 1, NULL }
 };
 

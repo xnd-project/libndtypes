@@ -323,14 +323,18 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     }
 
     case Nominal: {
-        char *name;
-
-        name = ndt_strdup(t->Nominal.name, ctx);
+        char *name = ndt_strdup(t->Nominal.name, ctx);
         if (name == NULL) {
             return NULL;
         }
 
-        u = ndt_nominal(name, ctx);
+        type = ndt_copy(t->Nominal.type, ctx);
+        if (type == NULL) {
+            ndt_free(name);
+            return NULL;
+        }
+
+        u = ndt_nominal(name, type, ctx);
         goto copy_common_fields;
     }
 

@@ -228,10 +228,8 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
     }
 
     case Nominal: {
-        /* Assume that the type has been created through ndt_nominal(), in
-           which case the name is guaranteed to be unique and present in the
-           typedef table. */
-        return strcmp(t->Nominal.name, u->Nominal.name) == 0;
+        return strcmp(t->Nominal.name, u->Nominal.name) == 0 &&
+               ndt_equal(t->Nominal.type, u->Nominal.type);
     }
 
     case Categorical: {
