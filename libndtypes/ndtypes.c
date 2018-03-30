@@ -1824,19 +1824,12 @@ ndt_nominal(char *name, ndt_t *type, ndt_context_t *ctx)
             return NULL;
         }
     }
-    else if (ndt_is_concrete(d)) {
+    else {
         type = ndt_copy(d, ctx);
         if (type == NULL) {
             ndt_free(name);
             return NULL;
         }
-    }
-    else {
-        ndt_err_format(ctx, NDT_ValueError,
-            "typedef instances must be concrete");
-        ndt_free(name);
-        ndt_del(type);
-        return NULL;
     }
 
     /* abstract type */

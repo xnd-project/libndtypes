@@ -1663,16 +1663,14 @@ class TestTypedef(unittest.TestCase):
         typedef("cost", "int32")
         typedef("graph", "var * var * (node, cost)")
 
-        self.assertRaises(ValueError, ndt, "graph")
-
         t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * (node, cost)")
         u = instantiate("graph", t)
-        self.assertTrue(t.isconcrete())
+        del t
+        gc.collect()
+        self.assertTrue(u.isconcrete())
 
         t = ndt("var(offsets=[0,2]) * var(offsets=[0,2,3]) * var(offsets=[0,1,2,3]) * (node, cost)")
         self.assertRaises(ValueError, instantiate, "graph", t)
-
-        self.assertRaises(ValueError, ndt, "graph")
 
 
 class LongFixedDimTests(unittest.TestCase):
