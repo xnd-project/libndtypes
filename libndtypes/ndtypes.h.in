@@ -114,6 +114,8 @@
 
 /* Types: ndt_t */
 typedef struct _ndt ndt_t;
+typedef struct _ndt_context ndt_context_t;
+
 
 /* Internal option type */
 enum ndt_option {
@@ -355,6 +357,7 @@ struct _ndt {
         struct {
             char *name;
             ndt_t *type;
+            bool (* constraint)(void *, ndt_context_t *);
         } Nominal;
 
         struct {
@@ -447,7 +450,7 @@ enum ndt_msg {
   DynamicMsg
 };
 
-typedef struct {
+struct _ndt_context {
     uint32_t flags;
     enum ndt_error err;
     enum ndt_msg msg;
@@ -455,7 +458,7 @@ typedef struct {
         const char *ConstMsg;
         char *DynamicMsg;
     };
-} ndt_context_t;
+};
 
 NDTYPES_API ndt_context_t *ndt_context_new(void);
 NDTYPES_API void ndt_context_del(ndt_context_t *ctx);
@@ -628,9 +631,19 @@ NDTYPES_API char *ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx);
 /*                                 Typedef                                   */
 /*****************************************************************************/
 
+typedef bool (* ndt_constraint_t)(void *, ndt_context_t *);
+
+typedef struct {
+    const ndt_t *type;
+    ndt_constraint_t constraint;
+} ndt_typedef_t;
+
 /* Typedef for nominal types */
-NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API int ndt_typedef_from_string(const char *name, const char *type, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef_add(const char *name, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx);
+NDTYPES_API const ndt_typedef_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
+
+NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef_from_string(const char *name, const char *type, ndt_constraint_t f, ndt_context_t *ctx);
 
 
 /*****************************************************************************/
@@ -746,8 +759,6 @@ NDTYPES_API ndt_t *ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *
 
 NDTYPES_API int ndt_init(ndt_context_t *ctx);
 NDTYPES_API void ndt_finalize(void);
-NDTYPES_API int ndt_typedef_add(const char *name, ndt_t *type, ndt_context_t *ctx);
-NDTYPES_API const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 
 
 /******************************************************************************/

@@ -68,7 +68,7 @@ init_charmap(void)
 /*****************************************************************************/
 
 typedef struct typedef_trie {
-    const ndt_t *value;
+    ndt_typedef_t def;
     struct typedef_trie *next[];
 } typedef_trie_t;
 
@@ -85,7 +85,8 @@ typedef_trie_new(ndt_context_t *ctx)
         return ndt_memory_error(ctx);
     }
 
-    t->value = NULL;
+    t->def.type = NULL;
+    t->def.constraint = NULL;
 
     for (i = 0; i < ALPHABET_LEN; i++) {
         t->next[i] = NULL;
@@ -103,7 +104,7 @@ typedef_trie_del(typedef_trie_t *t)
         return;
     }
 
-    ndt_del((ndt_t *)t->value);
+    ndt_del((ndt_t *)t->def.type);
 
     for (i = 0; i < ALPHABET_LEN; i++) {
         typedef_trie_del(t->next[i]);
@@ -113,7 +114,7 @@ typedef_trie_del(typedef_trie_t *t)
 }
 
 int
-ndt_typedef_add(const char *key, ndt_t *value, ndt_context_t *ctx)
+ndt_typedef_add(const char *key, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx)
 {
     typedef_trie_t *t = typedef_map;
     const unsigned char *cp;
@@ -124,14 +125,14 @@ ndt_typedef_add(const char *key, ndt_t *value, ndt_context_t *ctx)
         if (i == UCHAR_MAX) {
             ndt_err_format(ctx, NDT_ValueError,
                            "invalid character in typedef: '%c'", *cp);
-            ndt_del(value);
+            ndt_del(type);
             return -1;
         }
 
         if (t->next[i] == NULL) {
             typedef_trie_t *u = typedef_trie_new(ctx);
             if (u == NULL) {
-                ndt_del(value);
+                ndt_del(type);
                 return -1;
             }
             t->next[i] = u;
@@ -142,17 +143,19 @@ ndt_typedef_add(const char *key, ndt_t *value, ndt_context_t *ctx)
         }
     }
 
-    if (t->value) {
+    if (t->def.type) {
         ndt_err_format(ctx, NDT_ValueError, "duplicate typedef '%s'", key);
-        ndt_del(value);
+        ndt_del(type);
         return -1;
     }
 
-    t->value = value;
+    t->def.type = type;
+    t->def.constraint = f;
+
     return 0;
 }
 
-const ndt_t *
+const ndt_typedef_t *
 ndt_typedef_find(const char *key, ndt_context_t *ctx)
 {
     typedef_trie_t *t = typedef_map;
@@ -175,13 +178,13 @@ ndt_typedef_find(const char *key, ndt_context_t *ctx)
         t = t->next[i];
     }
 
-    if (t->value == NULL) {
+    if (t->def.type == NULL) {
         ndt_err_format(ctx, NDT_RuntimeError,
                        "missing typedef for key '%s'", key);
         return NULL;
     }
 
-    return t->value;
+    return &t->def;
 }
 
 

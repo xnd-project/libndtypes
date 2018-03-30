@@ -65,7 +65,7 @@ init_tests(void)
         ndt_context_del(ctx);
         return -1;
     }
-    if (ndt_typedef("defined_t", t, ctx) < 0) {
+    if (ndt_typedef("defined_t", t, NULL, ctx) < 0) {
         ndt_err_fprint(stderr, ctx);
         ndt_context_del(ctx);
         return -1;
@@ -77,7 +77,7 @@ init_tests(void)
         ndt_context_del(ctx);
         return -1;
     }
-    if (ndt_typedef("foo_t", t, ctx) < 0) {
+    if (ndt_typedef("foo_t", t, NULL, ctx) < 0) {
         ndt_err_fprint(stderr, ctx);
         ndt_context_del(ctx);
         return -1;
@@ -423,7 +423,7 @@ test_typedef(void)
             t = ndt_from_string("10 * 20 * {a : int64, b : ref(float64)}", ctx);
 
             ndt_set_alloc_fail();
-            (void)ndt_typedef(*c, t, ctx);
+            (void)ndt_typedef(*c, t, NULL, ctx);
             ndt_set_alloc();
 
             if (ctx->err != NDT_MemoryError) {
@@ -477,7 +477,7 @@ test_typedef_duplicates(void)
             t = ndt_from_string("10 * 20 * {a : int64, b : ref(float64)}", ctx);
 
             ndt_set_alloc_fail();
-            (void)ndt_typedef(*c, t, ctx);
+            (void)ndt_typedef(*c, t, NULL, ctx);
             ndt_set_alloc();
 
             if (ctx->err != NDT_MemoryError) {
@@ -529,7 +529,7 @@ test_typedef_error(void)
             t = ndt_from_string("10 * 20 * {a : int64, b : ref(float64)}", ctx);
 
             ndt_set_alloc_fail();
-            (void)ndt_typedef(*c, t, ctx);
+            (void)ndt_typedef(*c, t, NULL, ctx);
             ndt_set_alloc();
 
             if (ctx->err != NDT_MemoryError) {

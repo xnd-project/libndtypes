@@ -1091,7 +1091,7 @@ ndtype_typedef(PyObject *mod UNUSED, PyObject *args, PyObject *kwds)
         return seterr(&ctx);
     }
 
-    if (ndt_typedef(cname, t, &ctx) < 0) {
+    if (ndt_typedef(cname, t, NULL, &ctx) < 0) {
         return seterr(&ctx);
     }
 
