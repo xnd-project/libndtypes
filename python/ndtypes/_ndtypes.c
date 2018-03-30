@@ -352,7 +352,13 @@ ndtype_from_object(PyTypeObject *tp, PyObject *type)
         return NULL;
     }
 
-    NDT(self) = ndt_from_string(cp, &ctx);
+    RBUF(self) = rbuf_alloc(RBUF_OWN_OFFSETS);
+    if (RBUF(self) == NULL) {
+        Py_DECREF(self);
+        return NULL;
+    }
+
+    NDT(self) = ndt_from_string_fill_meta(&RBUF_NDT_META(self), cp, &ctx);
     if (NDT(self) == NULL) {
         Py_DECREF(self);
         return seterr(&ctx);
@@ -1132,7 +1138,7 @@ ndtype_instantiate(PyObject *mod UNUSED, PyObject *args, PyObject *kwds)
         return seterr(&ctx);
     }
 
-    return Ndt_FromType(t);
+    return Ndt_MoveSubtree(type, t);
 }
 
 static PyMethodDef _ndtypes_methods [] =
