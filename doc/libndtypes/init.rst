@@ -11,38 +11,36 @@ Initialization and tables
 libndtypes has global tables that need to be initialized and finalized.
 
 
-.. code-block:: c
+.. c:function:: int ndt_init(ndt_context_t *ctx)
 
-   int ndt_init(ndt_context_t *ctx);
+   Initialize the global tables.  This function must be called once at program
+   start before using any other libndtypes functions.
 
+   Return *0* on success and *-1* otherwise.
 
-Initialize the global tables.  This function must be called once at program
-start before using any other libndtypes functions.
+.. c:function:: void ndt_finalize(void)
 
-Return *0* on success and *-1* otherwise.
+   Deallocate the global tables.  This function may be called once at program
+   end for the benefit of memory debuggers.
 
+.. c:function:: int ndt_typedef_add(const char *key, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx)
 
-.. code-block:: c
+   Add a type alias for *type* to the typedef table. *key* must be globally
+   unique. The function steals the *type* argument. *f* is an optional constraint
+   on it's values.
 
-   void ndt_finalize(void);
+   On error, deallocate *type* and return *-1*.  Return *0* otherwise.
 
-Deallocate the global tables.  This function may be called once at program
-end for the benefit of memory debuggers.
+.. c:function:: const ndt_typedef_t *ndt_typedef_find(const char *name, ndt_context_t *ctx)
 
+   Try to find the type associated with *key* in the typedef table.  On success,
+   return a const pointer to the typedef, :c:macro:`NULL` otherwise.
 
-.. code-block:: c
+.. c:type:: struct ndt_typedef_t
 
-   int ndt_typedef_add(const char *name, const ndt_t *type, ndt_context_t *ctx);
+   .. c:member:: const ndt_t * type
+   .. c:member:: ndt_constraint_t constraint
 
-Add a type alias for *type* to the typedef table. *name* must be globally
-unique. The function steals the *type* argument.
+.. c:type:: bool (* ndt_constraint_t)(void *, ndt_context_t *)
 
-On error, deallocate *type* and return *-1*.  Return *0* otherwise.
-
-
-.. code-block:: c
-
-   const ndt_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
-
-Try to find the type associated with  *name* in the typedef table.  On success,
-return a const pointer to the type, :c:macro:`NULL` otherwise.
+   Returns whether the initialized data is valid for this typedef.
