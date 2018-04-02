@@ -53,12 +53,12 @@ SERIALIZE_SHARED_OBJS = serialize\.objs\serialize.obj serialize\.objs\deserializ
 
 
 $(LIBSTATIC):\
-Makefile $(OBJS) $(COMPAT_OBJS)
+Makefile $(OBJS) $(COMPAT_OBJS) $(SERIALIZE_OBJS)
 	-@if exist $@ del $(LIBSTATIC)
 	lib /nologo /out:$(LIBSTATIC) $(OBJS) $(COMPAT_OBJS) $(SERIALIZE_OBJS)
 
 $(LIBSHARED):\
-Makefile $(SHARED_OBJS) $(COMPAT_SHARED_OBJS)
+Makefile $(SHARED_OBJS) $(COMPAT_SHARED_OBJS) $(SERIALIZE_SHARED_OBJS)
 	-@if exist $@ del $(LIBSHARED)
 	link /nologo /DLL /MANIFEST /out:$(LIBSHARED) /implib:$(LIBIMPORT) \
             $(SHARED_OBJS) $(COMPAT_SHARED_OBJS) $(SERIALIZE_SHARED_OBJS)
