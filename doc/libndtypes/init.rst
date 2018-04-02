@@ -26,8 +26,7 @@ libndtypes has global tables that need to be initialized and finalized.
 .. c:function:: int ndt_typedef_add(const char *key, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx)
 
    Add a type alias for *type* to the typedef table. *key* must be globally
-   unique. The function steals the *type* argument. *f* is an optional constraint
-   on it's values.
+   unique. The function steals the *type* argument. *f* is an optional constraint function.
 
    On error, deallocate *type* and return *-1*.  Return *0* otherwise.
 
@@ -43,4 +42,5 @@ libndtypes has global tables that need to be initialized and finalized.
 
 .. c:type:: bool (* ndt_constraint_t)(void *, ndt_context_t *)
 
-   Returns whether the initialized data is valid for this typedef.
+   Limits the permissible values to a subset of the type, by returning
+   whether the initialized value is valid.
