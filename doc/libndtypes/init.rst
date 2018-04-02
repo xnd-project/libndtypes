@@ -23,16 +23,22 @@ libndtypes has global tables that need to be initialized and finalized.
    Deallocate the global tables.  This function may be called once at program
    end for the benefit of memory debuggers.
 
-.. c:function:: int ndt_typedef_add(const char *key, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx)
+.. c:function:: int ndt_typedef(const char *name, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx)
 
-   Add a type alias for *type* to the typedef table. *key* must be globally
+   Add a type alias for *type* to the typedef table. *name* must be globally
    unique. The function steals the *type* argument. *f* is an optional constraint function.
 
    On error, deallocate *type* and return *-1*.  Return *0* otherwise.
 
+.. c:function:: int ndt_typedef_from_string(const char *name, const char *type, ndt_constraint_t f, ndt_context_t *ctx)
+
+   Add a type alias for *type* to the typedef table. Like :c:func:`ndt_typedef` but reads
+   the *type* as a string. 
+
+
 .. c:function:: const ndt_typedef_t *ndt_typedef_find(const char *name, ndt_context_t *ctx)
 
-   Try to find the type associated with *key* in the typedef table.  On success,
+   Try to find the type associated with *name* in the typedef table.  On success,
    return a const pointer to the typedef, :c:macro:`NULL` otherwise.
 
 .. c:type:: struct ndt_typedef_t
