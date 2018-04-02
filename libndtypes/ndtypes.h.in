@@ -626,6 +626,9 @@ NDTYPES_API char *ndt_as_string(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_indent(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx);
 
+NDTYPES_API char *ndt_serialize(const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_deserialize(ndt_meta_t *m, const char *ptr, ndt_context_t *ctx);
+
 
 /*****************************************************************************/
 /*                                 Typedef                                   */
@@ -751,6 +754,9 @@ NDTYPES_API ndt_t *ndt_from_string_fill_meta(ndt_meta_t *m, const char *input, n
 
 /* Metadata is provided and managed by an external source. */
 NDTYPES_API ndt_t *ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_t *ctx);
+
+NDTYPES_API ndt_meta_t *ndt_meta_new(ndt_context_t *ctx);
+NDTYPES_API void ndt_meta_del(ndt_meta_t *m);
 
 
 /******************************************************************************/

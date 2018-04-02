@@ -303,6 +303,39 @@ ndt_apply_tag_as_string(ndt_apply_spec_t *spec)
 
 
 /*****************************************************************************/
+/*                            Metadata (unstable API)                        */
+/*****************************************************************************/
+
+ndt_meta_t *
+ndt_meta_new(ndt_context_t *ctx)
+{
+    ndt_meta_t *m;
+
+    m = ndt_calloc(1, sizeof *m);
+    if (m == NULL) {
+        ndt_memory_error(ctx);
+    }
+
+    m->num_offset_arrays = 0;
+    return m;
+}
+
+void
+ndt_meta_del(ndt_meta_t *m)
+{
+    if (m == NULL) {
+        return;
+    }
+
+    for (int i = 0; i < m->num_offset_arrays; i++) {
+        ndt_free(m->offset_arrays[i]);
+    }
+
+    ndt_free(m);
+}
+
+
+/*****************************************************************************/
 /*                     Optimized kernel strategy (unstable API)              */
 /*****************************************************************************/
 

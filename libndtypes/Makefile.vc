@@ -47,6 +47,10 @@ COMPAT_OBJS = compat\bpgrammar.obj compat\bplexer.obj compat\import.obj
 COMPAT_SHARED_OBJS = compat\.objs\bpgrammar.obj compat\.objs\bplexer.obj \
                      compat\.objs\import.obj
 
+SERIALIZE_OBJS = serialize\serialize.obj serialize\deserialize.obj
+
+SERIALIZE_SHARED_OBJS = serialize\.objs\serialize.obj serialize\.objs\deserialize.obj
+
 
 $(LIBSTATIC):\
 Makefile $(OBJS) $(COMPAT_OBJS)
@@ -210,6 +214,12 @@ Makefile compat\Makefile compat\bpgrammar.y compat\bplexer.l compat\import.c \
 ndtypes.h seq.h
         cd compat && nmake
 
+# serialize directory
+$(SERIALIZE_OBJS) $(SERIALIZE_SHARED_OBJS):\
+Makefile serialize\Makefile serialize\serialize.c serialize\deserialize.c \
+ndtypes.h
+        cd serialize && nmake
+
 
 check:\
 Makefile default
@@ -247,9 +257,11 @@ clean: FORCE
 	if exist "..\record.txt" del "..\record.txt"
 	cd ..\python\ndtypes && del *.lib *.dll *.pyd ndtypes.h 2>NUL
 	cd compat && nmake clean
+	cd serialize && nmake clean
 
 distclean: clean
 	cd compat && nmake distclean
+	cd serialize && nmake distclean
 	del Makefile 2>NUL
 	del ndtypes.h 2>NUL
 

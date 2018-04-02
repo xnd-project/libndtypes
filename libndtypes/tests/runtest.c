@@ -1258,6 +1258,117 @@ test_buffer_error(void)
     return 0;
 }
 
+static int
+test_serialize(void)
+{
+    const char **c;
+    ndt_meta_t *m;
+    ndt_context_t *ctx;
+    ndt_t *t, *u;
+    int count = 0;
+    char *bytes;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = parse_tests; *c != NULL; c++) {
+        m = ndt_meta_new(ctx);
+        if (m == NULL) {
+            ndt_context_del(ctx);
+            fprintf(stderr,
+                "test_serialize: FAIL: unexpected failure in meta_new");
+            return -1;
+        }
+
+        t = ndt_from_string(*c, ctx);
+        if (t == NULL) {
+            ndt_meta_del(m);
+            ndt_context_del(ctx);
+            fprintf(stderr,
+                "test_serialize: FAIL: unexpected failure in from_string");
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            bytes = ndt_serialize(t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (bytes != NULL) {
+                ndt_free(bytes);
+                ndt_del(t);
+                ndt_meta_del(m);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_serialize: FAIL: bytes != NULL after MemoryError\n");
+                fprintf(stderr, "test_serialize: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            u = ndt_deserialize(m, bytes, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (u != NULL) {
+                ndt_free(bytes);
+                ndt_del(t);
+                ndt_meta_del(m);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_serialize: FAIL: u != NULL after MemoryError\n");
+                fprintf(stderr, "test_serialize: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+
+        if (bytes == NULL) {
+            fprintf(stderr, "test_serialize: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_serialize: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_del(u);
+            ndt_meta_del(m);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_free(bytes);
+
+        if (!ndt_equal(u, t)) {
+            fprintf(stderr, "test_serialize: FAIL: u != v in %s\n", *c);
+            ndt_del(t);
+            ndt_del(u);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_del(t);
+        ndt_del(u);
+
+        ndt_meta_del(m);
+        count++;
+    }
+    fprintf(stderr, "test_serialize (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
 
 static int (*tests[])(void) = {
   test_parse,
@@ -1275,6 +1386,7 @@ static int (*tests[])(void) = {
   test_copy,
   test_buffer,
   test_buffer_error,
+  test_serialize,
 #ifdef __GNUC__
   test_struct_align_pack,
   test_array,
