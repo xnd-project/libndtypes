@@ -40,7 +40,8 @@
 #include "overflow.h"
 
 
-static ndt_t *read_type(ndt_meta_t *m, const char * const ptr, int64_t offset, ndt_context_t *ctx);
+static ndt_t *read_type(ndt_meta_t *m, const char * const ptr, int64_t offset,
+                        const int64_t len, ndt_context_t *ctx);
 
 
 
@@ -67,36 +68,128 @@ typedef struct {
 /*                     Read values from the bytes buffer                     */
 /*****************************************************************************/
 
+static inline int64_t
+next_offset(const int64_t offset, const size_t size, const int64_t len,
+            ndt_context_t *ctx)
+{
+    bool overflow = 0;
+    int64_t next;
+
+    next = ADDi64(offset, (int64_t)size, &overflow);
+    if (overflow || next > len) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "buffer overflow in type deserialization");
+        return -1;
+    }
+
+    return next;
+}
+
+static inline int64_t
+array_size(const int64_t nmemb, const size_t size, ndt_context_t *ctx)
+{
+    bool overflow = 0;
+    int64_t array_size;
+
+    array_size = MULi64(nmemb, (int64_t)size, &overflow);
+    if (nmemb < 0 || overflow) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "corrupted data or buffer overflow in type deserialization");
+        return -1;
+    }
+
+    return array_size;
+}
+
+static inline int64_t
+string_size(const char * const ptr, const int64_t offset, const int64_t len,
+            ndt_context_t *ctx)
+{
+    const int64_t n = len-offset;
+    const char *end = memchr(ptr+offset, '\0', n);
+
+    if (end == NULL) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "buffer overflow in type deserialization");
+        return -1;
+    }
+
+    return end-(ptr+offset)+1;
+}
+
 #define READ(type) \
-static inline int64_t                                                       \
-read_##type(type##_t * const value, const char * const ptr, int64_t offset) \
-{                                                                           \
-    const size_t size = sizeof(type##_t);                                   \
-    memcpy(value, ptr+offset, size);                                        \
-    return offset + size;                                                   \
+static inline int64_t                                         \
+read_##type(type##_t * const value, const char * const ptr,   \
+            const int64_t offset, const int64_t len,          \
+            ndt_context_t *ctx )                              \
+{                                                             \
+    const size_t size = sizeof(type##_t);                     \
+    const int64_t next = next_offset(offset, size, len, ctx); \
+    if (next < 0) {                                           \
+        return -1;                                            \
+    }                                                         \
+                                                              \
+    memcpy(value, ptr+offset, size);                          \
+    return next;                                              \
+}
+
+#define READ_POS(type) \
+static inline int64_t                                                        \
+read_pos_##type(type##_t * const value, const char * const ptr,              \
+                const int64_t offset, const int64_t len,                     \
+                ndt_context_t *ctx)                                          \
+{                                                                            \
+    const size_t size = sizeof(type##_t);                                    \
+    const int64_t next = next_offset(offset, size, len, ctx);                \
+    if (next < 0) {                                                          \
+        return -1;                                                           \
+    }                                                                        \
+                                                                             \
+    memcpy(value, ptr+offset, size);                                         \
+    if (*value < 0) {                                                        \
+        ndt_err_format(ctx, NDT_ValueError,                                  \
+            "unexpected negative value in deserialization (corrupt data?)"); \
+        return -1;                                                           \
+    }                                                                        \
+    return next;                                                             \
 }
 
 #define READ_CAST(dtype, stype) \
 static inline int64_t                                             \
 dtype##_from_##stype(dtype * const value, const char * const ptr, \
-                     int64_t offset)                              \
+                     const int64_t offset, const int64_t len,     \
+                     ndt_context_t *ctx)                          \
 {                                                                 \
     stype##_t x;                                                  \
     const size_t size = sizeof x;                                 \
+    const int64_t next = next_offset(offset, size, len, ctx);     \
+    if (next < 0) {                                               \
+        return -1;                                                \
+    }                                                             \
                                                                   \
     memcpy(&x, ptr+offset, size);                                 \
     *value = (dtype)x;                                            \
-    return offset + size;                                         \
+    return next;                                                  \
 }
 
 #define READ_ARRAY(type) \
-static inline int64_t                                        \
-read_##type##_array(type##_t * const v, const int64_t nmemb, \
-                    const char * const ptr, int64_t offset)  \
-{                                                            \
-    int64_t size = nmemb * sizeof(type##_t);                 \
-    memcpy(v, ptr+offset, size);                             \
-    return offset + size;                                    \
+static inline int64_t                                               \
+read_##type##_array(type##_t * const v, const int64_t nmemb,        \
+                    const char * const ptr, const int64_t offset,   \
+                    const int64_t len, ndt_context_t *ctx)          \
+{                                                                   \
+    const int64_t size = array_size(nmemb, sizeof(type##_t), ctx);  \
+    if (size < 0) {                                                 \
+        return -1;                                                  \
+    }                                                               \
+                                                                    \
+    const int64_t next = next_offset(offset, size, len, ctx);       \
+    if (next < 0) {                                                 \
+        return -1;                                                  \
+    }                                                               \
+                                                                    \
+    memcpy(v, ptr+offset, size);                                    \
+    return next;                                                    \
 }
 
 READ_CAST(ndt_tag, uint8)
@@ -105,6 +198,10 @@ READ_CAST(ndt_variadic, uint8)
 READ_CAST(ndt_encoding, uint8)
 READ_CAST(ndt_value, uint8)
 READ_CAST(bool, uint8)
+
+READ_POS(int64)
+READ_POS(int32)
+
 READ(uint16)
 READ(uint32)
 READ(int32)
@@ -114,6 +211,21 @@ READ_ARRAY(uint16)
 READ_ARRAY(int32)
 READ_ARRAY(int64)
 READ_ARRAY(ndt_slice)
+
+static inline int64_t
+next_metaoffset(int64_t *offset, const char * const ptr,
+                int64_t metaoffset, const int64_t len,
+                ndt_context_t *ctx)
+{
+    metaoffset = read_pos_int64(offset, ptr, metaoffset, len, ctx);
+    if (metaoffset < 0 || *offset >= len) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "corrupt data or buffer overflow in type deserialization");
+        return -1;
+    }
+
+    return metaoffset;
+}
 
 
 /*****************************************************************************/
@@ -144,23 +256,29 @@ new_copy_common(const common_t *f, ndt_context_t *ctx)
 }
 
 static int64_t
-read_string(char **dest, const char * const ptr, int64_t offset,
-            ndt_context_t *ctx)
+read_string(char **dest, const char * const ptr, const int64_t offset,
+            const int64_t len, ndt_context_t *ctx)
 {
+    const int64_t size = string_size(ptr, offset, len, ctx);
+    if (size < 0) {
+        return -1;
+    }
+
     *dest = ndt_strdup(ptr+offset, ctx);
     if (*dest == NULL) {
         return -1;
     }
 
-    return offset + strlen(ptr+offset) + 1;
+    return offset + size;
 }
 
 static int64_t
 read_string_array(char *s[], int64_t shape, const char * const ptr,
-                  int64_t offset, ndt_context_t *ctx)
+                  int64_t offset, const int64_t len,
+                  ndt_context_t *ctx)
 {
     for (int64_t i = 0; i < shape; i++) {
-        offset = read_string(&s[i], ptr, offset, ctx);
+        offset = read_string(&s[i], ptr, offset, len, ctx);
         if (offset < 0) {
             for (int64_t k = 0; k < i; k++) {
                 ndt_free(s[k]);
@@ -175,29 +293,32 @@ read_string_array(char *s[], int64_t shape, const char * const ptr,
 
 static inline int64_t
 read_ndt_value_array(ndt_value_t *v, const int64_t nmemb,
-                     const char * const ptr, int64_t offset,
+                     const char * const ptr,
+                     int64_t offset, const int64_t len,
                      ndt_context_t *ctx)
 {
     for (int64_t i = 0; i < nmemb; i++) {
-        offset = ndt_value_from_uint8(&v[i].tag, ptr, offset);
+        offset = ndt_value_from_uint8(&v[i].tag, ptr, offset, len, ctx);
+        if (offset < 0) return -1;
 
         switch (v[i].tag) {
         case ValNA:
             break;
         case ValBool:
-            offset = bool_from_uint8(&v[i].ValBool, ptr, offset);
+            offset = bool_from_uint8(&v[i].ValBool, ptr, offset, len, ctx);
+            if (offset < 0) return -1;
             break;
         case ValInt64:
-            offset = read_int64(&v[i].ValInt64, ptr, offset);
+            offset = read_int64(&v[i].ValInt64, ptr, offset, len, ctx);
+            if (offset < 0) return -1;
             break;
         case ValFloat64:
-            offset = read_float64(&v[i].ValFloat64, ptr, offset);
+            offset = read_float64(&v[i].ValFloat64, ptr, offset, len, ctx);
+            if (offset < 0) return -1;
             break;
         case ValString:
-            offset = read_string(&v[i].ValString, ptr, offset, ctx);
-            if (offset < 0) {
-                return -1;
-            }
+            offset = read_string(&v[i].ValString, ptr, offset, len, ctx);
+            if (offset < 0) return -1;
             break;
         }
     }
@@ -206,30 +327,42 @@ read_ndt_value_array(ndt_value_t *v, const int64_t nmemb,
 }
 
 static int64_t
-read_common_fields(common_t *fields, const char * const ptr, int64_t offset)
+read_common_fields(common_t *fields, const char * const ptr,
+                   int64_t offset, const int64_t len,
+                   ndt_context_t *ctx)
 {
-    offset = ndt_tag_from_uint8(&fields->tag, ptr, offset);
-    offset = ndt_access_from_uint8(&fields->access, ptr, offset);
-    offset = read_uint32(&fields->flags, ptr, offset);
-    offset = read_int32(&fields->ndim, ptr, offset);
-    offset = read_int64(&fields->datasize, ptr, offset);
-    return read_uint16(&fields->align, ptr, offset);
+    offset = ndt_tag_from_uint8(&fields->tag, ptr, offset, len, ctx);
+    if (offset < 0) return -1;
+
+    offset = ndt_access_from_uint8(&fields->access, ptr, offset, len, ctx);
+    if (offset < 0) return -1;
+
+    offset = read_uint32(&fields->flags, ptr, offset, len, ctx);
+    if (offset < 0) return -1;
+
+    offset = read_pos_int32(&fields->ndim, ptr, offset, len, ctx);
+    if (offset < 0) return -1;
+
+    offset = read_pos_int64(&fields->datasize, ptr, offset, len, ctx);
+    if (offset < 0) return -1;
+
+    return read_uint16(&fields->align, ptr, offset, len, ctx);
 }
 
 static ndt_t *
 read_module(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-            int64_t offset, ndt_context_t *ctx)
+            int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     char *name;
     ndt_t *type;
     ndt_t *t;
 
-    offset = read_string(&name, ptr, offset, ctx);
+    offset = read_string(&name, ptr, offset, len, ctx);
     if (offset < 0) {
         return NULL;
     }
 
-    type = read_type(m, ptr, offset, ctx);
+    type = read_type(m, ptr, offset, len, ctx);
     if (type == NULL) {
         ndt_free(name);
         return NULL;
@@ -249,7 +382,7 @@ read_module(ndt_meta_t *m, const common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_function(ndt_meta_t *m, common_t *fields, const char * const ptr,
-              int64_t offset, ndt_context_t *ctx)
+              int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     int64_t metaoffset;
     int64_t nin;
@@ -257,9 +390,15 @@ read_function(ndt_meta_t *m, common_t *fields, const char * const ptr,
     int64_t nargs;
     ndt_t *t;
 
-    offset = read_int64(&nin, ptr, offset);
-    offset = read_int64(&nout, ptr, offset);
-    offset = read_int64(&nargs, ptr, offset);
+    offset = read_pos_int64(&nin, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = read_pos_int64(&nout, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = read_pos_int64(&nargs, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
 
     t = ndt_function_new(nargs, ctx);
     if (t == NULL) {
@@ -269,8 +408,10 @@ read_function(ndt_meta_t *m, common_t *fields, const char * const ptr,
 
     metaoffset = offset;
     for (int64_t i = 0; i < nargs; i++) {
-        metaoffset = read_int64(&offset, ptr, metaoffset);
-        t->Function.types[i] = read_type(m, ptr, offset, ctx);
+        metaoffset = next_metaoffset(&offset, ptr, metaoffset, len, ctx);
+        if (metaoffset < 0) return NULL;
+
+        t->Function.types[i] = read_type(m, ptr, offset, len, ctx);
         if (t->Function.types[i] == NULL) {
             ndt_del(t);
             return NULL;
@@ -285,7 +426,7 @@ read_function(ndt_meta_t *m, common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_fixed_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-               int64_t offset, ndt_context_t *ctx)
+               int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     int64_t shape;
     int64_t step;
@@ -293,11 +434,16 @@ read_fixed_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
     ndt_t *type;
     ndt_t *t;
 
-    offset = read_int64(&shape, ptr, offset);
-    offset = read_int64(&step, ptr, offset);
-    offset = read_int64(&itemsize, ptr, offset);
+    offset = read_pos_int64(&shape, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
-    type = read_type(m, ptr, offset, ctx);
+    offset = read_int64(&step, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = read_pos_int64(&itemsize, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    type = read_type(m, ptr, offset, len, ctx);
     if (type == NULL) {
         return NULL;
     }
@@ -317,18 +463,18 @@ read_fixed_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_symbolic_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-                  int64_t offset, ndt_context_t *ctx)
+                  int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     char *name;
     ndt_t *type;
     ndt_t *t;
 
-    offset = read_string(&name, ptr, offset, ctx);
+    offset = read_string(&name, ptr, offset, len, ctx);
     if (offset < 0) {
         return NULL;
     }
 
-    type = read_type(m, ptr, offset, ctx);
+    type = read_type(m, ptr, offset, len, ctx);
     if (type == NULL) {
         ndt_free(name);
         return NULL;
@@ -348,13 +494,13 @@ read_symbolic_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_ellipsis_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-                  int64_t offset, ndt_context_t *ctx)
+                  int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     char *name;
     ndt_t *type;
     ndt_t *t;
 
-    offset = read_string(&name, ptr, offset, ctx);
+    offset = read_string(&name, ptr, offset, len, ctx);
     if (offset < 0) {
         return NULL;
     }
@@ -363,7 +509,7 @@ read_ellipsis_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
         name = NULL;
     }
 
-    type = read_type(m, ptr, offset, ctx);
+    type = read_type(m, ptr, offset, len, ctx);
     if (type == NULL) {
         ndt_free(name);
         return NULL;
@@ -383,7 +529,7 @@ read_ellipsis_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_var_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-             int64_t offset, ndt_context_t *ctx)
+             int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     int64_t itemsize;
     int32_t noffsets;
@@ -393,16 +539,21 @@ read_var_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
     ndt_t *type;
     ndt_t *t;
 
-    offset = read_int64(&itemsize, ptr, offset);
-    offset = read_int32(&noffsets, ptr, offset);
-    offset = read_int32(&nslices, ptr, offset);
+    offset = read_pos_int64(&itemsize, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = read_pos_int32(&noffsets, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = read_pos_int32(&nslices, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     offsets = ndt_alloc(noffsets, sizeof *offsets);
     if (offsets == NULL) {
         return ndt_memory_error(ctx);
     }
 
-    offset = read_int32_array(offsets, noffsets, ptr, offset);
+    offset = read_int32_array(offsets, noffsets, ptr, offset, len, ctx);
     if (offset < 0) {
         ndt_free(offsets);
         return NULL;
@@ -414,7 +565,7 @@ read_var_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
         return ndt_memory_error(ctx);
     }
 
-    offset = read_ndt_slice_array(slices, nslices, ptr, offset);
+    offset = read_ndt_slice_array(slices, nslices, ptr, offset, len, ctx);
     if (offset < 0) {
         ndt_free(offsets);
         ndt_free(slices);
@@ -426,7 +577,7 @@ read_var_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
         slices = NULL;
     }
 
-    type = read_type(m, ptr, offset, ctx);
+    type = read_type(m, ptr, offset, len, ctx);
     if (type == NULL) {
         ndt_free(offsets);
         ndt_free(slices);
@@ -457,15 +608,18 @@ read_var_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_tuple(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-           int64_t offset, ndt_context_t *ctx)
+           int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     int64_t metaoffset;
     enum ndt_variadic flag;
     int64_t shape;
     ndt_t *t;
 
-    offset = ndt_variadic_from_uint8(&flag, ptr, offset);
-    offset = read_int64(&shape, ptr, offset);
+    offset = ndt_variadic_from_uint8(&flag, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = read_pos_int64(&shape, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     t = ndt_tuple_new(flag, shape, ctx);
     if (t == NULL) {
@@ -473,34 +627,47 @@ read_tuple(ndt_meta_t *m, const common_t *fields, const char * const ptr,
     }
     copy_common(t, fields);
 
-    offset = read_int64_array(t->Concrete.Tuple.offset, shape, ptr, offset);
-    offset = read_uint16_array(t->Concrete.Tuple.align, shape, ptr, offset);
-    offset = read_uint16_array(t->Concrete.Tuple.pad, shape, ptr, offset);
+    offset = read_int64_array(t->Concrete.Tuple.offset, shape, ptr, offset, len, ctx);
+    if (offset < 0) goto error;
+
+    offset = read_uint16_array(t->Concrete.Tuple.align, shape, ptr, offset, len, ctx);
+    if (offset < 0) goto error;
+
+    offset = read_uint16_array(t->Concrete.Tuple.pad, shape, ptr, offset, len, ctx);
+    if (offset < 0) goto error;
 
     metaoffset = offset;
     for (int64_t i = 0; i < shape; i++) {
-        metaoffset = read_int64(&offset, ptr, metaoffset);
-        t->Tuple.types[i] = read_type(m, ptr, offset, ctx);
+        metaoffset = next_metaoffset(&offset, ptr, metaoffset, len, ctx);
+        if (metaoffset < 0) goto error;
+
+        t->Tuple.types[i] = read_type(m, ptr, offset, len, ctx);
         if (t->Tuple.types[i] == NULL) {
-            ndt_del(t);
-            return NULL;
+            goto error;
         }
     }
 
     return t;
+
+error:
+    ndt_del(t);
+    return NULL;
 }
 
 static ndt_t *
 read_record(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-            int64_t offset, ndt_context_t *ctx)
+            int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     int64_t metaoffset;
     enum ndt_variadic flag;
     int64_t shape;
     ndt_t *t;
 
-    offset = ndt_variadic_from_uint8(&flag, ptr, offset);
-    offset = read_int64(&shape, ptr, offset);
+    offset = ndt_variadic_from_uint8(&flag, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = read_pos_int64(&shape, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     t = ndt_record_new(flag, shape, ctx);
     if (t == NULL) {
@@ -508,36 +675,44 @@ read_record(ndt_meta_t *m, const common_t *fields, const char * const ptr,
     }
     copy_common(t, fields);
 
-    offset = read_int64_array(t->Concrete.Record.offset, shape, ptr, offset);
-    offset = read_uint16_array(t->Concrete.Record.align, shape, ptr, offset);
-    offset = read_uint16_array(t->Concrete.Tuple.pad, shape, ptr, offset);
-    offset = read_string_array(t->Record.names, shape, ptr, offset, ctx);
-    if (offset < 0) {
-        ndt_del(t);
-        return NULL;
-    }
+    offset = read_int64_array(t->Concrete.Record.offset, shape, ptr, offset, len, ctx);
+    if (offset < 0) goto error;
+
+    offset = read_uint16_array(t->Concrete.Record.align, shape, ptr, offset, len, ctx);
+    if (offset < 0) goto error;
+
+    offset = read_uint16_array(t->Concrete.Tuple.pad, shape, ptr, offset, len, ctx);
+    if (offset < 0) goto error;
+
+    offset = read_string_array(t->Record.names, shape, ptr, offset, len, ctx);
+    if (offset < 0) goto error;
 
     metaoffset = offset;
     for (int64_t i = 0; i < shape; i++) {
-        metaoffset = read_int64(&offset, ptr, metaoffset);
-        t->Record.types[i] = read_type(m, ptr, offset, ctx);
+        metaoffset = next_metaoffset(&offset, ptr, metaoffset, len, ctx);
+        if (metaoffset < 0) goto error;
+
+        t->Record.types[i] = read_type(m, ptr, offset, len, ctx);
         if (t->Record.types[i] == NULL) {
-            ndt_del(t);
-            return NULL;
+            goto error;
         }
     }
 
     return t;
+
+error:
+    ndt_del(t);
+    return NULL;
 }
 
 static ndt_t *
 read_ref(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-         int64_t offset, ndt_context_t *ctx)
+         int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     ndt_t *type;
     ndt_t *t;
 
-    type = read_type(m, ptr, offset, ctx);
+    type = read_type(m, ptr, offset, len, ctx);
     if (type == NULL) {
         return NULL;
     }
@@ -554,18 +729,16 @@ read_ref(ndt_meta_t *m, const common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_constr(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-            int64_t offset, ndt_context_t *ctx)
+            int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     char *name;
     ndt_t *type;
     ndt_t *t;
 
-    offset = read_string(&name, ptr, offset, ctx);
-    if (offset < 0) {
-        return NULL;
-    }
+    offset = read_string(&name, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
-    type = read_type(m, ptr, offset, ctx);
+    type = read_type(m, ptr, offset, len, ctx);
     if (type == NULL) {
         ndt_free(name);
         return NULL;
@@ -585,19 +758,17 @@ read_constr(ndt_meta_t *m, const common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_nominal(ndt_meta_t *m, const common_t *fields, const char * const ptr,
-             int64_t offset, ndt_context_t *ctx)
+             int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     char *name;
     ndt_t *type;
     const ndt_typedef_t *d;
     ndt_t *t;
 
-    offset = read_string(&name, ptr, offset, ctx);
-    if (offset < 0) {
-        return NULL;
-    }
+    offset = read_string(&name, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
-    type = read_type(m, ptr, offset, ctx);
+    type = read_type(m, ptr, offset, len, ctx);
     if (type == NULL) {
         ndt_free(name);
         return NULL;
@@ -625,20 +796,21 @@ read_nominal(ndt_meta_t *m, const common_t *fields, const char * const ptr,
 
 static ndt_t *
 read_categorical(const common_t *fields, const char * const ptr, int64_t offset,
-                 ndt_context_t *ctx)
+                 const int64_t len, ndt_context_t *ctx)
 {
     int64_t ntypes;
     ndt_value_t *types;
     ndt_t *t;
 
-    offset = read_int64(&ntypes, ptr, offset);
+    offset = read_pos_int64(&ntypes, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     types = ndt_calloc(ntypes, sizeof *types);
     if (types == NULL) {
         return ndt_memory_error(ctx);
     }
 
-    offset = read_ndt_value_array(types, ntypes, ptr, offset, ctx);
+    offset = read_ndt_value_array(types, ntypes, ptr, offset, len, ctx);
     if (offset < 0) {
         ndt_value_array_del(types, ntypes);
         return NULL;
@@ -657,14 +829,17 @@ read_categorical(const common_t *fields, const char * const ptr, int64_t offset,
 
 static ndt_t *
 read_fixed_string(const common_t *fields, const char * const ptr, int64_t offset,
-                  ndt_context_t *ctx)
+                  const int64_t len, ndt_context_t *ctx)
 {
     int64_t size;
     enum ndt_encoding encoding;
     ndt_t *t;
 
-    offset = read_int64(&size, ptr, offset);
-    (void)ndt_encoding_from_uint8(&encoding, ptr, offset);
+    offset = read_pos_int64(&size, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = ndt_encoding_from_uint8(&encoding, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     t = new_copy_common(fields, ctx);
     if (t == NULL) {
@@ -678,14 +853,17 @@ read_fixed_string(const common_t *fields, const char * const ptr, int64_t offset
 
 static ndt_t *
 read_fixed_bytes(const common_t *fields, const char * const ptr, int64_t offset,
-                 ndt_context_t *ctx)
+                 const int64_t len, ndt_context_t *ctx)
 {
     int64_t size;
     uint16_t align;
     ndt_t *t;
 
-    offset = read_int64(&size, ptr, offset);
-    (void)read_uint16(&align, ptr, offset);
+    offset = read_pos_int64(&size, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    offset = read_uint16(&align, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     t = new_copy_common(fields, ctx);
     if (t == NULL) {
@@ -699,12 +877,13 @@ read_fixed_bytes(const common_t *fields, const char * const ptr, int64_t offset,
 
 static ndt_t *
 read_bytes(const common_t *fields, const char * const ptr, int64_t offset,
-           ndt_context_t *ctx)
+           const int64_t len, ndt_context_t *ctx)
 {
     uint16_t align;
     ndt_t *t;
 
-    (void)read_uint16(&align, ptr, offset);
+    offset = read_uint16(&align, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     t = new_copy_common(fields, ctx);
     if (t == NULL) {
@@ -717,12 +896,13 @@ read_bytes(const common_t *fields, const char * const ptr, int64_t offset,
 
 static ndt_t *
 read_char(const common_t *fields, const char * const ptr, int64_t offset,
-          ndt_context_t *ctx)
+          const int64_t len, ndt_context_t *ctx)
 {
     enum ndt_encoding encoding;
     ndt_t *t;
 
-    (void)ndt_encoding_from_uint8(&encoding, ptr, offset);
+    offset = ndt_encoding_from_uint8(&encoding, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     t = new_copy_common(fields, ctx);
     if (t == NULL) {
@@ -735,15 +915,13 @@ read_char(const common_t *fields, const char * const ptr, int64_t offset,
 
 static ndt_t *
 read_typevar(const common_t *fields, const char * const ptr, int64_t offset,
-             ndt_context_t *ctx)
+             const int64_t len, ndt_context_t *ctx)
 {
     char *name;
     ndt_t *t;
 
-    offset = read_string(&name, ptr, offset, ctx);
-    if (offset < 0) {
-        return NULL;
-    }
+    offset = read_string(&name, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     t = new_copy_common(fields, ctx);
     if (t == NULL) {
@@ -756,31 +934,32 @@ read_typevar(const common_t *fields, const char * const ptr, int64_t offset,
 }
 
 static ndt_t *
-read_type(ndt_meta_t *m, const char * const ptr, int64_t offset,
+read_type(ndt_meta_t *m, const char * const ptr, int64_t offset, const int64_t len,
           ndt_context_t *ctx)
 {
     common_t fields;
 
-    offset = read_common_fields(&fields, ptr, offset);
+    offset = read_common_fields(&fields, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
 
     switch (fields.tag) {
-    case Module: return read_module(m, &fields, ptr, offset, ctx);
-    case Function: return read_function(m, &fields, ptr, offset, ctx);
-    case FixedDim: return read_fixed_dim(m, &fields, ptr, offset, ctx);
-    case SymbolicDim: return read_symbolic_dim(m, &fields, ptr, offset, ctx);
-    case EllipsisDim: return read_ellipsis_dim(m, &fields, ptr, offset, ctx);
-    case VarDim: return read_var_dim(m, &fields, ptr, offset, ctx);
-    case Tuple: return read_tuple(m, &fields, ptr, offset, ctx);
-    case Record: return read_record(m, &fields, ptr, offset, ctx);
-    case Ref: return read_ref(m, &fields, ptr, offset, ctx);
-    case Constr: return read_constr(m, &fields, ptr, offset, ctx);
-    case Nominal: return read_nominal(m, &fields, ptr, offset, ctx);
-    case Categorical: return read_categorical(&fields, ptr, offset, ctx);
-    case FixedString: return read_fixed_string(&fields, ptr, offset, ctx);
-    case FixedBytes: return read_fixed_bytes(&fields, ptr, offset, ctx);
-    case Bytes: return read_bytes(&fields, ptr, offset, ctx);
-    case Char: return read_char(&fields, ptr, offset, ctx);
-    case Typevar: return read_typevar(&fields, ptr, offset, ctx);
+    case Module: return read_module(m, &fields, ptr, offset, len, ctx);
+    case Function: return read_function(m, &fields, ptr, offset, len, ctx);
+    case FixedDim: return read_fixed_dim(m, &fields, ptr, offset, len, ctx);
+    case SymbolicDim: return read_symbolic_dim(m, &fields, ptr, offset, len, ctx);
+    case EllipsisDim: return read_ellipsis_dim(m, &fields, ptr, offset, len, ctx);
+    case VarDim: return read_var_dim(m, &fields, ptr, offset, len, ctx);
+    case Tuple: return read_tuple(m, &fields, ptr, offset, len, ctx);
+    case Record: return read_record(m, &fields, ptr, offset, len, ctx);
+    case Ref: return read_ref(m, &fields, ptr, offset, len, ctx);
+    case Constr: return read_constr(m, &fields, ptr, offset, len, ctx);
+    case Nominal: return read_nominal(m, &fields, ptr, offset, len, ctx);
+    case Categorical: return read_categorical(&fields, ptr, offset, len, ctx);
+    case FixedString: return read_fixed_string(&fields, ptr, offset, len, ctx);
+    case FixedBytes: return read_fixed_bytes(&fields, ptr, offset, len, ctx);
+    case Bytes: return read_bytes(&fields, ptr, offset, len, ctx);
+    case Char: return read_char(&fields, ptr, offset, len, ctx);
+    case Typevar: return read_typevar(&fields, ptr, offset, len, ctx);
 
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
@@ -795,12 +974,14 @@ read_type(ndt_meta_t *m, const char * const ptr, int64_t offset,
         return new_copy_common(&fields, ctx);
     }
 
-   /* NOT REACHED: tags should be exhaustive. */
-    ndt_internal_error("invalid tag");
+    ndt_err_format(ctx, NDT_RuntimeError,
+        "found invalid type tag in deserialization (corrupted data?)");
+    return NULL;
 }
 
 ndt_t *
-ndt_deserialize(ndt_meta_t *m, const char * const ptr, ndt_context_t *ctx)
+ndt_deserialize(ndt_meta_t *m, const char * const ptr, const int64_t len,
+                ndt_context_t *ctx)
 {
-    return read_type(m, ptr, 0, ctx);
+    return read_type(m, ptr, 0, len, ctx);
 }

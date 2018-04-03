@@ -748,7 +748,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
     t->flags = 0;
     t->ndim = 0;
 
-    t->datasize = -1;
+    t->datasize = 0;
     t->align = UINT16_MAX;
 
     return t;
@@ -777,7 +777,7 @@ ndt_new_extra(enum ndt tag, int64_t n, ndt_context_t *ctx)
     t->flags = 0;
     t->ndim = 0;
 
-    t->datasize = -1;
+    t->datasize = 0;
     t->align = UINT16_MAX;
 
     return t;
@@ -887,6 +887,11 @@ ndt_record_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
     pad_offset = ADDi64(align_offset, size, &overflow);
 
     extra = ADDi64(pad_offset, size, &overflow);
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError, "record size too large");
+        return NULL;
+    }
 
     t = ndt_new_extra(Record, extra, ctx);
     if (t == NULL) {
@@ -1221,7 +1226,7 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
     t->ndim = type->ndim + 1;
     t->flags = ndt_dim_flags(type);
 
-    t->Concrete.FixedDim.itemsize = -1;
+    t->Concrete.FixedDim.itemsize = 0;
     t->Concrete.FixedDim.step = INT64_MAX;
 
     /* concrete access */
@@ -1268,7 +1273,7 @@ ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
     /* concrete access */
     t->access = Abstract;
     t->Concrete.VarDim.flag = ExternalOffsets;
-    t->Concrete.VarDim.itemsize = -1;
+    t->Concrete.VarDim.itemsize = 0;
     t->Concrete.VarDim.noffsets = 0;
     t->Concrete.VarDim.offsets = NULL;
     t->Concrete.VarDim.nslices = 0;

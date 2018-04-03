@@ -626,8 +626,9 @@ NDTYPES_API char *ndt_as_string(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_indent(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx);
 
-NDTYPES_API char *ndt_serialize(const ndt_t *t, ndt_context_t *ctx);
-NDTYPES_API ndt_t *ndt_deserialize(ndt_meta_t *m, const char *ptr, ndt_context_t *ctx);
+NDTYPES_API int64_t ndt_serialize(char **dest, const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_deserialize(ndt_meta_t *m, const char *ptr, int64_t len,
+                                   ndt_context_t *ctx);
 
 
 /*****************************************************************************/

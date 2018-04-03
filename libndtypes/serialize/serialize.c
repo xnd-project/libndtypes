@@ -402,33 +402,38 @@ write_type(char * const ptr, int64_t offset, const ndt_t * const t,
     ndt_internal_error("invalid tag");
 }
 
-char *
-ndt_serialize(const ndt_t * const t, ndt_context_t *ctx)
+int64_t
+ndt_serialize(char **dest, const ndt_t * const t, ndt_context_t *ctx)
 {
     bool overflow = 0;
-    int64_t offset;
+    int64_t len;
     char *bytes;
 
-    offset = write_type(NULL, 0, t, &overflow);
+    *dest = NULL;
+
+    len = write_type(NULL, 0, t, &overflow);
     if (overflow) {
         ndt_err_format(ctx, NDT_ValueError,
             "overflow during type serialization");
-        return NULL;
+        return -1;
     }
 
-    bytes = ndt_alloc(offset, 1);
+    bytes = ndt_alloc(len, 1);
     if (bytes == NULL) {
-        return ndt_memory_error(ctx);
+        (void)ndt_memory_error(ctx);
+        return -1;
     }
 
     overflow = 0;
-    (void)write_type(bytes, 0, t, &overflow);
-    if (overflow) {
+    int64_t n = write_type(bytes, 0, t, &overflow);
+    if (overflow || n != len) {
         ndt_err_format(ctx, NDT_RuntimeError,
-            "unexpected overflow in second pass of write_type()");
+            "unexpected overflow or different length in second pass "
+            "of serialization");
         ndt_free(bytes);
-        return NULL;
+        return -1;
     }
 
-    return bytes;
+    *dest = bytes;
+    return len;
 }
