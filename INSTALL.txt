@@ -95,3 +95,5 @@ cd docs
 make html
 # View docs
 open build/html/index.html
+# Run doctests
+make doctest

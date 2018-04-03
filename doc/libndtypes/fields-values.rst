@@ -15,11 +15,6 @@ for creating categorical types.
 Fields
 ------
 
-.. c:type:: enum ndt_option
-
-  .. c:var:: enum ndt_option None
-  .. c:var:: enum ndt_option Some
-
 .. c:type:: struct uint16_opt_t
 
   .. c:member:: enum ndt_option tag

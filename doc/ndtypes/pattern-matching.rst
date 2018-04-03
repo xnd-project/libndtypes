@@ -23,7 +23,7 @@ Again, we will be using the :py:mod:`ndtypes` module included in
 datashape pattern matching. The rest of this document assumes that the
 :py:mod:`ndtypes` module has been imported:
 
-.. code-block:: py
+.. testcode::
 
    from ndtypes import ndt
 
@@ -41,7 +41,7 @@ is a subset of the set of types described by the left hand side.
 Simple example
 --------------
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("Any")
    >>> c = ndt("int32")
@@ -54,7 +54,7 @@ Non-commutativity
 
 From the above definition it follows that pattern matching is not commutative:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("int32")
    >>> c = ndt("Any")
@@ -68,7 +68,7 @@ Concrete matching
 Much like members of the alphabet in regular expressions, concrete types
 match themselves:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("int32")
    >>> c = ndt("int32")
@@ -98,7 +98,7 @@ Unlike :ref:`dtype variables <dtype-vars-matching>`, matching type kinds
 does not require that a well defined substitution exists. Two instances
 of a type kind can match different types:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("(Any) -> Any")
    >>> c = ndt("(float64) -> int32")
@@ -114,7 +114,7 @@ The *Any* type kind is the most general and describes the set of all
 
 Here's how to match a dtype against the set of all types:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("Any")
    >>> c = ndt("int32")
@@ -124,7 +124,7 @@ Here's how to match a dtype against the set of all types:
 
 This matches an array type against the set of all types:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("Any")
    >>> c = ndt("10 * 5 * { v: float64, t: float64 }")
@@ -139,7 +139,7 @@ The *Scalar* type kind stands for the set of all :ref:`scalars <scalars>`.
 
 :c:type:`int32` is a member of the set of all scalars:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("Scalar")
    >>> c = ndt("int32")
@@ -149,7 +149,7 @@ The *Scalar* type kind stands for the set of all :ref:`scalars <scalars>`.
 
 A pattern for a function that takes any type and returns a scalar:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("(Any) -> Scalar")
    >>> c = ndt("(10 * complex128) -> float64")
@@ -169,7 +169,7 @@ A pattern for a function that takes any type and returns a scalar:
 
 Unlike with type variables, different types match a type kind:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("(Scalar, Scalar)")
    >>> c = ndt("(uint8, float64)")
@@ -182,7 +182,7 @@ FixedString
 
 The set of all :ref:`fixed string <fixed-string>` types.
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("FixedString")
    >>> c = ndt("fixed_string(100)")
@@ -205,7 +205,7 @@ FixedBytes
 
 The set of all :ref:`fixed bytes <fixed-bytes>` types.
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("FixedBytes")
    >>> c = ndt("fixed_bytes(size=100)")
@@ -235,7 +235,7 @@ Fixed
 
 The set of all instances of the :ref:`fixed dimension <arrays>` kind.
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("Fixed * 20 * bool")
    >>> c = ndt("10 * 20 * bool")
@@ -262,7 +262,7 @@ whose base cases may operate on a dtype.
 
 This matches a record against a single :ref:`dtype <dtypes>` variable:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("T")
    >>> c = ndt("{v: float64, t: float64}")
@@ -272,7 +272,7 @@ This matches a record against a single :ref:`dtype <dtypes>` variable:
 
 Match against several dtype variables in a tuple type:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("T")
    >>> c = ndt("(int32, int32, bool)")
@@ -301,7 +301,7 @@ Simple symbolic match
 This matches a concrete fixed size array against the set of all one-dimensional
 fixed size arrays:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("N * float64")
    >>> c = ndt("100 * float64")
@@ -314,7 +314,7 @@ Symbolic-symbolic match
 
 Symbolic dimensions also match against other symbolic dimensions:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("N * float64")
    >>> c = ndt("M * float64")
@@ -327,7 +327,7 @@ Symbolic+Dtypevar
 
 Symbolic dimensions can be used in conjunction with dtype variables:
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("N * T")
    >>> c = ndt("10 * float32")
@@ -341,7 +341,7 @@ Ellipsis match
 Finally, all dimension kinds (including multiple dimensions) match against
 ellipsis dimensions (named or unnamed):
 
-.. code-block:: py
+.. doctest::
 
    >>> p = ndt("... * float64")
    >>> c = ndt("N * float64")
