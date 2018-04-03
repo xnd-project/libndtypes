@@ -7,10 +7,15 @@ build:
   string: py{{ environ.get('CONDA_PY', 'NA') }}_{{ environ.get('GIT_BUILD_STR', 'NA') }}
 
 test:
+  requires:
+    - sphinx
+    - sphinx_rtd_theme
   files:
     - test
+    - docs
   commands:
     - python test/test_ndtypes.py --long
+    - cd docs; make doctest
 
 requirements:
   build:
