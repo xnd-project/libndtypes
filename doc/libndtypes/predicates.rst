@@ -11,100 +11,75 @@ Predicates
 libndtypes has a number of type predicates.
 
 
-.. topic:: ndt_is_abstract
-.. topic:: ndt_is_concrete
+.. c:function:: int ndt_is_abstract(const ndt_t *t)
 
-.. code-block:: c
+   Determine whether a type is abstract. These functions need to be called to check whether the concrete type fields are defined.
 
-   int ndt_is_abstract(const ndt_t *t);
-   int ndt_is_concrete(const ndt_t *t);
+.. c:function:: int ndt_is_concrete(const ndt_t *t)
 
-Determine whether a type is abstract or concrete. These functions need
-to be called to check whether the concrete type fields are defined.
+   Determine whether a type is concrete. These functions need to be called to check whether the concrete type fields are defined.
 
 
-.. topic:: ndt_is_optional
+.. c:function:: int ndt_is_optional(const ndt_t *t)
 
-.. code-block:: c
-
-   int ndt_is_optional(const ndt_t *t);
-
-Check if a type is optional.
+   Check if a type is optional.
 
 
-.. topic:: ndt_subtree_is_optional
+.. c:function:: int ndt_subtree_is_optional(const ndt_t *t)
 
-.. code-block:: c
-
-   int ndt_subtree_is_optional(const ndt_t *t);
-
-Check if a subtree of a type is optional.  This is useful for deciding if
-bitmaps need to be allocated for subtrees.
+   Check if a subtree of a type is optional.  This is useful for deciding if
+   bitmaps need to be allocated for subtrees.
 
 
-.. topic:: ndt_is_ndarray
+.. c:function:: int ndt_is_ndarray(const ndt_t *t)
 
-.. code-block:: c
-
-   int ndt_is_ndarray(const ndt_t *t);
-
-Check if a type describes an n-dimensional (n > 0) array of fixed dimensions.
+   Check if a type describes an n-dimensional (n > 0) array of fixed dimensions.
 
 
-.. topic:: ndt_is_c_contiguous
-.. topic:: ndt_is_f_contiguous
+.. c:function:: int ndt_is_c_contiguous(const ndt_t *t)
 
-.. code-block:: c
-
-   int ndt_is_c_contiguous(const ndt_t *t);
-   int ndt_is_f_contiguous(const ndt_t *t);
-
-Check if a type is an n-dimensional (n > 0) contiguous C or Fortran
-array.  Currently this returns 0 for scalars.
+   Check if a type is an n-dimensional (n > 0) contiguous C
+   array.  Currently this returns 0 for scalars.
 
 
-.. topic:: ndt_is_scalar
+.. c:function:: int ndt_is_f_contiguous(const ndt_t *t)
 
-.. code-block:: c
+   Check if a type is an n-dimensional (n > 0) contiguous Fortran
+   array.  Currently this returns 0 for scalars.
 
-   int ndt_is_scalar(const ndt_t *t);
+.. c:function:: int ndt_is_scalar(const ndt_t *t)
 
-Check if a type is a scalar.
-
-
-.. topic:: ndt_is_signed
-.. topic:: ndt_is_unsigned
-.. topic:: ndt_is_float
-.. topic:: ndt_is_complex
-
-.. code-block:: c
-
-   int ndt_is_signed(const ndt_t *t);
-   int ndt_is_unsigned(const ndt_t *t);
-   int ndt_is_float(const ndt_t *t);
-   int ndt_is_complex(const ndt_t *t);
-
-Check if a type is signed, unsigned, float or complex.
+   Check if a type is a scalar.
 
 
-.. topic:: ndt_endian_is_set
+.. c:function:: int ndt_is_signed(const ndt_t *t)
 
-.. code-block:: c
-
-   int ndt_endian_is_set(const ndt_t *t);
-
-Check whether the endianness of a type is explicitly set.
+   Check if a type is signed.
 
 
-.. topic:: ndt_is_little_endian
-.. topic:: ndt_is_big_endian
+.. c:function:: int ndt_is_unsigned(const ndt_t *t)
 
-.. code-block:: c
+   Check if a type is unsigned.
 
-   int ndt_is_little_endian(const ndt_t *t);
-   int ndt_is_big_endian(const ndt_t *t);
+.. c:function:: int ndt_is_float(const ndt_t *t)
 
-Check whether a type is big or little endian.  Use the native order
-if no endian flag is set.
+   Check if a type is float.
+
+.. c:function:: int ndt_is_complex(const ndt_t *t)
+
+   Check if a type is complex.
+
+.. c:function:: int ndt_endian_is_set(const ndt_t *t)
+
+   Check whether the endianness of a type is explicitly set.
 
 
+.. c:function:: int ndt_is_little_endian(const ndt_t *t)
+
+   Check whether a type is little endian.  Use the native order
+   if no endian flag is set.
+
+.. c:function:: int ndt_is_big_endian(const ndt_t *t)
+
+   Check whether a type is big endian.  Use the native order
+   if no endian flag is set.

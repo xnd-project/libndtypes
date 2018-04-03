@@ -15,58 +15,39 @@ operate *on* types.
 Copying
 -------
 
-.. topic:: ndt_copy
+.. c:function:: ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 
-.. code-block:: c
-
-   ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
-
-Create a copy of the argument. This is an important function, since types
-should be immutable.
+   Create a copy of the argument. This is an important function, since types
+   should be immutable.
 
 
 Equality
 --------
 
-.. topic:: ndt_equal
+.. c:function:: int ndt_equal(const ndt_t *t, const ndt_t *u)
 
-.. code-block:: c
-
-   int ndt_equal(const ndt_t *t, const ndt_t *u);
-
-Return 1 if *t* and *u* are structurally equal, *0* otherwise.
+   Return 1 if *t* and *u* are structurally equal, *0* otherwise.
 
 
 Pattern matching
 ----------------
 
-.. topic:: ndt_match
+.. c:function:: int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
 
-.. code-block:: c
+   Match concrete candidate *c* against the (possibly abstract) pattern *p*.
 
-   int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
-
-Match concrete candidate *c* against the (possibly abstract) pattern *p*.
-
-This is the main function used in type checking.
+   This is the main function used in type checking.
 
 
 
 Type checking
 -------------
 
-.. topic:: ndt_typecheck
+.. c:function:: int ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[], \
+              const int nin, ndt_context_t *ctx)
 
-.. code-block:: c
+   Take a function type *sig*, check if it can accept the concrete arguments *in*.
+   *args* must be a tuple type that contains the individual arguments.
 
-   ndt_t *ndt_typecheck(const ndt_t *f, const ndt_t *args, int *outer_dims, ndt_context_t *ctx);
-
-Take a function type *f*, check if it can accept the concrete type *args*.
-*args* must be a tuple type that contains the individual arguments.
-
-The return value is the inferred return type.
-
-Store the number of outer dimensions that need to be traversed before applying
-the function kernel.
-
-
+   On success, infer and store the concrete return types and the (possibly broadcasted) 'in' types
+   in *spec*.
