@@ -10,11 +10,13 @@ matrix:
       before_script:
         - sudo apt-get -qq update
         - sudo apt-get install -y python3-numpy
+        - pip install sphinx_rtd_theme sphinx
       script:
         - ./configure
         - make check
         - python3 setup.py module
         - python3 setup.py test
+        - cd docs; make doctest
 
     - compiler: gcc
       before_script:
@@ -30,18 +32,21 @@ matrix:
     - compiler: clang
       before_script:
         - export CC=clang
+        - pip install sphinx_rtd_theme sphinx
       script:
         - ./configure
         - make parser
         - make check
         - python3 setup.py module
         - python3 setup.py test
+        - cd docs; make doctest
 
     - language: objective-c
       os: osx
       compiler: clang
       before_install:
         - brew install python3
+        - pip install sphinx_rtd_theme sphinx
       before_script:
         - export CC=clang
       script:
@@ -49,11 +54,14 @@ matrix:
         - make check
         - python3 setup.py module
         - python3 setup.py test
+        - cd docs; make doctest
 
     - compiler: gcc
+        - pip install sphinx_rtd_theme sphinx
       script:
         - python3 setup.py build
         - python3 setup.py test
+        - cd docs; make doctest
 
     - compiler: conda
       install:
