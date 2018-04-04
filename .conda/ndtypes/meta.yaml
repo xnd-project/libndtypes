@@ -14,7 +14,7 @@ test:
     - doc
   commands:
     - python test/test_ndtypes.py --long
-    - cd dos; make doctest
+    - cd doc; make doctest
 
 requirements:
   build:
