@@ -418,6 +418,38 @@ ndtype_from_offsets_and_dtype(PyTypeObject *tp, PyObject *offsets, PyObject *dty
 }
 
 static PyObject *
+ndtype_deserialize(PyTypeObject *tp, PyObject *bytes)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *self;
+
+    if (!PyBytes_Check(bytes)) {
+        PyErr_SetString(PyExc_TypeError, "expected bytes object");
+        return NULL;
+    }
+
+    self = ndtype_alloc(tp);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    RBUF(self) = rbuf_alloc();
+    if (RBUF(self) == NULL) {
+        Py_DECREF(self);
+        return NULL;
+    }
+
+    NDT(self) = ndt_deserialize(RBUF_NDT_META(self), PyBytes_AS_STRING(bytes),
+                                PyBytes_GET_SIZE(bytes), &ctx);
+    if (NDT(self) == NULL) {
+        Py_DECREF(self);
+        return seterr(&ctx);
+    }
+
+    return self;
+}
+
+static PyObject *
 ndtype_new(PyTypeObject *tp, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"type", "offsets", NULL};
@@ -527,6 +559,24 @@ ndtype_copy(PyObject *self, PyObject *args UNUSED)
 {
     Py_INCREF(self);
     return self;
+}
+
+static PyObject *
+ndtype_serialize(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *res;
+    char *bytes;
+    int64_t size;
+
+    size = ndt_serialize(&bytes, NDT(self), &ctx);
+    if (size < 0) {
+        return seterr(&ctx);
+    }
+
+    res = PyBytes_FromStringAndSize(bytes, size);
+    ndt_free(bytes);
+    return res;
 }
 
 
@@ -875,9 +925,11 @@ static PyMethodDef ndtype_methods [] =
   { "pformat", (PyCFunction)ndtype_pformat, METH_NOARGS, doc_pformat },
   { "pprint", (PyCFunction)ndtype_pprint, METH_NOARGS, doc_pprint },
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, doc_ast_repr },
+  { "serialize", (PyCFunction)ndtype_serialize, METH_NOARGS, doc_serialize },
 
   /* Class methods */
   { "from_format", (PyCFunction)ndtype_from_format, METH_O|METH_CLASS, doc_from_format },
+  { "deserialize", (PyCFunction)ndtype_deserialize, METH_O|METH_CLASS, doc_deserialize },
 
   /* Special methods */
   { "__copy__", ndtype_copy, METH_NOARGS, NULL },

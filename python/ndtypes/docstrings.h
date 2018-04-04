@@ -156,6 +156,16 @@ Create a type from a buffer protocol format string.\n\
     ndt(\"{a : uint8, b : uint64}\")\n\
 \n");
 
+PyDoc_STRVAR(doc_deserialize,
+"deserialize($self, bytes, /)\n--\n\n\
+Deserialize a bytes object to a type .\n\
+\n\
+    >>> t = ndt(\"int64\")\n\
+    >>> b = t.serialize()\n\
+    >>> ndt.deserialize(b)\n\
+    ndt(\"int64\")\n\
+\n");
+
 PyDoc_STRVAR(doc_is_c_contiguous,
 "is_c_contiguous($self, /)\n--\n\n\
 Return True if the type is a C-contiguous array and False otherwise.\n\
@@ -297,4 +307,13 @@ Print a formatted string representation to stdout.\n\
       },\n\
       b : (string, bytes)\n\
     }\n\
+\n");
+
+PyDoc_STRVAR(doc_serialize,
+"serialize($self, /)\n--\n\n\
+Serialize a type to a bytes format.\n\
+\n\
+    >>> t = ndt(\"int64\")\n\
+    >>> t.serialize()\n\
+    b'\\x1a\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x08\\x00'\n\
 \n");
