@@ -15,7 +15,7 @@ matrix:
         - make check
         - python3 setup.py module
         - python3 setup.py test
-        - cd docs; make doctest
+        - cd doc; make doctest
 
     - compiler: gcc
       before_script:
@@ -27,7 +27,7 @@ matrix:
         - make memcheck
         - python3 setup.py module
         - python3 setup.py test
-        - cd docs; make doctest
+        - cd doc; make doctest
 
     - compiler: clang
       before_script:
@@ -40,7 +40,7 @@ matrix:
         - make check
         - python3 setup.py module
         - python3 setup.py test
-        - cd docs; make doctest
+        - cd doc; make doctest
 
     - language: objective-c
       os: osx
@@ -54,7 +54,7 @@ matrix:
         - make check
         - python3 setup.py module
         - python3 setup.py test
-        - cd docs; make doctest
+        - cd doc; make doctest
 
     - compiler: gcc
       before_script:
@@ -63,7 +63,7 @@ matrix:
       script:
         - python3 setup.py build
         - python3 setup.py test
-        - cd docs; make doctest
+        - cd doc; make doctest
 
     - compiler: conda
       install:
