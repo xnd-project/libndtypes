@@ -11,10 +11,10 @@ test:
     - sphinx
   files:
     - test
-    - docs
+    - doc
   commands:
     - python test/test_ndtypes.py --long
-    - cd docs; make doctest
+    - cd dos; make doctest
 
 requirements:
   build:
