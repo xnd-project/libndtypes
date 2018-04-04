@@ -63,22 +63,20 @@
    At a later stage, the object will need to communicate with Arrow
    or other formats to store external resources. */
 
+static PyObject *seterr(ndt_context_t *ctx);
+
 typedef struct {
     PyObject_HEAD
-    uint32_t flags;
-    ndt_meta_t m;
+    ndt_meta_t *m;
 } ResourceBufferObject;
 
 static PyTypeObject ResourceBuffer_Type;
 
-#define RBUF_OWN_OFFSETS      0x00000001U
-#define RBUF_EXTERNAL_OFFSETS 0x00000002U
-
 static PyObject *
-rbuf_alloc(uint32_t flags)
+rbuf_alloc(void)
 {
+    NDT_STATIC_CONTEXT(ctx);
     ResourceBufferObject *self;
-    int i;
 
     self = (ResourceBufferObject *)
         PyObject_GC_New(ResourceBufferObject, &ResourceBuffer_Type);
@@ -86,12 +84,9 @@ rbuf_alloc(uint32_t flags)
         return NULL;
     }
  
-    self->flags = flags;
-    self->m.ndims = 0;
-
-    for (i = 0; i < NDT_MAX_DIM; i++) {
-        self->m.noffsets[i] = 0;
-        self->m.offsets[i] = NULL;
+    self->m = ndt_meta_new(&ctx);
+    if (self->m == NULL) {
+        return seterr(&ctx);
     }
 
     PyObject_GC_Track(self);
@@ -108,15 +103,8 @@ rbuf_traverse(ResourceBufferObject *self UNUSED, visitproc visit UNUSED,
 static void
 rbuf_dealloc(ResourceBufferObject *self)
 {
-    int i;
-
-    if (self->flags & RBUF_OWN_OFFSETS) {
-        for (i = 0; i < NDT_MAX_DIM; i++) {
-            ndt_free(self->m.offsets[i]);
-            self->m.offsets[i] = NULL;
-        }
-    }
-
+    ndt_meta_del(self->m);
+    self->m = NULL;
     PyObject_GC_UnTrack(self);
     PyObject_GC_Del(self);
 }
@@ -124,7 +112,7 @@ rbuf_dealloc(ResourceBufferObject *self)
 static int
 rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
 {
-    ndt_meta_t *m = &rbuf->m;
+    ndt_meta_t * const m = rbuf->m;
     PyObject *lst;
 
     if (!PyList_Check(list)) {
@@ -191,7 +179,7 @@ rbuf_from_offset_lists(PyObject *list)
 {
     PyObject *rbuf;
 
-    rbuf = rbuf_alloc(RBUF_OWN_OFFSETS);
+    rbuf = rbuf_alloc();
     if (rbuf == NULL) {
         return NULL;
     }
@@ -355,13 +343,13 @@ ndtype_from_object(PyTypeObject *tp, PyObject *type)
         return NULL;
     }
 
-    RBUF(self) = rbuf_alloc(RBUF_OWN_OFFSETS);
+    RBUF(self) = rbuf_alloc();
     if (RBUF(self) == NULL) {
         Py_DECREF(self);
         return NULL;
     }
 
-    NDT(self) = ndt_from_string_fill_meta(&RBUF_NDT_META(self), cp, &ctx);
+    NDT(self) = ndt_from_string_fill_meta(RBUF_NDT_META(self), cp, &ctx);
     if (NDT(self) == NULL) {
         Py_DECREF(self);
         return seterr(&ctx);
@@ -419,7 +407,7 @@ ndtype_from_offsets_and_dtype(PyTypeObject *tp, PyObject *offsets, PyObject *dty
         return NULL;
     }
 
-    NDT(self) = ndt_from_metadata_and_dtype(&RBUF_NDT_META(self), cp, &ctx);
+    NDT(self) = ndt_from_metadata_and_dtype(RBUF_NDT_META(self), cp, &ctx);
 
     if (NDT(self) == NULL) {
         Py_DECREF(self);
