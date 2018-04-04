@@ -49,6 +49,7 @@ matrix:
         - brew install python3 sphinx-doc
       before_script:
         - export CC=clang
+        - export PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
       script:
         - ./configure
         - make check
