@@ -50,6 +50,12 @@ SKIP_LONG = True
 SKIP_BRUTE_FORCE = True
 
 
+def check_serialize(self, t):
+    b = t.serialize()
+    u = ndt.deserialize(b)
+    self.assertEqual(u, t)
+
+
 class TestModule(unittest.TestCase):
 
     def test_module_predicates(self):
@@ -57,6 +63,7 @@ class TestModule(unittest.TestCase):
         # types, however.  Modules are for pattern matching only, so they 
         # are abstract.
         t = ndt("SomeNamespace:: 2 * 3 * float64")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -72,6 +79,7 @@ class TestModule(unittest.TestCase):
 
     def test_module_common_fields(self):
         t = ndt("SomeNamespace:: 2 * 3 * float64")
+        check_serialize(self, t)
 
         # Common type fields are undefined.
         self.assertRaises(TypeError, getattr, t, 'ndim')
@@ -87,6 +95,7 @@ class TestFunction(unittest.TestCase):
 
     def test_function_predicates(self):
         t = ndt("(10 * float64, string) -> float64")
+        check_serialize(self, t)
  
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -102,6 +111,7 @@ class TestFunction(unittest.TestCase):
 
     def test_function_common_fields(self):
         t = ndt("(10 * float64, string) -> float64")
+        check_serialize(self, t)
 
         # Common type fields are undefined.
         self.assertRaises(TypeError, getattr, t, 'ndim')
@@ -117,6 +127,7 @@ class TestVoid(unittest.TestCase):
 
     def test_void_as_return_value(self):
         t = ndt("() -> void")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -169,6 +180,7 @@ class TestFixedDim(unittest.TestCase):
 
     def test_fixed_dim_predicates(self):
         t = ndt("10 * 20 * complex128")
+        check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -193,6 +205,8 @@ class TestFixedDim(unittest.TestCase):
     def test_fixed_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
         t = ndt("2 * 3 * %s" % dt)
+        check_serialize(self, t)
+
         dtype = ndt(dt)
 
         self.assertEqual(t.ndim, 2)
@@ -223,6 +237,7 @@ class TestFixedDim(unittest.TestCase):
 
             for i in range(10):
                 t = ndt("%d * %s" % (i, dtype))
+                check_serialize(self, t)
                 shape = (i,)
                 strides = (mem.itemsize,)
 
@@ -239,6 +254,7 @@ class TestFixedDim(unittest.TestCase):
             for i in range(10):
                 for j in range(10):
                     t = ndt("%d * %d * %s" % (i, j, dtype))
+                    check_serialize(self, t)
                     shape = (i, j)
                     strides = (j * mem.itemsize, mem.itemsize)
 
@@ -256,6 +272,7 @@ class TestFixedDim(unittest.TestCase):
                 for j in range(5):
                     for k in range(5):
                         t = ndt("%d * %d * %d * %s" % (i, j, k, dtype))
+                        check_serialize(self, t)
                         shape = (i, j, k)
                         strides = (j * k * mem.itemsize, k * mem.itemsize, mem.itemsize)
 
@@ -322,6 +339,7 @@ class TestFortran(unittest.TestCase):
 
             for i in range(10):
                 t = ndt("!%d * %s" % (i, dtype))
+                check_serialize(self, t)
                 shape = (i,)
                 strides = (mem.itemsize,)
 
@@ -338,6 +356,7 @@ class TestFortran(unittest.TestCase):
             for i in range(10):
                 for j in range(10):
                     t = ndt("!%d * %d * %s" % (i, j, dtype))
+                    check_serialize(self, t)
                     shape = (i, j)
                     strides = (mem.itemsize, i * mem.itemsize)
 
@@ -355,6 +374,7 @@ class TestFortran(unittest.TestCase):
                 for j in range(5):
                     for k in range(5):
                         t = ndt("!%d * %d * %d * %s" % (i, j, k, dtype))
+                        check_serialize(self, t)
                         shape = (i, j, k)
                         strides = (mem.itemsize, i * mem.itemsize, i * j * mem.itemsize)
 
@@ -378,6 +398,7 @@ class TestVarDim(unittest.TestCase):
 
     def test_var_dim_predicates(self):
         t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * complex128")
+        check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -394,6 +415,7 @@ class TestVarDim(unittest.TestCase):
     def test_var_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
         t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * %s" % dt)
+        check_serialize(self, t)
         dtype = ndt(dt)
 
         self.assertEqual(t.ndim, 2)
@@ -459,6 +481,7 @@ class TestSymbolicDim(unittest.TestCase):
 
     def test_symbolic_dim_predicates(self):
         t = ndt("N * M * complex128")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -475,6 +498,7 @@ class TestSymbolicDim(unittest.TestCase):
     def test_symbolic_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
         t = ndt("N * M * %s" % dt)
+        check_serialize(self, t)
         dtype = ndt(dt)
 
         self.assertRaises(TypeError, t, 'ndim')
@@ -489,6 +513,7 @@ class TestEllipsisDim(unittest.TestCase):
 
     def test_ellipsis_dim_predicates(self):
         t = ndt("... * 2 * complex128")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -505,6 +530,7 @@ class TestEllipsisDim(unittest.TestCase):
     def test_ellipsis_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
         t = ndt("... * 2 * %s" % dt)
+        check_serialize(self, t)
         dtype = ndt(dt)
 
         self.assertRaises(TypeError, t, 'ndim')
@@ -520,6 +546,7 @@ class TestTuple(unittest.TestCase):
     def test_tuple_predicates(self):
         for s in ["()", "(int64)", "(string, bytes, pack=1)"]:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -535,6 +562,7 @@ class TestTuple(unittest.TestCase):
 
         for s in ["(Any)", "(int64, N * M * uint8)", "(string, Float)"]:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertTrue(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -551,6 +579,7 @@ class TestTuple(unittest.TestCase):
     def test_tuple_common_fields(self):
         f = "{a: complex64, b: string}"
         t = ndt("(%s, %s)" % (f, f))
+        check_serialize(self, t)
         field = ndt(f)
 
         self.assertEqual(t.ndim, 0)
@@ -567,6 +596,7 @@ class TestRecord(unittest.TestCase):
     def test_record_predicates(self):
         for s in ["{}", "{a: int64, b: bytes}", "{x: string, y: uint8, pack=1}"]:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -582,6 +612,7 @@ class TestRecord(unittest.TestCase):
 
         for s in ["{a: Any, b: Complex}", "{x: N * M * T}"]:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertTrue(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -598,6 +629,7 @@ class TestRecord(unittest.TestCase):
     def test_record_common_fields(self):
         f = "{a: complex64, b: string}"
         t = ndt("{x: %s, y: %s, z: %s}" % (f, f, f))
+        check_serialize(self, t)
         field = ndt(f)
 
         self.assertEqual(t.ndim, 0)
@@ -614,6 +646,7 @@ class TestRef(unittest.TestCase):
     def test_ref_predicates(self):
         for s in ["&2 * 3 * float64", "&bool", "&(uint8, int32)"]:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -629,6 +662,7 @@ class TestRef(unittest.TestCase):
 
         for s in ["&Any", "&(int64, N * M * uint8)"]:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertTrue(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -645,6 +679,7 @@ class TestRef(unittest.TestCase):
     def test_ref_common_fields(self):
         a = "{a: complex64, b: string}"
         t = ndt("ref(%s)" % a)
+        check_serialize(self, t)
         arg = ndt(a)
 
         self.assertEqual(t.ndim, 0)
@@ -660,6 +695,7 @@ class TestConstr(unittest.TestCase):
     def test_constr_predicates(self):
         for s in ["Some(int16)", "Maybe(int64)", "Just((string, bytes))"]:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -676,6 +712,7 @@ class TestConstr(unittest.TestCase):
     def test_constr_common_fields(self):
         a = "{a: complex64, b: string}"
         t = ndt("Just(%s)" % a)
+        check_serialize(self, t)
         arg = ndt(a)
 
         self.assertEqual(t.ndim, 0)
@@ -700,6 +737,7 @@ class TestNominal(unittest.TestCase):
 
     def test_nominal_predicates(self):
             t = ndt("some_t")
+            check_serialize(self, t)
 
             # The nominal type is opaque. The only thing known is that
             # the typedef is concrete.
@@ -741,6 +779,7 @@ class TestScalarKind(unittest.TestCase):
 
     def test_scalar_kind_predicates(self):
         t = ndt("Scalar")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -756,6 +795,7 @@ class TestScalarKind(unittest.TestCase):
 
     def test_scalar_kind_common_fields(self):
         t = ndt("Scalar")
+        check_serialize(self, t)
 
         self.assertRaises(TypeError, t, 'ndim')
         self.assertRaises(TypeError, t, 'itemsize')
@@ -774,6 +814,7 @@ class TestCategorical(unittest.TestCase):
             "categorical('foo', 'bar')",
             "categorical('foo', NA, 100)"]:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -789,6 +830,7 @@ class TestCategorical(unittest.TestCase):
 
     def test_categorical_common_fields(self):
         t = ndt("categorical(NA, 'something', 'must', 'be', 'done')")
+        check_serialize(self, t)
 
         self.assertEqual(t.ndim, 0)
         if not HAVE_32_BIT_LINUX:
@@ -803,6 +845,7 @@ class TestFixedStringKind(unittest.TestCase):
 
     def test_fixed_string_kind_predicates(self):
         t = ndt("FixedString")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -831,6 +874,7 @@ class TestFixedString(unittest.TestCase):
 
     def test_fixed_string_predicates(self):
         t = ndt("fixed_string(380, 'utf16')")
+        check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -852,6 +896,7 @@ class TestFixedString(unittest.TestCase):
             ('utf32', 4)]:
 
             t = ndt("fixed_string(20, '%s')" % encoding)
+            check_serialize(self, t)
 
             self.assertEqual(t.ndim, 0)
             if not HAVE_32_BIT_LINUX:
@@ -866,6 +911,7 @@ class TestFixedBytesKind(unittest.TestCase):
 
     def test_fixed_bytes_kind_predicates(self):
         t = ndt("FixedBytes")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -894,6 +940,7 @@ class TestFixedBytes(unittest.TestCase):
 
     def test_fixed_bytes_predicates(self):
         t = ndt("fixed_bytes(size=1020)")
+        check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -911,6 +958,7 @@ class TestFixedBytes(unittest.TestCase):
         for align in [1,2,4,8,16,32,64]:
 
             t = ndt("fixed_bytes(size=1024, align=%d)" % align)
+            check_serialize(self, t)
 
             self.assertEqual(t.ndim, 0)
             if not HAVE_32_BIT_LINUX:
@@ -929,6 +977,7 @@ class TestString(unittest.TestCase):
 
     def test_string_predicates(self):
         t = ndt("string")
+        check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -957,6 +1006,7 @@ class TestBytes(unittest.TestCase):
 
     def test_bytes_predicates(self):
         t = ndt("bytes")
+        check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -986,6 +1036,7 @@ class TestChar(unittest.TestCase):
 
     def test_char_predicates(self):
         t = ndt("char")
+        check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -1001,6 +1052,7 @@ class TestChar(unittest.TestCase):
 
     def test_char_common_fields(self):
         t = ndt("char('utf32')")
+        check_serialize(self, t)
 
         self.assertEqual(t.ndim, 0)
         self.assertEqual(t.itemsize, 4)
@@ -1014,6 +1066,7 @@ class TestBool(unittest.TestCase):
 
     def test_bool_predicates(self):
         t = ndt("bool")
+        check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -1042,6 +1095,7 @@ class TestSignedKind(unittest.TestCase):
 
     def test_signed_kind_predicates(self):
         t = ndt("Signed")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -1073,6 +1127,7 @@ class TestSigned(unittest.TestCase):
 
         for s in signed:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -1108,6 +1163,7 @@ class TestUnsignedKind(unittest.TestCase):
 
     def test_unsigned_kind_predicates(self):
         t = ndt("Unsigned")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -1139,6 +1195,7 @@ class TestUnsigned(unittest.TestCase):
 
         for s in unsigned:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -1174,6 +1231,7 @@ class TestFloatKind(unittest.TestCase):
 
     def test_float_kind_predicates(self):
         t = ndt("Float")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -1189,6 +1247,7 @@ class TestFloatKind(unittest.TestCase):
 
     def test_float_kind_common_fields(self):
         t = ndt("Float")
+        check_serialize(self, t)
 
         self.assertRaises(TypeError, t, 'ndim')
         self.assertRaises(TypeError, t, 'itemsize')
@@ -1207,6 +1266,7 @@ class TestFloat(unittest.TestCase):
 
         for s in _float:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertFalse(t.iscomplex())
@@ -1241,6 +1301,7 @@ class TestComplexKind(unittest.TestCase):
 
     def test_complex_kind_predicates(self):
         t = ndt("Complex")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -1274,6 +1335,7 @@ class TestComplex(unittest.TestCase):
 
         for s in _complex:
             t = ndt(s)
+            check_serialize(self, t)
 
             self.assertFalse(t.isabstract())
             self.assertTrue(t.iscomplex())
@@ -1308,6 +1370,7 @@ class TestTypevar(unittest.TestCase):
 
     def test_typevar_predicates(self):
         t = ndt("T")
+        check_serialize(self, t)
 
         self.assertTrue(t.isabstract())
         self.assertFalse(t.iscomplex())
@@ -1557,6 +1620,7 @@ class TestApply(unittest.TestCase):
 
         # Function type:
         sig = ndt("Dims... * N * M * int64, Dims... * M * P * int64 -> Dims... * N * P * float64")
+        check_serialize(self, sig)
 
 
         # Argument types:
@@ -1604,6 +1668,7 @@ class TestBroadcast(unittest.TestCase):
         skip_if(SKIP_LONG, "use --long argument to enable these tests")
 
         sig = ndt("... * float64, ... * float64 -> ... * float64")
+        check_serialize(self, sig)
 
         for xshape in genindices(1):
           for yshape in genindices(1):
@@ -1671,6 +1736,18 @@ class TestTypedef(unittest.TestCase):
 
         t = ndt("var(offsets=[0,2]) * var(offsets=[0,2,3]) * var(offsets=[0,1,2,3]) * (node, cost)")
         self.assertRaises(ValueError, instantiate, "graph", t)
+
+
+class TestSerialize(unittest.TestCase):
+
+    def test_serialize(self):
+        typedef("xnode", "int32")
+        typedef("xcost", "int32")
+
+        t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * (xnode, xcost)")
+        b = t.serialize()
+        u = ndt.deserialize(b)
+        self.assertEqual(u, t)
 
 
 class LongFixedDimTests(unittest.TestCase):
@@ -1768,6 +1845,7 @@ ALL_TESTS = [
   TestApply,
   TestBroadcast,
   TestTypedef,
+  TestSerialize,
   LongFixedDimTests,
 ]
 
