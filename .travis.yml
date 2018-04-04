@@ -10,7 +10,7 @@ matrix:
       before_script:
         - sudo apt-get -qq update
         - sudo apt-get install -y python3-numpy
-        - pip install sphinx_rtd_theme sphinx
+        - sudo pip install sphinx_rtd_theme sphinx
       script:
         - ./configure
         - make check
@@ -32,7 +32,7 @@ matrix:
     - compiler: clang
       before_script:
         - export CC=clang
-        - pip install sphinx_rtd_theme sphinx
+        - sudo pip install sphinx_rtd_theme sphinx
       script:
         - ./configure
         - make parser
@@ -46,7 +46,7 @@ matrix:
       compiler: clang
       before_install:
         - brew install python3
-        - pip install sphinx_rtd_theme sphinx
+        - sudo pip install sphinx_rtd_theme sphinx
       before_script:
         - export CC=clang
       script:
@@ -57,7 +57,8 @@ matrix:
         - cd docs; make doctest
 
     - compiler: gcc
-        - pip install sphinx_rtd_theme sphinx
+      before_script:
+        - sudo pip install sphinx_rtd_theme sphinx
       script:
         - python3 setup.py build
         - python3 setup.py test
