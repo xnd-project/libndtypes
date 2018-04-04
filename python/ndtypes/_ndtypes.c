@@ -87,11 +87,11 @@ rbuf_alloc(uint32_t flags)
     }
  
     self->flags = flags;
-    self->m.num_offset_arrays = 0;
+    self->m.ndims = 0;
 
     for (i = 0; i < NDT_MAX_DIM; i++) {
-        self->m.num_offsets[i] = 0;
-        self->m.offset_arrays[i] = NULL;
+        self->m.noffsets[i] = 0;
+        self->m.offsets[i] = NULL;
     }
 
     PyObject_GC_Track(self);
@@ -112,8 +112,8 @@ rbuf_dealloc(ResourceBufferObject *self)
 
     if (self->flags & RBUF_OWN_OFFSETS) {
         for (i = 0; i < NDT_MAX_DIM; i++) {
-            ndt_free(self->m.offset_arrays[i]);
-            self->m.offset_arrays[i] = NULL;
+            ndt_free(self->m.offsets[i]);
+            self->m.offsets[i] = NULL;
         }
     }
 
@@ -124,25 +124,23 @@ rbuf_dealloc(ResourceBufferObject *self)
 static int
 rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
 {
+    ndt_meta_t *m = &rbuf->m;
     PyObject *lst;
-    int64_t n;
-    int32_t k;
-    int i;
 
     if (!PyList_Check(list)) {
         PyErr_SetString(PyExc_TypeError, "expected a list of offset lists");
         return -1;
     }
 
-    n = PyList_GET_SIZE(list);
+    const int64_t n = PyList_GET_SIZE(list);
     if (n < 1 || n > NDT_MAX_DIM) {
         PyErr_Format(PyExc_ValueError,
             "number of offset lists must be in [1, %d]", NDT_MAX_DIM);
         return -1;
     }
-    rbuf->m.num_offset_arrays = (int)n;
 
-    for (i = 0; i < rbuf->m.num_offset_arrays; i++) {
+    m->ndims = 0;
+    for (int i = n-1; i >= 0; i--) {
         lst = PyList_GET_ITEM(list, i);
         if (!PyList_Check(lst)) {
             PyErr_SetString(PyExc_TypeError,
@@ -150,34 +148,39 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
             return -1;
         }
 
-        n = PyList_GET_SIZE(lst);
-        if (n < 2 || n > INT32_MAX) {
+        const int64_t noffsets = PyList_GET_SIZE(lst);
+        if (noffsets < 2 || noffsets > INT32_MAX) {
             PyErr_SetString(PyExc_ValueError,
                 "length of a single offset list must be in [2, INT32_MAX]");
             return -1;
         }
-        rbuf->m.num_offsets[i] = (int32_t)n;
 
-        rbuf->m.offset_arrays[i] = ndt_alloc(rbuf->m.num_offsets[i], sizeof(int32_t));
-        if (rbuf->m.offset_arrays[i] == NULL) {
+        int32_t * const offsets = ndt_alloc(noffsets, sizeof(int32_t));
+        if (offsets == NULL) {
             PyErr_NoMemory();
             return -1;
         }
 
-        for (k = 0; k < rbuf->m.num_offsets[i]; k++) {
+        for (int32_t k = 0; k < noffsets; k++) {
             long long x = PyLong_AsLongLong(PyList_GET_ITEM(lst, k));
             if (x == -1 && PyErr_Occurred()) {
+                ndt_free(offsets);
                 return -1;
             }
 
             if (x < 0 || x > INT32_MAX) {
+                ndt_free(offsets);
                 PyErr_SetString(PyExc_ValueError,
                     "offset must be in [0, INT32_MAX]");
                 return -1;
             }
 
-            rbuf->m.offset_arrays[i][k] = (int32_t)x;
+            offsets[k] = (int32_t)x;
         }
+
+        m->noffsets[m->ndims] = (int32_t)noffsets;
+        m->offsets[m->ndims] = offsets;
+        m->ndims++;
     }
 
     return 0;

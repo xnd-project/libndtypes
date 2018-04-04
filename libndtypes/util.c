@@ -316,7 +316,7 @@ ndt_meta_new(ndt_context_t *ctx)
         ndt_memory_error(ctx);
     }
 
-    m->num_offset_arrays = 0;
+    m->ndims = 0;
     return m;
 }
 
@@ -327,8 +327,8 @@ ndt_meta_del(ndt_meta_t *m)
         return;
     }
 
-    for (int i = 0; i < m->num_offset_arrays; i++) {
-        ndt_free(m->offset_arrays[i]);
+    for (int i = 0; i < m->ndims; i++) {
+        ndt_free(m->offsets[i]);
     }
 
     ndt_free(m);

@@ -154,11 +154,15 @@ enum ndt_offsets {
 /*
  * Collect offsets during parsing for transferring ownership to an external
  * resource manager later.
+ *
+ * The arrays are addressed by t->ndim-1, where t->ndim > 0. It follows that
+ * offsets[0] are the offsets of the innermost dimension and offsets[ndims-1]
+ * the offsets of the outermost dimension.
  */
 typedef struct {
-    int num_offset_arrays;               /* number of offset arrays */
-    int32_t num_offsets[NDT_MAX_DIM];    /* lengths of the offset arrays */
-    int32_t *offset_arrays[NDT_MAX_DIM]; /* offset arrays */
+    int ndims;                     /* number of offset arrays */
+    int32_t noffsets[NDT_MAX_DIM]; /* length of the nth offset array */
+    int32_t *offsets[NDT_MAX_DIM]; /* nth offset array */
 } ndt_meta_t;
 
 

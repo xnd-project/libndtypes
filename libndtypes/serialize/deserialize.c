@@ -599,9 +599,9 @@ read_var_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
     t->Concrete.VarDim.nslices = nslices;
     t->Concrete.VarDim.slices = slices;
 
-    m->num_offsets[m->num_offset_arrays] = noffsets;
-    m->offset_arrays[m->num_offset_arrays] = offsets;
-    m->num_offset_arrays++;
+    m->noffsets[m->ndims] = noffsets;
+    m->offsets[m->ndims] = offsets;
+    m->ndims++;
 
     return t;
 }
