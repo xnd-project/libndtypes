@@ -9,9 +9,10 @@ build:
 test:
   requires:
     - sphinx
+  source_files:
+    - doc
   files:
     - test
-    - doc
   commands:
     - python test/test_ndtypes.py --long
     - cd doc; make doctest
