@@ -161,7 +161,7 @@ elif len(sys.argv) == 2:
         ret = subprocess.call([sys.executable, "python/test_ndtypes.py", "--long"], env=env)
         sys.exit(ret)
     elif sys.argv[1] == 'doctest':
-        module_path = get_module_path()
+        module_path = '../python'
         python_path = os.getenv('PYTHONPATH')
         path = module_path + ':' + python_path if python_path else module_path
         env = os.environ.copy()
