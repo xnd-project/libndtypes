@@ -12,54 +12,18 @@
 #
 
 {
-   flex_inadequate_error_handling_opt1
+   flex_inadequate_error_handling_lexer
    Memcheck:Leak
-   match-leak-kinds: indirect
+   match-leak-kinds: all
    ...
    fun:ndt_yy_scan_buffer
    fun:_ndt_from_string
 }
 
 {
-   flex_inadequate_error_handling_opt2
+   flex_inadequate_error_handling_bplexer
    Memcheck:Leak
-   match-leak-kinds: possible
-   ...
-   fun:ndt_yy_scan_buffer
-   fun:_ndt_from_string
-}
-
-{
-   flex_inadequate_error_handling_opt3
-   Memcheck:Leak
-   match-leak-kinds: definite
-   ...
-   fun:ndt_yy_scan_buffer
-   fun:_ndt_from_string
-}
-
-{
-   lex_inadequate_error_handling_opt4
-   Memcheck:Leak
-   match-leak-kinds: indirect
-   ...
-   fun:ndt_bp_scan_buffer
-   fun:ndt_from_bpformat
-}
-
-{
-   lex_inadequate_error_handling_opt5
-   Memcheck:Leak
-   match-leak-kinds: possible
-   ...
-   fun:ndt_bp_scan_buffer
-   fun:ndt_from_bpformat
-}
-
-{
-   lex_inadequate_error_handling_opt6
-   Memcheck:Leak
-   match-leak-kinds: definite
+   match-leak-kinds: all
    ...
    fun:ndt_bp_scan_buffer
    fun:ndt_from_bpformat
