@@ -157,11 +157,6 @@ A pattern for a function that takes any type and returns a scalar:
    True
 
    >>> p = ndt("(Any) -> Scalar")
-   >>> c = ndt("(?{a: 10 * uint8}) -> uint8")
-   >>> p.match(c)
-   True
-
-   >>> p = ndt("(Any) -> Scalar")
    >>> c = ndt("(?{a: 10 * uint8}) -> 10 * uint8")
    >>> p.match(c)
    False
