@@ -9,7 +9,6 @@ build:
 test:
   requires:
     - sphinx
-    - sphinx_rtd_theme
   files:
     - test
     - docs

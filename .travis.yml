@@ -9,8 +9,7 @@ matrix:
     - compiler: gcc
       before_script:
         - sudo apt-get -qq update
-        - sudo apt-get install -y python3-numpy
-        - sudo pip install sphinx_rtd_theme sphinx
+        - sudo apt-get install -y python3-numpy python3-sphinx
       script:
         - ./configure
         - make check
@@ -21,18 +20,20 @@ matrix:
     - compiler: gcc
       before_script:
         - sudo apt-get -qq update
-        - sudo apt-get install valgrind
+        - sudo apt-get install -y valgrind python3-sphinx
       script:
         - ./configure --with-valgrind
         - make parser
         - make memcheck
         - python3 setup.py module
         - python3 setup.py test
+        - cd docs; make doctest
 
     - compiler: clang
       before_script:
         - export CC=clang
-        - sudo pip install sphinx_rtd_theme sphinx
+        - sudo apt-get -qq update
+        - sudo apt-get install -y python3-sphinx
       script:
         - ./configure
         - make parser
@@ -45,8 +46,7 @@ matrix:
       os: osx
       compiler: clang
       before_install:
-        - brew install python3
-        - sudo pip install sphinx_rtd_theme sphinx
+        - brew install python3 sphinx-doc
       before_script:
         - export CC=clang
       script:
@@ -58,7 +58,8 @@ matrix:
 
     - compiler: gcc
       before_script:
-        - sudo pip install sphinx_rtd_theme sphinx
+        - sudo apt-get -qq update
+        - sudo apt-get install -y python3-sphinx
       script:
         - python3 setup.py build
         - python3 setup.py test
