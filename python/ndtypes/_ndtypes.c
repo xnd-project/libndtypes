@@ -223,6 +223,7 @@ static PyTypeObject ResourceBuffer_Type = {
 /*                               Cached objects                             */
 /****************************************************************************/
 
+static PyObject *Deserialize = NULL;
 static PyTypeObject *ApplySpec = NULL;
 
 
@@ -889,6 +890,24 @@ ndtype_align(PyObject *self, PyObject *args UNUSED)
     return PyLong_FromLong(NDT(self)->align);
 }
 
+static PyObject *
+ndtype_reduce(PyObject *self, PyObject *args UNUSED)
+{
+    PyObject *bytes;
+    PyObject *res;
+
+    bytes = ndtype_serialize(self, NULL);
+    if (bytes == NULL) {
+        return NULL;
+    }
+
+    res = Py_BuildValue("O(O)", Deserialize, bytes);
+    Py_DECREF(bytes);
+
+    return res;
+}
+
+
 static PyGetSetDef ndtype_getsets [] =
 {
   { "align", (getter)ndtype_align, NULL, doc_align, NULL},
@@ -934,6 +953,7 @@ static PyMethodDef ndtype_methods [] =
   /* Special methods */
   { "__copy__", ndtype_copy, METH_NOARGS, NULL },
   { "__deepcopy__", ndtype_copy, METH_O, NULL },
+  { "__reduce__", ndtype_reduce, METH_NOARGS, NULL },
 
   { NULL, NULL, 1 }
 };
@@ -1261,6 +1281,11 @@ PyInit__ndtypes(void)
 
     m = PyModule_Create(&ndtypes_module);
     if (m == NULL) {
+        goto error;
+    }
+
+    Deserialize = PyObject_GetAttrString((PyObject *)&Ndt_Type, "deserialize");
+    if (Deserialize == NULL) {
         goto error;
     }
 

@@ -38,6 +38,7 @@ from ndtypes import ndt, typedef, instantiate, MAX_DIM, ApplySpec
 from ndt_support import *
 from ndt_randtype import *
 from random import random
+import pickle
 
 
 try:
@@ -53,6 +54,10 @@ SKIP_BRUTE_FORCE = True
 def check_serialize(self, t):
     b = t.serialize()
     u = ndt.deserialize(b)
+    self.assertEqual(u, t)
+
+    s = pickle.dumps(t)
+    u = pickle.loads(s)
     self.assertEqual(u, t)
 
 
@@ -1750,6 +1755,18 @@ class TestSerialize(unittest.TestCase):
         self.assertEqual(u, t)
 
 
+class TestPickle(unittest.TestCase):
+
+    def test_pickle(self):
+        typedef("ynode", "int32")
+        typedef("ycost", "int32")
+
+        t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * (ynode, ycost)")
+        s = pickle.dumps(t)
+        u = pickle.loads(s)
+        self.assertEqual(u, t)
+
+
 class LongFixedDimTests(unittest.TestCase):
 
     def test_steps_random(self):
@@ -1846,6 +1863,7 @@ ALL_TESTS = [
   TestBroadcast,
   TestTypedef,
   TestSerialize,
+  TestPickle,
   LongFixedDimTests,
 ]
 
