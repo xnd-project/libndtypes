@@ -144,6 +144,7 @@ yycolumn = 1;
 "T"        { return RECORD; }
 "s"        { return BYTES; }
 
+"->"       { return RARROW; }
 "@"        { return AT; }
 "="        { return EQUAL; }
 "<"        { return LESS; }

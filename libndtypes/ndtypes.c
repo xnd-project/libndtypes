@@ -1080,6 +1080,7 @@ ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
     assert(0 <= nin && 0 <= nout && nargs == nin+nout);
 
     if (!check_function_invariants(types, nargs, ctx)) {
+        ndt_type_array_clear((ndt_t **)types, nargs);
         return NULL;
     }
 

@@ -61,6 +61,13 @@ const char *buffer_tests[] = {
 
   "T{T{Zf:foo:(2,3)L:bar:}:a:100s:b:}",
 
+  "f -> f",
+  "ff -> f",
+  "fc -> f",
+  "Zf -> Q",
+
+  "T{b:a:100s:b:} -> T{T{Zf:foo:(2,3)L:bar:}:a:100s:b:}",
+
    NULL
 };
 

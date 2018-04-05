@@ -148,7 +148,7 @@ primitive_fixed(char dtype, uint32_t flags, ndt_context_t *ctx)
 }
 
 static ndt_t *
-mk_dtype(char modifier, char dtype, ndt_context_t *ctx)
+make_dtype(char modifier, char dtype, ndt_context_t *ctx)
 {
     switch (modifier) {
     case '@':
@@ -169,7 +169,7 @@ mk_dtype(char modifier, char dtype, ndt_context_t *ctx)
 }
 
 static ndt_t *
-mk_fixed_bytes(char *v, ndt_context_t *ctx)
+make_fixed_bytes(char *v, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
     int64_t datasize = 1;
@@ -192,7 +192,7 @@ mk_fixed_bytes(char *v, ndt_context_t *ctx)
 }
 
 static ndt_t *
-mk_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
+make_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
     int64_t shape;
@@ -226,7 +226,7 @@ mk_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 }
 
 static ndt_field_t *
-mk_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
+make_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
@@ -237,7 +237,7 @@ mk_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
 }
 
 static ndt_t *
-mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
+make_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
@@ -268,12 +268,40 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 
     return t;
 }
+
+static ndt_type_seq_t *
+broadcast_seq_new(ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    t = ndt_ellipsis_dim(NULL, type, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+
+    return ndt_type_seq_new(t, ctx);
+}
+
+static ndt_type_seq_t *
+broadcast_seq_append(ndt_type_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    t = ndt_ellipsis_dim(NULL, type, ctx);
+    if (t == NULL) {
+        ndt_type_seq_del(seq);
+        return NULL;
+    }
+
+    return ndt_type_seq_append(seq, t, ctx);
+}
 %}
 
 %code requires {
   #include <ctype.h>
   #include <assert.h>
   #include "ndtypes.h"
+  #include "parsefuncs.h"
   #include "seq.h"
   #include "overflow.h"
   #define YY_TYPEDEF_YY_SCANNER_T
@@ -307,6 +335,7 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
     ndt_field_t *field;
     ndt_field_seq_t *field_seq;
     ndt_string_seq_t *string_seq;
+    ndt_type_seq_t *type_seq;
     char *string;
     unsigned char uchar;
     uint16_t uint16;
@@ -321,9 +350,12 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 %type <field_seq> field_seq
 
 %type <ndt> dtype
+%type <type_seq> dtype_seq
 
 %type <string_seq> dimensions
 %type <string> repeat
+
+%type <ndt> function
 
 %type <uchar> modifier
 %type <uint16> padding
@@ -331,7 +363,7 @@ mk_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 %token
  BYTES RECORD PAD
 
-AT EQUAL LESS GREATER BANG COMMA COLON LPAREN RPAREN LBRACE RBRACE
+AT EQUAL LESS GREATER BANG COMMA COLON LPAREN RPAREN LBRACE RBRACE RARROW
 ERRTOKEN
 
 %token <uchar>
@@ -346,6 +378,7 @@ ERRTOKEN
 %destructor { ndt_field_del($$); } <field>
 %destructor { ndt_field_seq_del($$); } <field_seq>
 %destructor { ndt_string_seq_del($$); } <string_seq>
+%destructor { ndt_type_seq_del($$); } <type_seq>
 %destructor { ndt_free($$); } <string>
 
 %%
@@ -354,27 +387,35 @@ input:
   datatype ENDMARKER { $$ = $1;  *ast = $$; YYACCEPT; }
 
 datatype:
-  LPAREN dimensions RPAREN dtype { $$ = mk_dimensions($2, $4, ctx); if ($$ == NULL) YYABORT; }
+  LPAREN dimensions RPAREN dtype { $$ = make_dimensions($2, $4, ctx); if ($$ == NULL) YYABORT; }
 | dtype                          { $$ = $1; }
+| function                       { $$ = $1; }
 
 dimensions:
   INTEGER                  { $$ = ndt_string_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
 | dimensions COMMA INTEGER { $$ = ndt_string_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 dtype:
-  modifier DTYPE { $$ = mk_dtype($1, $2, ctx); if ($$ == NULL) YYABORT; }
-| repeat BYTES   { $$ = mk_fixed_bytes($1, ctx); if ($$ == NULL) YYABORT; }
+  modifier DTYPE { $$ = make_dtype($1, $2, ctx); if ($$ == NULL) YYABORT; }
+| repeat BYTES   { $$ = make_fixed_bytes($1, ctx); if ($$ == NULL) YYABORT; }
 | record         { $$ = $1; }
 
 record:
-  RECORD LBRACE field_seq RBRACE { $$ = mk_record($3, ctx); if ($$ == NULL) YYABORT; }
+  RECORD LBRACE field_seq RBRACE { $$ = make_record($3, ctx); if ($$ == NULL) YYABORT; }
 
 field_seq:
   field           { $$ = ndt_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
 | field_seq field { $$ = ndt_field_seq_append($1, $2, ctx); if ($$ == NULL) YYABORT; }
 
 field:
-  datatype COLON NAME COLON padding { $$ = mk_field($3, $1, $5, ctx); if ($$ == NULL) YYABORT; }
+  datatype COLON NAME COLON padding { $$ = make_field($3, $1, $5, ctx); if ($$ == NULL) YYABORT; }
+
+function:
+  dtype_seq RARROW dtype_seq { $$ = mk_function($1, $3, ctx); if ($$ == NULL) YYABORT; }
+
+dtype_seq:
+  dtype           { $$ = broadcast_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
+| dtype_seq dtype { $$ = broadcast_seq_append($1, $2, ctx); if ($$ == NULL) YYABORT; }
 
 modifier:
  %empty   { $$ = '@'; }
