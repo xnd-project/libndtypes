@@ -399,68 +399,6 @@ followed by any number of additional positional arguments:
    ndt("(int32, ...) -> int32")
 
 
-Keyword-only
-~~~~~~~~~~~~
-
-Keywords are specified inline:
-
-.. doctest::
-
-   >>> ndt("(distance: float32, velocity: float32) -> float32")
-   ndt("(distance : float32, velocity : float32) -> float32")
-
-
-Keyword-variadic
-~~~~~~~~~~~~~~~~
-
-This is a function type with a single required keyword argument,
-followed by any number of additional keyword arguments:
-
-.. doctest::
-
-   >>> ndt("(sum: float64, ...) -> float64")
-   ndt("(sum : float64, ...) -> float64")
-
- 
-Mixed
-~~~~~
-
-Function types can have both positional and keyword arguments, the former
-must precede the latter:
-
-.. doctest::
-
-   >>> ndt("(uint32, uint32, product: float64) -> float64")
-   ndt("(uint32, uint32, product : float64) -> float64")
-
- 
-Mixed-variadic
-~~~~~~~~~~~~~~
-
-Any combination of positional-variadic and keyword-variadic is permitted.
-
-This function has positional-variadic arguments, followed by keyword
-arguments:
-
-.. doctest::
-
-   >>> ndt("(uint64, ..., scale: uint8) -> uint64")
-   ndt("(uint64, ..., scale : uint8) -> uint64")
-
-Positional arguments, followed by keyword-variadic arguments:
-
-.. doctest::
-
-   >>> ndt("(uint64, scale: uint8, ...) -> uint64")
-   ndt("(uint64, scale : uint8, ...) -> uint64")
-
-Positional-variadic and keyword-variadic:
-
-.. doctest::
-
-   >>> ndt("(..., color: uint32, ...) -> uint64")
-   ndt("(..., color : uint32, ...) -> uint64")
-
 
 .. _arrays:
 
