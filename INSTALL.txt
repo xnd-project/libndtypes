@@ -77,4 +77,21 @@ Alternative install (for developing)
 python3 setup.py install --local=../foo
 
 
+Documentation
+=============
 
+First, install Sphinx:
+http://www.sphinx-doc.org/en/master/usage/installation.html
+
+Then (optionally) install the RTFD theme:
+
+pip install sphinx_rtd_theme
+
+Then, build the docs:
+
+cd docs
+
+# Build html
+make html
+# View docs
+open build/html/index.html
