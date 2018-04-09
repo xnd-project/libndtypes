@@ -11,8 +11,9 @@ Buffer protocol
 
 ndtypes supports conversion from PEP-3118 format strings to datashape:
 
-.. code-block:: py
+.. doctest::
 
+   >>> from ndtypes import ndt
    >>> ndt.from_format("T{<b:a:Q:b:}")
    ndt("{a : <int8, b : uint64}")
 

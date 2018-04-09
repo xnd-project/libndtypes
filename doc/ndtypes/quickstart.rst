@@ -83,7 +83,7 @@ Create types
 
 The most fundamental operation is to create a type:
 
-.. code-block:: py
+.. doctest::
 
    >>> from ndtypes import *
    >>> t = ndt("2 * 3 * int64")
@@ -100,7 +100,7 @@ Type properties
 
 All types have the following properties (continuing the example above):
 
-.. code-block:: py
+.. doctest::
 
    >>> t.ndim
    2
@@ -113,7 +113,7 @@ All types have the following properties (continuing the example above):
 
 Array types have these individual properties:
 
-.. code-block:: py
+.. doctest::
 
    >>> t.shape
    (2, 3)
@@ -130,7 +130,7 @@ Internals
 
 This is how to display the internal type AST:
 
-.. code-block:: py
+.. doctest::
 
    >>> print(t.ast_repr())
    FixedDim(
