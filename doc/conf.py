@@ -1,9 +1,7 @@
 import sys, os, docutils
 
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.imgmath',
-              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.autosummary']
+extensions = ['sphinx.ext.intersphinx', 'sphinx.ext.doctest']
 
 source_suffix = '.rst'
 master_doc = 'index'
@@ -14,6 +12,7 @@ release = 'v0.2.0dev3'
 exclude_patterns = ['doc', 'build']
 pygments_style = 'sphinx'
 html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
 
 primary_domain = 'py'
 add_function_parentheses = False
