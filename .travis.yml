@@ -20,51 +20,41 @@ matrix:
     - compiler: gcc
       before_script:
         - sudo apt-get -qq update
-        - sudo apt-get install -y valgrind python3-sphinx
+        - sudo apt-get install -y valgrind
       script:
         - ./configure --with-valgrind
         - make parser
         - make memcheck
         - python3 setup.py module
         - python3 setup.py test
-        - python3 setup.py doctest
 
     - compiler: clang
       before_script:
         - export CC=clang
-        - sudo apt-get -qq update
-        - sudo apt-get install -y python3-sphinx
       script:
         - ./configure
         - make parser
         - make check
         - python3 setup.py module
         - python3 setup.py test
-        - python3 setup.py doctest
 
     - language: objective-c
       os: osx
       compiler: clang
       before_install:
-        - brew install python3 sphinx-doc
+        - brew install python3
       before_script:
         - export CC=clang
-        - export PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
       script:
         - ./configure
         - make check
         - python3 setup.py module
         - python3 setup.py test
-        - python3 setup.py doctest
 
     - compiler: gcc
-      before_script:
-        - sudo apt-get -qq update
-        - sudo apt-get install -y python3-sphinx
       script:
         - python3 setup.py build
         - python3 setup.py test
-        - python3 setup.py doctest
 
     - compiler: conda
       install:
