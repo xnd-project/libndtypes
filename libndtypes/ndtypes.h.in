@@ -292,9 +292,9 @@ typedef struct {
 } ndt_slice_t;
 
 /* Object features for the Nominal type. */
-typedef bool (* ndt_init_t)(void *, void *src, ndt_context_t *);
-typedef bool (* ndt_constraint_t)(void *, ndt_context_t *);
-typedef bool (* ndt_repr_t)(void *, ndt_context_t *);
+typedef bool (* ndt_init_t)(void *dest, const void *src, ndt_context_t *);
+typedef bool (* ndt_constraint_t)(const void *, ndt_context_t *);
+typedef void *(* ndt_repr_t)(const void *, ndt_context_t *);
 
 typedef struct {
    ndt_init_t init;
