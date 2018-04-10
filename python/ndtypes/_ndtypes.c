@@ -63,22 +63,20 @@
    At a later stage, the object will need to communicate with Arrow
    or other formats to store external resources. */
 
+static PyObject *seterr(ndt_context_t *ctx);
+
 typedef struct {
     PyObject_HEAD
-    uint32_t flags;
-    ndt_meta_t m;
+    ndt_meta_t *m;
 } ResourceBufferObject;
 
 static PyTypeObject ResourceBuffer_Type;
 
-#define RBUF_OWN_OFFSETS      0x00000001U
-#define RBUF_EXTERNAL_OFFSETS 0x00000002U
-
 static PyObject *
-rbuf_alloc(uint32_t flags)
+rbuf_alloc(void)
 {
+    NDT_STATIC_CONTEXT(ctx);
     ResourceBufferObject *self;
-    int i;
 
     self = (ResourceBufferObject *)
         PyObject_GC_New(ResourceBufferObject, &ResourceBuffer_Type);
@@ -86,12 +84,9 @@ rbuf_alloc(uint32_t flags)
         return NULL;
     }
  
-    self->flags = flags;
-    self->m.num_offset_arrays = 0;
-
-    for (i = 0; i < NDT_MAX_DIM; i++) {
-        self->m.num_offsets[i] = 0;
-        self->m.offset_arrays[i] = NULL;
+    self->m = ndt_meta_new(&ctx);
+    if (self->m == NULL) {
+        return seterr(&ctx);
     }
 
     PyObject_GC_Track(self);
@@ -108,15 +103,8 @@ rbuf_traverse(ResourceBufferObject *self UNUSED, visitproc visit UNUSED,
 static void
 rbuf_dealloc(ResourceBufferObject *self)
 {
-    int i;
-
-    if (self->flags & RBUF_OWN_OFFSETS) {
-        for (i = 0; i < NDT_MAX_DIM; i++) {
-            ndt_free(self->m.offset_arrays[i]);
-            self->m.offset_arrays[i] = NULL;
-        }
-    }
-
+    ndt_meta_del(self->m);
+    self->m = NULL;
     PyObject_GC_UnTrack(self);
     PyObject_GC_Del(self);
 }
@@ -124,25 +112,23 @@ rbuf_dealloc(ResourceBufferObject *self)
 static int
 rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
 {
+    ndt_meta_t * const m = rbuf->m;
     PyObject *lst;
-    int64_t n;
-    int32_t k;
-    int i;
 
     if (!PyList_Check(list)) {
         PyErr_SetString(PyExc_TypeError, "expected a list of offset lists");
         return -1;
     }
 
-    n = PyList_GET_SIZE(list);
+    const int64_t n = PyList_GET_SIZE(list);
     if (n < 1 || n > NDT_MAX_DIM) {
         PyErr_Format(PyExc_ValueError,
             "number of offset lists must be in [1, %d]", NDT_MAX_DIM);
         return -1;
     }
-    rbuf->m.num_offset_arrays = (int)n;
 
-    for (i = 0; i < rbuf->m.num_offset_arrays; i++) {
+    m->ndims = 0;
+    for (int i = n-1; i >= 0; i--) {
         lst = PyList_GET_ITEM(list, i);
         if (!PyList_Check(lst)) {
             PyErr_SetString(PyExc_TypeError,
@@ -150,34 +136,39 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
             return -1;
         }
 
-        n = PyList_GET_SIZE(lst);
-        if (n < 2 || n > INT32_MAX) {
+        const int64_t noffsets = PyList_GET_SIZE(lst);
+        if (noffsets < 2 || noffsets > INT32_MAX) {
             PyErr_SetString(PyExc_ValueError,
                 "length of a single offset list must be in [2, INT32_MAX]");
             return -1;
         }
-        rbuf->m.num_offsets[i] = (int32_t)n;
 
-        rbuf->m.offset_arrays[i] = ndt_alloc(rbuf->m.num_offsets[i], sizeof(int32_t));
-        if (rbuf->m.offset_arrays[i] == NULL) {
+        int32_t * const offsets = ndt_alloc(noffsets, sizeof(int32_t));
+        if (offsets == NULL) {
             PyErr_NoMemory();
             return -1;
         }
 
-        for (k = 0; k < rbuf->m.num_offsets[i]; k++) {
+        for (int32_t k = 0; k < noffsets; k++) {
             long long x = PyLong_AsLongLong(PyList_GET_ITEM(lst, k));
             if (x == -1 && PyErr_Occurred()) {
+                ndt_free(offsets);
                 return -1;
             }
 
             if (x < 0 || x > INT32_MAX) {
+                ndt_free(offsets);
                 PyErr_SetString(PyExc_ValueError,
                     "offset must be in [0, INT32_MAX]");
                 return -1;
             }
 
-            rbuf->m.offset_arrays[i][k] = (int32_t)x;
+            offsets[k] = (int32_t)x;
         }
+
+        m->noffsets[m->ndims] = (int32_t)noffsets;
+        m->offsets[m->ndims] = offsets;
+        m->ndims++;
     }
 
     return 0;
@@ -188,7 +179,7 @@ rbuf_from_offset_lists(PyObject *list)
 {
     PyObject *rbuf;
 
-    rbuf = rbuf_alloc(RBUF_OWN_OFFSETS);
+    rbuf = rbuf_alloc();
     if (rbuf == NULL) {
         return NULL;
     }
@@ -232,6 +223,7 @@ static PyTypeObject ResourceBuffer_Type = {
 /*                               Cached objects                             */
 /****************************************************************************/
 
+static PyObject *Deserialize = NULL;
 static PyTypeObject *ApplySpec = NULL;
 
 
@@ -352,13 +344,13 @@ ndtype_from_object(PyTypeObject *tp, PyObject *type)
         return NULL;
     }
 
-    RBUF(self) = rbuf_alloc(RBUF_OWN_OFFSETS);
+    RBUF(self) = rbuf_alloc();
     if (RBUF(self) == NULL) {
         Py_DECREF(self);
         return NULL;
     }
 
-    NDT(self) = ndt_from_string_fill_meta(&RBUF_NDT_META(self), cp, &ctx);
+    NDT(self) = ndt_from_string_fill_meta(RBUF_NDT_META(self), cp, &ctx);
     if (NDT(self) == NULL) {
         Py_DECREF(self);
         return seterr(&ctx);
@@ -416,8 +408,40 @@ ndtype_from_offsets_and_dtype(PyTypeObject *tp, PyObject *offsets, PyObject *dty
         return NULL;
     }
 
-    NDT(self) = ndt_from_metadata_and_dtype(&RBUF_NDT_META(self), cp, &ctx);
+    NDT(self) = ndt_from_metadata_and_dtype(RBUF_NDT_META(self), cp, &ctx);
 
+    if (NDT(self) == NULL) {
+        Py_DECREF(self);
+        return seterr(&ctx);
+    }
+
+    return self;
+}
+
+static PyObject *
+ndtype_deserialize(PyTypeObject *tp, PyObject *bytes)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *self;
+
+    if (!PyBytes_Check(bytes)) {
+        PyErr_SetString(PyExc_TypeError, "expected bytes object");
+        return NULL;
+    }
+
+    self = ndtype_alloc(tp);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    RBUF(self) = rbuf_alloc();
+    if (RBUF(self) == NULL) {
+        Py_DECREF(self);
+        return NULL;
+    }
+
+    NDT(self) = ndt_deserialize(RBUF_NDT_META(self), PyBytes_AS_STRING(bytes),
+                                PyBytes_GET_SIZE(bytes), &ctx);
     if (NDT(self) == NULL) {
         Py_DECREF(self);
         return seterr(&ctx);
@@ -536,6 +560,24 @@ ndtype_copy(PyObject *self, PyObject *args UNUSED)
 {
     Py_INCREF(self);
     return self;
+}
+
+static PyObject *
+ndtype_serialize(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *res;
+    char *bytes;
+    int64_t size;
+
+    size = ndt_serialize(&bytes, NDT(self), &ctx);
+    if (size < 0) {
+        return seterr(&ctx);
+    }
+
+    res = PyBytes_FromStringAndSize(bytes, size);
+    ndt_free(bytes);
+    return res;
 }
 
 
@@ -848,6 +890,24 @@ ndtype_align(PyObject *self, PyObject *args UNUSED)
     return PyLong_FromLong(NDT(self)->align);
 }
 
+static PyObject *
+ndtype_reduce(PyObject *self, PyObject *args UNUSED)
+{
+    PyObject *bytes;
+    PyObject *res;
+
+    bytes = ndtype_serialize(self, NULL);
+    if (bytes == NULL) {
+        return NULL;
+    }
+
+    res = Py_BuildValue("O(O)", Deserialize, bytes);
+    Py_DECREF(bytes);
+
+    return res;
+}
+
+
 static PyGetSetDef ndtype_getsets [] =
 {
   { "align", (getter)ndtype_align, NULL, doc_align, NULL},
@@ -884,13 +944,16 @@ static PyMethodDef ndtype_methods [] =
   { "pformat", (PyCFunction)ndtype_pformat, METH_NOARGS, doc_pformat },
   { "pprint", (PyCFunction)ndtype_pprint, METH_NOARGS, doc_pprint },
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, doc_ast_repr },
+  { "serialize", (PyCFunction)ndtype_serialize, METH_NOARGS, doc_serialize },
 
   /* Class methods */
   { "from_format", (PyCFunction)ndtype_from_format, METH_O|METH_CLASS, doc_from_format },
+  { "deserialize", (PyCFunction)ndtype_deserialize, METH_O|METH_CLASS, doc_deserialize },
 
   /* Special methods */
   { "__copy__", ndtype_copy, METH_NOARGS, NULL },
   { "__deepcopy__", ndtype_copy, METH_O, NULL },
+  { "__reduce__", ndtype_reduce, METH_NOARGS, NULL },
 
   { NULL, NULL, 1 }
 };
@@ -1218,6 +1281,11 @@ PyInit__ndtypes(void)
 
     m = PyModule_Create(&ndtypes_module);
     if (m == NULL) {
+        goto error;
+    }
+
+    Deserialize = PyObject_GetAttrString((PyObject *)&Ndt_Type, "deserialize");
+    if (Deserialize == NULL) {
         goto error;
     }
 

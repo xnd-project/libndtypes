@@ -6,6 +6,7 @@ AC_CONFIG_FILES([
   Makefile
   libndtypes/Makefile libndtypes/tests/Makefile libndtypes/ndtypes.h
   libndtypes/compat/Makefile
+  libndtypes/serialize/Makefile
 ])
 
 # System and machine type (only used for Darwin):

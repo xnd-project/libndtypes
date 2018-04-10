@@ -234,17 +234,15 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
             t = ndt_var_dim(type, InternalOffsets, (int32_t)noffsets, offsets, 0, NULL, ctx);
         }
         else {
-            int i = m->num_offset_arrays;
-            if (i >= NDT_MAX_DIM) {
-                ndt_err_format(ctx, NDT_RuntimeError,
-                               "too many offsets arrays");
+            if (m->ndims >= NDT_MAX_DIM) {
+                ndt_err_format(ctx, NDT_RuntimeError, "too many dimensions");
                 ndt_del(type);
                 ndt_free(offsets);
                 return NULL;
             }
-            m->num_offsets[i] = (int32_t)noffsets;
-            m->offset_arrays[i] = offsets;
-            m->num_offset_arrays++;
+            m->noffsets[m->ndims] = (int32_t)noffsets;
+            m->offsets[m->ndims] = offsets;
+            m->ndims++;
 
             t = ndt_var_dim(type, ExternalOffsets, (int32_t)noffsets, offsets, 0, NULL, ctx);
         }

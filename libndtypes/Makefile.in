@@ -48,13 +48,18 @@ COMPAT_OBJS = compat/bpgrammar.o compat/bplexer.o compat/import.o
 COMPAT_SHARED_OBJS = compat/.objs/bpgrammar.o compat/.objs/bplexer.o \
                      compat/.objs/import.o
 
+SERIALIZE_OBJS = serialize/serialize.o serialize/deserialize.o
 
-$(LIBSTATIC): Makefile $(OBJS) $(COMPAT_OBJS)
-	$(AR) rc $(LIBSTATIC) $(OBJS) $(COMPAT_OBJS)
+SERIALIZE_SHARED_OBJS = serialize/.objs/serialize.o serialize/.objs/deserialize.o
+
+
+$(LIBSTATIC): Makefile $(OBJS) $(COMPAT_OBJS) $(SERIALIZE_OBJS)
+	$(AR) rc $(LIBSTATIC) $(OBJS) $(COMPAT_OBJS) $(SERIALIZE_OBJS)
 	$(RANLIB) $(LIBSTATIC)
 
-$(LIBSHARED): Makefile $(SHARED_OBJS) $(COMPAT_SHARED_OBJS)
-	$(LD) $(NDT_LDFLAGS) -o $(LIBSHARED) $(SHARED_OBJS) $(COMPAT_SHARED_OBJS)
+
+$(LIBSHARED): Makefile $(SHARED_OBJS) $(COMPAT_SHARED_OBJS) $(SERIALIZE_SHARED_OBJS)
+	$(LD) $(NDT_LDFLAGS) -o $(LIBSHARED) $(SHARED_OBJS) $(COMPAT_SHARED_OBJS) $(SERIALIZE_SHARED_OBJS)
 	ln -sf $(LIBSHARED) $(LIBNAME)
 	ln -sf $(LIBSHARED) $(LIBSONAME)
 
@@ -219,6 +224,11 @@ Makefile compat/Makefile compat/bpgrammar.y compat/bplexer.l compat/import.c \
 ndtypes.h seq.h
 	cd compat && make
 
+# serialize directory
+$(SERIALIZE_OBJS) $(SERIALIZE_SHARED_OBJS):\
+Makefile serialize/Makefile serialize/serialize.c ndtypes.h
+	cd serialize && make
+
 
 # Coverage
 coverage:\
@@ -250,10 +260,12 @@ clean: FORCE
 	rm -f bench indent print_ast $(LIBSTATIC) $(LIBSHARED) $(LIBSONAME) $(LIBNAME)
 	cd .objs && rm -f *.o *.so *.gch *.gcda *.gcno *.gcov *.dyn *.dpi *.lock
 	cd compat && make clean
+	cd serialize && make clean
 
 distclean: clean
 	rm -f Makefile ndtypes.h
 	cd compat && make distclean
+	cd serialize && make distclean
 
 
 

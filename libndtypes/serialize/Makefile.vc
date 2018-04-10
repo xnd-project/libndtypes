@@ -1,0 +1,46 @@
+
+SRCDIR = ..
+
+OPT = /MT /Ox /GS /EHsc
+OPT_SHARED = /DEXPORT /MD /Ox /GS /EHsc /Fo.objs^\
+
+COMMON_CFLAGS = -I$(SRCDIR) /nologo /W4 /wd4200 /wd4201 /wd4204
+
+CFLAGS = $(COMMON_CFLAGS) $(OPT)
+CFLAGS_SHARED = $(COMMON_CFLAGS) $(OPT_SHARED)
+
+
+OBJS = serialize.obj deserialize.obj
+SHARED_OBJS = .objs\serialize.obj .objs\deserialize.obj
+
+
+default: $(OBJS) $(SHARED_OBJS)
+
+
+serialize.obj:\
+Makefile serialize.c ..\ndtypes.h
+	$(CC) $(CFLAGS) -c serialize.c
+
+.objs\serialize.obj:\
+Makefile serialize.c ..\ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c serialize.c
+
+deserialize.obj:\
+Makefile deserialize.c ..\ndtypes.h
+	$(CC) $(CFLAGS) -c deserialize.c
+
+.objs\deserialize.obj:\
+Makefile deserialize.c ..\ndtypes.h
+	$(CC) $(CFLAGS_SHARED) -c deserialize.c
+
+
+FORCE:
+
+clean: FORCE
+	del /q /f *.exe *.obj *.lib *.dll *.exp *.manifest 2>NUL
+	cd .objs && del /q /f *.obj 2>NUL
+
+distclean: clean
+	del Makefile 2>NUL
+
+

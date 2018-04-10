@@ -540,10 +540,9 @@ ndt_type_array_del(ndt_t **types, int64_t shape)
  * reference.
  */
 int
-ndt_typedef(const char *name, ndt_t *type, ndt_constraint_t f,
-            ndt_context_t *ctx)
+ndt_typedef(const char *name, ndt_t *type, const ndt_methods_t *m, ndt_context_t *ctx)
 {
-    if (ndt_typedef_add(name, type, f, ctx) < 0) {
+    if (ndt_typedef_add(name, type, m, ctx) < 0) {
         return -1;
     }
 
@@ -551,7 +550,7 @@ ndt_typedef(const char *name, ndt_t *type, ndt_constraint_t f,
 }
 
 int
-ndt_typedef_from_string(const char *name, const char *type, ndt_constraint_t f,
+ndt_typedef_from_string(const char *name, const char *type, const ndt_methods_t *m,
                         ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -561,7 +560,7 @@ ndt_typedef_from_string(const char *name, const char *type, ndt_constraint_t f,
         return -1;
     }
 
-    if (ndt_typedef_add(name, t, f, ctx) < 0) {
+    if (ndt_typedef_add(name, t, m, ctx) < 0) {
         return -1;
     }
 
@@ -748,7 +747,7 @@ ndt_new(enum ndt tag, ndt_context_t *ctx)
     t->flags = 0;
     t->ndim = 0;
 
-    t->datasize = -1;
+    t->datasize = 0;
     t->align = UINT16_MAX;
 
     return t;
@@ -777,7 +776,7 @@ ndt_new_extra(enum ndt tag, int64_t n, ndt_context_t *ctx)
     t->flags = 0;
     t->ndim = 0;
 
-    t->datasize = -1;
+    t->datasize = 0;
     t->align = UINT16_MAX;
 
     return t;
@@ -887,6 +886,11 @@ ndt_record_new(enum ndt_variadic flag, int64_t shape, ndt_context_t *ctx)
     pad_offset = ADDi64(align_offset, size, &overflow);
 
     extra = ADDi64(pad_offset, size, &overflow);
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError, "record size too large");
+        return NULL;
+    }
 
     t = ndt_new_extra(Record, extra, ctx);
     if (t == NULL) {
@@ -1075,6 +1079,7 @@ ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
     assert(0 <= nin && 0 <= nout && nargs == nin+nout);
 
     if (!check_function_invariants(types, nargs, ctx)) {
+        ndt_type_array_clear((ndt_t **)types, nargs);
         return NULL;
     }
 
@@ -1221,7 +1226,7 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
     t->ndim = type->ndim + 1;
     t->flags = ndt_dim_flags(type);
 
-    t->Concrete.FixedDim.itemsize = -1;
+    t->Concrete.FixedDim.itemsize = 0;
     t->Concrete.FixedDim.step = INT64_MAX;
 
     /* concrete access */
@@ -1268,7 +1273,7 @@ ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx)
     /* concrete access */
     t->access = Abstract;
     t->Concrete.VarDim.flag = ExternalOffsets;
-    t->Concrete.VarDim.itemsize = -1;
+    t->Concrete.VarDim.itemsize = 0;
     t->Concrete.VarDim.noffsets = 0;
     t->Concrete.VarDim.offsets = NULL;
     t->Concrete.VarDim.nslices = 0;
@@ -1843,7 +1848,7 @@ ndt_nominal(char *name, ndt_t *type, ndt_context_t *ctx)
     }
     t->Nominal.name = name;
     t->Nominal.type = type;
-    t->Nominal.constraint = d->constraint;
+    t->Nominal.meth = &d->meth;
     t->flags = ndt_subtree_flags(type);
 
     /* concrete access */

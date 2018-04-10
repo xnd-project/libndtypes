@@ -36,6 +36,14 @@
 #include <inttypes.h>
 #include <string.h>
 #include <assert.h>
+
+#ifdef __linux__
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include "ndtypes.h"
 #include "test.h"
 #include "alloc_fail.h"
@@ -1258,6 +1266,200 @@ test_buffer_error(void)
     return 0;
 }
 
+static int
+test_serialize(void)
+{
+    const char **c;
+    ndt_meta_t *m;
+    ndt_context_t *ctx;
+    ndt_t *t, *u;
+    int count = 0;
+    char *bytes;
+    int64_t len;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = parse_tests; *c != NULL; c++) {
+        m = ndt_meta_new(ctx);
+        if (m == NULL) {
+            ndt_context_del(ctx);
+            fprintf(stderr,
+                "test_serialize: FAIL: unexpected failure in meta_new");
+            return -1;
+        }
+
+        t = ndt_from_string(*c, ctx);
+        if (t == NULL) {
+            ndt_meta_del(m);
+            ndt_context_del(ctx);
+            fprintf(stderr,
+                "test_serialize: FAIL: unexpected failure in from_string");
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+            bytes = NULL;
+
+            ndt_set_alloc_fail();
+            len = ndt_serialize(&bytes, t, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (len >= 0 || bytes != NULL) {
+                ndt_del(t);
+                ndt_free(bytes);
+                ndt_meta_del(m);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_serialize: FAIL: invalid len or bytes after MemoryError\n");
+                fprintf(stderr, "test_serialize: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+
+        if (len < 0 || bytes == NULL) {
+            ndt_del(t);
+            ndt_free(bytes);
+            ndt_meta_del(m);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_serialize: FAIL: invalid len or bytes (expected success)\n");
+            fprintf(stderr, "test_serialize: FAIL: %s\n", *c);
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            u = ndt_deserialize(m, bytes, len, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (u != NULL) {
+                ndt_del(t);
+                ndt_del(u);
+                ndt_free(bytes);
+                ndt_meta_del(m);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_serialize: FAIL: u != NULL after MemoryError\n");
+                fprintf(stderr, "test_serialize: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+
+        if (u == NULL) {
+            fprintf(stderr, "test_serialize: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_serialize: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_del(t);
+            ndt_free(bytes);
+            ndt_meta_del(m);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_free(bytes);
+
+        if (!ndt_equal(u, t)) {
+            fprintf(stderr, "test_serialize: FAIL: u != v in %s\n", *c);
+            ndt_del(t);
+            ndt_del(u);
+            ndt_meta_del(m);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_del(t);
+        ndt_del(u);
+
+        ndt_meta_del(m);
+        count++;
+    }
+    fprintf(stderr, "test_serialize (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+#if defined(__linux__)
+static int
+test_serialize_fuzz(void)
+{
+    ndt_context_t *ctx;
+    ndt_meta_t *m;
+    char *buf;
+    ssize_t ret, n;
+    int src;
+    int64_t i;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "\nmalloc error in fuzz tests\n");
+        return -1;
+    }
+
+    src = open("/dev/urandom", O_RDONLY);
+    if (src < 0) {
+        ndt_context_del(ctx);
+        fprintf(stderr, "\ncould not open /dev/urandom\n");
+        return -1;
+    }
+
+    for (i = 0; i < 10000; i++) {
+        n = rand() % 1000;
+        buf = ndt_alloc(n, 1);
+        if (buf == NULL) {
+            close(src);
+            ndt_context_del(ctx);
+            fprintf(stderr, "malloc error in fuzz tests\n");
+            return -1;
+        }
+
+        ret = read(src, buf, n);
+        if (ret < 0) {
+            ndt_free(buf);
+            close(src);
+            ndt_context_del(ctx);
+            fprintf(stderr, "\nread error in fuzz tests\n");
+            return -1;
+        }
+
+        m = ndt_meta_new(ctx);
+        if (m == NULL) {
+            ndt_free(buf);
+            close(src);
+            ndt_context_del(ctx);
+            fprintf(stderr, "\nmalloc error in fuzz tests\n");
+            return -1;
+        }
+
+        ndt_err_clear(ctx);
+        ndt_t *t = ndt_deserialize(m, buf, n, ctx);
+        if (t != NULL) {
+            ndt_del(t);
+        }
+
+        ndt_free(buf);
+        ndt_meta_del(m);
+    }
+    fprintf(stderr, "test_serialize_fuzz (%" PRIi64 " test cases)\n", i);
+
+    close(src);
+    ndt_context_del(ctx);
+    return 0;
+}
+#endif
 
 static int (*tests[])(void) = {
   test_parse,
@@ -1275,6 +1477,10 @@ static int (*tests[])(void) = {
   test_copy,
   test_buffer,
   test_buffer_error,
+  test_serialize,
+#ifdef __linux__
+  test_serialize_fuzz,
+#endif
 #ifdef __GNUC__
   test_struct_align_pack,
   test_array,

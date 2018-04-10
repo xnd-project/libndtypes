@@ -11,6 +11,10 @@ cd compat
 copy /y Makefile.vc Makefile
 cd ..
 
+cd serialize
+copy /y Makefile.vc Makefile
+cd ..
+
 nmake /nologo clean
 nmake /nologo
 

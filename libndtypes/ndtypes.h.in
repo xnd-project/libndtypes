@@ -154,11 +154,15 @@ enum ndt_offsets {
 /*
  * Collect offsets during parsing for transferring ownership to an external
  * resource manager later.
+ *
+ * The arrays are addressed by t->ndim-1, where t->ndim > 0. It follows that
+ * offsets[0] are the offsets of the innermost dimension and offsets[ndims-1]
+ * the offsets of the outermost dimension.
  */
 typedef struct {
-    int num_offset_arrays;               /* number of offset arrays */
-    int32_t num_offsets[NDT_MAX_DIM];    /* lengths of the offset arrays */
-    int32_t *offset_arrays[NDT_MAX_DIM]; /* offset arrays */
+    int ndims;                     /* number of offset arrays */
+    int32_t noffsets[NDT_MAX_DIM]; /* length of the nth offset array */
+    int32_t *offsets[NDT_MAX_DIM]; /* nth offset array */
 } ndt_meta_t;
 
 
@@ -287,6 +291,17 @@ typedef struct {
     int64_t step;
 } ndt_slice_t;
 
+/* Object features for the Nominal type. */
+typedef bool (* ndt_init_t)(void *dest, const void *src, ndt_context_t *);
+typedef bool (* ndt_constraint_t)(const void *, ndt_context_t *);
+typedef void *(* ndt_repr_t)(const void *, ndt_context_t *);
+
+typedef struct {
+   ndt_init_t init;
+   ndt_constraint_t constraint;
+   ndt_repr_t repr;
+} ndt_methods_t;
+
 
 /* Datashape type */
 struct _ndt {
@@ -357,7 +372,7 @@ struct _ndt {
         struct {
             char *name;
             ndt_t *type;
-            bool (* constraint)(void *, ndt_context_t *);
+            const ndt_methods_t *meth;
         } Nominal;
 
         struct {
@@ -626,24 +641,26 @@ NDTYPES_API char *ndt_as_string(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_indent(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx);
 
+NDTYPES_API int64_t ndt_serialize(char **dest, const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_deserialize(ndt_meta_t *m, const char *ptr, int64_t len,
+                                   ndt_context_t *ctx);
+
 
 /*****************************************************************************/
 /*                                 Typedef                                   */
 /*****************************************************************************/
 
-typedef bool (* ndt_constraint_t)(void *, ndt_context_t *);
-
 typedef struct {
     const ndt_t *type;
-    ndt_constraint_t constraint;
+    ndt_methods_t meth;
 } ndt_typedef_t;
 
 /* Typedef for nominal types */
-NDTYPES_API int ndt_typedef_add(const char *name, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef_add(const char *name, ndt_t *type, const ndt_methods_t *m, ndt_context_t *ctx);
 NDTYPES_API const ndt_typedef_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 
-NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx);
-NDTYPES_API int ndt_typedef_from_string(const char *name, const char *type, ndt_constraint_t f, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, const ndt_methods_t *m, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef_from_string(const char *name, const char *type, const ndt_methods_t *m, ndt_context_t *ctx);
 
 
 /*****************************************************************************/
@@ -751,6 +768,9 @@ NDTYPES_API ndt_t *ndt_from_string_fill_meta(ndt_meta_t *m, const char *input, n
 
 /* Metadata is provided and managed by an external source. */
 NDTYPES_API ndt_t *ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_t *ctx);
+
+NDTYPES_API ndt_meta_t *ndt_meta_new(ndt_context_t *ctx);
+NDTYPES_API void ndt_meta_del(ndt_meta_t *m);
 
 
 /******************************************************************************/
