@@ -75,11 +75,6 @@ match themselves:
    >>> p.match(c)
    True
 
-   >>> p = ndt("var * float32")
-   >>> c = ndt("var * float32")
-   >>> p.match(c)
-   True
-
    >>> p = ndt("10 * float64")
    >>> c = ndt("10 * float32")
    >>> p.match(c)
@@ -100,8 +95,8 @@ of a type kind can match different types:
 
 .. doctest::
 
-   >>> p = ndt("(Any) -> Any")
-   >>> c = ndt("(float64) -> int32")
+   >>> p = ndt("(Any, Any)")
+   >>> c = ndt("(float64, int32)")
    >>> p.match(c)
    True
 
@@ -145,21 +140,6 @@ The *Scalar* type kind stands for the set of all :ref:`scalars <scalars>`.
    >>> c = ndt("int32")
    >>> p.match(c)
    True
-
-
-A pattern for a function that takes any type and returns a scalar:
-
-.. doctest::
-
-   >>> p = ndt("(Any) -> Scalar")
-   >>> c = ndt("(10 * complex128) -> float64")
-   >>> p.match(c)
-   True
-
-   >>> p = ndt("(Any) -> Scalar")
-   >>> c = ndt("(?{a: 10 * uint8}) -> 10 * uint8")
-   >>> p.match(c)
-   False
 
 
 Unlike with type variables, different types match a type kind:
@@ -304,19 +284,6 @@ fixed size arrays:
    True
 
 
-Symbolic-symbolic match
------------------------
-
-Symbolic dimensions also match against other symbolic dimensions:
-
-.. doctest::
-
-   >>> p = ndt("N * float64")
-   >>> c = ndt("M * float64")
-   >>> p.match(c)
-   True
-
-
 Symbolic+Dtypevar
 -----------------
 
@@ -339,12 +306,7 @@ ellipsis dimensions (named or unnamed):
 .. doctest::
 
    >>> p = ndt("... * float64")
-   >>> c = ndt("N * float64")
-   >>> p.match(c)
-   True
-
-   >>> p = ndt("... * float64")
-   >>> c = ndt("10 * N * float64")
+   >>> c = ndt("10 * 2 * float64")
    >>> p.match(c)
    True
 
