@@ -14,6 +14,12 @@ Types
 
 The set of all types comprises :ref:`dtypes <dtypes>` and :ref:`arrays <arrays>`.
 
+The rest of this document assumes that the :py:mod:`ndtypes` module has been
+imported:
+
+.. testcode::
+
+   from ndtypes import ndt
 
 .. _dtypes:
 
@@ -42,7 +48,7 @@ Fixed size
 Datashape offers a number of fixed-size scalars. Here's how to construct a simple
 :c:type:`int64_t` type:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt('int64')
    ndt("int64")
@@ -75,7 +81,7 @@ Datashape has a number of aliases for scalars, which are internally mapped
 to their corresponding platform specific fixed-size types. This is how to
 construct an :c:type:`intptr_t`:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt('intptr')
    ndt("int64")
@@ -116,7 +122,7 @@ has several aliases:
 
 As seen in the table, encodings must be given in string form:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("char('utf16')")
    ndt("char('utf16')")
@@ -128,7 +134,7 @@ Chars
 The ``char`` constructor accepts ``'ascii'``, ``'ucs2'`` and ``'utf32'`` encoding
 arguments.  ``char`` without arguments is equivalent to ``char(utf32)``.
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("char('ascii')")
    ndt("char('ascii')")
@@ -145,7 +151,7 @@ UTF-8 strings
 
 The ``string`` type is a variable length NUL-terminated UTF-8 string:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("string")
    ndt("string")
@@ -158,7 +164,7 @@ Fixed size strings
 
 The ``fixed_string`` type takes a length and an optional encoding argument:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("fixed_string(1729)")
    ndt("fixed_string(1729)")
@@ -173,10 +179,10 @@ Bytes
 The `bytes` type is variable length and takes an optional alignment argument.
 Valid values are powers of two in the range ``[1, 16]``.
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("bytes")
-   ndt("bytes()")
+   ndt("bytes")
 
    >>> ndt("bytes(align=2)")
    ndt("bytes(align=2)")
@@ -191,7 +197,7 @@ The ``fixed_bytes`` type takes a length and an optional alignment argument.
 The latter is a keyword-only argument in order to prevent accidental swapping of
 the two integer arguments:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("fixed_bytes(size=32)")
    ndt("fixed_bytes(size=32)")
@@ -207,7 +213,7 @@ References
 Datashape references are fully general and can point to types of arbitrary
 complexity:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("ref(int64)")
    ndt("ref(int64)")
@@ -224,7 +230,7 @@ The categorical type allows to specify subsets of types. This is implemented
 as a set of typed values. Types are inferred and interpreted as int64, float64
 or strings. The *NA* keyword creates a category for missing values.
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("categorical(1, 10)")
    ndt("categorical(1, 10)")
@@ -248,7 +254,7 @@ The concept is well-known from languages like ML or SQL.
 
 Two equivalent notations exist:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("?complex64")
    ndt("?complex64")
@@ -263,13 +269,13 @@ Dtype variables
 Dtype variables are used in quantifier free type schemes and pattern matching.
 The range of a variable extends over the entire type term.
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("T")
    ndt("T")
 
    >>> ndt("10 * 16 * T")
-   ndt('10 * 16 * T')
+   ndt("10 * 16 * T")
 
 
 .. _symbolic-constructors:
@@ -281,7 +287,7 @@ Symbolic constructors
 Symbolic constructors stand for any constructor that takes the given datashape
 argument. Used in pattern matching.
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("Coulomb(float64)")
    ndt("Coulomb(float64)")
@@ -328,7 +334,7 @@ Tuples
 
 As usual, the tuple type is the product type of a fixed number of types:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("(int64, float32, string)")
    ndt("(int64, float32, string)")
@@ -336,10 +342,10 @@ As usual, the tuple type is the product type of a fixed number of types:
 
 Tuples can be nested:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("(bytes, (int8, fixed_string(10)))")
-   ndt("(bytes(), (int8, fixed_string(10)))")
+   ndt("(bytes, (int8, fixed_string(10)))")
 
 
 Records
@@ -347,7 +353,7 @@ Records
 
 Records are equivalent to tuples with named fields:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("{a: float32, b: float64}")
    ndt("{a : float32, b : float64}")
@@ -367,7 +373,7 @@ Positional-only
 This is a function type with a single positional ``int32`` argument, returning
 an ``int32``:
 
-.. code-block:: py
+.. doctest::
 
   >>> ndt("(int32) -> int32")
   ndt("(int32) -> int32")
@@ -375,7 +381,7 @@ an ``int32``:
 
 This is a function type with three positional arguments:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("(int32, complex128, string) -> float64")
    ndt("(int32, complex128, string) -> float64")
@@ -387,73 +393,11 @@ Positional-variadic
 This is a function type with a single required positional argument,
 followed by any number of additional positional arguments:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("(int32, ...) -> int32")
    ndt("(int32, ...) -> int32")
 
-
-Keyword-only
-~~~~~~~~~~~~
-
-Keywords are specified inline:
-
-.. code-block:: py
-
-   >>> ndt("(distance: float32, velocity: float32) -> float32")
-   ndt("(distance : float32, velocity : float32) -> float32")
-
-
-Keyword-variadic
-~~~~~~~~~~~~~~~~
-
-This is a function type with a single required keyword argument,
-followed by any number of additional keyword arguments:
-
-.. code-block:: py
-
-   >>> ndt("(sum: float64, ...) -> float64")
-   ndt("(sum : float64, ...) -> float64")
-
- 
-Mixed
-~~~~~
-
-Function types can have both positional and keyword arguments, the former
-must precede the latter:
-
-.. code-block:: py
-
-   >>> ndt("(uint32, uint32, product: float64) -> float64")
-   ndt("(uint32, uint32, product : float64) -> float64")
-
- 
-Mixed-variadic
-~~~~~~~~~~~~~~
-
-Any combination of positional-variadic and keyword-variadic is permitted.
-
-This function has positional-variadic arguments, followed by keyword
-arguments:
-
-.. code-block:: py
-
-   >>> ndt("(uint64, ..., scale: uint8) -> uint64")
-   ndt("(uint64, ..., scale : uint8) -> uint64")
-
-Positional arguments, followed by keyword-variadic arguments:
-
-.. code-block:: py
-
-   >>> ndt("(uint64, scale: uint8, ...) -> uint64")
-   ndt("(uint64, scale : uint8, ...) -> uint64")
-
-Positional-variadic and keyword-variadic:
-
-.. code-block:: py
-
-   >>> ndt("(..., color: uint32, ...) -> uint64")
-   ndt("(..., color : uint32, ...) -> uint64")
 
 
 .. _arrays:
@@ -475,7 +419,7 @@ Fixed Dimension
 A fixed dimension denotes an array type with a fixed number of elements of
 a specific type.  The type can be written in two ways:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("fixed(shape=10) * uint64")
    ndt("10 * uint64")
@@ -494,7 +438,7 @@ it may be helpful to view this type as ``array[10] of uint64``.
 Multidimensional arrays are constructed in the same manner, the ``*`` is
 right associative:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("10 * 25 * float64")
    ndt("10 * 25 * float64")
@@ -508,7 +452,7 @@ array.
 Dtypes can be arbitrarily complex. Here is an array with a dtype of a record that
 contains another array:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("120 * {size: int32, items: 10 * int8}")
    ndt("120 * {size : int32, items : 10 * int8}")
@@ -523,7 +467,7 @@ Variable Dimension
 The variable dimension kind describes an array type with a variable number
 of elements of a specific type:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("var * float32")
    ndt("var * float32")
@@ -546,7 +490,7 @@ symbolic dimension is an uppercase variable that stands for a fixed dimension.
 In this manner entire sets of array types can be specified.  The following type
 describes the set of all ``M * N`` matrices with a ``float32`` dtype: 
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("M * N * float32")
    ndt("M * N * float32")
@@ -555,7 +499,7 @@ describes the set of all ``M * N`` matrices with a ``float32`` dtype:
 The next type describes a function that performs matrix multiplication on any
 permissible pair of input matrices with dtype ``T``:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("(M * N * T, N * P * T) -> M * P * T")
    ndt("(M * N * T, N * P * T) -> M * P * T")
@@ -565,7 +509,7 @@ In this case, we have used both symbolic dimensions and the type variable ``T``.
 
 Symbolic dimensions can be mixed fixed dimensions:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("10 * N * float64")
    ndt("10 * N * float64")
@@ -580,7 +524,7 @@ Ellipsis Dimension
 The ellipsis, used in pattern matching, stands for any number of dimensions.
 Datashape supports both named and unnamed ellipses:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("... * float32")
    ndt("... * float32")
@@ -588,10 +532,10 @@ Datashape supports both named and unnamed ellipses:
 
 Named form:
 
-.. code-block:: py
+.. doctest::
 
    >>> ndt("Dim... * float32")
-   ndt('Dim... * float32')
+   ndt("Dim... * float32")
 
 Ellipsis dimensions play an important role in broadcasting, more on the topic
 in the section on pattern matching.

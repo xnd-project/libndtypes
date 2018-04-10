@@ -9,17 +9,18 @@ matrix:
     - compiler: gcc
       before_script:
         - sudo apt-get -qq update
-        - sudo apt-get install -y python3-numpy
+        - sudo apt-get install -y python3-numpy python3-sphinx
       script:
         - ./configure
         - make check
         - python3 setup.py module
         - python3 setup.py test
+        - python3 setup.py doctest
 
     - compiler: gcc
       before_script:
         - sudo apt-get -qq update
-        - sudo apt-get install valgrind
+        - sudo apt-get install -y valgrind
       script:
         - ./configure --with-valgrind
         - make parser
