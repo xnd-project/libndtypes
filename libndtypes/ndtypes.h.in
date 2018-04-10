@@ -361,6 +361,7 @@ struct _ndt {
         struct {
             char *name;
             ndt_t *type;
+            bool (* init)(void *dest, void *src, ndt_context_t *);
             bool (* constraint)(void *, ndt_context_t *);
         } Nominal;
 
@@ -639,19 +640,24 @@ NDTYPES_API ndt_t *ndt_deserialize(ndt_meta_t *m, const char *ptr, int64_t len,
 /*                                 Typedef                                   */
 /*****************************************************************************/
 
+typedef bool (* ndt_init_t)(void *, void *src, ndt_context_t *);
 typedef bool (* ndt_constraint_t)(void *, ndt_context_t *);
 
 typedef struct {
     const ndt_t *type;
+    ndt_init_t init;
     ndt_constraint_t constraint;
 } ndt_typedef_t;
 
 /* Typedef for nominal types */
-NDTYPES_API int ndt_typedef_add(const char *name, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef_add(const char *name, ndt_t *type, ndt_init_t init,
+                                ndt_constraint_t constraint, ndt_context_t *ctx);
 NDTYPES_API const ndt_typedef_t *ndt_typedef_find(const char *name, ndt_context_t *ctx);
 
-NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx);
-NDTYPES_API int ndt_typedef_from_string(const char *name, const char *type, ndt_constraint_t f, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef(const char *name, ndt_t *type, ndt_init_t init,
+                            ndt_constraint_t constraint, ndt_context_t *ctx);
+NDTYPES_API int ndt_typedef_from_string(const char *name, const char *type, ndt_init_t init,
+                                        ndt_constraint_t constraint, ndt_context_t *ctx);
 
 
 /*****************************************************************************/

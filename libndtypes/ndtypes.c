@@ -540,10 +540,10 @@ ndt_type_array_del(ndt_t **types, int64_t shape)
  * reference.
  */
 int
-ndt_typedef(const char *name, ndt_t *type, ndt_constraint_t f,
-            ndt_context_t *ctx)
+ndt_typedef(const char *name, ndt_t *type, ndt_init_t init,
+            ndt_constraint_t constraint, ndt_context_t *ctx)
 {
-    if (ndt_typedef_add(name, type, f, ctx) < 0) {
+    if (ndt_typedef_add(name, type, init, constraint, ctx) < 0) {
         return -1;
     }
 
@@ -551,8 +551,8 @@ ndt_typedef(const char *name, ndt_t *type, ndt_constraint_t f,
 }
 
 int
-ndt_typedef_from_string(const char *name, const char *type, ndt_constraint_t f,
-                        ndt_context_t *ctx)
+ndt_typedef_from_string(const char *name, const char *type, ndt_init_t init,
+                        ndt_constraint_t constraint, ndt_context_t *ctx)
 {
     ndt_t *t;
 
@@ -561,7 +561,7 @@ ndt_typedef_from_string(const char *name, const char *type, ndt_constraint_t f,
         return -1;
     }
 
-    if (ndt_typedef_add(name, t, f, ctx) < 0) {
+    if (ndt_typedef_add(name, t, init, constraint, ctx) < 0) {
         return -1;
     }
 
@@ -1849,6 +1849,7 @@ ndt_nominal(char *name, ndt_t *type, ndt_context_t *ctx)
     }
     t->Nominal.name = name;
     t->Nominal.type = type;
+    t->Nominal.init = d->init;
     t->Nominal.constraint = d->constraint;
     t->flags = ndt_subtree_flags(type);
 

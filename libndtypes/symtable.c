@@ -86,6 +86,7 @@ typedef_trie_new(ndt_context_t *ctx)
     }
 
     t->def.type = NULL;
+    t->def.init = NULL;
     t->def.constraint = NULL;
 
     for (i = 0; i < ALPHABET_LEN; i++) {
@@ -114,7 +115,8 @@ typedef_trie_del(typedef_trie_t *t)
 }
 
 int
-ndt_typedef_add(const char *key, ndt_t *type, ndt_constraint_t f, ndt_context_t *ctx)
+ndt_typedef_add(const char *key, ndt_t *type, ndt_init_t init,
+                ndt_constraint_t constraint, ndt_context_t *ctx)
 {
     typedef_trie_t *t = typedef_map;
     const unsigned char *cp;
@@ -150,7 +152,8 @@ ndt_typedef_add(const char *key, ndt_t *type, ndt_constraint_t f, ndt_context_t 
     }
 
     t->def.type = type;
-    t->def.constraint = f;
+    t->def.init = init;
+    t->def.constraint = constraint;
 
     return 0;
 }
