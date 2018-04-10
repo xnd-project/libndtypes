@@ -789,8 +789,7 @@ read_nominal(ndt_meta_t *m, const common_t *fields, const char * const ptr,
     }
     t->Nominal.name = name;
     t->Nominal.type = type;
-    t->Nominal.init = d->init;
-    t->Nominal.constraint = d->constraint;
+    t->Nominal.meth = &d->meth;
 
     return t;
 }
