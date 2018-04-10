@@ -14,8 +14,8 @@ Types
 
 The set of all types comprises :ref:`dtypes <dtypes>` and :ref:`arrays <arrays>`.
 
-The rest of this document assumes that the
-:py:mod:`ndtypes` module has been imported:
+The rest of this document assumes that the :py:mod:`ndtypes` module has been
+imported:
 
 .. testcode::
 
