@@ -204,7 +204,6 @@ READ_POS(int32)
 
 READ(uint16)
 READ(uint32)
-READ(int32)
 READ(int64)
 READ(float64)
 READ_ARRAY(uint16)
