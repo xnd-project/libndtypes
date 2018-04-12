@@ -979,7 +979,7 @@ read_type(ndt_meta_t *m, const char * const ptr, int64_t offset, const int64_t l
 }
 
 ndt_t *
-ndt_deserialize(ndt_meta_t *m, const char * const ptr, const int64_t len,
+ndt_deserialize(ndt_meta_t *m, const char * const ptr, int64_t len,
                 ndt_context_t *ctx)
 {
     return read_type(m, ptr, 0, len, ctx);
