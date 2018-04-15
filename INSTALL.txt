@@ -73,11 +73,12 @@ python3 setup.py clean
 Alternative install (for developing)
 ------------------------------------
 
-# Install the package into a local directory using a relative path.
-# The following line installs the package into directory 'foo' outside
-# the ndtypes directory. This is mainly useful for developing xnd or
-# gufuncs.
-python3 setup.py install --local=../foo
+# Install the package into a local directory.  This is mainly useful for
+# developing xnd or gufuncs:
+python3 setup.py install --local="$PWD/../python"
+
+# Windows:
+python.exe setup.py install --local="%cd%\..\python"
 
 
 
