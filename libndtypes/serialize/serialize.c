@@ -69,7 +69,7 @@ static inline int64_t                                                     \
 write_##type##_array(char * const ptr, int64_t offset, const type##_t *v, \
                      const int64_t nmemb, bool *overflow)                 \
 {                                                                         \
-    int64_t size = MULi64(nmemb, sizeof(type##_t), overflow);             \
+    size_t size = MULi64_size(nmemb, sizeof(type##_t), overflow);         \
                                                                           \
     if (ptr != NULL) {                                                    \
         memcpy(ptr+offset, v, size);                                      \

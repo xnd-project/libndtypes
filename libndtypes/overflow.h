@@ -63,6 +63,17 @@ MULi64(int64_t a, int64_t b, bool *overflow)
     return c;
 }
 
+static inline size_t
+MULi64_size(int64_t a, int64_t b, bool *overflow)
+{
+    int64_t c;
+    *overflow |= __builtin_mul_overflow(a, b, &c);
+#if SIZE_MAX < INT64_MAX
+    *overflow |= (c > INT32_MAX);
+#endif
+    return c;
+}
+
 static inline int64_t
 ABSi64(int64_t a, bool *overflow)
 {
@@ -102,6 +113,17 @@ MULi64(int64_t a, int64_t b, bool *overflow)
 {
     int64_t c = (uint64_t)a * (uint64_t)b;
     *overflow |= ((b < 0 && a == INT64_MIN) || (b != 0 && a != c / b));
+    return c;
+}
+
+static inline int64_t
+MULi64_size(int64_t a, int64_t b, bool *overflow)
+{
+    int64_t c = (uint64_t)a * (uint64_t)b;
+    *overflow |= ((b < 0 && a == INT64_MIN) || (b != 0 && a != c / b));
+#if SIZE_MAX < INT64_MAX
+    *overflow |= (c > INT32_MAX);
+#endif
     return c;
 }
 
