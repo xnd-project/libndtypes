@@ -60,7 +60,7 @@ var_dim_copy_contiguous(ndt_t *type, const ndt_t *t, ndt_context_t *ctx)
     }
 
     for (i=0, sum=0; i < noffsets-1; i++) {
-        offsets[i] = sum;
+        offsets[i] = (int32_t)sum;
 
         shape = ndt_var_indices(&start, &step, t, i, ctx);
         if (shape == -1) {
@@ -69,7 +69,7 @@ var_dim_copy_contiguous(ndt_t *type, const ndt_t *t, ndt_context_t *ctx)
         }
         sum += shape;
     }
-    offsets[i] = sum;
+    offsets[i] = (int32_t)sum;
 
     return ndt_var_dim(type, InternalOffsets, noffsets, offsets, 0, NULL, ctx);
 }
