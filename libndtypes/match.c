@@ -590,7 +590,7 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
 
 static ndt_t *
 broadcast(const ndt_t *t, const int64_t *shape,
-          int64_t outer_dims, int inner_dims,
+          int outer_dims, int inner_dims,
           bool use_max, ndt_context_t *ctx)
 {
     ndt_ndarray_t u;
