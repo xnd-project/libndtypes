@@ -174,8 +174,8 @@ resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 {
     const char *key = "00_ELLIPSIS";
     symtable_entry_t *v;
-    int64_t vsize, wsize;
     int64_t n, m;
+    int vsize, wsize;
     int i, k;
 
     v = symtable_find_ptr(tbl, key);
