@@ -691,8 +691,7 @@ static int
 resolve_constraint(const ndt_constraint_t *c, const void *args, symtable_t *tbl,
                    ndt_context_t *ctx)
 {
-    int nsym = c->nin + c->nout;
-    int64_t shapes[nsym];
+    int64_t shapes[NDT_MAX_SYMBOLS];
     symtable_entry_t v;
 
     for (int i = 0; i < c->nin; i++) {
