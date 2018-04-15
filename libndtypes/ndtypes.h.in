@@ -291,14 +291,39 @@ typedef struct {
     int64_t step;
 } ndt_slice_t;
 
+/*
+ * Constraint support for function signatures. A constraint needs to specify:
+ *
+ *  1) The symbols in the function arguments and return value(s) that are
+ *     needed to decide the constraint.
+ *  2) ndt_typecheck() resolves the 'nin' incoming symbols and passes their
+ *     shape values in the 'shapes' array.  It then calls the constraint
+ *     function.
+ *  3) The constraint function can look at the incoming shapes as well
+ *     as the incoming function arguments (usually xnd_t).
+ *  4) The function then needs to decide whether the constraint is met; if so,
+ *     it must fill in 'nout' shapes for the return symbols (if any).
+ *  5) ndt_typecheck() uses the resolved 'nout' shapes to update the symbol
+ *     table and now has sufficient information to compute the return type.
+ */
+#define NDT_MAX_SYMBOLS 16
+typedef int (* ndt_func_constraint_t)(int64_t *shapes, const void *args, ndt_context_t *ctx);
+
+typedef struct {
+    ndt_func_constraint_t f;
+    int nin;
+    int nout;
+    const char *symbols[NDT_MAX_SYMBOLS];
+} ndt_constraint_t;
+
 /* Object features for the Nominal type. */
 typedef bool (* ndt_init_t)(void *dest, const void *src, ndt_context_t *);
-typedef bool (* ndt_constraint_t)(const void *, ndt_context_t *);
+typedef bool (* ndt_tdef_constraint_t)(const void *, ndt_context_t *);
 typedef void *(* ndt_repr_t)(const void *, ndt_context_t *);
 
 typedef struct {
    ndt_init_t init;
-   ndt_constraint_t constraint;
+   ndt_tdef_constraint_t constraint;
    ndt_repr_t repr;
 } ndt_methods_t;
 
@@ -617,7 +642,9 @@ NDTYPES_API ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API int ndt_equal(const ndt_t *t, const ndt_t *u);
 NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 NDTYPES_API int ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
-                              const ndt_t *in[], const int nin, ndt_context_t *ctx);
+                              const ndt_t *in[], const int nin,
+                              const ndt_constraint_t *c, const void *args,
+                              ndt_context_t *ctx);
 
 NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
 

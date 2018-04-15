@@ -687,14 +687,48 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
     return 0;
 }
 
+static int
+resolve_constraint(const ndt_constraint_t *c, const void *args, symtable_t *tbl,
+                   ndt_context_t *ctx)
+{
+    int nsym = c->nin + c->nout;
+    int64_t shapes[nsym];
+    symtable_entry_t v;
+
+    for (int i = 0; i < c->nin; i++) {
+        v = symtable_find(tbl, c->symbols[i]);
+        if (v.tag != ShapeEntry) {
+            ndt_err_format(ctx, NDT_ValueError, "expected dimension variable");
+            return -1;
+        }
+        shapes[i] = v.ShapeEntry;
+    }
+
+    if (c->f(shapes, args, ctx) < 0) {
+        return -1;
+    }
+
+    for (int i = 0; i < c->nout; i++) {
+        v.tag = ShapeEntry;
+        v.ShapeEntry = shapes[c->nin+i];
+        if (resolve_sym(c->symbols[c->nin+i], v, tbl, ctx) < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 /*
  * Check the concrete function arguments 'in' against the function
  * signature 'sig'.  On success, infer and return the concrete return
  * types and the (possibly broadcasted) 'in' types.
  */
 int
-ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
-              const int nin, ndt_context_t *ctx)
+ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
+              const ndt_t *in[], const int nin,
+              const ndt_constraint_t *c, const void *args,
+              ndt_context_t *ctx)
 {
     symtable_t *tbl;
     ndt_t *t;
@@ -744,6 +778,11 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[],
 
             return -1;
         }
+    }
+
+    if (c != NULL && resolve_constraint(c, args, tbl, ctx) < 0) {
+        symtable_del(tbl);
+        return -1;
     }
 
     for (i = 0; i < sig->Function.nout; i++) {

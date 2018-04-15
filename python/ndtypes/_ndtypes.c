@@ -697,7 +697,7 @@ ndtype_apply(PyObject *self, PyObject *args)
     }
 
     spec = ndt_apply_spec_empty;
-    if (ndt_typecheck(&spec, sig, in, nin, &ctx) < 0) {
+    if (ndt_typecheck(&spec, sig, in, nin, NULL, NULL, &ctx) < 0) {
         return seterr(&ctx);
     }
 
