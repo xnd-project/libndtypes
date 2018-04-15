@@ -331,7 +331,7 @@ match_single(const ndt_t *p, const ndt_t *c, bool ellipsis, symtable_t *tbl,
 }
 
 static int
-resolve_ellipsis(const char *name, const ndt_t *c[], int64_t cshape,
+resolve_ellipsis(const char *name, const ndt_t *c[], int cshape,
                  symtable_t *tbl, ndt_context_t *ctx)
 {
     if (name == NULL) {
