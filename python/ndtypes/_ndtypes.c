@@ -128,7 +128,7 @@ rbuf_init_from_offset_list(ResourceBufferObject *rbuf, PyObject *list)
     }
 
     m->ndims = 0;
-    for (int i = n-1; i >= 0; i--) {
+    for (int64_t i = n-1; i >= 0; i--) {
         lst = PyList_GET_ITEM(list, i);
         if (!PyList_Check(lst)) {
             PyErr_SetString(PyExc_TypeError,
