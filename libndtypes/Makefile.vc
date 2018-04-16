@@ -8,7 +8,7 @@ LIBIMPORT = libndtypes-0.2.0dev3.dll.lib
 LIBSHARED = libndtypes-0.2.0dev3.dll
 
 OPT = /MT /Ox /GS /EHsc
-OPT_SHARED = /DEXPORT /MD /Ox /GS /EHsc /Fo.objs^\
+OPT_SHARED = /DNDT_EXPORT /MD /Ox /GS /EHsc /Fo.objs^\
 
 COMMON_CFLAGS = /nologo /W4 /wd4200 /wd4201 /wd4204
 COMMON_CFLAGS_FOR_GENERATED = /nologo /W4 /wd4200 /wd4201 /wd4244 /wd4267 /wd4702 /wd4127 /DYY_NO_UNISTD_H=1 /D__STDC_VERSION__=199901L

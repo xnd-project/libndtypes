@@ -7,7 +7,7 @@ LIBSHARED = libndtypes-0.2.0dev3.dll.lib
 
 CC = cl.exe
 CFLAGS = /nologo /MT /Ox /GS /EHsc
-CFLAGS_SHARED = /nologo /DIMPORT /MD /Ox /GS /EHsc
+CFLAGS_SHARED = /nologo /DNDT_IMPORT /MD /Ox /GS /EHsc
 
 default: runtest runtest_shared
 

@@ -59,9 +59,9 @@
 #endif
 
 #ifdef _MSC_VER
-  #if defined (EXPORT)
+  #if defined (NDT_EXPORT)
     #define NDTYPES_API __declspec(dllexport)
-  #elif defined(IMPORT)
+  #elif defined(NDT_IMPORT)
     #define NDTYPES_API __declspec(dllimport)
   #else
     #define NDTYPES_API

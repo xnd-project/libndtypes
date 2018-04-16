@@ -2,7 +2,7 @@
 SRCDIR = ..
 
 OPT = /MT /Ox /GS /EHsc
-OPT_SHARED = /DEXPORT /MD /Ox /GS /EHsc /Fo.objs^\
+OPT_SHARED = /DNDT_EXPORT /MD /Ox /GS /EHsc /Fo.objs^\
 
 COMMON_CFLAGS = -I$(SRCDIR) /nologo /W4 /wd4200 /wd4201 /wd4204 /D_CRT_SECURE_NO_WARNINGS
 
