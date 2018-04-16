@@ -159,7 +159,8 @@ mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, ndt_context_t *ctx)
     ndt_free(out->ptr);
     ndt_free(out);
 
-    return ndt_function(types, nargs, nin, nout, ctx);
+    return ndt_function(types, (int32_t)nargs, (int32_t)nin, (int32_t)nout,
+                        ctx);
 }
 
 ndt_t *

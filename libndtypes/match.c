@@ -525,7 +525,6 @@ match_datashape(const ndt_t *p, const ndt_t *c,
         if (c->tag != Record) return 0;
         return match_record_fields(p, c, tbl, ctx);
     case Function: {
-        int64_t i;
         if (c->tag != Function ||
             c->Function.nin != p->Function.nin ||
             c->Function.nout != p->Function.nout ||
@@ -533,7 +532,7 @@ match_datashape(const ndt_t *p, const ndt_t *c,
             return 0;
         }
 
-        for (i = 0; i < p->Function.nargs; i++) {
+        for (int32_t i = 0; i < p->Function.nargs; i++) {
             n = match_datashape(p->Function.types[i], c->Function.types[i], tbl, ctx);
             if (n <= 0) return n;
         }
@@ -590,7 +589,7 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
 
 static ndt_t *
 broadcast(const ndt_t *t, const int64_t *shape,
-          int outer_dims, int inner_dims,
+          int32_t outer_dims, int32_t inner_dims,
           bool use_max, ndt_context_t *ctx)
 {
     ndt_ndarray_t u;
@@ -643,14 +642,14 @@ broadcast(const ndt_t *t, const int64_t *shape,
 
 static int
 broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
-              const ndt_t *in[], const int nin,
+              const ndt_t *in[], const int32_t nin,
               const symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
     ndt_t *u;
     int outer_dims;
     int inner_dims;
-    int i;
+    int32_t i;
 
     v = symtable_find(tbl, "00_ELLIPSIS");
     if (v.tag != BroadcastEntry) {
@@ -725,7 +724,7 @@ resolve_constraint(const ndt_constraint_t *c, const void *args, symtable_t *tbl,
  */
 int
 ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
-              const ndt_t *in[], const int nin,
+              const ndt_t *in[], const int32_t nin,
               const ndt_constraint_t *c, const void *args,
               ndt_context_t *ctx)
 {
@@ -733,7 +732,6 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     ndt_t *t;
     const char *name;
     int ret;
-    int64_t i;
 
     assert(spec->tag == Xnd);
     assert(spec->nout == 0);
@@ -752,7 +750,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    for (i = 0; i < nin; i++) {
+    for (int32_t i = 0; i < nin; i++) {
         if (ndt_is_abstract(in[i])) {
             ndt_err_format(ctx, NDT_ValueError,
                 "type checking requires concrete argument types");
@@ -765,7 +763,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    for (i = 0; i < nin; i++) {
+    for (int32_t i = 0; i < nin; i++) {
         ret = match_datashape(sig->Function.types[i], in[i], tbl, ctx);
         if (ret <= 0) {
             symtable_del(tbl);
@@ -784,7 +782,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    for (i = 0; i < sig->Function.nout; i++) {
+    for (int32_t i = 0; i < sig->Function.nout; i++) {
         spec->out[i] = ndt_substitute(sig->Function.types[nin+i], tbl, false, ctx);
         if (spec->out[i] == NULL) {
             ndt_apply_spec_clear(spec);

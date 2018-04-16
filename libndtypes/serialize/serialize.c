@@ -179,17 +179,17 @@ static int64_t
 write_function(char * const ptr, int64_t offset, const ndt_t * const t,
                bool *overflow)
 {
-    const int64_t nargs = t->Function.nargs;
+    const int32_t nargs = t->Function.nargs;
     int64_t metaoffset;
 
-    offset = write_int64(ptr, offset, t->Function.nin, overflow);
-    offset = write_int64(ptr, offset, t->Function.nout, overflow);
-    offset = write_int64(ptr, offset, nargs, overflow);
+    offset = write_int32(ptr, offset, t->Function.nin, overflow);
+    offset = write_int32(ptr, offset, t->Function.nout, overflow);
+    offset = write_int32(ptr, offset, nargs, overflow);
 
     metaoffset = offset;
     offset = alloc_int64_array(offset, nargs, overflow);
 
-    for (int64_t i = 0; i < nargs; i++) {
+    for (int32_t i = 0; i < nargs; i++) {
         metaoffset = write_int64(ptr, metaoffset, offset, overflow); 
         offset = write_type(ptr, offset, t->Function.types[i], overflow);
     }
