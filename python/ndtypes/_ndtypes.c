@@ -575,7 +575,7 @@ ndtype_serialize(PyObject *self, PyObject *args UNUSED)
         return seterr(&ctx);
     }
 
-    res = PyBytes_FromStringAndSize(bytes, size);
+    res = PyBytes_FromStringAndSize(bytes, (Py_ssize_t)size);
     ndt_free(bytes);
     return res;
 }
