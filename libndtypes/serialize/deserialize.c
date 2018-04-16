@@ -106,7 +106,7 @@ string_size(const char * const ptr, const int64_t offset, const int64_t len,
             ndt_context_t *ctx)
 {
     const int64_t n = len-offset;
-    const char *end = memchr(ptr+offset, '\0', n);
+    const char *end = memchr(ptr+offset, '\0', (size_t)n);
 
     if (end == NULL) {
         ndt_err_format(ctx, NDT_ValueError,
