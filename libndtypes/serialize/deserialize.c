@@ -85,17 +85,17 @@ next_offset(const int64_t offset, const size_t size, const int64_t len,
     return next;
 }
 
-static inline int64_t
+static inline size_t
 array_size(const int64_t nmemb, const size_t size, ndt_context_t *ctx)
 {
     bool overflow = 0;
-    int64_t array_size;
+    size_t array_size;
 
-    array_size = MULi64(nmemb, (int64_t)size, &overflow);
+    array_size = MULi64_size(nmemb, (int64_t)size, &overflow);
     if (nmemb < 0 || overflow) {
         ndt_err_format(ctx, NDT_ValueError,
             "corrupted data or buffer overflow in type deserialization");
-        return -1;
+        return SIZE_MAX;
     }
 
     return array_size;
@@ -178,8 +178,8 @@ read_##type##_array(type##_t * const v, const int64_t nmemb,        \
                     const char * const ptr, const int64_t offset,   \
                     const int64_t len, ndt_context_t *ctx)          \
 {                                                                   \
-    const int64_t size = array_size(nmemb, sizeof(type##_t), ctx);  \
-    if (size < 0) {                                                 \
+    const size_t size = array_size(nmemb, sizeof(type##_t), ctx);   \
+    if (size == SIZE_MAX) {                                         \
         return -1;                                                  \
     }                                                               \
                                                                     \
