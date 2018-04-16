@@ -54,9 +54,9 @@ ndt_common_equal(const ndt_t *t, const ndt_t *u)
 }
 
 static int
-function_types_equal(const ndt_t *t, const ndt_t *u, int32_t nargs)
+function_types_equal(const ndt_t *t, const ndt_t *u, int64_t nargs)
 {
-    int32_t i;
+    int64_t i;
 
     assert(t->tag == Function && u->tag == Function);
 

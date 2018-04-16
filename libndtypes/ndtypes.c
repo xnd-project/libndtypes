@@ -691,10 +691,10 @@ strcmp_null(const char *s, const char *t)
 }
 
 static int
-check_function_invariants(ndt_t * const *types, int32_t nargs, ndt_context_t *ctx)
+check_function_invariants(ndt_t * const *types, int64_t nargs, ndt_context_t *ctx)
 {
-    int32_t count = 0;
-    int32_t i;
+    int64_t count = 0;
+    int i;
 
     if (nargs == 0) {
         return 1;
@@ -783,11 +783,11 @@ ndt_new_extra(enum ndt tag, int64_t n, ndt_context_t *ctx)
 }
 
 ndt_t *
-ndt_function_new(int32_t nargs, ndt_context_t *ctx)
+ndt_function_new(int64_t nargs, ndt_context_t *ctx)
 {
     ndt_t *t = NULL;
     bool overflow = 0;
-    int64_t extra;
+    int64_t extra, i;
 
     extra = MULi64(nargs, sizeof(ndt_t *), &overflow);
 
@@ -804,7 +804,7 @@ ndt_function_new(int32_t nargs, ndt_context_t *ctx)
     t->Function.nargs = nargs;
     t->Function.types = (ndt_t **)t->extra;
 
-    for (int32_t i = 0; i < nargs; i++) {
+    for (i = 0; i < nargs; i++) {
         t->Function.types[i] = NULL;
     }
 
@@ -931,7 +931,8 @@ ndt_del(ndt_t *t)
     }
 
     case Function: {
-        for (int32_t i = 0; i < t->Function.nargs; i++) {
+        int64_t i;
+        for (i = 0; i < t->Function.nargs; i++) {
             ndt_del(t->Function.types[i]);
         }
         goto free_type;
@@ -1069,11 +1070,11 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
 
 /* Abstract function signatures */
 ndt_t *
-ndt_function(ndt_t * const *types, int32_t nargs, int32_t nin, int32_t nout,
+ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
              ndt_context_t *ctx)
 {
     ndt_t *t;
-    int32_t i;
+    int64_t i;
 
     assert(0 <= nin && 0 <= nout && nargs == nin+nout);
 

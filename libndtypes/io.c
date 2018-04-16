@@ -277,7 +277,7 @@ static int datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx);
 static int
 function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
-    int32_t i;
+    int64_t i;
     int n;
 
     assert(t->tag == Function);
@@ -769,7 +769,7 @@ ast_common_attributes_with_newline(buf_t *buf, const ndt_t *t, int d,
 static int
 ast_function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
-    int32_t i;
+    int64_t i;
     int n;
 
     assert(t->tag == Function);

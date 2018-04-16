@@ -384,18 +384,18 @@ read_function(ndt_meta_t *m, common_t *fields, const char * const ptr,
               int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
     int64_t metaoffset;
-    int32_t nin;
-    int32_t nout;
-    int32_t nargs;
+    int64_t nin;
+    int64_t nout;
+    int64_t nargs;
     ndt_t *t;
 
-    offset = read_pos_int32(&nin, ptr, offset, len, ctx);
+    offset = read_pos_int64(&nin, ptr, offset, len, ctx);
     if (offset < 0) return NULL;
 
-    offset = read_pos_int32(&nout, ptr, offset, len, ctx);
+    offset = read_pos_int64(&nout, ptr, offset, len, ctx);
     if (offset < 0) return NULL;
 
-    offset = read_pos_int32(&nargs, ptr, offset, len, ctx);
+    offset = read_pos_int64(&nargs, ptr, offset, len, ctx);
     if (offset < 0) return NULL;
 
 
@@ -406,7 +406,7 @@ read_function(ndt_meta_t *m, common_t *fields, const char * const ptr,
     copy_common(t, fields);
 
     metaoffset = offset;
-    for (int32_t i = 0; i < nargs; i++) {
+    for (int64_t i = 0; i < nargs; i++) {
         metaoffset = next_metaoffset(&offset, ptr, metaoffset, len, ctx);
         if (metaoffset < 0) return NULL;
 

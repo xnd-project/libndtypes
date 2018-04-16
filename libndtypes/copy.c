@@ -89,7 +89,7 @@ static ndt_t *
 ndt_copy_function(const ndt_t *t, ndt_context_t *ctx)
 {
     ndt_t *u;
-    int32_t i;
+    int64_t i;
 
     assert(t->tag == Function);
 
