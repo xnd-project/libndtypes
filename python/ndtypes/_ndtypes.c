@@ -194,28 +194,12 @@ rbuf_from_offset_lists(PyObject *list)
 
 static PyTypeObject ResourceBuffer_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "_ndtypes.resource",
-    sizeof(ResourceBufferObject),
-    0,
-    (destructor)rbuf_dealloc,     /* tp_dealloc */
-    0,                            /* tp_print */
-    0,                            /* tp_getattr */
-    0,                            /* tp_setattr */
-    0,                            /* tp_reserved */
-    0,                            /* tp_repr */
-    0,                            /* tp_as_number */
-    0,                            /* tp_as_sequence */
-    0,                            /* tp_as_mapping */
-    0,                            /* tp_hash */
-    0,                            /* tp_call */
-    0,                            /* tp_str */
-    PyObject_GenericGetAttr,      /* tp_getattro */
-    0,                            /* tp_setattro */
-    0,                            /* tp_as_buffer */
-    (Py_TPFLAGS_DEFAULT|
-     Py_TPFLAGS_HAVE_GC),         /* tp_flags */
-    0,                            /* tp_doc */
-    (traverseproc)rbuf_traverse,  /* tp_traverse */
+    .tp_name = "_ndtypes.resource",
+    .tp_basicsize = sizeof(ResourceBufferObject),
+    .tp_dealloc = (destructor)rbuf_dealloc,
+    .tp_getattro = PyObject_GenericGetAttr,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+    .tp_traverse = (traverseproc)rbuf_traverse
 };
 
 
@@ -961,46 +945,21 @@ static PyMethodDef ndtype_methods [] =
 static PyTypeObject Ndt_Type =
 {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "ndtypes.ndt",                          /* tp_name */
-    sizeof(NdtObject),                      /* tp_basicsize */
-    0,                                      /* tp_itemsize */
-    (destructor) ndtype_dealloc,            /* tp_dealloc */
-    0,                                      /* tp_print */
-    (getattrfunc) 0,                        /* tp_getattr */
-    (setattrfunc) 0,                        /* tp_setattr */
-    0,                                      /* tp_reserved */
-    (reprfunc) ndtype_repr,                 /* tp_repr */
-    0,                                      /* tp_as_number */
-    0,                                      /* tp_as_sequence */
-    0,                                      /* tp_as_mapping */
-    ndtype_hash,                            /* tp_hash */
-    0,                                      /* tp_call */
-    (reprfunc) ndtype_str,                  /* tp_str */
-    (getattrofunc) PyObject_GenericGetAttr, /* tp_getattro */
-    (setattrofunc) 0,                       /* tp_setattro */
-    (PyBufferProcs *) 0,                    /* tp_as_buffer */
-    (Py_TPFLAGS_DEFAULT|
-     Py_TPFLAGS_BASETYPE|
-     Py_TPFLAGS_HAVE_GC),                   /* tp_flags */
-    0,                                      /* tp_doc */
-    (traverseproc)ndtype_traverse,          /* tp_traverse */
-    NULL,                                   /* tp_clear */
-    ndtype_richcompare,                     /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    0,                                      /* tp_iter */
-    0,                                      /* tp_iternext */
-    ndtype_methods,                         /* tp_methods */
-    0,                                      /* tp_members */
-    ndtype_getsets,                         /* tp_getset */
-    0,                                      /* tp_base */
-    0,                                      /* tp_dict */
-    0,                                      /* tp_descr_get */
-    0,                                      /* tp_descr_set */
-    0,                                      /* tp_dictoffset */
-    0,                                      /* tp_init */
-    PyType_GenericAlloc,                    /* tp_alloc */
-    ndtype_new,                             /* tp_new */
-    PyObject_GC_Del,                        /* tp_free */
+    .tp_name = "ndtypes.ndt",
+    .tp_basicsize = sizeof(NdtObject),
+    .tp_dealloc = (destructor) ndtype_dealloc,
+    .tp_repr = (reprfunc) ndtype_repr,
+    .tp_hash = ndtype_hash,
+    .tp_str = (reprfunc) ndtype_str,
+    .tp_getattro = (getattrofunc) PyObject_GenericGetAttr,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_traverse = (traverseproc)ndtype_traverse,
+    .tp_richcompare = ndtype_richcompare,
+    .tp_methods = ndtype_methods,
+    .tp_getset = ndtype_getsets,
+    .tp_alloc = PyType_GenericAlloc,
+    .tp_new = ndtype_new,
+    .tp_free = PyObject_GC_Del
 };
 
 
