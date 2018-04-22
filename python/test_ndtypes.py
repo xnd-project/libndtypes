@@ -1450,7 +1450,7 @@ class TestBufferProtocol(unittest.TestCase):
             ("(2,19)T{<b:a:xxxQ:b:}", 12, 4),
             ("(31,221)T{<b:a:xxxxxxxQ:b:}", 16, 8),
             ("(2,3,10)T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16),
-            ("(2,10)T{=L:a:(2,3)Zd:b:}", 100, 1)]
+            ("(2,10)T{=L:a:(2,3)D:b:}", 100, 1)]
 
         test_error_cases = [
             # empty shape (scalars are not arrays in datashape)
@@ -1516,7 +1516,7 @@ class TestBufferProtocol(unittest.TestCase):
                 self.assertRaises(ValueError, ndt.from_format, f)
 
         t = ndt.from_format('c')
-        self.assertEqual(t, ndt("fixed_bytes(size=1)"))
+        self.assertEqual(t, ndt("char('ascii')"))
 
     def test_primitive(self):
         standard = [
@@ -1555,7 +1555,7 @@ class TestBufferProtocol(unittest.TestCase):
 
         if HAVE_PYTHON_36:
             # complex32
-            fmt = 'Ze'
+            fmt = 'E'
             for modifier in ['', '@', '=', '<', '>', '!']:
                 f = modifier + fmt
                 t = ndt.from_format(f)
@@ -1563,7 +1563,7 @@ class TestBufferProtocol(unittest.TestCase):
                     self.assertEqual(t.itemsize, 4)
 
         # complex64
-        fmt = 'Zf'
+        fmt = 'F'
         for modifier in ['', '@', '=', '<', '>', '!']:
             f = modifier + fmt
             t = ndt.from_format(f)
@@ -1571,7 +1571,7 @@ class TestBufferProtocol(unittest.TestCase):
                 self.assertEqual(t.itemsize, 8)
 
         # complex128
-        fmt = 'Zd'
+        fmt = 'D'
         for modifier in ['', '@', '=', '<', '>', '!']:
             f = modifier + fmt
             t = ndt.from_format(f)

@@ -42,7 +42,7 @@ const char *buffer_tests[] = {
   "H", "I", "L", "Q",
   "n", "N",
   "e", "f", "d",
-  "Ze", "Zf", "Zd",
+  "E", "F", "D",
   "s", "100s",
   "T{b:a:100s:b:}",
 
@@ -52,21 +52,21 @@ const char *buffer_tests[] = {
   "(2,3)b",
   "(0,2,0)B",
   "(1,2,3,4)h",
-  "(2,3,10)Zf",
-  "(20,2,100)Zd",
+  "(2,3,10)F",
+  "(20,2,100)D",
   "(10,2)s",
   "(10,2)100s",
   "(10,2)T{b:a:100s:b:}",
   "(10,2)T{b:a:100s:b:}",
 
-  "T{T{Zf:foo:(2,3)L:bar:}:a:100s:b:}",
+  "T{T{F:foo:(2,3)L:bar:}:a:100s:b:}",
 
   "f -> f",
   "ff -> f",
   "fc -> f",
-  "Zf -> Q",
+  "F -> Q",
 
-  "T{b:a:100s:b:} -> T{T{Zf:foo:(2,3)L:bar:}:a:100s:b:}",
+  "T{b:a:100s:b:} -> T{T{F:foo:(2,3)L:bar:}:a:100s:b:}",
 
    NULL
 };
@@ -105,6 +105,9 @@ const char *buffer_roundtrip_tests[] = {
 
 const char *buffer_error_tests[] = {
   "&",
+  "Ze",
+  "Zf",
+  "Zd",
   "O", "O",
   "T{O:a:100O:b:}",
 
@@ -128,7 +131,7 @@ const char *buffer_error_tests[] = {
   "(10,2)T{b:a:100s:b:{",
   "(10,2)T{b:a:100s:b:}}",
 
-  "T{T{Zf:foo:(2,3)%:bar:}:a:100s:b:}",
+  "T{T{F:foo:(2,3)%:bar:}:a:100s:b:}",
 
    NULL
 };
