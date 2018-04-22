@@ -31,55 +31,27 @@
  */
 
 
-#ifndef TEST_H
-#define TEST_H
+#include <stdio.h>
+#include "test.h"
 
 
-#include "ndtypes.h"
+const numba_testcase_t numba_tests[] = {
 
+  { .signature="... * float64 -> ... * float32",
+    .sig="() -> ()",
+    .core="void([float64[], float32[]])" },
 
-typedef struct {
-    const char *input;
-    const char *indented;
-} indent_testcase_t;
+  { .signature="... * I * float64 -> ... * I * float32",
+    .sig="(I) -> (I)",
+    .core="void([float64[:], float32[:]])" },
 
-typedef struct {
-    const char *pattern;
-    const char *candidate;
-    int expected;
-} match_testcase_t;
+  { .signature="... * M * N * uint16 -> ... * M * N * complex128",
+    .sig="(M, N) -> (M, N)",
+    .core="void([uint16[:, :], complex128[:, :]])" },
 
-typedef struct {
-    const char *signature;
-    const char *in[128];
-    const char *out[128];
-    const char *broadcast[128];
-    int outer_dims;
-    bool success;
-} typecheck_testcase_t;
+  { .signature="... * N * M * complex64, ... * M * P * complex64 -> ... * N * P * complex64",
+    .sig="(N, M), (M, P) -> (N, P)",
+    .core="void([complex64[:, :], complex64[:, :], complex64[:, :]])" },
 
-typedef struct {
-    const char *signature;
-    const char *sig;
-    const char *core;
-} numba_testcase_t;
-
-extern const char *parse_tests[];
-extern const char *parse_tests[];
-extern const char *parse_roundtrip_tests[];
-extern const char *parse_error_tests[];
-extern const indent_testcase_t indent_tests[];
-extern const char *typedef_tests[];
-extern const char *typedef_error_tests[];
-extern const match_testcase_t match_tests[];
-extern const typecheck_testcase_t typecheck_tests[];
-extern const numba_testcase_t numba_tests[];
-extern const char *buffer_tests[];
-extern const char *buffer_roundtrip_tests[];
-extern const char *buffer_error_tests[];
-
-int test_struct_align_pack(void);
-int test_array(void);
-
-
-#endif /* TEST_H */
+  { NULL, NULL, NULL }
+};

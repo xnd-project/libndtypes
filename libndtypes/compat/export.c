@@ -105,53 +105,6 @@ ndt_snprintf(ndt_context_t *ctx, buf_t *buf, const char *fmt, ...)
 
 static int format(buf_t *buf, const ndt_t *t, ndt_context_t *ctx);
 
-#if 0
-static int
-function_types(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
-{
-    int64_t i;
-    int n;
-
-    assert(t->tag == Function);
-
-    if (t->Function.nin == 0) {
-        n = ndt_snprintf(ctx, buf, "nil");
-        if (n < 0) return -1;
-    }
-    else {
-        for (i = 0; i < t->Function.nin; i++) {
-            if (i >= 1) {
-                n = ndt_snprintf(ctx, buf, ", ");
-                if (n < 0) return -1;
-            }
-
-            n = datashape(buf, t->Function.types[i], d, ctx);
-            if (n < 0) return -1;
-        }
-    }
-
-    n = ndt_snprintf(ctx, buf, " -> ");
-    if (n < 0) return -1;
-
-    if (t->Function.nout == 0) {
-        n = ndt_snprintf(ctx, buf, "void");
-        if (n < 0) return -1;
-    }
-    else {
-        for (i = t->Function.nin; i < t->Function.nargs; i++) {
-            if (i >= t->Function.nin + 1) {
-                n = ndt_snprintf(ctx, buf, ", ");
-                if (n < 0) return -1;
-            }
-
-            n = datashape(buf, t->Function.types[i], d, ctx);
-            if (n < 0) return -1;
-        }
-    }
-
-    return 0;
-}
-#endif
 
 static int
 option(const ndt_t *t, ndt_context_t *ctx)
@@ -335,6 +288,156 @@ format(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 
 
 /******************************************************************************/
+/*                  Conversion from function to NumPy signature               */
+/******************************************************************************/
+
+static int
+symbolic_dimensions(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+{
+    int n, i;
+
+    if (t->tag != EllipsisDim || t->EllipsisDim.name != NULL) {
+        ndt_err_format(ctx, NDT_ValueError, "expected unnamed ellipsis");
+        return -1;
+    }
+
+    n = ndt_snprintf(ctx, buf, "(");
+    if (n < 0) return -1;
+
+    for (i=0, t=t->EllipsisDim.type; t->ndim > 0; i++, t=t->SymbolicDim.type) {
+        if (t->tag != SymbolicDim) {
+            ndt_err_format(ctx, NDT_ValueError, "expected symbolic dimension");
+            return -1;
+        }
+
+        if (i >= 1) {
+            n = ndt_snprintf(ctx, buf, ", ");
+            if (n < 0) return -1;
+        }
+
+        n = ndt_snprintf(ctx, buf, "%s", t->SymbolicDim.name);
+        if (n < 0) return -1;
+    }
+
+    return ndt_snprintf(ctx, buf, ")");
+}
+
+static int
+np_signature(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+{
+    int64_t i = 0;
+    int n;
+
+    assert(t->tag == Function);
+
+    if (t->Function.nin == 0) {
+        n = ndt_snprintf(ctx, buf, "nil");
+        if (n < 0) return -1;
+    }
+    else {
+        for (i = 0; i < t->Function.nin; i++) {
+            if (i >= 1) {
+                n = ndt_snprintf(ctx, buf, ", ");
+                if (n < 0) return -1;
+            }
+
+            n = symbolic_dimensions(buf, t->Function.types[i], ctx);
+            if (n < 0) return -1;
+        }
+    }
+
+    n = ndt_snprintf(ctx, buf, " -> ");
+    if (n < 0) return -1;
+
+    if (t->Function.nout == 0) {
+        n = ndt_snprintf(ctx, buf, "nil");
+        if (n < 0) return -1;
+    }
+    else if (t->Function.nout == 1) {
+        n = symbolic_dimensions(buf, t->Function.types[i], ctx);
+        if (n < 0) return -1;
+    }
+    else {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "multiple return values not supported");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
+nb_dtype(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+{
+    switch (t->tag) {
+    case Bool: return ndt_snprintf(ctx, buf, "bool");
+
+    case Int8: return ndt_snprintf(ctx, buf, "int8");
+    case Int16: return ndt_snprintf(ctx, buf, "int16");
+    case Int32: return ndt_snprintf(ctx, buf, "int32");
+    case Int64: return ndt_snprintf(ctx, buf, "int64");
+
+    case Uint8: return ndt_snprintf(ctx, buf, "uint8");
+    case Uint16: return ndt_snprintf(ctx, buf, "uint16");
+    case Uint32: return ndt_snprintf(ctx, buf, "uint32");
+    case Uint64: return ndt_snprintf(ctx, buf, "uint64");
+
+    case Float16: return ndt_snprintf(ctx, buf, "float16");
+    case Float32: return ndt_snprintf(ctx, buf, "float32");
+    case Float64: return ndt_snprintf(ctx, buf, "float64");
+
+    case Complex32: return ndt_snprintf(ctx, buf, "complex32");
+    case Complex64: return ndt_snprintf(ctx, buf, "complex64");
+    case Complex128: return ndt_snprintf(ctx, buf, "complex128");
+
+    default:
+        ndt_err_format(ctx, NDT_ValueError, "unsupported dtype");
+        return -1;
+    }
+}
+
+static int
+nb_signature(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
+{
+    const ndt_t *dtype;
+    int n;
+
+    assert(t->tag == Function);
+
+    n = ndt_snprintf(ctx, buf, "void([");
+    if (n < 0) return -1;
+
+    for (int64_t i = 0; i < t->Function.nargs; i++) {
+        if (i >= 1) {
+            n = ndt_snprintf(ctx, buf, ", ");
+            if (n < 0) return -1;
+        }
+
+        dtype = ndt_dtype(t->Function.types[i]);
+        n = nb_dtype(buf, dtype, ctx);
+        if (n < 0) return -1;
+
+        n = ndt_snprintf(ctx, buf, "[");
+        if (n < 0) return -1;
+
+        for (int k = 0; k < t->Function.types[i]->ndim-1; k++) {
+            if (k >= 1) {
+                n = ndt_snprintf(ctx, buf, ", ");
+                if (n < 0) return -1;
+            }
+            n = ndt_snprintf(ctx, buf, ":");
+            if (n < 0) return -1;
+        }
+
+        n = ndt_snprintf(ctx, buf, "]");
+        if (n < 0) return -1;
+    }
+
+    return ndt_snprintf(ctx, buf, "])");
+}
+
+
+/******************************************************************************/
 /*                    API: conversion to buffer protocol format               */
 /******************************************************************************/
 
@@ -365,4 +468,71 @@ ndt_to_bpformat(const ndt_t *t, ndt_context_t *ctx)
     s[count] = '\0';
 
     return s;
+}
+
+int
+ndt_to_nbformat(char **sig, char **dtype, const ndt_t *t, ndt_context_t *ctx)
+{
+    buf_t buf = {0, 0, NULL};
+    size_t count;
+
+    *sig = *dtype = NULL;
+
+    if (t->tag != Function) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "conversion to numba signature requires a function type");
+        return -1;
+    }
+
+
+    if (np_signature(&buf, t, ctx) < 0) {
+        return -1;
+    }
+
+    count = buf.count;
+    buf.count = 0;
+    buf.size = count+1;
+
+    buf.cur = *sig = ndt_alloc(1, count+1);
+    if (buf.cur == NULL) {
+        (void)ndt_memory_error(ctx);
+        return -1;
+    }
+
+    if (np_signature(&buf, t, ctx) < 0) {
+        ndt_free(*sig);
+        return -1;
+    }
+    (*sig)[count] = '\0';
+
+
+    buf.count = buf.size = 0;
+    buf.cur = NULL;
+    if (nb_signature(&buf, t, ctx) < 0) {
+        ndt_free(*sig);
+        *sig = NULL;
+        return -1;
+    }
+
+    count = buf.count;
+    buf.count = 0;
+    buf.size = count+1;
+
+    buf.cur = *dtype = ndt_alloc(1, count+1);
+    if (buf.cur == NULL) {
+        ndt_free(*sig);
+        *sig = NULL;
+        (void)ndt_memory_error(ctx);
+        return -1;
+    }
+
+    if (nb_signature(&buf, t, ctx) < 0) {
+        ndt_free(*sig);
+        ndt_free(*dtype);
+        *sig = *dtype = NULL;
+        return -1;
+    }
+    (*dtype)[count] = '\0';
+
+    return 0;
 }

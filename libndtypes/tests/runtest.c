@@ -879,6 +879,81 @@ error:
 }
 
 static int
+test_numba(void)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    const numba_testcase_t *test;
+    ndt_t *t;
+    char *sig = NULL;
+    char *core = NULL;
+    int count = 0;
+    int ret = -1;
+
+    for (test = numba_tests; test->signature != NULL; test++) {
+        t = ndt_from_string(test->signature, &ctx);
+        if (t == NULL) {
+            ndt_err_format(&ctx, NDT_RuntimeError,
+                "test_numba: could not parse \"%s\"\n", test->signature);
+            goto error;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(&ctx);
+
+            ndt_set_alloc_fail();
+            ret = ndt_to_nbformat(&sig, &core, t, &ctx);
+            ndt_set_alloc();
+
+            if (ctx.err != NDT_MemoryError) {
+                break;
+            }
+
+            if (ret != -1) {
+                ndt_del(t);
+                ndt_err_format(&ctx, NDT_RuntimeError,
+                    "test_numba: expect ret == -1 after MemoryError\n"
+                    "test_numba: \"%s\"\n", test->signature);
+                goto error;
+            }
+        }
+
+        ndt_err_clear(&ctx);
+        ndt_del(t);
+
+        if (sig == NULL || strcmp(sig, test->sig) != 0) {
+            ndt_err_format(&ctx, NDT_RuntimeError,
+                "test_numba: input: \"%s\" output: \"%s\"\n", test->sig, sig);
+            goto error;
+        }
+
+        if (core == NULL || strcmp(core, test->core) != 0) {
+            ndt_err_format(&ctx, NDT_RuntimeError,
+                "test_numba: input: \"%s\" output: \"%s\"\n", test->core, core);
+            goto error;
+        }
+
+        ndt_free(sig);
+        ndt_free(core);
+        sig = core = NULL;
+
+        count++;
+    }
+
+    ret = 0;
+    fprintf(stderr, "test_numba (%d test cases)\n", count);
+
+
+out:
+    ndt_context_del(&ctx);
+    return ret;
+
+error:
+   ret = -1;
+   ndt_err_fprint(stderr, &ctx);
+   goto out;
+}
+
+static int
 test_static_context(void)
 {
     const char **c;
@@ -1534,6 +1609,7 @@ static int (*tests[])(void) = {
   test_equal,
   test_match,
   test_typecheck,
+  test_numba,
   test_static_context,
   test_hash,
   test_copy,
