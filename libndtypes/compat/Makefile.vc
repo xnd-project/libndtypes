@@ -18,8 +18,8 @@ CFLAGS_FOR_PARSER = $(COMMON_CFLAGS_FOR_PARSER) $(OPT)
 CFLAGS_FOR_PARSER_SHARED = $(COMMON_CFLAGS_FOR_PARSER) $(OPT_SHARED)
 
 
-OBJS = bpgrammar.obj bplexer.obj import.obj
-SHARED_OBJS = .objs\bpgrammar.obj .objs\bplexer.obj .objs\import.obj
+OBJS = bpgrammar.obj bplexer.obj import.obj export.obj
+SHARED_OBJS = .objs\bpgrammar.obj .objs\bplexer.obj .objs\import.obj .objs\export.obj
 
 
 default: $(OBJS) $(SHARED_OBJS)
@@ -48,6 +48,14 @@ Makefile import.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
 .objs\import.obj:\
 Makefile import.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
        $(CC) $(CFLAGS_FOR_PARSER_SHARED) -c import.c
+
+export.obj:\
+Makefile export.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
+       $(CC) $(CFLAGS_FOR_PARSER) -c export.c
+
+.objs\export.obj:\
+Makefile export.c bpgrammar.h bplexer.h ..\ndtypes.h ..\seq.h
+       $(CC) $(CFLAGS_FOR_PARSER_SHARED) -c export.c
 
 
 FORCE:

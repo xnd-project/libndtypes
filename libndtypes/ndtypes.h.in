@@ -783,6 +783,7 @@ NDTYPES_API ndt_t *ndt_typevar(char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_from_file(const char *name, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_from_bpformat(const char *input, ndt_context_t *ctx);
+NDTYPES_API char *ndt_to_bpformat(const ndt_t *t, ndt_context_t *ctx);
 
 
 /*

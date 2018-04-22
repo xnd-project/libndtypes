@@ -370,6 +370,24 @@ ndtype_from_format(PyTypeObject *tp, PyObject *format)
 }
 
 static PyObject *
+ndtype_to_format(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *ret;
+    char *cp;
+
+    cp = ndt_to_bpformat(NDT(self), &ctx);
+    if (cp == NULL) {
+        return seterr(&ctx);
+    }
+
+    ret = PyUnicode_FromString(cp);
+    ndt_free(cp);
+
+    return ret;
+}
+
+static PyObject *
 ndtype_from_offsets_and_dtype(PyTypeObject *tp, PyObject *offsets, PyObject *dtype)
 {
     NDT_STATIC_CONTEXT(ctx);
@@ -925,6 +943,7 @@ static PyMethodDef ndtype_methods [] =
   { "apply", (PyCFunction)ndtype_apply, METH_O, "method likely to change" },
 
   /* Other functions */
+  { "to_format", (PyCFunction)ndtype_to_format, METH_NOARGS, NULL },
   { "pformat", (PyCFunction)ndtype_pformat, METH_NOARGS, doc_pformat },
   { "pprint", (PyCFunction)ndtype_pprint, METH_NOARGS, doc_pprint },
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, doc_ast_repr },

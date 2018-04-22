@@ -1137,7 +1137,6 @@ test_buffer(void)
     const char **c;
     ndt_context_t *ctx;
     ndt_t *t;
-    char *s;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -1175,11 +1174,65 @@ test_buffer(void)
             return -1;
         }
 
+        ndt_del(t);
+        count++;
+    }
+    fprintf(stderr, "test_buffer (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
+static int
+test_buffer_roundtrip(void)
+{
+    const char **c;
+    ndt_context_t *ctx;
+    ndt_t *t;
+    char *s;
+    int count = 0;
+    int ret;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (c = buffer_roundtrip_tests; *c != NULL; c++) {
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(ctx);
 
             ndt_set_alloc_fail();
-            s = ndt_as_string(t, ctx);
+            t = ndt_from_bpformat(*c, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (t != NULL) {
+                ndt_del(t);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_buffer: convert: FAIL: t != NULL after MemoryError\n");
+                fprintf(stderr, "test_buffer: convert: FAIL: %s\n", *c);
+                return -1;
+            }
+        }
+        if (t == NULL) {
+            fprintf(stderr, "test_buffer: convert: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_buffer: convert: FAIL: got: %s: %s\n\n",
+                    ndt_err_as_string(ctx->err),
+                    ndt_context_msg(ctx));
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            s = ndt_to_bpformat(t, ctx);
             ndt_set_alloc();
 
             if (ctx->err != NDT_MemoryError) {
@@ -1190,14 +1243,14 @@ test_buffer(void)
                 ndt_free(s);
                 ndt_del(t);
                 ndt_context_del(ctx);
-                fprintf(stderr, "test_buffer: convert: FAIL: s != NULL after MemoryError\n");
-                fprintf(stderr, "test_buffer: convert: FAIL: %s\n", *c);
+                fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: s != NULL after MemoryError\n");
+                fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: %s\n", *c);
                 return -1;
             }
         }
         if (s == NULL) {
-            fprintf(stderr, "test_buffer: convert: FAIL: expected success: \"%s\"\n", *c);
-            fprintf(stderr, "test_buffer: convert: FAIL: got: %s: %s\n\n",
+            fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: expected success: \"%s\"\n", *c);
+            fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
             ndt_del(t);
@@ -1205,11 +1258,20 @@ test_buffer(void)
             return -1;
         }
 
-        ndt_free(s);
+        ret = strcmp(s, *c);
         ndt_del(t);
+
+        if (ret != 0) {
+            fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: input: \"%s\" output: \"%s\"\n", *c, s);
+            ndt_free(s);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        ndt_free(s);
         count++;
     }
-    fprintf(stderr, "test_buffer (%d test cases)\n", count);
+    fprintf(stderr, "test_buffer_roundtrip (%d test cases)\n", count);
 
     ndt_context_del(ctx);
     return 0;
@@ -1463,8 +1525,8 @@ test_serialize_fuzz(void)
 
 static int (*tests[])(void) = {
   test_parse,
-  test_parse_error,
   test_parse_roundtrip,
+  test_parse_error,
   test_indent,
   test_typedef,
   test_typedef_duplicates,
@@ -1476,6 +1538,7 @@ static int (*tests[])(void) = {
   test_hash,
   test_copy,
   test_buffer,
+  test_buffer_roundtrip,
   test_buffer_error,
   test_serialize,
 #ifdef __linux__

@@ -43,10 +43,10 @@ SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/context.o .objs/copy.o \
               .objs/util.o .objs/values.o
 
 
-COMPAT_OBJS = compat/bpgrammar.o compat/bplexer.o compat/import.o
+COMPAT_OBJS = compat/bpgrammar.o compat/bplexer.o compat/import.o compat/export.o
 
 COMPAT_SHARED_OBJS = compat/.objs/bpgrammar.o compat/.objs/bplexer.o \
-                     compat/.objs/import.o
+                     compat/.objs/import.o compat/.objs/export.o
 
 SERIALIZE_OBJS = serialize/serialize.o serialize/deserialize.o
 

@@ -68,20 +68,12 @@ add_uint16(uint16_t a, uint16_t b, ndt_context_t *ctx)
 }
 
 static ndt_t *
-single_byte(ndt_context_t *ctx)
-{
-    uint16_opt_t align = {None, 0};
-
-    return ndt_fixed_bytes(1, align, ctx);
-}
-
-static ndt_t *
 primitive_native(char dtype, ndt_context_t *ctx)
 {
     switch (dtype) {
     case '?': return ndt_primitive(Bool, 0, ctx);
 
-    case 'c': return single_byte(ctx);
+    case 'c': return ndt_char(Ascii, ctx);
     case 'b': return ndt_primitive(Int8, 0, ctx);
     case 'B': return ndt_primitive(Uint8, 0, ctx);
 
@@ -118,7 +110,7 @@ primitive_fixed(char dtype, uint32_t flags, ndt_context_t *ctx)
     switch (dtype) {
     case '?': return ndt_primitive(Bool, flags, ctx);
 
-    case 'c': return single_byte(ctx);
+    case 'c': return ndt_char(Ascii, ctx);
     case 'b': return ndt_primitive(Int8, flags, ctx);
     case 'B': return ndt_primitive(Uint8, flags, ctx);
 
@@ -206,7 +198,7 @@ make_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    for (i=0, t=type; i<seq->len; i++, type=t) {
+    for (i=seq->len-1, t=type; i>=0; i--, type=t) {
         shape = ndt_strtoll(seq->ptr[i], 0, INT_MAX, ctx);
         if (ndt_err_occurred(ctx)) {
             ndt_string_seq_del(seq);

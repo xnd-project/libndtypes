@@ -67,6 +67,7 @@ extern const char *typedef_error_tests[];
 extern const match_testcase_t match_tests[];
 extern const typecheck_testcase_t typecheck_tests[];
 extern const char *buffer_tests[];
+extern const char *buffer_roundtrip_tests[];
 extern const char *buffer_error_tests[];
 
 int test_struct_align_pack(void);

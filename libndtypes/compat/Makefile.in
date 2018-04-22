@@ -12,8 +12,8 @@ ifeq ($(MAKECMDGOALS), coverage)
 endif
 
 
-OBJS = bpgrammar.o bplexer.o import.o
-SHARED_OBJS = .objs/bpgrammar.o .objs/bplexer.o .objs/import.o
+OBJS = bpgrammar.o bplexer.o import.o export.o
+SHARED_OBJS = .objs/bpgrammar.o .objs/bplexer.o .objs/import.o .objs/export.o
 
 
 default: $(OBJS) $(SHARED_OBJS)
@@ -42,6 +42,14 @@ Makefile import.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
 .objs/import.o:\
 Makefile import.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c import.c -o .objs/import.o
+
+export.o:\
+Makefile export.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
+	$(CC) $(NDT_CFLAGS) -c export.c
+
+.objs/export.o:\
+Makefile export.c bpgrammar.h bplexer.h ../ndtypes.h ../seq.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c export.c -o .objs/export.o
 
 
 # Without these, GNU make automatically builds the parser.

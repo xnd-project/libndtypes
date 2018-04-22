@@ -40,7 +40,7 @@
 extern int ndt_bpdebug;
 #endif
 /* "%code requires" blocks.  */
-#line 300 "bpgrammar.y" /* yacc.c:1909  */
+#line 292 "bpgrammar.y" /* yacc.c:1909  */
 
   #include <ctype.h>
   #include <assert.h>
@@ -86,7 +86,7 @@ extern int ndt_bpdebug;
 
 union YYSTYPE
 {
-#line 333 "bpgrammar.y" /* yacc.c:1909  */
+#line 325 "bpgrammar.y" /* yacc.c:1909  */
 
     ndt_t *ndt;
     ndt_field_t *field;
@@ -123,7 +123,7 @@ struct YYLTYPE
 
 int ndt_bpparse (yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
-#line 311 "bpgrammar.y" /* yacc.c:1909  */
+#line 303 "bpgrammar.y" /* yacc.c:1909  */
 
   #define YY_DECL extern int ndt_bplexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int ndt_bplexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
