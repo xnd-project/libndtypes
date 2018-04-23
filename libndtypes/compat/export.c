@@ -278,7 +278,8 @@ format(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
         case SignedKind: case UnsignedKind:
         case FloatKind: case ComplexKind:
         case FixedStringKind: case FixedBytesKind:
-            ndt_internal_error("type is not supported by the buffer protocol");
+            ndt_err_format(ctx, NDT_ValueError,
+                "type is not supported by the buffer protocol");
             return -1;
     }
 
@@ -413,7 +414,7 @@ nb_signature(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             if (n < 0) return -1;
         }
 
-        dtype = ndt_dtype(t->Function.types[i]);
+        dtype = ndt_hidden_dtype(t->Function.types[i]);
         n = nb_dtype(buf, dtype, ctx);
         if (n < 0) return -1;
 
