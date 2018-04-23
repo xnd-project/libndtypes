@@ -909,6 +909,47 @@ ndtype_reduce(PyObject *self, PyObject *args UNUSED)
     return res;
 }
 
+static PyObject *
+ndtype_to_nbformat(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *sig;
+    PyObject *core;
+    PyObject *ret;
+    char *s;
+    char *c;
+
+    if (ndt_to_nbformat(&s, &c, NDT(self), &ctx) < 0) {
+        return seterr(&ctx);
+    }
+
+    sig = PyUnicode_FromString(s);
+    ndt_free(s);
+    if (s == NULL) {
+        ndt_free(c);
+        return NULL;
+    }
+
+    core = PyUnicode_FromString(c);
+    ndt_free(c);
+    if (s == NULL) {
+        Py_DECREF(sig);
+        return NULL;
+    }
+
+    ret = PyTuple_New(2);
+    if (ret == NULL) {
+        Py_DECREF(sig);
+        Py_DECREF(core);
+        return NULL;
+    }
+
+    PyTuple_SET_ITEM(ret, 0, sig);
+    PyTuple_SET_ITEM(ret, 1, core);
+
+    return ret;
+}
+
 
 static PyGetSetDef ndtype_getsets [] =
 {
@@ -944,6 +985,7 @@ static PyMethodDef ndtype_methods [] =
 
   /* Other functions */
   { "to_format", (PyCFunction)ndtype_to_format, METH_NOARGS, NULL },
+  { "to_nbformat", (PyCFunction)ndtype_to_nbformat, METH_NOARGS, NULL },
   { "pformat", (PyCFunction)ndtype_pformat, METH_NOARGS, doc_pformat },
   { "pprint", (PyCFunction)ndtype_pprint, METH_NOARGS, doc_pprint },
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, doc_ast_repr },
