@@ -39,19 +39,19 @@ const numba_testcase_t numba_tests[] = {
 
   { .signature="... * float64 -> ... * float32",
     .sig="() -> ()",
-    .core="void([float64[], float32[]])" },
+    .core="void(float64, float32)" },
 
   { .signature="... * I * float64 -> ... * I * float32",
     .sig="(I) -> (I)",
-    .core="void([float64[:], float32[:]])" },
+    .core="void(float64[:], float32[:])" },
 
   { .signature="... * M * N * uint16 -> ... * M * N * complex128",
     .sig="(M, N) -> (M, N)",
-    .core="void([uint16[:, :], complex128[:, :]])" },
+    .core="void(uint16[:, :], complex128[:, :])" },
 
   { .signature="... * N * M * complex64, ... * M * P * complex64 -> ... * N * P * complex64",
     .sig="(N, M), (M, P) -> (N, P)",
-    .core="void([complex64[:, :], complex64[:, :], complex64[:, :]])" },
+    .core="void(complex64[:, :], complex64[:, :], complex64[:, :])" },
 
   { NULL, NULL, NULL }
 };

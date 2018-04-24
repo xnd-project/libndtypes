@@ -401,11 +401,12 @@ static int
 nb_signature(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
 {
     const ndt_t *dtype;
+    int coredims;
     int n;
 
     assert(t->tag == Function);
 
-    n = ndt_snprintf(ctx, buf, "void([");
+    n = ndt_snprintf(ctx, buf, "void(");
     if (n < 0) return -1;
 
     for (int64_t i = 0; i < t->Function.nargs; i++) {
@@ -418,23 +419,26 @@ nb_signature(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
         n = nb_dtype(buf, dtype, ctx);
         if (n < 0) return -1;
 
-        n = ndt_snprintf(ctx, buf, "[");
-        if (n < 0) return -1;
+        coredims = t->Function.types[i]->ndim-1;
+        if (coredims > 0) {
+            n = ndt_snprintf(ctx, buf, "[");
+            if (n < 0) return -1;
 
-        for (int k = 0; k < t->Function.types[i]->ndim-1; k++) {
-            if (k >= 1) {
-                n = ndt_snprintf(ctx, buf, ", ");
+            for (int k = 0; k < coredims; k++) {
+                if (k >= 1) {
+                    n = ndt_snprintf(ctx, buf, ", ");
+                    if (n < 0) return -1;
+                }
+                n = ndt_snprintf(ctx, buf, ":");
                 if (n < 0) return -1;
             }
-            n = ndt_snprintf(ctx, buf, ":");
+
+            n = ndt_snprintf(ctx, buf, "]");
             if (n < 0) return -1;
         }
-
-        n = ndt_snprintf(ctx, buf, "]");
-        if (n < 0) return -1;
     }
 
-    return ndt_snprintf(ctx, buf, "])");
+    return ndt_snprintf(ctx, buf, ")");
 }
 
 
