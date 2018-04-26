@@ -85,7 +85,7 @@ matrix:
         - export PATH=$HOME/miniconda3/bin:$PATH
         - export CC=clang
         - conda update --yes conda
-        - conda install --yes conda-build
+        - conda install --yes conda-build=3.3.0
         - conda install --yes anaconda-client
       script:
         - cd ndtypes
