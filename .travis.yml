@@ -68,8 +68,7 @@ matrix:
       script:
         - cd ndtypes
         - git fetch --unshallow
-        - conda build .conda/libndtypes
-        - conda build .conda/ndtypes
+        - conda build .conda
         - export LIBNDTYPES=`conda build --output .conda/libndtypes`
         - export NDTYPES=`conda build --output .conda/ndtypes`
         - if test X"$TRAVIS_BRANCH" = X"master" && test X"$TRAVIS_PULL_REQUEST" = X"false"; then anaconda --token $ANACONDA_TOKEN upload $LIBNDTYPES --user plures --label dev; fi
