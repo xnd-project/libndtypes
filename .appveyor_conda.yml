@@ -18,8 +18,8 @@ build_script:
   - ps: $env:NDTYPES = (conda build --output .conda/ndtypes)
 
 on_success:
-  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { cmd /C anaconda --token $env:anaconda_token upload $env:LIBNDTYPES --user plures --label dev "2>&1" }
-  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { cmd /C anaconda --token $env:anaconda_token upload $env:NDTYPES --user plures --label dev "2>&1" }
+  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { cmd /C anaconda --token $env:anaconda_token upload $env:LIBNDTYPES --user xnd --label dev "2>&1" }
+  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { cmd /C anaconda --token $env:anaconda_token upload $env:NDTYPES --user xnd --label dev "2>&1" }
 
 environment:
   anaconda_token:
