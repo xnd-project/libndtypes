@@ -44,4 +44,4 @@ Authors
 
 libndtypes/ndtypes was created by `Stefan Krah <https://github.com/skrah>`_.
 The funding that made this project possible came from `Anaconda Inc. <https://www.anaconda.com/>`_
-and currently from `Quansight LLC <https://www.quansight.com/`_.
+and currently from `Quansight LLC <https://www.quansight.com/>`_.
