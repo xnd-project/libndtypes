@@ -37,3 +37,11 @@ is to support the type part required for the xnd container module.
 http://ndtypes.readthedocs.io/en/latest/
 
 http://xnd.readthedocs.io/en/latest/
+
+
+Authors
+-------
+
+libndtypes/ndtypes was created by https://github.com/skrah.  The funding that
+made this project possible came from https://www.anaconda.com/ and currently
+from https://www.quansight.com/ .
