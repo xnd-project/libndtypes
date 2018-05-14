@@ -39,6 +39,34 @@ http://ndtypes.readthedocs.io/en/latest/
 http://xnd.readthedocs.io/en/latest/
 
 
+Contributing to ndtypes
+-----------------------
+
+In order to have a local version of the module, please follow these steps:
+
+- fork the repository and clone your fork::
+
+    clone https://github.com/your_login/ndtypes
+    cd ndtypes
+
+- create and activate a new conda environment (you have to have `conda <https://conda.io/docs/user-guide/install/index.html>`_ installed)::
+
+    conda create --name ndtypes_py3 python=3
+    conda activate ndtypes_only_py3
+
+- use conda to build `libntypes` and `ndtypes`::
+
+    conda build .conda/libndtypes
+    conda build .conda/ndtypes
+
+- use `conda` to install the local version of the python module::
+
+    conda install --use-local ndtype
+
+- running the `ndtype` test set::
+
+    python setup.py test
+
 Authors
 -------
 
