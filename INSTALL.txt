@@ -81,4 +81,20 @@ python3 setup.py install --local="$PWD/../python"
 python.exe setup.py install --local="%cd%\..\python"
 
 
+Alternative install with conda (for developing)
+------------------------------------
+
+Install the ndtypes package into a local directory.
+
+# create and activate a new conda environment:
+  conda create --name ndtypes_py3 python=3
+  conda activate ndtypes_only_py3
+
+# use conda to build `libntypes` and `ndtypes`:
+  conda build .conda/libndtypes
+  conda build .conda/ndtypes
+
+# use `conda` to install the local version of the python module:
+  conda install --use-local ndtype
+
 
