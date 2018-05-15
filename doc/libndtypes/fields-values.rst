@@ -15,26 +15,16 @@ for creating categorical types.
 Fields
 ------
 
-.. topic:: uint16_opt
+.. c:type:: struct uint16_opt_t
 
-.. code-block:: c
+  .. c:member:: enum ndt_option tag
+  .. c:member:: uint16_t Some
 
-   enum ndt_option {
-     None,
-     Some
-   };
+  Due to the multitude of options in creating fields a number of functions take
+  a *uint16_opt_t* struct.  If *tag* is *None*, no value has been specified
+  and the *Some* field is undefined.
 
-   typedef struct {
-     enum ndt_option tag;
-     uint16_t Some;
-   } uint16_opt_t;
-
-
-Due to the multitude of options in creating fields a number of functions take
-a *uint16_opt_t* struct.  If *tag* is *None*, no value has been specified
-and the *Some* field is undefined.
-
-If *tag* is *Some*, the value in the *Some* field has been explicitly given.
+  If *tag* is *Some*, the value in the *Some* field has been explicitly given.
 
 
 Functions
@@ -42,56 +32,44 @@ Functions
 
 .. topic:: ndt_field
 
-.. code-block:: c
-
-   ndt_field_t *ndt_field(char *name, ndt_t *type, uint16_opt_t align,
-                          uint16_opt_t pack, uint16_opt_t pad, ndt_context_t *ctx);
+.. c:function:: ndt_field_t *ndt_field(char *name, ndt_t *type, uint16_opt_t align, \
+                          uint16_opt_t pack, uint16_opt_t pad, ndt_context_t *ctx)
 
 
-Create a new field.  For tuples, *name* is :c:macro:`NULL`.  The `align`
-and `pack` options are mutually exclusive and have exactly the same
-function as *gcc's* `aligned` and `packed` attributes when applied to
-individual fields.
+  Create a new field.  For tuples, *name* is :c:macro:`NULL`.  The `align`
+  and `pack` options are mutually exclusive and have exactly the same
+  function as *gcc's* `aligned` and `packed` attributes when applied to
+  individual fields.
 
-The `pad` field has no influence on the field layout. It is present to
-enable sanity checks when an explicit number of padding bytes has been
-specified (Example: PEP-3118).
-
-
-.. topic:: ndt_field_del
-
-.. code-block:: c
-
-   void ndt_field_del(ndt_field_t *field);
-
-Deallocate a field.
+  The `pad` field has no influence on the field layout. It is present to
+  enable sanity checks when an explicit number of padding bytes has been
+  specified (Example: PEP-3118).
 
 
-.. topic:: ndt_field_array_del
+.. c:function:: void ndt_field_del(ndt_field_t *field)
 
-.. code-block:: c
-
-   void ndt_field_array_del(ndt_field_t *fields, int64_t shape);
+  Deallocate a field.
 
 
-Deallocate an array of fields.
+.. c:function:: void ndt_field_array_del(ndt_field_t *fields, int64_t shape)
+
+  Deallocate an array of fields.
 
 
 Values
 ------
 
-.. topic:: values
+.. c:type:: enum ndt_value
+
+  Selected values for the categorical type.
+
+  .. c:var:: enum ndt_value ValBool
+  .. c:var:: enum ndt_value ValInt64
+  .. c:var:: enum ndt_value ValFloat64
+  .. c:var:: enum ndt_value ValString
+  .. c:var:: enum ndt_value ValNA
 
 .. code-block:: c
-
-   /* Selected values for the categorical type. */
-   enum ndt_value {
-     ValBool,
-     ValInt64,
-     ValFloat64,
-     ValString,
-     ValNA,
-   };
 
    typedef struct {
      enum ndt_value tag;
@@ -112,64 +90,34 @@ libraries or by duplicating parts of a container library.
 It remains to be seen if such an added complexity is useful.
 
 
+.. c:function:: ndt_value_t *ndt_value_from_number(enum ndt_value tag, char *v, ndt_context_t *ctx)
 
-.. topic:: ndt_value_from_number
-
-.. code-block:: c
-
-   ndt_value_t *ndt_value_from_number(enum ndt_value tag, char *v, ndt_context_t *ctx);
-
-Construct a number or boolean value from a string.  *tag* must be one of
-:c:macro:`ValBool`, :c:macro:`ValInt64`, or :c:macro:`ValFloat64`.
+  Construct a number or boolean value from a string.  *tag* must be one of
+  :c:data:`ValBool`, :c:data:`ValInt64`, or :c:data:`ValFloat64`.
 
 
-.. topic:: ndt_value_from_string
+.. c:function:: ndt_value_t *ndt_value_from_string(char *v, ndt_context_t *ctx)
 
-.. code-block:: c
+  Construct a :c:data:`ValString` value from a string.
 
-   ndt_value_t *ndt_value_from_string(char *v, ndt_context_t *ctx);
+.. c:function::  ndt_value_t *ndt_value_na(ndt_context_t *ctx)
 
-Construct a :c:macro:`ValString` value from a string.
-
-
-.. topic:: *ndt_value_na
-
-.. code-block:: c
-
-   ndt_value_t *ndt_value_na(ndt_context_t *ctx);
-
-Construct the :c:macro:`NA` value.
+  Construct the :c:data:`NA` value.
 
 
-.. topic:: ndt_value_equal
+.. c:function:: int ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y)
 
-.. code-block:: c
-
-   int ndt_value_equal(const ndt_value_t *x, const ndt_value_t *y);
-
-Determine if two values are equal. :c:macro:`NA` compares not equal to
-itself.
+  Determine if two values are equal. :c:data:`NA` compares not equal to
+  itself.
 
 
-.. topic:: ndt_value_mem_equal
+.. c:function:: ndt_value_mem_equal(const ndt_value_t *x, const ndt_value_t *y)
 
-.. code-block:: c
-
-   ndt_value_mem_equal(const ndt_value_t *x, const ndt_value_t *y);
-
-Determine if two values are structurally equal. :c:macro:`NA` compares
-equal to itself.
+  Determine if two values are structurally equal. :c:data:`NA` compares
+  equal to itself.
 
 
-.. topic:: ndt_value_compare
+.. c:function:: int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y)
 
-.. code-block:: c
-
-   int ndt_value_compare(const ndt_value_t *x, const ndt_value_t *y);
-
-Compare values according to a sorting order. :c:macro:`NA` compares equal
-to itself.
-
-
-
-
+  Compare values according to a sorting order. :c:data:`NA` compares equal
+  to itself.

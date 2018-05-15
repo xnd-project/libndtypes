@@ -12,6 +12,7 @@ release = 'v0.2.0dev3'
 exclude_patterns = ['doc', 'build']
 pygments_style = 'sphinx'
 html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
 
 primary_domain = 'py'
 add_function_parentheses = False
