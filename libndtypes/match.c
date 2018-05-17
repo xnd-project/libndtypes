@@ -219,6 +219,7 @@ static int
 resolve_dimension_list(const char *name, const ndt_t *c[], int size,
                        symtable_t *tbl, ndt_context_t *ctx)
 {
+    bool have_var = (strcmp(name, "var") == 0);
     symtable_entry_t v;
     int i;
 
@@ -233,10 +234,15 @@ resolve_dimension_list(const char *name, const ndt_t *c[], int size,
 
     for (i = 0; i < size; i++) {
         switch(c[i]->tag) {
-        case FixedDim: case VarDim:
+        case FixedDim:
+            if (have_var) goto match_failure;
             v.DimListEntry.dims[i] = c[i];
             break;
-        default:
+        case VarDim:
+            if (!have_var) goto match_failure;
+            v.DimListEntry.dims[i] = c[i];
+            break;
+        default: match_failure:
             ndt_free((void *)v.DimListEntry.dims);
             return 0;
         }

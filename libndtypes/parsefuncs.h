@@ -71,6 +71,7 @@ ndt_t *mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx);
 ndt_t *mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx);
 
 ndt_t *mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *seq, ndt_t *type, ndt_context_t *ctx);
+ndt_t *mk_var_ellipsis(ndt_t *type, ndt_context_t *ctx);
 
 ndt_field_t *mk_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
 ndt_t *mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, ndt_context_t *ctx);

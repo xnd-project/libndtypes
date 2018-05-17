@@ -254,6 +254,18 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
     }
 }
 
+ndt_t *
+mk_var_ellipsis(ndt_t *type, ndt_context_t *ctx)
+{
+    char *s = ndt_strdup("var", ctx);
+
+    if (s == NULL) {
+        return NULL;
+    }
+
+    return ndt_ellipsis_dim(s, type, ctx);
+}
+
 ndt_field_t *
 mk_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {

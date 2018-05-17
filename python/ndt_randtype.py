@@ -377,17 +377,25 @@ BROADCAST_TEST_CASES = [
 
     ApplySpec(
         tag = 'Xnd',
-        sig = ndt("Dims... * var * float64 -> Dims... * var * float64"),
-        in_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
-        out_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
-        in_broadcast = [],
-        outer_dims = 1),
-
-    ApplySpec(
-        tag = 'Xnd',
         sig = ndt("N * D * float64 -> P * float64"),
         in_types = [ndt("2 * 10 * float64")],
         out_types = [ndt("P * float64")],
         in_broadcast = [],
-        outer_dims = 0)
+        outer_dims = 0),
+
+    ApplySpec(
+        tag = 'Xnd',
+        sig = ndt("var... * float64 -> var... * float64"),
+        in_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
+        out_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
+        in_broadcast = [],
+        outer_dims = 2),
+
+    ApplySpec(
+        tag = 'Xnd',
+        sig = ndt("var... * var * float64 -> var... * var * float64"),
+        in_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
+        out_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
+        in_broadcast = [],
+        outer_dims = 1)
 ]
