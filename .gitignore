@@ -13,9 +13,10 @@ libndtypes/ndtypes.h
 libndtypes/tests/runtest
 libndtypes/tests/runtest_shared
 
-# Ignore python generated build files
+# Ignore python generated build and test files
 build/
 doc/build/
 python/xnd/xnd.h
 python/ndtypes/ndtypes.h
 *.egg-info
+__pycache__
