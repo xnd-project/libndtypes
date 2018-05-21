@@ -562,8 +562,8 @@ class TestTuple(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
         for s in ["(Any)", "(int64, N * M * uint8)", "(string, Float)"]:
             t = ndt(s)
@@ -612,8 +612,8 @@ class TestRecord(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
         for s in ["{a: Any, b: Complex}", "{x: N * M * T}"]:
             t = ndt(s)
@@ -662,8 +662,8 @@ class TestRef(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
         for s in ["&Any", "&(int64, N * M * uint8)"]:
             t = ndt(s)
@@ -711,8 +711,8 @@ class TestConstr(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
     def test_constr_common_fields(self):
         a = "{a: complex64, b: string}"
@@ -755,8 +755,8 @@ class TestNominal(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
     def test_nominal_common_fields(self):
         t = ndt("some_t")
@@ -830,8 +830,8 @@ class TestCategorical(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
     def test_categorical_common_fields(self):
         t = ndt("categorical(NA, 'something', 'must', 'be', 'done')")
@@ -890,8 +890,8 @@ class TestFixedString(unittest.TestCase):
         self.assertFalse(t.issigned())
         self.assertFalse(t.isunsigned())
 
-        self.assertFalse(t.is_c_contiguous())
-        self.assertFalse(t.is_f_contiguous())
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
 
     def test_fixed_string_common_fields(self):
         for encoding, codepoint_size in [
@@ -956,8 +956,8 @@ class TestFixedBytes(unittest.TestCase):
         self.assertFalse(t.issigned())
         self.assertFalse(t.isunsigned())
 
-        self.assertFalse(t.is_c_contiguous())
-        self.assertFalse(t.is_f_contiguous())
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
 
     def test_fixed_bytes_common_fields(self):
         for align in [1,2,4,8,16,32,64]:
@@ -993,8 +993,8 @@ class TestString(unittest.TestCase):
         self.assertFalse(t.issigned())
         self.assertFalse(t.isunsigned())
 
-        self.assertFalse(t.is_c_contiguous())
-        self.assertFalse(t.is_f_contiguous())
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
 
     def test_string_common_fields(self):
         t = ndt("string")
@@ -1022,8 +1022,8 @@ class TestBytes(unittest.TestCase):
         self.assertFalse(t.issigned())
         self.assertFalse(t.isunsigned())
 
-        self.assertFalse(t.is_c_contiguous())
-        self.assertFalse(t.is_f_contiguous())
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
 
     def test_bytes_common_fields(self):
         t = ndt("bytes")
@@ -1052,8 +1052,8 @@ class TestChar(unittest.TestCase):
         self.assertFalse(t.issigned())
         self.assertFalse(t.isunsigned())
 
-        self.assertFalse(t.is_c_contiguous())
-        self.assertFalse(t.is_f_contiguous())
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
 
     def test_char_common_fields(self):
         t = ndt("char('utf32')")
@@ -1082,8 +1082,8 @@ class TestBool(unittest.TestCase):
         self.assertFalse(t.issigned())
         self.assertFalse(t.isunsigned())
 
-        self.assertFalse(t.is_c_contiguous())
-        self.assertFalse(t.is_f_contiguous())
+        self.assertTrue(t.is_c_contiguous())
+        self.assertTrue(t.is_f_contiguous())
 
     def test_bool_common_fields(self):
         t = ndt("bool")
@@ -1143,8 +1143,8 @@ class TestSigned(unittest.TestCase):
             self.assertTrue(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
     def test_signed_common_fields(self):
         for s, itemsize in [
@@ -1211,8 +1211,8 @@ class TestUnsigned(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertTrue(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
     def test_unsigned_common_fields(self):
         for s, itemsize in [
@@ -1282,8 +1282,8 @@ class TestFloat(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
     def test_float_common_fields(self):
         _float = [('float32', 4), ('float64', 8)]
@@ -1351,8 +1351,8 @@ class TestComplex(unittest.TestCase):
             self.assertFalse(t.issigned())
             self.assertFalse(t.isunsigned())
 
-            self.assertFalse(t.is_c_contiguous())
-            self.assertFalse(t.is_f_contiguous())
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
 
     def test_complex_common_fields(self):
         _complex = [('complex64', 8), ('complex128', 16)]

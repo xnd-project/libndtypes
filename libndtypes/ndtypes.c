@@ -167,10 +167,13 @@ ndt_is_c_contiguous(const ndt_t *t)
     int64_t shape, step;
     int ndim, i;
 
-    if (!ndt_is_ndarray(t)) {
+    if (ndt_is_abstract(t)) {
         return 0;
     }
-    if (!ndt_is_concrete(t)) {
+    if (t->ndim == 0) {
+        return 1;
+    }
+    if (!ndt_is_ndarray(t)) {
         return 0;
     }
 
@@ -196,10 +199,13 @@ ndt_is_f_contiguous(const ndt_t *t)
     int64_t shape, step;
     int ndim, i;
 
-    if (!ndt_is_ndarray(t)) {
+    if (ndt_is_abstract(t)) {
         return 0;
     }
-    if (!ndt_is_concrete(t)) {
+    if (t->ndim == 0) {
+        return 1;
+    }
+    if (!ndt_is_ndarray(t)) {
         return 0;
     }
 
@@ -1190,10 +1196,6 @@ ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
         ndt_err_format(ctx, NDT_TypeError,
             "array must be C-contiguous for conversion to Fortran order");
         return NULL;
-    }
-
-    if (ndt_is_abstract(t)) {
-        return ndt_copy(t, ctx);
     }
 
     return _ndt_to_fortran(t, 1, ctx);

@@ -340,18 +340,6 @@ ndt_meta_del(ndt_meta_t *m)
 /*****************************************************************************/
 
 static bool
-all_scalar(const ndt_t *types[], int n)
-{
-    for (int i = 0; i < n; i++) {
-        if (!ndt_is_scalar(types[i])) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static bool
 all_c_contiguous(const ndt_t *types[], int n)
 {
     for (int i = 0; i < n; i++) {
@@ -407,10 +395,7 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
         nin = spec->nbroadcast;
     }
 
-    if (all_scalar(in, nin) && all_scalar(out, spec->nout)) {
-        spec->tag = C;
-    }
-    else if (all_c_contiguous(in, nin) && all_c_contiguous(out, spec->nout)) {
+    if (all_c_contiguous(in, nin) && all_c_contiguous(out, spec->nout)) {
         spec->tag = C;
     }
     else if (really_fortran(in, nin) && all_c_contiguous(out, spec->nout)) {
