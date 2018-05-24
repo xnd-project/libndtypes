@@ -416,49 +416,43 @@ invalid_tag:
     return NULL;
 }
 
+ndt_t *
+ndt_var_dim_copy_contiguous(ndt_t *type, const ndt_t *t, ndt_context_t *ctx)
+{
+    int32_t noffsets = t->Concrete.VarDim.noffsets;
+    int32_t *offsets;
+    int64_t shape, start, step;
+    int64_t sum;
+    int64_t i;
+
+    offsets = ndt_alloc(noffsets, sizeof *offsets);
+    if (offsets == NULL) {
+        ndt_del(type);
+        return ndt_memory_error(ctx);
+    }
+
+    for (i=0, sum=0; i < noffsets-1; i++) {
+        offsets[i] = (int32_t)sum;
+
+        shape = ndt_var_indices(&start, &step, t, i, ctx);
+        if (shape == -1) {
+            ndt_free(offsets);
+            return NULL;
+        }
+        sum += shape;
+    }
+    offsets[i] = (int32_t)sum;
+
+    return ndt_var_dim(type, InternalOffsets, noffsets, offsets, 0, NULL, ctx);
+}
+
 
 /*****************************************************************************/
 /*                        Experimental (for gumath)                          */
 /*****************************************************************************/
 
-static ndt_t *
-ndt_copy_var_dim_new_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
-{
-    ndt_t *type;
-    ndt_slice_t *slices;
-    int nslices;
-
-    assert(t->tag == VarDim);
-    assert(ndt_is_concrete(t) && ndt_is_concrete(dtype));
-
-    type = ndt_copy_new_dtype(t->VarDim.type, dtype, ctx);
-    if (type == NULL) {
-        ndt_del(dtype);
-        return NULL;
-    }
-
-    slices = NULL;
-    nslices = t->Concrete.VarDim.nslices;
-
-    if (nslices > 0) {
-        slices = ndt_alloc(nslices, sizeof *slices);
-        if (slices == NULL) {
-            ndt_del(dtype);
-            return ndt_memory_error(ctx);
-        }
-        memcpy(slices, t->Concrete.VarDim.slices,
-               nslices * (sizeof *slices));
-    }
-
-    return ndt_var_dim(type, ExternalOffsets,
-                       t->Concrete.VarDim.noffsets,
-                       t->Concrete.VarDim.offsets,
-                       nslices,
-                       slices, ctx);
-}
-
 ndt_t *
-ndt_copy_new_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
+ndt_copy_contiguous_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
 {
     ndt_t *u = NULL;
     ndt_t *type;
@@ -471,18 +465,24 @@ ndt_copy_new_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
 
     switch (t->tag) {
     case FixedDim: {
-        type = ndt_copy_new_dtype(t->FixedDim.type, dtype, ctx);
+        type = ndt_copy_contiguous_dtype(t->FixedDim.type, dtype, ctx);
         if (type == NULL) {
             ndt_del(dtype);
             return NULL;
         }
 
-        u = ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.step, ctx);
+        u = ndt_fixed_dim(type, t->FixedDim.shape, INT64_MAX, ctx);
         goto copy_common_fields;
     }
 
     case VarDim: {
-        u = ndt_copy_var_dim_new_dtype(t, dtype, ctx);
+        type = ndt_copy_contiguous_dtype(t->VarDim.type, dtype, ctx);
+        if (type == NULL) {
+            ndt_del(dtype);
+            return NULL;
+        }
+
+        u = ndt_var_dim_copy_contiguous(u, type, ctx);
         goto copy_common_fields;
     }
 

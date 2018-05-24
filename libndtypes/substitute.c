@@ -45,36 +45,6 @@
 
 
 static ndt_t *
-var_dim_copy_contiguous(ndt_t *type, const ndt_t *t, ndt_context_t *ctx)
-{
-    int32_t noffsets = t->Concrete.VarDim.noffsets;
-    int32_t *offsets;
-    int64_t shape, start, step;
-    int64_t sum;
-    int64_t i;
-
-    offsets = ndt_alloc(noffsets, sizeof *offsets);
-    if (offsets == NULL) {
-        ndt_del(type);
-        return ndt_memory_error(ctx);
-    }
-
-    for (i=0, sum=0; i < noffsets-1; i++) {
-        offsets[i] = (int32_t)sum;
-
-        shape = ndt_var_indices(&start, &step, t, i, ctx);
-        if (shape == -1) {
-            ndt_free(offsets);
-            return NULL;
-        }
-        sum += shape;
-    }
-    offsets[i] = (int32_t)sum;
-
-    return ndt_var_dim(type, InternalOffsets, noffsets, offsets, 0, NULL, ctx);
-}
-
-static ndt_t *
 substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
@@ -107,7 +77,7 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
             }
 
             case VarDim: {
-                u = var_dim_copy_contiguous(u, w, ctx);
+                u = ndt_var_dim_copy_contiguous(u, w, ctx);
                 if (u == NULL) {
                     return NULL;
                 }
@@ -177,7 +147,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
             }
         }
 
-        return var_dim_copy_contiguous(u, t, ctx);
+        return ndt_var_dim_copy_contiguous(u, t, ctx);
     }
 
     case SymbolicDim: {
