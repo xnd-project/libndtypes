@@ -482,7 +482,7 @@ ndt_copy_contiguous_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
             return NULL;
         }
 
-        u = ndt_var_dim_copy_contiguous(u, type, ctx);
+        u = ndt_var_dim_copy_contiguous(type, t, ctx);
         goto copy_common_fields;
     }
 
