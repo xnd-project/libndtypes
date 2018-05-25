@@ -62,31 +62,45 @@ is_array(const ndt_t *t)
 }
 
 static int
-match_concrete_var_dim(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
+match_concrete_var_dim(const ndt_t *t, int64_t tindex,
+                       const ndt_t *u, int64_t uindex,
+                       ndt_context_t *ctx)
 {
-    const int32_t noffsets = t->Concrete.VarDim.noffsets;
-    const int64_t itemsize = t->Concrete.VarDim.itemsize;
-    int64_t tshape, ushape;
-    int64_t start, step;
+    int64_t tshape, tstart, tstep;
+    int64_t ushape, ustart, ustep;
 
-    if (itemsize != u->Concrete.VarDim.itemsize ||
-        noffsets != u->Concrete.VarDim.noffsets) {
+    if (t->ndim != u->ndim) {
+        return 0;
+    }
+    if (t->ndim == 0) {
+        return 1;
+    }
+    if (t->Concrete.VarDim.itemsize != u->Concrete.VarDim.itemsize) {
         return 0;
     }
 
-    for (int64_t i = 0; i < noffsets-1; i++) {
-        tshape = ndt_var_indices(&start, &step, t, i, ctx);
-        if (tshape < 0) {
-            return -1;
-        }
+    tshape = ndt_var_indices(&tstart, &tstep, t, tindex, ctx);
+    if (tshape < 0) {
+        return -1;
+    }
 
-        ushape = ndt_var_indices(&start, &step, u, i, ctx);
-        if (ushape < 0) {
-            return -1;
-        }
+    ushape = ndt_var_indices(&ustart, &ustep, u, uindex, ctx);
+    if (ushape < 0) {
+        return -1;
+    }
 
-        if (tshape != ushape) {
-            return 0;
+    if (ushape != tshape) {
+        return 0;
+    }
+
+    for (int64_t i = 0; i < tshape; i++) {
+        int64_t tnext = tstart + i * tstep;
+        int64_t unext = ustart + i * ustep;
+        int ret = match_concrete_var_dim(t->VarDim.type, tnext,
+                                         u->VarDim.type, unext,
+                                         ctx);
+        if (ret <= 0) {
+            return ret;
         }
     }
 
@@ -106,8 +120,8 @@ symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
         if (w->tag != VarDimEntry)
             return 0;
 
-        return match_concrete_var_dim(v->VarDimEntry.type,
-                                      w->VarDimEntry.type,
+        return match_concrete_var_dim(v->VarDimEntry.type, 0,
+                                      w->VarDimEntry.type, 0,
                                       ctx);
     case TypeEntry:
         return w->tag == TypeEntry && ndt_equal(v->TypeEntry, w->TypeEntry);
@@ -301,7 +315,7 @@ match_single(const ndt_t *p, const ndt_t *c, bool ellipsis, symtable_t *tbl,
             return resolve_var_dim(c->ndim, v, tbl, ctx);
         }
         else {
-            return match_concrete_var_dim(p, c, ctx);
+            return match_concrete_var_dim(p, 0, c, 0, ctx);
         }
     }
 
@@ -386,6 +400,9 @@ match_dimensions(const ndt_t *p[], int pshape,
     for (i = 0; i < pshape && i < cshape; i++) {
         n = match_single(p[i], c[i], false, tbl, ctx);
         if (n <= 0) return n;
+        if (p[i]->tag == VarDim) {
+            return 1;
+        }
     }
 
     return i == pshape && i == cshape;

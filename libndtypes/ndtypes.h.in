@@ -639,6 +639,7 @@ NDTYPES_API int ndt_is_big_endian(const ndt_t *t);
 
 NDTYPES_API ndt_t *ndt_copy(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_var_dim_copy_contiguous(ndt_t *type, const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_copy_contiguous(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_copy_contiguous_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx);
 
 NDTYPES_API int ndt_equal(const ndt_t *t, const ndt_t *u);

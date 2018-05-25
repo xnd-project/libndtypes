@@ -950,6 +950,25 @@ ndtype_to_nbformat(PyObject *self, PyObject *args UNUSED)
     return ret;
 }
 
+static PyObject *
+ndtype_copy_contiguous(PyObject *self, PyObject *args UNUSED)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *dest;
+
+    dest = ndtype_alloc(Py_TYPE(self));
+    if (dest == NULL) {
+        return NULL;
+    }
+
+    NDT(dest) = ndt_copy_contiguous(NDT(self), &ctx);
+    if (NDT(dest) == NULL) {
+        return seterr(&ctx);
+    }
+
+    return dest;
+}
+
 
 static PyGetSetDef ndtype_getsets [] =
 {
@@ -990,6 +1009,7 @@ static PyMethodDef ndtype_methods [] =
   { "pprint", (PyCFunction)ndtype_pprint, METH_NOARGS, doc_pprint },
   { "ast_repr", (PyCFunction)ndtype_ast_repr, METH_NOARGS, doc_ast_repr },
   { "serialize", (PyCFunction)ndtype_serialize, METH_NOARGS, doc_serialize },
+  { "copy_contiguous", (PyCFunction)ndtype_copy_contiguous, METH_NOARGS, NULL },
 
   /* Class methods */
   { "from_format", (PyCFunction)ndtype_from_format, METH_O|METH_CLASS, doc_from_format },
