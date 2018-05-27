@@ -416,158 +416,47 @@ invalid_tag:
     return NULL;
 }
 
-static ndt_t *
-fixed_copy_contiguous(const ndt_t *t, ndt_t *type, ndt_context_t *ctx)
+ndt_t *
+ndt_var_dim_copy_contiguous(ndt_t *type, const ndt_t *t, ndt_context_t *ctx)
 {
-    if (t->ndim == 0) {
-        return type;
-    }
-
-    assert(t->tag == FixedDim);
-    assert(ndt_is_concrete(t));
-    type = fixed_copy_contiguous(t->FixedDim.type, type, ctx);
-    if (type == NULL) {
-        ndt_del(type);
-        return NULL;
-    }
-
-    return ndt_fixed_dim(type, t->FixedDim.shape, INT64_MAX, ctx);
-}
-
-static void
-clear_meta(ndt_meta_t *m)
-{
-    for (int i = 0; i < m->ndims; i++) {
-        ndt_free(m->offsets[i]);
-    }
-}
-
-static int
-var_init_meta(ndt_meta_t *m, const ndt_t *t, int32_t noffsets, ndt_context_t *ctx)
-{
+    int32_t noffsets = t->Concrete.VarDim.noffsets;
     int32_t *offsets;
     int64_t shape, start, step;
     int64_t sum;
     int64_t i;
 
-    if (t->ndim == 0) {
-        return 0;
-    }
-
     offsets = ndt_alloc(noffsets, sizeof *offsets);
     if (offsets == NULL) {
-        clear_meta(m);
-        (void)ndt_memory_error(ctx);
-        return -1;
+        ndt_del(type);
+        return ndt_memory_error(ctx);
     }
-    m->noffsets[m->ndims] = noffsets;
-    m->offsets[m->ndims] = offsets;
-    m->ndims++;
 
     for (i=0, sum=0; i < noffsets-1; i++) {
+        offsets[i] = (int32_t)sum;
+
         shape = ndt_var_indices(&start, &step, t, i, ctx);
         if (shape == -1) {
-            clear_meta(m);
-            return -1;
+            ndt_free(offsets);
+            return NULL;
         }
         sum += shape;
     }
+    offsets[i] = (int32_t)sum;
 
-    return var_init_meta(m, t->VarDim.type, sum+1, ctx);
+    return ndt_var_dim(type, InternalOffsets, noffsets, offsets, 0, NULL, ctx);
 }
 
-static int
-var_copy_shapes(ndt_meta_t *m, int64_t dst_index, int64_t src_index,
-                const ndt_t *t, const int ndim,
-                ndt_context_t *ctx)
-{
-    int64_t shape, start, step;
 
-    if (t->ndim == 0) {
-        return 0;
-    }
-
-    shape = ndt_var_indices(&start, &step, t, src_index, ctx);
-    if (shape < 0) {
-        clear_meta(m);
-        return -1;
-    }
-    m->offsets[ndim-t->ndim][dst_index] = shape;
-
-    for (int64_t i = 0; i < shape; i++) {
-        int64_t src_next = start + i * step;
-        if (var_copy_shapes(m, i, src_next, t->VarDim.type, ndim, ctx) < 0) {
-            clear_meta(m);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static void
-var_sum_shapes(ndt_meta_t *m)
-{
-    int i, k;
-
-    for (i = 0; i < m->ndims; i++) {
-        int32_t sum = 0;
-        for (k = 0; k < m->noffsets[i]-1; k++) {
-            int32_t s = m->offsets[i][k];
-            m->offsets[i][k] = sum;
-            sum += s;
-        }
-        m->offsets[i][k] = sum;
-   }
-}
-
-ndt_t *
-var_from_metadata_and_dtype(ndt_meta_t *m, ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t;
-    int i;
-
-    for (i=m->ndims-1, t=type; i >= 0; i--, type=t) {
-        t = ndt_var_dim(type, InternalOffsets, m->noffsets[i], m->offsets[i],
-                        0, NULL, ctx);
-        if (t == NULL) {
-            for (int k = i-1; k >= 0; k--) {
-                ndt_free(m->offsets[k]);
-            }
-            return NULL;
-        }
-    }
-
-    return t;
-}
- 
-static ndt_t *
-var_copy_contiguous(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
-{
-    ndt_meta_t m = {.ndims=0, .noffsets={0}, .offsets={NULL}};
-
-    assert(t->tag == VarDim);
-    assert(ndt_is_concrete(t));
-    assert(t->Concrete.VarDim.noffsets == 2);
-
-    if (var_init_meta(&m, t, 2, ctx) < 0) {
-        ndt_del(dtype);
-        return NULL;
-    }
-
-    if (var_copy_shapes(&m, 0, 0, t, t->ndim, ctx) < 0) {
-        ndt_del(dtype);
-        return NULL;
-    }
-
-    var_sum_shapes(&m);
-
-    return var_from_metadata_and_dtype(&m, dtype, ctx);
-}
+/*****************************************************************************/
+/*                        Experimental (for gumath)                          */
+/*****************************************************************************/
 
 ndt_t *
 ndt_copy_contiguous_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
 {
+    ndt_t *u = NULL;
+    ndt_t *type;
+
     if (ndt_is_abstract(t) || ndt_is_abstract(dtype)) {
         ndt_err_format(ctx, NDT_ValueError,
             "copy_new_dtype() called on abstract type");
@@ -576,23 +465,37 @@ ndt_copy_contiguous_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
 
     switch (t->tag) {
     case FixedDim: {
-        return fixed_copy_contiguous(t, dtype, ctx);
+        type = ndt_copy_contiguous_dtype(t->FixedDim.type, dtype, ctx);
+        if (type == NULL) {
+            ndt_del(dtype);
+            return NULL;
+        }
+
+        u = ndt_fixed_dim(type, t->FixedDim.shape, INT64_MAX, ctx);
+        goto copy_common_fields;
     }
+
     case VarDim: {
-        return var_copy_contiguous(t, dtype, ctx);
+        type = ndt_copy_contiguous_dtype(t->VarDim.type, dtype, ctx);
+        if (type == NULL) {
+            ndt_del(dtype);
+            return NULL;
+        }
+
+        u = ndt_var_dim_copy_contiguous(type, t, ctx);
+        goto copy_common_fields;
     }
+
     default:
         return dtype;
     }
-}
 
-ndt_t *
-ndt_copy_contiguous(const ndt_t *t, ndt_context_t *ctx)
-{
-    ndt_t *dtype = ndt_copy(ndt_dtype(t), ctx);
-    if (dtype == NULL) {
+copy_common_fields:
+    if (u == NULL) {
+        ndt_del(dtype);
         return NULL;
     }
 
-    return ndt_copy_contiguous_dtype(t, dtype, ctx);
+    copy_common(u, t);
+    return u;
 }
