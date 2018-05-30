@@ -41,22 +41,17 @@
 
 enum symtable_entry {
   Unbound,
-  ShapeEntry,
-  SymbolEntry,
-  VarDimEntry,
-  TypeEntry,
-  DimListEntry,
-  BroadcastEntry
+  Shape,
+  Symbol,
+  Type,
+  BroadcastSeq,
+  FixedSeq,
+  VarSeq
 };
 
 typedef struct {
-    int ndim;
-    const ndt_t *type;
-} var_dim_entry_t;
-
-typedef struct {
     int size;
-    const ndt_t **dims;
+    const ndt_t *dims[NDT_MAX_DIM];
 } dim_list_t;
 
 typedef struct {
@@ -67,12 +62,12 @@ typedef struct {
 typedef struct {
   enum symtable_entry tag;
   union {
-    int64_t ShapeEntry;
-    const char *SymbolEntry;
-    const ndt_t *TypeEntry;
-    var_dim_entry_t VarDimEntry;
-    dim_list_t DimListEntry;
-    broadcast_list_t BroadcastEntry;
+    int64_t Shape;
+    const char *Symbol;
+    const ndt_t *Type;
+    broadcast_list_t BroadcastSeq;
+    dim_list_t FixedSeq;
+    dim_list_t VarSeq;
   };
 } symtable_entry_t;
 

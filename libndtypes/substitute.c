@@ -48,7 +48,6 @@ static ndt_t *
 substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
-    const ndt_t *w;
     ndt_t *u;
     int i;
 
@@ -62,39 +61,29 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
     v = symtable_find(tbl, t->EllipsisDim.name);
 
     switch (v.tag) {
-    case DimListEntry: {
-        for (i = v.DimListEntry.size-1; i >= 0; i--) {
-            w = v.DimListEntry.dims[i];
+    case FixedSeq: {
+        for (i = v.FixedSeq.size-1; i >= 0; i--) {
+            const ndt_t *w = v.FixedSeq.dims[i];
             assert(ndt_is_concrete(w));
+            assert(w->tag == FixedDim);
 
-            switch (w->tag) {
-            case FixedDim: {
-                u = ndt_fixed_dim(u, w->FixedDim.shape, INT64_MAX, ctx);
-                if (u == NULL) {
-                    return NULL;
-                }
-                break;
-            }
-
-            case VarDim: {
-                u = ndt_var_dim_copy_contiguous(u, w, ctx);
-                if (u == NULL) {
-                    return NULL;
-                }
-                break;
-           }
-
-           default:
-               ndt_err_format(ctx, NDT_NotImplementedError,
-                   "substitution not implemented for this type");
-               ndt_del(u);
-               return NULL;
+            u = ndt_fixed_dim(u, w->FixedDim.shape, INT64_MAX, ctx);
+            if (u == NULL) {
+                return NULL;
             }
         }
 
         return u;
     }
-
+    case VarSeq: {
+        if (v.VarSeq.size == 0) {
+            return u;
+        }
+        else {
+            const ndt_t *w = v.VarSeq.dims[0];
+            return ndt_copy_contiguous_dtype(w, u, ctx);
+        }
+    }
     default:
         ndt_err_format(ctx, NDT_ValueError,
             "variable not found or has incorrect type");
@@ -125,29 +114,12 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
     }
 
     case VarDim: {
-        u = ndt_substitute(t->VarDim.type, tbl, req_concrete, ctx);
+        u = ndt_substitute(ndt_dtype(t), tbl, req_concrete, ctx);
         if (u == NULL) {
             return NULL;
         }
 
-        if (ndt_is_abstract(t)) {
-            const ndt_t *v = symtable_find_var_dim(tbl, t->ndim, ctx);
-            if (v == NULL) {
-                if (req_concrete) {
-                    ndt_del(u);
-                    return NULL;
-                }
-                else {
-                    ndt_err_clear(ctx);
-                    return ndt_abstract_var_dim(u, ctx);
-                }
-            }
-            else {
-                t = v;
-            }
-        }
-
-        return ndt_var_dim_copy_contiguous(u, t, ctx);
+        return ndt_copy_abstract_var_dtype(t, u, ctx);
     }
 
     case SymbolicDim: {

@@ -389,13 +389,5 @@ BROADCAST_TEST_CASES = [
         in_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
         out_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
         in_broadcast = [],
-        outer_dims = 2),
-
-    ApplySpec(
-        tag = 'Xnd',
-        sig = ndt("var... * var * float64 -> var... * var * float64"),
-        in_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
-        out_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
-        in_broadcast = [],
-        outer_dims = 1)
+        outer_dims = 2)
 ]

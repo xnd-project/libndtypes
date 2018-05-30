@@ -207,7 +207,8 @@ datashape_with_ellipsis:
   datashape                                { $$ = $1; }
 | ELLIPSIS STAR dimensions_tail            { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER ELLIPSIS STAR dimensions_tail { $$ = ndt_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
-| VAR ELLIPSIS STAR dimensions_tail        { $$ = mk_var_ellipsis($4, ctx); if ($$ == NULL) YYABORT; }
+| VAR ELLIPSIS STAR dtype                  { $$ = mk_var_ellipsis($4, ctx); if ($$ == NULL) YYABORT; }
+| VAR ELLIPSIS STAR QUESTIONMARK dtype     { $$ = mk_var_ellipsis(ndt_option($5), ctx); if ($$ == NULL) YYABORT; }
 
 datashape:
   dimensions         { $$ = $1; }

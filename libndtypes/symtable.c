@@ -243,22 +243,6 @@ symtable_new(ndt_context_t *ctx)
 }
 
 void
-symtable_free_entry(symtable_entry_t entry)
-{
-    switch(entry.tag) {
-    case DimListEntry:
-       ndt_free((void *)entry.DimListEntry.dims);
-       return;
-    case Unbound: case ShapeEntry: case SymbolEntry: case VarDimEntry:
-    case TypeEntry: case BroadcastEntry:
-       return;
-    }
-
-    /* NOT REACHED: tags should be exhaustive. */
-    ndt_internal_error("invalid symtable entry tag");
-}
-
-void
 symtable_del(symtable_t *t)
 {
     int i;
@@ -271,7 +255,6 @@ symtable_del(symtable_t *t)
         symtable_del(t->next[i]);
     }
 
-    symtable_free_entry(t->entry);
     ndt_free(t);
 }
 
@@ -362,8 +345,8 @@ symtable_find_shape(const symtable_t *tbl, const char *key, ndt_context_t *ctx)
 
     v = symtable_find(tbl, key);
     switch (v.tag) {
-    case ShapeEntry:
-        return v.ShapeEntry;
+    case Shape:
+        return v.Shape;
     default:
         ndt_err_format(ctx, NDT_ValueError,
             "variable not found or has incorrect type");
@@ -378,35 +361,11 @@ symtable_find_typevar(const symtable_t *tbl, const char *key, ndt_context_t *ctx
 
     v = symtable_find(tbl, key);
     switch (v.tag) {
-    case TypeEntry:
-        return v.TypeEntry;
+    case Type:
+        return v.Type;
     default:
         ndt_err_format(ctx, NDT_ValueError,
             "variable not found or has incorrect type");
-        return NULL;
-    }
-}
-
-const ndt_t *
-symtable_find_var_dim(const symtable_t *tbl, int ndim, ndt_context_t *ctx)
-{
-    symtable_entry_t v;
-    char key[10];
-    int n;
-
-    n = snprintf(key, 10, "00%dVAR", ndim);
-    if (n < 0 || n >= 10) {
-        ndt_err_format(ctx, NDT_RuntimeError,
-            "write failed or buffer too small %s", key);
-        return NULL;
-    }
-
-    v = symtable_find(tbl, key);
-    switch (v.tag) {
-    case VarDimEntry:
-        return v.VarDimEntry.type;
-    default:
-        ndt_err_format(ctx, NDT_RuntimeError, "var dim not found");
         return NULL;
     }
 }

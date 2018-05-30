@@ -2161,6 +2161,43 @@ const match_testcase_t match_tests[] = {
   { "D... * int64",
     "int64", 1 },
 
+  { "var... * int64",
+    "var * int64", 0 },
+
+  { "var... * int64",
+    "int64", 1 },
+
+  { "var * int64",
+    "int64", 0 },
+
+  { "var * int64",
+    "var * int64", 0 },
+
+  { "var * int64",
+    "var(offsets=[0,10]) * int64", 1 },
+
+  { "var * var * int64",
+    "var(offsets=[0,10]) * int64", 0 },
+
+  { "var * var * int64",
+    "var(offsets=[0,10]) * int64", 0 },
+
+  { "var * var * int64",
+    "var(offsets=[0,3]) * var(offsets=[0,5,20,100]) * int64", 1 },
+
+  { "var * var * int64",
+    "var(offsets=[0,2]) * var(offsets=[0,2,3]) * var(offsets=[0,1,2,3]) * int64", 0 },
+
+  { "var... * int64",
+    "var(offsets=[0,10]) * int64", 1 },
+
+  { "var... * int64",
+    "var(offsets=[0,3]) * var(offsets=[0,5,20,100]) * int64", 1 },
+
+  { "var... * int64",
+    "var(offsets=[0,2]) * var(offsets=[0,2,3]) * var(offsets=[0,1,2,3]) * int64", 1 },
+
+
   /* END MANUALLY GENERATED */
 
   { NULL, NULL, 0 }

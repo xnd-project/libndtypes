@@ -45,132 +45,9 @@
 
 
 static int match_datashape(const ndt_t *, const ndt_t *, symtable_t *, ndt_context_t *);
-static int match_dimensions(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
-static int match_dimensions_rev(const ndt_t *p[], int pshape, const ndt_t *c[], int cshape, symtable_t *tbl, ndt_context_t *ctx);
-static int match_single(const ndt_t *p, const ndt_t *c, bool ellipsis, symtable_t *tbl, ndt_context_t *ctx);
-
 
 static int
-is_array(const ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim: case SymbolicDim: case VarDim: case EllipsisDim:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-static int
-match_concrete_var_dim(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
-{
-    const int32_t noffsets = t->Concrete.VarDim.noffsets;
-    const int64_t itemsize = t->Concrete.VarDim.itemsize;
-    int64_t tshape, ushape;
-    int64_t start, step;
-
-    if (itemsize != u->Concrete.VarDim.itemsize ||
-        noffsets != u->Concrete.VarDim.noffsets) {
-        return 0;
-    }
-
-    for (int64_t i = 0; i < noffsets-1; i++) {
-        tshape = ndt_var_indices(&start, &step, t, i, ctx);
-        if (tshape < 0) {
-            return -1;
-        }
-
-        ushape = ndt_var_indices(&start, &step, u, i, ctx);
-        if (ushape < 0) {
-            return -1;
-        }
-
-        if (tshape != ushape) {
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-static int
-symtable_entry_equal(symtable_entry_t *v, symtable_entry_t *w, symtable_t *tbl,
-                     ndt_context_t *ctx)
-{
-    switch (v->tag) {
-    case ShapeEntry:
-        return w->tag == ShapeEntry && v->ShapeEntry == w->ShapeEntry;
-    case SymbolEntry:
-        return w->tag == SymbolEntry && strcmp(v->SymbolEntry, w->SymbolEntry) == 0;
-    case VarDimEntry:
-        if (w->tag != VarDimEntry)
-            return 0;
-
-        return match_concrete_var_dim(v->VarDimEntry.type,
-                                      w->VarDimEntry.type,
-                                      ctx);
-    case TypeEntry:
-        return w->tag == TypeEntry && ndt_equal(v->TypeEntry, w->TypeEntry);
-    case DimListEntry:
-        if (w->tag != DimListEntry)
-            return 0;
-
-        return match_dimensions(v->DimListEntry.dims, v->DimListEntry.size,
-                                w->DimListEntry.dims, w->DimListEntry.size,
-                                tbl, ctx);
-    case BroadcastEntry:
-        /* NOT REACHED: function is not used for broadcasting. */
-        return 0;
-    case Unbound:
-        /* NOT REACHED: 'v' is always bound. */
-        return 0;
-    }
-
-    /* NOT REACHED: tags should be exhaustive. */
-    ndt_internal_error("invalid symtable entry");
-}
-
-static int
-resolve_sym(const char *key, symtable_entry_t w,
-            symtable_t *tbl,
-            ndt_context_t *ctx)
-{
-    symtable_entry_t v;
-    int n;
-
-    v = symtable_find(tbl, key);
-    if (v.tag == Unbound) {
-        if (symtable_add(tbl, key, w, ctx) < 0) {
-            symtable_free_entry(w);
-            return -1;
-        }
-        return 1;
-    }
-
-    n = symtable_entry_equal(&v, &w, tbl, ctx);
-    symtable_free_entry(w);
-    return n;
-}
-
-static int
-resolve_var_dim(int ndim, symtable_entry_t w, symtable_t *tbl,
-                ndt_context_t *ctx)
-{
-    char key[10];
-    int n;
-
-    n = snprintf(key, 10, "00%dVAR", ndim);
-    if (n < 0 || n >= 10) {
-        ndt_err_format(ctx, NDT_RuntimeError,
-            "write failed or buffer too small %s", key);
-        return -1;
-    }
-
-    return resolve_sym(key, w, tbl, ctx);
-}
-
-static int
-resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
+resolve_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 {
     const char *key = "00_ELLIPSIS";
     symtable_entry_t *v;
@@ -181,18 +58,17 @@ resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
     v = symtable_find_ptr(tbl, key);
     if (v == NULL) {
         if (symtable_add(tbl, key, w, ctx) < 0) {
-            symtable_free_entry(w);
             return -1;
         }
         return 1;
     }
 
-    vsize = v->BroadcastEntry.size;
-    wsize = w.BroadcastEntry.size;
+    vsize = v->BroadcastSeq.size;
+    wsize = w.BroadcastSeq.size;
 
     for (i=vsize-1, k=wsize-1; i>=0 && k>=0; i--, k--) {
-        n = v->BroadcastEntry.dims[i];
-        m = w.BroadcastEntry.dims[k];
+        n = v->BroadcastSeq.dims[i];
+        m = w.BroadcastSeq.dims[k];
         if (m != n) {
             if (n == 1) {
                 n = m;
@@ -204,191 +80,159 @@ resolve_sym_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
                 return 0;
             }
         }
-        v->BroadcastEntry.dims[i<k ? k : i] = n;
+        v->BroadcastSeq.dims[i<k ? k : i] = n;
     }
     for (; k >= 0; k--) {
-        v->BroadcastEntry.dims[k] = w.BroadcastEntry.dims[k];
+        v->BroadcastSeq.dims[k] = w.BroadcastSeq.dims[k];
     }
 
-    v->BroadcastEntry.size = vsize >= wsize ? vsize : wsize;
+    v->BroadcastSeq.size = vsize >= wsize ? vsize : wsize;
 
     return 1;
 }
 
 static int
-resolve_dimension_list(const char *name, const ndt_t *c[], int size,
-                       symtable_t *tbl, ndt_context_t *ctx)
-{
-    bool have_var = (strcmp(name, "var") == 0);
-    symtable_entry_t v;
-    int i;
-
-    v.tag = DimListEntry;
-    v.DimListEntry.size = size;
-    v.DimListEntry.dims = ndt_alloc(size, sizeof *v.DimListEntry.dims);
-
-    if (v.DimListEntry.dims == NULL) {
-        (void)ndt_memory_error(ctx);
-        return -1;
-    }
-
-    for (i = 0; i < size; i++) {
-        switch(c[i]->tag) {
-        case FixedDim:
-            if (have_var) goto match_failure;
-            v.DimListEntry.dims[i] = c[i];
-            break;
-        case VarDim:
-            if (!have_var) goto match_failure;
-            v.DimListEntry.dims[i] = c[i];
-            break;
-        default: match_failure:
-            ndt_free((void *)v.DimListEntry.dims);
-            return 0;
-        }
-    }
-
-    return resolve_sym(name, v, tbl, ctx);
-}
-
-static int
-resolve_broadcast(const ndt_t *c[], int size, symtable_t *tbl,
-                  ndt_context_t *ctx)
+resolve_fixed(const char *key, symtable_entry_t w,
+              symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
-    int i;
 
-    v.tag = BroadcastEntry;
-    v.BroadcastEntry.size = size;
+    v = symtable_find(tbl, key);
+    if (v.tag == Unbound) {
+        if (symtable_add(tbl, key, w, ctx) < 0) {
+            return -1;
+        }
+        return 1;
+    }
 
-    for (i = 0; i < size; i++) {
-        switch(c[i]->tag) {
-        case FixedDim:
-            v.BroadcastEntry.dims[i] = c[i]->FixedDim.shape;
-            break;
-        default:
+    if (w.FixedSeq.size != v.FixedSeq.size) {
+        return 0;
+    }
+
+    for (int i = 0; i < v.FixedSeq.size; i++) {
+        const ndt_t *t = v.FixedSeq.dims[i];
+        const ndt_t *u = w.FixedSeq.dims[i];
+        if (u->FixedDim.shape != t->FixedDim.shape) {
             return 0;
         }
     }
 
-    return resolve_sym_broadcast(v, tbl, ctx);
+    return 1;
 }
 
 static int
-match_single(const ndt_t *p, const ndt_t *c, bool ellipsis, symtable_t *tbl,
-             ndt_context_t *ctx)
+resolve_shape(const char *key, int64_t shape, symtable_t *tbl, ndt_context_t *ctx)
 {
-    switch (p->tag) {
-    case FixedDim: {
-        return c->tag == FixedDim && p->FixedDim.shape == c->FixedDim.shape;
-    }
+    symtable_entry_t v;
 
-    case VarDim: {
-        if (ndt_is_abstract(p)) {
-            symtable_entry_t v;
-
-            if (c->tag != VarDim || c->ndim != p->ndim) {
-                return 0;
-            }
-
-            if (!ellipsis) {
-                return 1;
-            }
-
-            v.tag = VarDimEntry;
-            v.VarDimEntry.type = c;
-
-            return resolve_var_dim(c->ndim, v, tbl, ctx);
+    v = symtable_find(tbl, key);
+    if (v.tag == Unbound) {
+        v.tag = Shape;
+        v.Shape = shape;
+        if (symtable_add(tbl, key, v, ctx) < 0) {
+            return -1;
         }
-        else {
-            return match_concrete_var_dim(p, c, ctx);
-        }
+        return 1;
     }
 
-    case SymbolicDim: {
-        symtable_entry_t v;
-
-        switch (c->tag) {
-        case FixedDim:
-            v.tag = ShapeEntry;
-            v.ShapeEntry = c->FixedDim.shape;
-            break;
-
-        case SymbolicDim:
-            v.tag = SymbolEntry;
-            v.SymbolEntry = c->SymbolicDim.name; /* borrowed */
-            break;
-
-        default:
-            return 0;
-        }
-
-        return resolve_sym(p->SymbolicDim.name, v, tbl, ctx);
+    if (v.tag != Shape) {
+        return 0;
     }
 
-    case EllipsisDim: {
-        ndt_err_format(ctx, NDT_RuntimeError, "unexpected ellipsis");
-        return -1;
-    }
-
-    default: /* NOT REACHED */
-        ndt_internal_error("not a dimension");
-    }
+    return shape == v.Shape;
 }
 
 static int
-resolve_ellipsis(const char *name, const ndt_t *c[], int cshape,
-                 symtable_t *tbl, ndt_context_t *ctx)
+resolve_typevar(const char *key, symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 {
-    if (name == NULL) {
-        return resolve_broadcast(c, cshape, tbl, ctx);
+    symtable_entry_t v;
+
+    v = symtable_find(tbl, key);
+    if (v.tag == Unbound) {
+        if (symtable_add(tbl, key, w, ctx) < 0) {
+            return -1;
+        }
+        return 1;
+    }
+
+    if (v.tag == Symbol && w.tag == Symbol) {
+        return strcmp(v.Symbol, w.Symbol) == 0;
+    }
+    else if (v.tag == Type && w.tag == Type) {
+        return ndt_equal(v.Type, w.Type);
     }
     else {
-        return resolve_dimension_list(name, c, cshape, tbl, ctx);
+        return 0;
     }
 }
 
 static int
-match_dimensions_rev(const ndt_t *p[], int pshape,
-                     const ndt_t *c[], int cshape,
-                     symtable_t *tbl, ndt_context_t *ctx)
+match_concrete_var_dim(const ndt_t *t, int64_t tindex,
+                       const ndt_t *u, int64_t uindex,
+                       const int outer_dims, ndt_context_t *ctx)
 {
-    int n, i, k;
+    int64_t tshape, tstart, tstep;
+    int64_t ushape, ustart, ustep;
 
-    assert(p[0]->tag == EllipsisDim);
+    if (outer_dims == 0) {
+        return 1;
+    }
+    if (t->Concrete.VarDim.itemsize != u->Concrete.VarDim.itemsize) {
+        return 0;
+    }
 
-    for (i=pshape-1, k=cshape-1; i>=0 && k>=0; i--, k--) {
-        if (i == 0) {
-            return resolve_ellipsis(p[0]->EllipsisDim.name, c, k+1, tbl, ctx);
+    tshape = ndt_var_indices(&tstart, &tstep, t, tindex, ctx);
+    if (tshape < 0) {
+        return -1;
+    }
+
+    ushape = ndt_var_indices(&ustart, &ustep, u, uindex, ctx);
+    if (ushape < 0) {
+        return -1;
+    }
+
+    if (ushape != tshape) {
+        return 0;
+    }
+
+    for (int64_t i = 0; i < tshape; i++) {
+        int64_t tnext = tstart + i * tstep;
+        int64_t unext = ustart + i * ustep;
+        int ret = match_concrete_var_dim(t->VarDim.type, tnext,
+                                         u->VarDim.type, unext,
+                                         outer_dims-1, ctx);
+        if (ret <= 0) {
+            return ret;
         }
-        n = match_single(p[i], c[k], true, tbl, ctx);
-        if (n <= 0) return n;
     }
 
-    if (i == 0 && k == -1) {
-        return resolve_ellipsis(p[0]->EllipsisDim.name, c, 0, tbl, ctx);
-    }
-
-    return i <= 0 && k == -1;
+    return 1;
 }
 
 static int
-match_dimensions(const ndt_t *p[], int pshape,
-                 const ndt_t *c[], int cshape,
-                 symtable_t *tbl, ndt_context_t *ctx)
+resolve_var(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 {
-    int n, i;
+    const char *key = "var";
+    symtable_entry_t v;
 
-    if (pshape > 0 && p[0]->tag == EllipsisDim) {
-        return match_dimensions_rev(p, pshape, c, cshape, tbl, ctx);
+    v = symtable_find(tbl, key);
+    if (v.tag == Unbound) {
+        if (symtable_add(tbl, key, w, ctx) < 0) {
+            return -1;
+        }
+        return 1;
     }
 
-    for (i = 0; i < pshape && i < cshape; i++) {
-        n = match_single(p[i], c[i], false, tbl, ctx);
-        if (n <= 0) return n;
+    if (w.VarSeq.size != v.VarSeq.size) {
+        return 0;
+    }
+    if (v.VarSeq.size == 0) {
+        return 1;
     }
 
-    return i == pshape && i == cshape;
+    return match_concrete_var_dim(w.VarSeq.dims[0], 0,
+                                  v.VarSeq.dims[0], 0,
+                                  v.VarSeq.size, ctx);
 }
 
 static int
@@ -455,33 +299,125 @@ match_categorical(ndt_value_t *p, int64_t plen,
     return 1;
 }
 
+static const ndt_t *
+outer_inner(symtable_entry_t *v, int i, const ndt_t *t, int ndim)
+{
+    assert(ndt_is_concrete(t));
+
+    if (t->ndim < ndim) {
+        return NULL;
+    }
+    if (t->ndim == ndim) {
+        return t;
+    }
+
+    switch (t->tag) {
+    case FixedDim: {
+        switch (v->tag) {
+        case FixedSeq:
+            v->FixedSeq.size = i+1;
+            v->FixedSeq.dims[i] = t;
+            break;
+        case BroadcastSeq:
+            v->BroadcastSeq.size = i+1;
+            v->BroadcastSeq.dims[i] = t->FixedDim.shape;
+            break;
+        default:
+            return NULL;
+        }
+        return outer_inner(v, i+1, t->FixedDim.type, ndim);
+    }
+    case VarDim: {
+        switch (v->tag) {
+        case VarSeq:
+            v->VarSeq.size = i+1;
+            v->VarSeq.dims[i] = t;
+            break;
+        default:
+            return NULL;
+        }
+        return outer_inner(v, i+1, t->VarDim.type, ndim);
+    }
+    default:
+        return NULL;
+    }
+}
+
 static int
-match_datashape(const ndt_t *p, const ndt_t *c,
-                symtable_t *tbl,
+match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
                 ndt_context_t *ctx)
 {
-    const ndt_t *pdims[NDT_MAX_DIM];
-    const ndt_t *cdims[NDT_MAX_DIM];
-    const ndt_t *pdtype;
-    const ndt_t *cdtype;
-    int pn, cn;
     int n;
 
     if (ndt_is_optional(c) != ndt_is_optional(p)) return 0;
 
     switch (p->tag) {
-    case AnyKind:
+    case AnyKind: {
         return 1;
-    case FixedDim: case SymbolicDim: case VarDim:
-        if (!is_array(c)) return 0; /* fall through */
-    case EllipsisDim:
-        pn = ndt_dims_dtype(pdims, &pdtype, p);
-        cn = ndt_dims_dtype(cdims, &cdtype, c);
+    }
 
-        n = match_dimensions(pdims, pn, cdims, cn, tbl, ctx);
-        if (n <= 0) return n;
+    case FixedDim: {
+        if (c->tag != FixedDim || p->FixedDim.shape != c->FixedDim.shape) {
+            return 0;
+        }
+        return match_datashape(p->FixedDim.type, c->FixedDim.type, tbl, ctx);
+    }
 
-        return match_datashape(pdtype, cdtype, tbl, ctx);
+    case VarDim: {
+        if (c->tag != VarDim) {
+            return 0;
+        }
+        return match_datashape(p->VarDim.type, c->VarDim.type, tbl, ctx);
+    }
+
+    case SymbolicDim: {
+        if (c->tag != FixedDim) return 0;
+        n = resolve_shape(p->SymbolicDim.name, c->FixedDim.shape, tbl, ctx);
+        if (n <= 0) {
+            return n;
+        }
+        return match_datashape(p->SymbolicDim.type, c->FixedDim.type, tbl, ctx);
+    }
+
+    case EllipsisDim: {
+        symtable_entry_t outer;
+        const ndt_t *inner;
+
+        if (p->EllipsisDim.name == NULL) {
+            outer.tag = BroadcastSeq;
+            outer.BroadcastSeq.size = 0;
+        }
+        else if (strcmp(p->EllipsisDim.name, "var") == 0) {
+            outer.tag = VarSeq;
+            outer.VarSeq.size = 0;
+        }
+        else {
+            outer.tag = FixedSeq;
+            outer.FixedSeq.size = 0;
+        }
+
+        inner = outer_inner(&outer, 0, c, p->EllipsisDim.type->ndim);
+        if (inner == NULL) {
+            return 0;
+        }
+
+        n = match_datashape(p->EllipsisDim.type, inner, tbl, ctx);
+        if (n <= 0) {
+            return n;
+        }
+
+        switch (outer.tag) {
+        case BroadcastSeq:
+            return resolve_broadcast(outer, tbl, ctx);
+        case FixedSeq:
+            return resolve_fixed(p->EllipsisDim.name, outer, tbl, ctx);
+        case VarSeq:
+            return resolve_var(outer, tbl, ctx);
+        default: /* NOT REACHED */
+            ndt_internal_error("invalid tag");
+        }
+    }
+
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -546,17 +482,16 @@ match_datashape(const ndt_t *p, const ndt_t *c,
 
         return 1;
     }
-    case Typevar:
+    case Typevar: {
         if (c->tag == Typevar) {
-            symtable_entry_t entry = { .tag = SymbolEntry,
-                                       .SymbolEntry = c->Typevar.name };
-            return resolve_sym(p->Typevar.name, entry, tbl, ctx);
+            symtable_entry_t entry = { .tag=Symbol, .Symbol=c->Typevar.name };
+            return resolve_typevar(p->Typevar.name, entry, tbl, ctx);
         }
         else {
-            symtable_entry_t entry = { .tag = TypeEntry,
-                                       .TypeEntry = c };
-            return resolve_sym(p->Typevar.name, entry, tbl, ctx);
+            symtable_entry_t entry = { .tag=Type, .Type=c };
+            return resolve_typevar(p->Typevar.name, entry, tbl, ctx);
         }
+    }
     case Nominal:
         /* Assume that the type has been created through ndt_nominal(), in
            which case the name is guaranteed to be unique and present in the
@@ -659,17 +594,17 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
     int i;
 
     v = symtable_find(tbl, "00_ELLIPSIS");
-    if (v.tag != BroadcastEntry) {
+    if (v.tag != BroadcastSeq) {
         ndt_err_format(ctx, NDT_RuntimeError,
             "unexpected missing unnamed ellipsis entry");
         return -1;
     }
 
-    outer_dims = v.BroadcastEntry.size;
+    outer_dims = v.BroadcastSeq.size;
 
     for (i = 0; i < nin; i++) {
         inner_dims = sig->Function.types[i]->ndim-1;
-        spec->broadcast[i] = broadcast(in[i], v.BroadcastEntry.dims,
+        spec->broadcast[i] = broadcast(in[i], v.BroadcastSeq.dims,
                                        outer_dims, inner_dims, false, ctx);
         if (spec->broadcast[i] == NULL) {
             return -1;
@@ -679,7 +614,7 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
 
     for (i = 0; i < spec->nout; i++) {
         inner_dims = sig->Function.types[nin+i]->ndim-1;
-        u = broadcast(spec->out[i], v.BroadcastEntry.dims,
+        u = broadcast(spec->out[i], v.BroadcastSeq.dims,
                       outer_dims, inner_dims, true, ctx);
         if (u == NULL) {
             return -1;
@@ -702,11 +637,11 @@ resolve_constraint(const ndt_constraint_t *c, const void *args, symtable_t *tbl,
 
     for (int i = 0; i < c->nin; i++) {
         v = symtable_find(tbl, c->symbols[i]);
-        if (v.tag != ShapeEntry) {
+        if (v.tag != Shape) {
             ndt_err_format(ctx, NDT_ValueError, "expected dimension variable");
             return -1;
         }
-        shapes[i] = v.ShapeEntry;
+        shapes[i] = v.Shape;
     }
 
     if (c->f(shapes, args, ctx) < 0) {
@@ -714,9 +649,7 @@ resolve_constraint(const ndt_constraint_t *c, const void *args, symtable_t *tbl,
     }
 
     for (int i = 0; i < c->nout; i++) {
-        v.tag = ShapeEntry;
-        v.ShapeEntry = shapes[c->nin+i];
-        if (resolve_sym(c->symbols[c->nin+i], v, tbl, ctx) < 0) {
+        if (resolve_shape(c->symbols[c->nin+i], shapes[c->nin+i], tbl, ctx) < 0) {
             return -1;
         }
     }
@@ -814,14 +747,20 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
 
         if (name != NULL) {
             symtable_entry_t v = symtable_find(tbl, name);
-            if (v.tag != DimListEntry) {
+            switch (v.tag) {
+            case FixedSeq:
+                spec->outer_dims = v.FixedSeq.size;
+                break;
+            case VarSeq:
+                spec->outer_dims = v.VarSeq.size;
+                break;
+            default:
                 ndt_err_format(ctx, NDT_RuntimeError,
                     "unexpected missing dimension list entry");
                 ndt_apply_spec_clear(spec);
                 symtable_del(tbl);
                 return -1;
             }
-            spec->outer_dims = v.DimListEntry.size;
         }
         else {
             if (broadcast_all(spec, sig, in, nin, tbl, ctx) < 0) {
