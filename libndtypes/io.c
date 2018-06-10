@@ -275,7 +275,7 @@ indent(ndt_context_t *ctx, buf_t *buf, int n)
 static int datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx);
 
 static int
-datashape_list(buf_t *buf, ndt_t *types[], int64_t start, int64_t stop,
+datashape_list(buf_t *buf, const ndt_t *types[], int64_t start, int64_t stop,
                int d, ndt_context_t *ctx)
 {
     int64_t i;
@@ -303,18 +303,19 @@ datashape_list(buf_t *buf, ndt_t *types[], int64_t start, int64_t stop,
 static int
 function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 {
+    const ndt_t **types = (const ndt_t **)t->Function.types;
     int n;
 
     assert(t->tag == Function);
 
-    n = datashape_list(buf, t->Function.types, 0, t->Function.nin, d, ctx);
+    n = datashape_list(buf, types, 0, t->Function.nin, d, ctx);
     if (n < 0) return -1;
 
     n = ndt_snprintf(ctx, buf, " -> ");
     if (n < 0) return -1;
 
-    return datashape_list(buf, t->Function.types, t->Function.nin,
-                          t->Function.nargs, d, ctx);
+    return datashape_list(buf, types, t->Function.nin, t->Function.nargs,
+                          d, ctx);
 }
 
 static int
@@ -1526,7 +1527,7 @@ ndt_as_string(const ndt_t *t, ndt_context_t *ctx)
 }
 
 char *
-ndt_list_as_string(ndt_t *types[], int64_t len, ndt_context_t *ctx)
+ndt_list_as_string(const ndt_t *types[], int64_t len, ndt_context_t *ctx)
 {
     buf_t buf = {0, 0, NULL};
     char *s;
