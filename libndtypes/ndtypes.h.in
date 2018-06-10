@@ -668,6 +668,7 @@ NDTYPES_API double ndt_strtod(const char *v, ndt_context_t *ctx);
 
 /*** Type to string conversion ***/
 NDTYPES_API char *ndt_as_string(const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API char *ndt_list_as_string(ndt_t *types[], int64_t len, ndt_context_t *ctx);
 NDTYPES_API char *ndt_indent(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API char *ndt_ast_repr(const ndt_t *t, ndt_context_t *ctx);
 

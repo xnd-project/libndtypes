@@ -275,49 +275,46 @@ indent(ndt_context_t *ctx, buf_t *buf, int n)
 static int datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx);
 
 static int
-function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
+datashape_list(buf_t *buf, ndt_t *types[], int64_t start, int64_t stop,
+               int d, ndt_context_t *ctx)
 {
     int64_t i;
     int n;
 
-    assert(t->tag == Function);
-
-    if (t->Function.nin == 0) {
+    if (start == stop) {
         n = ndt_snprintf(ctx, buf, "void");
         if (n < 0) return -1;
     }
     else {
-        for (i = 0; i < t->Function.nin; i++) {
-            if (i >= 1) {
+        for (i = start; i < stop; i++) {
+            if (i >= start+1) {
                 n = ndt_snprintf(ctx, buf, ", ");
                 if (n < 0) return -1;
             }
 
-            n = datashape(buf, t->Function.types[i], d, ctx);
-            if (n < 0) return -1;
-        }
-    }
-
-    n = ndt_snprintf(ctx, buf, " -> ");
-    if (n < 0) return -1;
-
-    if (t->Function.nout == 0) {
-        n = ndt_snprintf(ctx, buf, "void");
-        if (n < 0) return -1;
-    }
-    else {
-        for (i = t->Function.nin; i < t->Function.nargs; i++) {
-            if (i >= t->Function.nin + 1) {
-                n = ndt_snprintf(ctx, buf, ", ");
-                if (n < 0) return -1;
-            }
-
-            n = datashape(buf, t->Function.types[i], d, ctx);
+            n = datashape(buf, types[i], d, ctx);
             if (n < 0) return -1;
         }
     }
 
     return 0;
+}
+
+static int
+function_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
+{
+    int n;
+
+    assert(t->tag == Function);
+
+    n = datashape_list(buf, t->Function.types, 0, t->Function.nin, d, ctx);
+    if (n < 0) return -1;
+
+    n = ndt_snprintf(ctx, buf, " -> ");
+    if (n < 0) return -1;
+
+    return datashape_list(buf, t->Function.types, t->Function.nin,
+                          t->Function.nargs, d, ctx);
 }
 
 static int
@@ -1520,6 +1517,35 @@ ndt_as_string(const ndt_t *t, ndt_context_t *ctx)
     }
 
     if (datashape(&buf, t, INT_MIN, ctx) < 0) {
+        ndt_free(s);
+        return NULL;
+    }
+    s[count] = '\0';
+
+    return s;
+}
+
+char *
+ndt_list_as_string(ndt_t *types[], int64_t len, ndt_context_t *ctx)
+{
+    buf_t buf = {0, 0, NULL};
+    char *s;
+    size_t count;
+
+    if (datashape_list(&buf, types, 0, len, INT_MIN, ctx) < 0) {
+        return NULL;
+    }
+
+    count = buf.count;
+    buf.count = 0;
+    buf.size = count+1;
+
+    buf.cur = s = ndt_alloc(1, count+1);
+    if (buf.cur == NULL) {
+        return ndt_memory_error(ctx);
+    }
+
+    if (datashape_list(&buf, types, 0, len, INT_MIN, ctx) < 0) {
         ndt_free(s);
         return NULL;
     }
