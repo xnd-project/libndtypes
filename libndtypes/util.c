@@ -288,7 +288,7 @@ ndt_apply_spec_del(ndt_apply_spec_t *spec)
 }
 
 const char *
-ndt_apply_tag_as_string(ndt_apply_spec_t *spec)
+ndt_apply_tag_as_string(const ndt_apply_spec_t *spec)
 {
     switch (spec->tag) {
     case C: return "C";
