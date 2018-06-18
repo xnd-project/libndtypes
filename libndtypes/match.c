@@ -46,14 +46,42 @@
 
 static int match_datashape(const ndt_t *, const ndt_t *, symtable_t *, ndt_context_t *);
 
+static int64_t
+_resolve_broadcast(int64_t vshape[NDT_MAX_DIM], int64_t vsize,
+                   const int64_t wshape[NDT_MAX_DIM], int64_t wsize)
+{
+    int64_t n, m;
+    int i, k;
+
+    for (i=vsize-1, k=wsize-1; i>=0 && k>=0; i--, k--) {
+        n = vshape[i];
+        m = wshape[k];
+        if (m != n) {
+            if (n == 1) {
+                n = m;
+            }
+            else if (m == 0) {
+                n = 0;
+            }
+            else if (m != 1) {
+                return -1;
+            }
+        }
+        vshape[i<k ? k : i] = n;
+    }
+    for (; k >= 0; k--) {
+        vshape[k] = wshape[k];
+    }
+
+    return vsize >= wsize ? vsize : wsize;
+}
+
 static int
 resolve_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 {
     const char *key = "00_ELLIPSIS";
     symtable_entry_t *v;
-    int64_t n, m;
-    int vsize, wsize;
-    int i, k;
+    int vsize;
 
     v = symtable_find_ptr(tbl, key);
     if (v == NULL) {
@@ -63,30 +91,13 @@ resolve_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
         return 1;
     }
 
-    vsize = v->BroadcastSeq.size;
-    wsize = w.BroadcastSeq.size;
-
-    for (i=vsize-1, k=wsize-1; i>=0 && k>=0; i--, k--) {
-        n = v->BroadcastSeq.dims[i];
-        m = w.BroadcastSeq.dims[k];
-        if (m != n) {
-            if (n == 1) {
-                n = m;
-            }
-            else if (m == 0) {
-                n = 0;
-            }
-            else if (m != 1) {
-                return 0;
-            }
-        }
-        v->BroadcastSeq.dims[i<k ? k : i] = n;
+    vsize = _resolve_broadcast(v->BroadcastSeq.dims, v->BroadcastSeq.size,
+                               w.BroadcastSeq.dims, w.BroadcastSeq.size);
+    if (vsize < 0) {
+        ndt_err_format(ctx, NDT_TypeError, "broadcast error");
+        return -1;
     }
-    for (; k >= 0; k--) {
-        v->BroadcastSeq.dims[k] = w.BroadcastSeq.dims[k];
-    }
-
-    v->BroadcastSeq.size = vsize >= wsize ? vsize : wsize;
+    v->BroadcastSeq.size = vsize;
 
     return 1;
 }
@@ -582,29 +593,19 @@ broadcast(const ndt_t *t, const int64_t *shape,
     return v;
 }
 
-static int
-broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
-              const ndt_t *in[], const int nin,
-              const symtable_t *tbl, ndt_context_t *ctx)
+int
+ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
+                  const ndt_t *in[], const int nin,
+                  const int64_t *shape, int outer_dims,
+                  ndt_context_t *ctx)
 {
-    symtable_entry_t v;
     ndt_t *u;
-    int outer_dims;
     int inner_dims;
     int i;
 
-    v = symtable_find(tbl, "00_ELLIPSIS");
-    if (v.tag != BroadcastSeq) {
-        ndt_err_format(ctx, NDT_RuntimeError,
-            "unexpected missing unnamed ellipsis entry");
-        return -1;
-    }
-
-    outer_dims = v.BroadcastSeq.size;
-
     for (i = 0; i < nin; i++) {
         inner_dims = sig->Function.types[i]->ndim-1;
-        spec->broadcast[i] = broadcast(in[i], v.BroadcastSeq.dims,
+        spec->broadcast[i] = broadcast(in[i], shape,
                                        outer_dims, inner_dims, false, ctx);
         if (spec->broadcast[i] == NULL) {
             return -1;
@@ -614,7 +615,7 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
 
     for (i = 0; i < spec->nout; i++) {
         inner_dims = sig->Function.types[nin+i]->ndim-1;
-        u = broadcast(spec->out[i], v.BroadcastSeq.dims,
+        u = broadcast(spec->out[i], shape,
                       outer_dims, inner_dims, true, ctx);
         if (u == NULL) {
             return -1;
@@ -626,6 +627,25 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
     spec->outer_dims = outer_dims;
 
     return 0;
+}
+
+static int
+broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
+              const ndt_t *in[], const int nin,
+              const symtable_t *tbl, ndt_context_t *ctx)
+{
+    symtable_entry_t v;
+
+    v = symtable_find(tbl, "00_ELLIPSIS");
+    if (v.tag != BroadcastSeq) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "unexpected missing unnamed ellipsis entry");
+        return -1;
+    }
+
+    return ndt_broadcast_all(spec, sig, in, nin,
+                             v.BroadcastSeq.dims, v.BroadcastSeq.size,
+                             ctx);
 }
 
 static int
@@ -779,4 +799,251 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     }
 
     return 0;
+}
+
+
+/*****************************************************************************/
+/*                  Optimized binary typecheck for fixed input               */
+/*****************************************************************************/
+
+static ndt_t *
+binary_broadcast_1D(const ndt_ndarray_t *t, const ndt_t *dtype,
+                    const int64_t *shape, int size, ndt_context_t *ctx)
+{
+    ndt_t *v;
+    int64_t step;
+    int i, k;
+
+    v = ndt_copy(dtype, ctx);
+    if (v == NULL) {
+        return NULL;
+    }
+
+    for (i=t->ndim-1, k=size-1; i>=0 && k>=0; i--, k--) {
+        step = t->shape[i]<=1 ? 0 : t->steps[i];
+        v = ndt_fixed_dim(v, shape[k], step, ctx);
+        if (v == NULL) {
+            return NULL;
+        }
+    }
+
+    for (; k>=0; k--) {
+        v = ndt_fixed_dim(v, shape[k], 0, ctx);
+        if (v == NULL) {
+            return NULL;
+        }
+    }
+
+    return v;
+}
+
+static ndt_t *
+fixed_dim_from_shape(const int64_t shape[], int len, ndt_t *dtype,
+                     ndt_context_t *ctx)
+{
+    ndt_t *t;
+    int i;
+
+    for (i=len-1, t=dtype; i >= 0; i--) {
+        t = ndt_fixed_dim(t, shape[i], INT64_MAX, ctx);
+        if (t == NULL) {
+            return NULL;
+        }
+    }
+
+    return t;
+}
+
+static bool
+shape_equal(const ndt_ndarray_t *a, const ndt_ndarray_t *b)
+{
+    if (b->ndim != a->ndim) {
+        return false;
+    }
+
+    for (int i = 0; i < a->ndim; i++) {
+        if (b->shape[i] != a->shape[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static int
+_ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
+                      const ndt_ndarray_t *x, const ndt_ndarray_t *y,
+                      const ndt_t *in[], const int nin, ndt_t *dtype,
+                      int inner, ndt_context_t *ctx)
+{
+    int64_t shape[NDT_MAX_DIM];
+    int size;
+
+    if (shape_equal(x, y)) {
+        spec->nout = 1;
+        spec->nbroadcast = 0;
+        spec->outer_dims = x->ndim-inner;
+        spec->out[0] = fixed_dim_from_shape(x->shape, x->ndim, dtype, ctx);
+        if (spec->out[0] == NULL) {
+            return -1;
+        }
+    }
+    else {
+        for (int i = 0; i < x->ndim; i++) {
+            shape[i] = x->shape[i];
+        }
+
+        size = _resolve_broadcast(shape, x->ndim, y->shape, y->ndim);
+        if (size < 0) {
+            ndt_err_format(ctx, NDT_TypeError, "broadcast error");
+            ndt_del(dtype);
+            return -1;
+        }
+
+        spec->nout = 1;
+        spec->nbroadcast = 2;
+        spec->outer_dims = size-inner;
+
+        spec->out[0] = fixed_dim_from_shape(shape, size, dtype, ctx);
+        if (spec->out[0] == NULL) {
+            return -1;
+        }
+
+        spec->broadcast[0] = binary_broadcast_1D(x, ndt_dtype(in[0]), shape, size, ctx);
+        if (spec->broadcast[0] == NULL) {
+            ndt_del(spec->out[0]);
+            return -1;
+        }
+
+        spec->broadcast[1] = binary_broadcast_1D(y, ndt_dtype(in[1]), shape, size, ctx);
+        if (spec->broadcast[1] == NULL) {
+            ndt_del(spec->out[0]);
+            ndt_del(spec->broadcast[0]);
+            return -1;
+        }
+    }
+
+    if (ndt_select_kernel_strategy(spec, sig, in, nin, ctx) < 0) {
+        ndt_apply_spec_clear(spec);
+        return -1;
+    }
+
+    return 0;
+}
+
+static bool
+all_ellipses(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2,
+             ndt_context_t *ctx)
+{
+    if ((t0->tag != EllipsisDim || t0->EllipsisDim.name != NULL) ||
+        (t1->tag != EllipsisDim || t1->EllipsisDim.name != NULL) ||
+        (t2->tag != EllipsisDim || t2->EllipsisDim.name != NULL)) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "fast binary typecheck expects leading ellipsis dimensions");
+        return false;
+    }
+
+    return true;
+}
+
+static bool
+all_same_symbol(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
+{
+    if (t0->tag != SymbolicDim || t1->tag != SymbolicDim ||
+        t2->tag != SymbolicDim) {
+        return false;
+    }
+
+    return strcmp(t0->SymbolicDim.name, t1->SymbolicDim.name) == 0 &&
+           strcmp(t0->SymbolicDim.name, t2->SymbolicDim.name) == 0;
+}
+
+static bool
+all_ndim0(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
+{
+    return t0->ndim == 0 && t1->ndim == 0 && t2->ndim == 0;
+}
+
+/*
+ * Optimized type checking for very specific signatures. The caller must
+ * have identified the kernel location, signature and the dtype.  For
+ * performance reasons, no substitution is performed on the dtype, so
+ * the dtype must be concrete.
+ *
+ * Supported signatures:
+ *   1) ... * N * T0, ... * N * T1 -> N * T2
+ *   2) ... * T0, ... * T1 -> ... * T2
+ */
+int
+ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
+                                const ndt_t *in[], const int nin, ndt_t *dtype,
+                                ndt_context_t *ctx)
+{
+    ndt_t *p0, *p1, *p2;
+    ndt_ndarray_t x, y;
+
+    assert(spec->tag == Xnd);
+    assert(spec->nout == 0);
+    assert(spec->nbroadcast == 0);
+    assert(spec->outer_dims == 0);
+
+    if (sig->tag != Function ||
+        sig->Function.nin != 2 ||
+        sig->Function.nout != 1) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "fast binary typecheck expects a signature with two inputs and "
+            "one output");
+        return -1;
+    }
+
+    if (nin != 2) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "fast binary typecheck expects two input arguments");
+        return -1;
+    }
+
+    if (ndt_is_abstract(dtype)) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "fast binary typecheck expects a concrete dtype");
+        return -1;
+    }
+
+    p0 = sig->Function.types[0];
+    p1 = sig->Function.types[1];
+    p2 = sig->Function.types[2];
+
+    if (!all_ellipses(p0, p1, p2, ctx)) {
+        return -1;
+    }
+
+    if (ndt_as_ndarray(&x, in[0], ctx) < 0) {
+        ndt_del(dtype);
+        return -1;
+    }
+
+    if (ndt_as_ndarray(&y, in[1], ctx) < 0) {
+        ndt_del(dtype);
+        return -1;
+    }
+
+    p0 = p0->EllipsisDim.type;
+    p1 = p1->EllipsisDim.type;
+    p2 = p2->EllipsisDim.type;
+
+    if (all_same_symbol(p0, p1, p2)) {
+        if (x.ndim>0 && y.ndim>0 && x.shape[x.ndim-1] != y.shape[y.ndim-1]) {
+            ndt_err_format(ctx, NDT_TypeError, "mismatch in inner dimensions");
+            ndt_del(dtype);
+            return -1;
+        }
+        return _ndt_binary_broadcast(spec, sig, &x, &y, in, nin, dtype, 1, ctx);
+    }
+    else if (all_ndim0(p0, p1, p2)) {
+        return _ndt_binary_broadcast(spec, sig, &x, &y, in, nin, dtype, 0, ctx);
+    }
+    else {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "unsupported signature in fast binary typecheck");
+        return -1;
+    }
 }
