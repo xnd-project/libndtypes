@@ -1031,10 +1031,14 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     p2 = p2->EllipsisDim.type;
 
     if (all_same_symbol(p0, p1, p2)) {
-        if (x.ndim>0 && y.ndim>0 && x.shape[x.ndim-1] != y.shape[y.ndim-1]) {
-            ndt_err_format(ctx, NDT_TypeError, "mismatch in inner dimensions");
-            ndt_del(dtype);
-            return -1;
+        if (x.ndim > 0 && y.ndim > 0) {
+            const int64_t xshape = x.shape[x.ndim-1];
+            const int64_t yshape = y.shape[y.ndim-1];
+            if (xshape != 1 && yshape != 1 && xshape != yshape) {
+                ndt_err_format(ctx, NDT_TypeError, "mismatch in inner dimensions");
+                ndt_del(dtype);
+                return -1;
+            }
         }
         return _ndt_binary_broadcast(spec, sig, &x, &y, in, nin, dtype, 1, ctx);
     }
