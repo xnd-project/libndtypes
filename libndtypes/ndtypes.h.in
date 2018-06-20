@@ -478,6 +478,7 @@ enum ndt_error {
   NDT_TypeError,
   NDT_InvalidArgumentError,
   NDT_NotImplementedError,
+  NDT_IndexError,
   NDT_LexError,
   NDT_ParseError,
   NDT_OSError,

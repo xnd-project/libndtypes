@@ -236,6 +236,9 @@ seterr(ndt_context_t *ctx)
     case NDT_NotImplementedError:
         exc = PyExc_NotImplementedError;
         break;
+    case NDT_IndexError:
+        exc = PyExc_IndexError;
+        break;
     case NDT_LexError: case NDT_ParseError:
         exc = PyExc_ValueError;
         break;

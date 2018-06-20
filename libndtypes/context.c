@@ -169,6 +169,8 @@ ndt_err_as_string(enum ndt_error err)
         return "InvalidArgumentError";
     case NDT_NotImplementedError:
         return "NotImplementedError";
+    case NDT_IndexError:
+        return "IndexError";
     case NDT_RuntimeError:
         return "RuntimeError";
     case NDT_LexError:
