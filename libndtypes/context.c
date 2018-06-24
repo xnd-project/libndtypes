@@ -32,6 +32,7 @@
 
 
 #include <stdarg.h>
+#include <string.h>
 #include "ndtypes.h"
 
 
@@ -146,6 +147,19 @@ ndt_memory_error(ndt_context_t *ctx)
 {
     ndt_err_format(ctx, NDT_MemoryError, "out of memory");
     return NULL;
+}
+
+/* Append a message to error message */
+void ndt_err_message_append(ndt_context_t *ctx, const char *append_fmt, const char *message)
+{
+    /* Note: append_fmt must have two `%s`, one for original message and one for appended message. */
+    const char* prev_message = ndt_context_msg(ctx);
+    size_t size = strlen(prev_message);
+    char* buffer = ndt_alloc_size(size);
+    memcpy(buffer, prev_message, size);
+    buffer[size-1] = '\0';
+    ndt_err_format(ctx, ctx->err, append_fmt, buffer, message);
+    ndt_free(buffer);
 }
 
 
