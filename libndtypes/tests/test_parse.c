@@ -232,7 +232,7 @@ const char *parse_tests[] = {
   "int64, Any -> Any",
   "() -> (int64, Any)",
   "() -> int64, Any",
-  "void -> int64, Any",
+  "void -> int64",
   "int64, Any -> void",
   "(int64, int64, Any) -> Any",
   "() -> (int64, int64, Any)",

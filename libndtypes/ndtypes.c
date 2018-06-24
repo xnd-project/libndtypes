@@ -697,13 +697,25 @@ strcmp_null(const char *s, const char *t)
 }
 
 static int
-check_function_invariants(ndt_t * const *types, int64_t nargs, ndt_context_t *ctx)
+check_function_invariants(ndt_t * const *types, int64_t nin, int64_t nargs,
+                          ndt_context_t *ctx)
 {
     int64_t count = 0;
     int i;
 
     if (nargs == 0) {
         return 1;
+    }
+
+    if (nin == 0) {
+        for (i = 0; i < nargs; i++) {
+            if (ndt_is_abstract(types[i])) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "output types cannot be inferred for function with "
+                    "no arguments");
+                return 0;
+            }
+        }
     }
 
     for (i = 0; i < nargs; i++) {
@@ -1084,7 +1096,7 @@ ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
 
     assert(0 <= nin && 0 <= nout && nargs == nin+nout);
 
-    if (!check_function_invariants(types, nargs, ctx)) {
+    if (!check_function_invariants(types, nin, nargs, ctx)) {
         ndt_type_array_clear((ndt_t **)types, nargs);
         return NULL;
     }
