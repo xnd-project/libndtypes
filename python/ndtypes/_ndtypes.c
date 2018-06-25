@@ -675,7 +675,7 @@ ndtype_apply(PyObject *self, PyObject *args)
     ndt_t *sig = NDT(self);
     const ndt_t *in[NDT_MAX_ARGS];
     ndt_apply_spec_t spec;
-    PyObject *tag = NULL, *out = NULL, *broadcast = NULL, *outer_dims = NULL;
+    PyObject *flags = NULL, *out = NULL, *broadcast = NULL, *outer_dims = NULL;
     PyObject *res = NULL;
     Py_ssize_t nin;
     Py_ssize_t i;
@@ -706,8 +706,8 @@ ndtype_apply(PyObject *self, PyObject *args)
         return seterr(&ctx);
     }
 
-    tag = PyUnicode_FromString(ndt_apply_tag_as_string(&spec));
-    if (tag == NULL) {
+    flags = PyUnicode_FromString(ndt_apply_flags_as_string(&spec));
+    if (flags == NULL) {
         return NULL;
     }
 
@@ -750,11 +750,11 @@ ndtype_apply(PyObject *self, PyObject *args)
         goto finish;
     }
 
-    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, tag, self,
+    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, flags, self,
                                        args, broadcast, out, outer_dims, NULL);
 
 finish:
-    Py_XDECREF(tag);
+    Py_XDECREF(flags);
     Py_XDECREF(out);
     Py_XDECREF(broadcast);
     Py_XDECREF(outer_dims);
@@ -1286,7 +1286,7 @@ PyInit__ndtypes(void)
 
     ApplySpec = (PyTypeObject *)PyObject_CallMethod(collections,
                                     "namedtuple", "(ss)", "ApplySpec",
-                                    "tag sig in_types in_broadcast out_types outer_dims");
+                                    "flags sig in_types in_broadcast out_types outer_dims");
     if (ApplySpec == NULL) {
         goto error;
     }

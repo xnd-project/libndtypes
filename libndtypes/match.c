@@ -694,7 +694,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     int ret;
     int64_t i;
 
-    assert(spec->tag == Xnd);
+    assert(spec->flags == 0);
     assert(spec->nout == 0);
     assert(spec->nbroadcast == 0);
     assert(spec->outer_dims == 0);
@@ -982,7 +982,7 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     ndt_t *p0, *p1, *p2;
     ndt_ndarray_t x, y;
 
-    assert(spec->tag == Xnd);
+    assert(spec->flags == 0);
     assert(spec->nout == 0);
     assert(spec->nbroadcast == 0);
     assert(spec->outer_dims == 0);

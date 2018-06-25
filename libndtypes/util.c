@@ -126,6 +126,18 @@ ndt_dtype(const ndt_t *t)
     return t;
 }
 
+static const ndt_t *
+ndt_inner(const ndt_t *t, int n)
+{
+    assert(n <= t->ndim);
+
+    for (int i = 0; i < n; i++) {
+        t = next_dim(t);
+    }
+
+    return t;
+}
+
 const ndt_t *
 ndt_hidden_dtype(const ndt_t *t)
 {
@@ -229,7 +241,7 @@ ndt_hash(ndt_t *t, ndt_context_t *ctx)
 /*****************************************************************************/
 
 const ndt_apply_spec_t ndt_apply_spec_empty = {
-  .tag = Xnd,
+  .flags = 0U,
   .nout = 0,
   .nbroadcast = 0,
   .outer_dims = 0,
@@ -246,7 +258,7 @@ ndt_apply_spec_new(ndt_context_t *ctx)
     if (spec == NULL) {
         return ndt_memory_error(ctx);
     }
-    spec->tag = Xnd;
+    spec->flags = 0U;
     spec->nout = 0;
     spec->nbroadcast = 0;
     spec->outer_dims = 0;
@@ -271,7 +283,7 @@ ndt_apply_spec_clear(ndt_apply_spec_t *spec)
         ndt_del(spec->out[i]);
     }
 
-    spec->tag = Xnd;
+    spec->flags = 0U;
     spec->nout = 0;
     spec->nbroadcast = 0;
     spec->outer_dims = 0;
@@ -289,17 +301,27 @@ ndt_apply_spec_del(ndt_apply_spec_t *spec)
 }
 
 const char *
-ndt_apply_tag_as_string(const ndt_apply_spec_t *spec)
+ndt_apply_flags_as_string(const ndt_apply_spec_t *spec)
 {
-    switch (spec->tag) {
-    case C: return "C";
-    case Fortran: return "Fortran";
-    case Strided: return "Strided";
-    case Xnd: return "Xnd";
+    switch (spec->flags) {
+    case 0: return "None";
+    case NDT_C: return "C";
+    case NDT_FORTRAN: return "Fortran";
+    case NDT_FORTRAN|NDT_C: return "C|Fortran";
+    case NDT_STRIDED: return "Strided";
+    case NDT_STRIDED|NDT_C: return "C|Strided";
+    case NDT_STRIDED|NDT_FORTRAN: return "Fortran|Strided";
+    case NDT_STRIDED|NDT_FORTRAN|NDT_C: return "C|Fortran|Strided";
+    case NDT_XND: return "Xnd";
+    case NDT_XND|NDT_C: return "C|Xnd";
+    case NDT_XND|NDT_FORTRAN: return "Fortran|Xnd";
+    case NDT_XND|NDT_FORTRAN|NDT_C: return "C|Fortran|Xnd";
+    case NDT_XND|NDT_STRIDED: return "Strided|Xnd";
+    case NDT_XND|NDT_STRIDED|NDT_C: return "C|Strided|Xnd";
+    case NDT_XND|NDT_STRIDED|NDT_FORTRAN: return "Fortran|Strided|Xnd";
+    case NDT_XND|NDT_STRIDED|NDT_FORTRAN|NDT_C: return "C|Fortran|Strided|Xnd";
+    default: return "error: invalid combination of spec->flags";
     }
-
-    /* NOT REACHED: tags should be exhaustive. */
-    ndt_internal_error("invalid tag");
 }
 
 
@@ -341,10 +363,10 @@ ndt_meta_del(ndt_meta_t *m)
 /*****************************************************************************/
 
 static bool
-all_c_contiguous(const ndt_t *types[], int n)
+all_inner_c_contiguous(const ndt_t *types[], int n, int outer)
 {
     for (int i = 0; i < n; i++) {
-        if (!ndt_is_c_contiguous(types[i])) {
+        if (!ndt_is_c_contiguous(ndt_inner(types[i], outer))) {
             return false;
         }
     }
@@ -353,20 +375,15 @@ all_c_contiguous(const ndt_t *types[], int n)
 }
 
 static bool
-really_fortran(const ndt_t *types[], int n)
+all_inner_f_contiguous(const ndt_t *types[], int n, int outer)
 {
-    bool fortran = false;
-
     for (int i = 0; i < n; i++) {
-        if (!ndt_is_f_contiguous(types[i])) {
+        if (!ndt_is_f_contiguous(ndt_inner(types[i], outer))) {
             return false;
-        }
-        if (!ndt_is_c_contiguous(types[i])) {
-            fortran = true;
         }
     }
 
-    return fortran;
+    return true;
 }
 
 static bool
@@ -374,6 +391,9 @@ all_ndarray(const ndt_t *types[], int n)
 {
     for (int i = 0; i < n; i++) {
         if (!ndt_is_ndarray(types[i])) {
+            return false;
+        }
+        if (ndt_subtree_is_optional(types[i])) {
             return false;
         }
     }
@@ -387,35 +407,51 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
                            ndt_context_t *ctx)
 {
     const ndt_t **out = (const ndt_t **)spec->out;
+    bool in_inner_c, in_inner_f, out_inner_c;
+    bool in_f;
     int i;
 
     assert(sig->tag == Function);
+    assert(spec->flags == 0);
 
     if (spec->nbroadcast > 0) {
         in = (const ndt_t **)spec->broadcast;
         nin = spec->nbroadcast;
     }
 
-    if (all_c_contiguous(in, nin) && all_c_contiguous(out, spec->nout)) {
-        spec->tag = C;
+    in_inner_c = all_inner_c_contiguous(in, nin, spec->outer_dims);
+    in_inner_f = all_inner_f_contiguous(in, nin, spec->outer_dims);
+    out_inner_c = all_inner_c_contiguous(out, spec->nout, spec->outer_dims);
+    in_f = all_inner_f_contiguous(in, nin, 0);
+
+    spec->flags = NDT_XND;
+
+    if (in_inner_c && out_inner_c) {
+        spec->flags |= NDT_C;
     }
-    else if (really_fortran(in, nin) && all_c_contiguous(out, spec->nout)) {
-        for (i=spec->nout-1; i>=0; i--) {
-            ndt_t *t = spec->out[i];
-            ndt_t *u = ndt_to_fortran(t, ctx);
-            if (u == NULL) {
-                return -1;
+    if (in_inner_f && out_inner_c) {
+        spec->flags |= NDT_FORTRAN;
+    }
+
+    if (in_f) {
+        if (all_inner_c_contiguous(out, spec->nout, 0)) {
+            for (i=spec->nout-1; i>=0; i--) {
+                ndt_t *t = spec->out[i];
+                if (t->ndim <= 1) {
+                    continue;
+                }
+                ndt_t *u = ndt_to_fortran(t, ctx);
+                if (u == NULL) {
+                    return -1;
+                }
+                ndt_del(t);
+                spec->out[i] = u;
             }
-            ndt_del(t);
-            spec->out[i] = u;
         }
-        spec->tag = Fortran;
     }
-    else if (all_ndarray(in, nin) && all_ndarray(out, spec->nout)) {
-        spec->tag = Strided;
-    }
-    else {
-        spec->tag = Xnd;
+
+    if (all_ndarray(in, nin) && all_ndarray(out, spec->nout)) {
+        spec->flags |= NDT_STRIDED;
     }
 
     return 0;

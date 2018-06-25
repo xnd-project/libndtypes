@@ -528,15 +528,13 @@ typedef struct {
 } ndt_ndarray_t;
 
 /* This may go into gumath at some point. */
-enum ndt_apply {
-    C,
-    Fortran,
-    Strided,
-    Xnd
-};
+#define NDT_C       0x00000001U
+#define NDT_FORTRAN 0x00000002U
+#define NDT_STRIDED 0x00000004U
+#define NDT_XND     0x00000008U
 
 typedef struct {
-    enum ndt_apply tag;
+    uint32_t flags;
     int nout;
     int nbroadcast;
     int outer_dims;
@@ -549,7 +547,7 @@ NDTYPES_API extern const ndt_apply_spec_t ndt_apply_spec_empty;
 NDTYPES_API ndt_apply_spec_t *ndt_apply_spec_new(ndt_context_t *ctx);
 NDTYPES_API void ndt_apply_spec_clear(ndt_apply_spec_t *spec);
 NDTYPES_API void ndt_apply_spec_del(ndt_apply_spec_t *spec);
-NDTYPES_API const char *ndt_apply_tag_as_string(const ndt_apply_spec_t *spec);
+NDTYPES_API const char *ndt_apply_flags_as_string(const ndt_apply_spec_t *spec);
 NDTYPES_API int ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, const ndt_t *in[], const int nin,
                                   const int64_t *shape, int outer_dims, ndt_context_t *ctx);
 

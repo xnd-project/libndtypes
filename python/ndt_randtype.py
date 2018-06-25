@@ -336,7 +336,7 @@ def genindices(factor):
 
 BROADCAST_TEST_CASES = [
     ApplySpec(
-        tag = 'C',
+        flags = 'C|Fortran|Strided|Xnd',
         sig = ndt("uint8 -> float64"),
         in_types = [ndt("uint8")],
         out_types = [ndt("float64")],
@@ -344,7 +344,7 @@ BROADCAST_TEST_CASES = [
         outer_dims = 0),
 
     ApplySpec(
-        tag = 'C',
+        flags = 'C|Fortran|Strided|Xnd',
         sig = ndt("... * uint8 -> ... * float64"),
         in_types = [ndt("2 * uint8")],
         out_types = [ndt("2 * float64")],
@@ -352,7 +352,7 @@ BROADCAST_TEST_CASES = [
         outer_dims = 1),
 
     ApplySpec(
-        tag = 'Fortran',
+        flags = 'C|Fortran|Strided|Xnd',
         sig = ndt("... * uint8 -> ... * float64"),
         in_types = [ndt("!2 * 3 * uint8")],
         out_types = [ndt("!2 * 3 * float64")],
@@ -360,7 +360,7 @@ BROADCAST_TEST_CASES = [
         outer_dims = 2),
 
     ApplySpec(
-        tag = 'Strided',
+        flags = 'C|Fortran|Strided|Xnd',
         sig = ndt("... * uint8 -> ... * float64"),
         in_types = [ndt("fixed(shape=2, step=10) * uint8")],
         out_types = [ndt("2 * float64")],
@@ -368,7 +368,15 @@ BROADCAST_TEST_CASES = [
         outer_dims = 1),
 
     ApplySpec(
-        tag = 'C',
+        flags = 'Strided|Xnd',
+        sig = ndt("... * N * uint8 -> ... * N * float64"),
+        in_types = [ndt("fixed(shape=2, step=10) * uint8")],
+        out_types = [ndt("2 * float64")],
+        in_broadcast = [ndt("fixed(shape=2, step=10) * uint8")],
+        outer_dims = 0),
+
+    ApplySpec(
+        flags = 'C|Fortran|Strided|Xnd',
         sig = ndt("... * N * uint8 -> ... * N * float64"),
         in_types = [ndt("2 * 3 * uint8")],
         out_types = [ndt("2 * 3 * float64")],
@@ -376,7 +384,15 @@ BROADCAST_TEST_CASES = [
         outer_dims = 1),
 
     ApplySpec(
-        tag = 'Xnd',
+        flags = 'C|Strided|Xnd',
+        sig = ndt("... * N * M * uint8 -> ... * N * M * float64"),
+        in_types = [ndt("2 * 3 * uint8")],
+        out_types = [ndt("2 * 3 * float64")],
+        in_broadcast = [ndt("2 * 3 * uint8")],
+        outer_dims = 0),
+
+    ApplySpec(
+        flags = 'Xnd',
         sig = ndt("N * D * float64 -> P * float64"),
         in_types = [ndt("2 * 10 * float64")],
         out_types = [ndt("P * float64")],
@@ -384,7 +400,7 @@ BROADCAST_TEST_CASES = [
         outer_dims = 0),
 
     ApplySpec(
-        tag = 'Xnd',
+        flags = 'C|Fortran|Xnd',
         sig = ndt("var... * float64 -> var... * float64"),
         in_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
         out_types = [ndt("var(offsets=[0,2]) * var(offsets=[0,4,11]) * float64")],
