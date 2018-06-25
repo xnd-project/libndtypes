@@ -508,7 +508,6 @@ NDTYPES_API void ndt_err_format(ndt_context_t *ctx, enum ndt_error err, const ch
 NDTYPES_API int ndt_err_occurred(const ndt_context_t *ctx);
 NDTYPES_API void ndt_err_clear(ndt_context_t *ctx);
 NDTYPES_API void *ndt_memory_error(ndt_context_t *ctx);
-NDTYPES_API void ndt_err_message_append(ndt_context_t *ctx, const char *append_fmt, const char *message);
 
 NDTYPES_API const char *ndt_err_as_string(enum ndt_error err);
 NDTYPES_API const char *ndt_context_msg(ndt_context_t *ctx);

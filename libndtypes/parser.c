@@ -171,8 +171,6 @@ _ndt_from_string(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
         state->yy_bs_column = 1;
 
         ret = ndt_yyparse(scanner, &ast, m, ctx);
-        if (ast==NULL)
-            ndt_err_message_append(ctx, "%s: `%s`", input);
         ndt_yy_delete_buffer(state, scanner);
         ndt_yylex_destroy(scanner);
         ndt_free(buffer);
