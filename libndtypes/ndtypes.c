@@ -155,7 +155,7 @@ ndt_is_ndarray(const ndt_t *t)
     case FixedDim:
         return 1;
     default:
-        return 0;
+        return t->ndim == 0;
     }
 }
 
@@ -170,11 +170,11 @@ ndt_is_c_contiguous(const ndt_t *t)
     if (ndt_is_abstract(t)) {
         return 0;
     }
-    if (t->ndim == 0) {
-        return 1;
-    }
     if (!ndt_is_ndarray(t)) {
         return 0;
+    }
+    if (t->ndim == 0) {
+        return 1;
     }
 
     ndim = ndt_dims_dtype(dims, &dtype, t);
@@ -202,11 +202,11 @@ ndt_is_f_contiguous(const ndt_t *t)
     if (ndt_is_abstract(t)) {
         return 0;
     }
-    if (t->ndim == 0) {
-        return 1;
-    }
     if (!ndt_is_ndarray(t)) {
         return 0;
+    }
+    if (t->ndim == 0) {
+        return 1;
     }
 
     ndim = ndt_dims_dtype(dims, &dtype, t);

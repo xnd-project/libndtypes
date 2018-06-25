@@ -171,13 +171,14 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
     }
 
     if (!ndt_is_ndarray(t)) {
-        if (t->ndim == 0) {
-            a->ndim = t->ndim;
-            a->itemsize = t->datasize;
-            return 0;
-        }
         ndt_err_format(ctx, NDT_TypeError, "type is not an ndarray");
         return -1;
+    }
+
+    if (t->ndim == 0) {
+        a->ndim = 0;
+        a->itemsize = t->datasize;
+        return 0;
     }
 
     a->ndim = t->ndim;
