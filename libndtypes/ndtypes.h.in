@@ -513,6 +513,9 @@ NDTYPES_API const char *ndt_err_as_string(enum ndt_error err);
 NDTYPES_API const char *ndt_context_msg(ndt_context_t *ctx);
 NDTYPES_API void ndt_err_fprint(FILE *fp, ndt_context_t *ctx);
 
+/* Unstable API */
+NDTYPES_API void ndt_err_append(ndt_context_t *ctx, const char *msg);
+
 
 /******************************************************************************/
 /*                        Array conversions and properties                    */
@@ -793,6 +796,9 @@ NDTYPES_API ndt_t *ndt_from_string(const char *input, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_from_bpformat(const char *input, ndt_context_t *ctx);
 NDTYPES_API char *ndt_to_bpformat(const ndt_t *t, ndt_context_t *ctx);
 NDTYPES_API int ndt_to_nbformat(char **sig, char **dtype, const ndt_t *t, ndt_context_t *ctx);
+
+/* Unstable API */
+NDTYPES_API ndt_t *ndt_from_string_v(const char *input, ndt_context_t *ctx);
 
 
 /*

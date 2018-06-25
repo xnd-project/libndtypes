@@ -43,7 +43,7 @@ yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta,
     (void)ast;
     (void)meta;
 
-    ndt_err_format(ctx, NDT_ParseError, "%d:%d: %s\n", loc->first_line,
+    ndt_err_format(ctx, NDT_ParseError, "%d:%d: %s", loc->first_line,
                    loc->first_column, msg);
 }
 

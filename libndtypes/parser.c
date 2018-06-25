@@ -201,6 +201,16 @@ ndt_from_string(const char *input, ndt_context_t *ctx)
 }
 
 ndt_t *
+ndt_from_string_v(const char *input, ndt_context_t *ctx)
+{
+    ndt_t *t = _ndt_from_string(NULL, input, ctx);
+    if (t == NULL) {
+        ndt_err_append(ctx, input);
+    }
+    return t;
+}
+
+ndt_t *
 ndt_from_string_fill_meta(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
 {
     return _ndt_from_string(m, input, ctx);

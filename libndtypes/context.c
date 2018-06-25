@@ -121,6 +121,29 @@ ndt_err_format(ndt_context_t *ctx, enum ndt_error err, const char *fmt, ...)
     ctx->DynamicMsg = s;
 }
 
+/* Append 'msg' to an existing error message. If no error is set, do nothing. */
+void
+ndt_err_append(ndt_context_t *ctx, const char *msg)
+{
+    NDT_STATIC_CONTEXT(localctx);
+    enum ndt_error err = ctx->err;
+    char *s;
+
+    if (!ndt_err_occurred(ctx)) {
+        return;
+    }
+
+    s = ndt_strdup(ndt_context_msg(ctx), &localctx);
+    if (s == NULL) {
+        ndt_context_del(&localctx);
+        return;
+    }
+
+    ndt_err_clear(ctx);
+    ndt_err_format(ctx, err, "%s: \"%s\"", s, msg);
+    ndt_free(s);
+}
+
 /* Check if an error has occurred. */
 int
 ndt_err_occurred(const ndt_context_t *ctx)
