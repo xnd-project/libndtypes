@@ -454,8 +454,8 @@ var_init_offsets(offsets_t *m, const ndt_t *t, int32_t noffsets, ndt_context_t *
 {
     int32_t *offsets;
     int64_t shape, start, step;
-    int64_t sum;
-    int64_t i;
+    int32_t sum;
+    int32_t i;
 
     assert(t->ndim >= 1);
 
