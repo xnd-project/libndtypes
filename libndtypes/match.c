@@ -46,9 +46,9 @@
 
 static int match_datashape(const ndt_t *, const ndt_t *, symtable_t *, ndt_context_t *);
 
-static int64_t
-_resolve_broadcast(int64_t vshape[NDT_MAX_DIM], int64_t vsize,
-                   const int64_t wshape[NDT_MAX_DIM], int64_t wsize)
+static int
+_resolve_broadcast(int64_t vshape[NDT_MAX_DIM], int vsize,
+                   const int64_t wshape[NDT_MAX_DIM], int wsize)
 {
     int64_t n, m;
     int i, k;
