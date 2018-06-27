@@ -454,7 +454,7 @@ var_init_offsets(offsets_t *m, const ndt_t *t, int32_t noffsets, ndt_context_t *
 {
     int32_t *offsets;
     int64_t shape, start, step;
-    int32_t sum;
+    int64_t sum;
     int32_t i;
 
     assert(t->ndim >= 1);
@@ -481,7 +481,7 @@ var_init_offsets(offsets_t *m, const ndt_t *t, int32_t noffsets, ndt_context_t *
         sum += shape;
     }
 
-    return var_init_offsets(m, t->VarDim.type, sum+1, ctx);
+    return var_init_offsets(m, t->VarDim.type, (int32_t)sum+1, ctx);
 }
 
 static int
@@ -499,7 +499,7 @@ var_copy_shapes(offsets_t *m, int64_t src_index, const ndt_t *t, ndt_context_t *
         return -1;
     }
     int32_t dst_index = m->index[t->ndim]++;
-    m->offsets[t->ndim][dst_index] = shape;
+    m->offsets[t->ndim][dst_index] = (int32_t)shape;
 
     for (int64_t i = 0; i < shape; i++) {
         int64_t src_next = start + i * step;
