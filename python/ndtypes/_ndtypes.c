@@ -264,6 +264,8 @@ seterr(ndt_context_t *ctx)
 /*                                 ndt object                               */
 /****************************************************************************/
 
+static PyTypeObject Ndt_Type;
+
 static PyObject *
 ndtype_alloc(PyTypeObject *type)
 {

@@ -51,8 +51,6 @@ typedef struct {
     ndt_t *ndt;     /* type */
 } NdtObject;
 
-static PyTypeObject Ndt_Type;
-
 #define NDT(v) (((NdtObject *)v)->ndt)
 #define RBUF(v) (((NdtObject *)v)->rbuf)
 #define RBUF_NDT_META(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->m)
