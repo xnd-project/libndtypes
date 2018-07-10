@@ -45,6 +45,9 @@ extern "C" {
 /*                                 ndt object                               */
 /****************************************************************************/
 
+/* Exposed here for the benefit of Numba. The API should not be regarded
+   stable across versions. */
+
 typedef struct {
     PyObject_HEAD
     PyObject *rbuf; /* resource buffer */
