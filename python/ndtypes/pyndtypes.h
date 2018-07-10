@@ -41,6 +41,27 @@ extern "C" {
 #include "ndtypes.h"
 
 
+/****************************************************************************/
+/*                                 ndt object                               */
+/****************************************************************************/
+
+typedef struct {
+    PyObject_HEAD
+    PyObject *rbuf; /* resource buffer */
+    ndt_t *ndt;     /* type */
+} NdtObject;
+
+static PyTypeObject Ndt_Type;
+
+#define NDT(v) (((NdtObject *)v)->ndt)
+#define RBUF(v) (((NdtObject *)v)->rbuf)
+#define RBUF_NDT_META(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->m)
+
+
+/****************************************************************************/
+/*                                Capsule API                               */
+/****************************************************************************/
+
 #define Ndt_CheckExact_INDEX 0
 #define Ndt_CheckExact_RETURN int
 #define Ndt_CheckExact_ARGS (const PyObject *)

@@ -264,19 +264,6 @@ seterr(ndt_context_t *ctx)
 /*                                 ndt object                               */
 /****************************************************************************/
 
-typedef struct {
-    PyObject_HEAD
-    PyObject *rbuf; /* resource buffer */
-    ndt_t *ndt;     /* type */
-} NdtObject;
-
-static PyTypeObject Ndt_Type;
-
-#define NDT(v) (((NdtObject *)v)->ndt)
-#define RBUF(v) (((NdtObject *)v)->rbuf)
-#define RBUF_NDT_META(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->m)
-
-
 static PyObject *
 ndtype_alloc(PyTypeObject *type)
 {
