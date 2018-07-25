@@ -1,8 +1,8 @@
 sudo: required
-python: 3.6
 
-language: C
-
+language: python
+python:
+  - 3.6
 
 matrix:
   include:
