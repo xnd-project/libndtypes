@@ -8,8 +8,7 @@ matrix:
   include:
     - compiler: gcc
       before_script:
-        - sudo apt-get -qq update
-        - sudo apt-get install -y python3-numpy python3-sphinx
+        - python3 -m pip install numpy sphinx
       script:
         - ./configure
         - make check
