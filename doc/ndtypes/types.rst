@@ -252,8 +252,6 @@ Option type
 The option type provides safe handling of values that may or may not be present.
 The concept is well-known from languages like ML or SQL.
 
-Two equivalent notations exist:
-
 .. doctest::
 
    >>> ndt("?complex64")
