@@ -745,6 +745,20 @@ error:
     return 0;
 }
 
+static bool
+is_elemwise(ndt_t * const *types, int64_t nargs)
+{
+    for (int64_t i = 0; i < nargs; i++) {
+        if ((types[i]->ndim == 1 && types[i]->tag == EllipsisDim) ||
+            types[i]->ndim == 0) {
+            continue;
+        }
+        return false;
+    }
+
+    return true;
+}
+
 
 /******************************************************************************/
 /*                         Type allocation/deallocation                       */
@@ -818,7 +832,6 @@ ndt_function_new(int64_t nargs, ndt_context_t *ctx)
     if (t == NULL) {
         return NULL;
     }
-
     t->Function.nargs = nargs;
     t->Function.types = (ndt_t **)t->extra;
 
@@ -1109,6 +1122,7 @@ ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
         }
         return NULL;
     }
+    t->Function.elemwise = is_elemwise(types, nargs);
     t->Function.nin = nin;
     t->Function.nout = nout;
 

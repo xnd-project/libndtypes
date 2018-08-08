@@ -300,6 +300,8 @@ ndt_apply_spec_del(ndt_apply_spec_t *spec)
     ndt_free(spec);
 }
 
+/* This function is used in places where it is _really_ convenient not to
+   have to deal with deallocating an error message. */
 const char *
 ndt_apply_flags_as_string(const ndt_apply_spec_t *spec)
 {
@@ -320,6 +322,22 @@ ndt_apply_flags_as_string(const ndt_apply_spec_t *spec)
     case NDT_XND|NDT_STRIDED|NDT_C: return "C|Strided|Xnd";
     case NDT_XND|NDT_STRIDED|NDT_FORTRAN: return "Fortran|Strided|Xnd";
     case NDT_XND|NDT_STRIDED|NDT_FORTRAN|NDT_C: return "C|Fortran|Strided|Xnd";
+    case NDT_ELEMWISE_1D: return "Elemwise1D";
+    case NDT_ELEMWISE_1D|NDT_C: return "Elemwise1D|C";
+    case NDT_ELEMWISE_1D|NDT_FORTRAN: return "Elemwise1D|Fortran";
+    case NDT_ELEMWISE_1D|NDT_FORTRAN|NDT_C: return "Elemwise1D|C|Fortran";
+    case NDT_ELEMWISE_1D|NDT_STRIDED: return "Elemwise1D|Strided";
+    case NDT_ELEMWISE_1D|NDT_STRIDED|NDT_C: return "Elemwise1D|C|Strided";
+    case NDT_ELEMWISE_1D|NDT_STRIDED|NDT_FORTRAN: return "Elemwise1D|Fortran|Strided";
+    case NDT_ELEMWISE_1D|NDT_STRIDED|NDT_FORTRAN|NDT_C: return "Elemwise1D|C|Fortran|Strided";
+    case NDT_ELEMWISE_1D|NDT_XND: return "Elemwise1D|Xnd";
+    case NDT_ELEMWISE_1D|NDT_XND|NDT_C: return "Elemwise1D|C|Xnd";
+    case NDT_ELEMWISE_1D|NDT_XND|NDT_FORTRAN: return "Elemwise1D|Fortran|Xnd";
+    case NDT_ELEMWISE_1D|NDT_XND|NDT_FORTRAN|NDT_C: return "Elemwise1D|C|Fortran|Xnd";
+    case NDT_ELEMWISE_1D|NDT_XND|NDT_STRIDED: return "Elemwise1D|Strided|Xnd";
+    case NDT_ELEMWISE_1D|NDT_XND|NDT_STRIDED|NDT_C: return "Elemwise1D|C|Strided|Xnd";
+    case NDT_ELEMWISE_1D|NDT_XND|NDT_STRIDED|NDT_FORTRAN: return "Elemwise1D|Fortran|Strided|Xnd";
+    case NDT_ELEMWISE_1D|NDT_XND|NDT_STRIDED|NDT_FORTRAN|NDT_C: return "Elemwise1D|C|Fortran|Strided|Xnd";
     default: return "error: invalid combination of spec->flags";
     }
 }
@@ -361,6 +379,21 @@ ndt_meta_del(ndt_meta_t *m)
 /*****************************************************************************/
 /*                     Optimized kernel strategy (unstable API)              */
 /*****************************************************************************/
+
+static bool
+all_inner_1D_contiguous(const ndt_t *types[], int n)
+{
+    for (int i = 0; i < n; i++) {
+        if (types[i]->ndim == 0) {
+            return false;
+        }
+        if (!ndt_is_c_contiguous(ndt_inner(types[i], types[i]->ndim-1))) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 static bool
 all_inner_c_contiguous(const ndt_t *types[], int n, int outer)
@@ -426,6 +459,12 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
 
     spec->flags = NDT_XND;
 
+    if (sig->Function.elemwise) {
+        if (all_inner_1D_contiguous(in, nin) &&
+            all_inner_1D_contiguous(out, spec->nout)) {
+            spec->flags |= NDT_ELEMWISE_1D;
+        }
+    }
     if (in_inner_c && out_inner_c) {
         spec->flags |= NDT_C;
     }

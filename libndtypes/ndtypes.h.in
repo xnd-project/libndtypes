@@ -347,6 +347,7 @@ struct _ndt {
         } Module;
 
         struct {
+            bool elemwise;
             int64_t nin;
             int64_t nout;
             int64_t nargs;
@@ -530,11 +531,13 @@ typedef struct {
     int64_t steps[NDT_MAX_DIM];
 } ndt_ndarray_t;
 
-/* This may go into gumath at some point. */
-#define NDT_C       0x00000001U
-#define NDT_FORTRAN 0x00000002U
-#define NDT_STRIDED 0x00000004U
-#define NDT_XND     0x00000008U
+/* This may go into gumath at some point.  A flag is set if the inner dimensions
+   of all input and output arguments have the property. */
+#define NDT_ELEMWISE_1D  0x00000001U  /* 1D elementwise and contiguous */
+#define NDT_C            0x00000004U  /* ND C-contiguous */
+#define NDT_FORTRAN      0x00000008U  /* ND F-contiguous */
+#define NDT_STRIDED      0x00000010U  /* ND non-contiguous */
+#define NDT_XND          0x00000020U  /* Any XND container */
 
 typedef struct {
     uint32_t flags;
