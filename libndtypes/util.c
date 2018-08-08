@@ -126,8 +126,8 @@ ndt_dtype(const ndt_t *t)
     return t;
 }
 
-static const ndt_t *
-ndt_inner(const ndt_t *t, int n)
+const ndt_t *
+ndt_dim_at(const ndt_t *t, int n)
 {
     assert(n <= t->ndim);
 
@@ -387,7 +387,7 @@ all_inner_1D_contiguous(const ndt_t *types[], int n)
         if (types[i]->ndim == 0) {
             return false;
         }
-        if (!ndt_is_c_contiguous(ndt_inner(types[i], types[i]->ndim-1))) {
+        if (!ndt_is_c_contiguous(ndt_dim_at(types[i], types[i]->ndim-1))) {
             return false;
         }
     }
@@ -399,7 +399,7 @@ static bool
 all_inner_c_contiguous(const ndt_t *types[], int n, int outer)
 {
     for (int i = 0; i < n; i++) {
-        if (!ndt_is_c_contiguous(ndt_inner(types[i], outer))) {
+        if (!ndt_is_c_contiguous(ndt_dim_at(types[i], outer))) {
             return false;
         }
     }
@@ -411,7 +411,7 @@ static bool
 all_inner_f_contiguous(const ndt_t *types[], int n, int outer)
 {
     for (int i = 0; i < n; i++) {
-        if (!ndt_is_f_contiguous(ndt_inner(types[i], outer))) {
+        if (!ndt_is_f_contiguous(ndt_dim_at(types[i], outer))) {
             return false;
         }
     }
