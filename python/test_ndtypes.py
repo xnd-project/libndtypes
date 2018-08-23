@@ -1618,6 +1618,91 @@ class TestConstruction(unittest.TestCase):
         gc.collect()
 
 
+class TestMatch(unittest.TestCase):
+
+    def test_match(self):
+
+        ##### No contiguity requirements.
+        p = ndt("... * 2 * 3 * float32")
+        c = ndt("2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        ##### C-contiguity required for inner dimensions.
+        p = ndt("... * C[2 * 3 * float32]")
+
+        # C input.
+        c = ndt("2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        # Inner dimensions C-contiguous.
+        c = ndt("4 * 2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        # Inner dimensions C-contiguous.
+        c = ndt("fixed(shape=4, step=-6) * 2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        # F input.
+        c = ndt("!2 * 3 * float32")
+        self.assertFalse(p.match(c))
+
+        ##### F-contiguity required for inner dimensions.
+        p = ndt("... * F[2 * 3 * float32]")
+
+        # F input.
+        c = ndt("!2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        # Inner dimensions F-contiguous.
+        c = ndt("fixed(shape=10, step=6) * fixed(shape=2, step=1) * fixed(shape=3, step=2) * float32")
+        self.assertTrue(p.match(c))
+
+        # C input.
+        c = ndt("2 * 3 * float32")
+        self.assertFalse(p.match(c))
+
+        ##### C-contiguity required for all dimensions after broadcast.
+        p = ndt("C[... * 2 * 3 * float32]")
+
+        # C input.
+        c = ndt("2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        # All dimensions C-contiguous.
+        c = ndt("4 * 2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        # Inner dimensions C-contiguous.
+        c = ndt("fixed(shape=4, step=-6) * 2 * 3 * float32")
+        self.assertFalse(p.match(c))
+
+        # F input.
+        c = ndt("!2 * 3 * float32")
+        self.assertFalse(p.match(c))
+
+        ##### F-contiguity required for all dimensions after broadcast.
+        p = ndt("F[... * 2 * 3 * float32]")
+
+        # C input.
+        c = ndt("2 * 3 * float32")
+        self.assertFalse(p.match(c))
+
+        c = ndt("4 * 2 * 3 * float32")
+        self.assertFalse(p.match(c))
+
+        # F input.
+        c = ndt("!2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        # All dimensions F-contiguous.
+        c = ndt("!4 * 2 * 3 * float32")
+        self.assertTrue(p.match(c))
+
+        # Inner dimensions C-contiguous.
+        c = ndt("fixed(shape=10, step=6) * fixed(shape=2, step=1) * fixed(shape=3, step=2) * float32")
+        self.assertFalse(p.match(c))
+
+
 class TestApply(unittest.TestCase):
 
     def test_apply(self):
@@ -1859,6 +1944,7 @@ ALL_TESTS = [
   TestBufferProtocol,
   TestConstruction,
   TestError,
+  TestMatch,
   TestApply,
   TestBroadcast,
   TestTypedef,

@@ -104,6 +104,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> datashape
 %type <ndt> datashape_or_module
 %type <ndt> datashape_with_ellipsis
+%type <ndt> fixed_ellipsis
 %type <ndt> dimensions
 %type <ndt> dimensions_nooption
 %type <ndt> dimensions_tail
@@ -205,10 +206,14 @@ datashape_or_module:
 /* types */
 datashape_with_ellipsis:
   datashape                                { $$ = $1; }
-| ELLIPSIS STAR dimensions_tail            { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER ELLIPSIS STAR dimensions_tail { $$ = ndt_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
+| fixed_ellipsis                           { $$ = $1; }
+| NAME_UPPER LBRACK fixed_ellipsis RBRACK  { $$ = mk_contig($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | VAR ELLIPSIS STAR dtype                  { $$ = mk_var_ellipsis($4, ctx); if ($$ == NULL) YYABORT; }
 | VAR ELLIPSIS STAR QUESTIONMARK dtype     { $$ = mk_var_ellipsis(ndt_option($5), ctx); if ($$ == NULL) YYABORT; }
+
+fixed_ellipsis:
+  ELLIPSIS STAR dimensions_tail            { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER ELLIPSIS STAR dimensions_tail { $$ = ndt_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 datashape:
   dimensions         { $$ = $1; }
@@ -217,8 +222,9 @@ datashape:
 | QUESTIONMARK dtype { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 
 dimensions:
-  dimensions_nooption              { $$ = $1; }
-| QUESTIONMARK dimensions_nooption { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
+  dimensions_nooption                 { $$ = $1; }
+| QUESTIONMARK dimensions_nooption    { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
+| NAME_UPPER LBRACK dimensions RBRACK { $$ = mk_contig($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_nooption:
   INTEGER STAR dimensions_tail                           { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }

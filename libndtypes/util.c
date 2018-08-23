@@ -434,6 +434,17 @@ all_ndarray(const ndt_t *types[], int n)
     return true;
 }
 
+static bool
+req_fortran(const ndt_t *t)
+{
+    switch (t->tag) {
+    case FixedDim: return t->FixedDim.tag == RequireF;
+    case SymbolicDim: return t->SymbolicDim.tag == RequireF;
+    case EllipsisDim: return t->EllipsisDim.tag == RequireF;
+    default: return false;
+    }
+}
+
 int
 ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
                            const ndt_t *in[], int nin,
@@ -441,7 +452,6 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
 {
     const ndt_t **out = (const ndt_t **)spec->out;
     bool in_inner_c, in_inner_f, out_inner_c;
-    bool in_f;
     int i;
 
     assert(sig->tag == Function);
@@ -455,7 +465,6 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
     in_inner_c = all_inner_c_contiguous(in, nin, spec->outer_dims);
     in_inner_f = all_inner_f_contiguous(in, nin, spec->outer_dims);
     out_inner_c = all_inner_c_contiguous(out, spec->nout, spec->outer_dims);
-    in_f = all_inner_f_contiguous(in, nin, 0);
 
     spec->flags = NDT_XND;
 
@@ -472,21 +481,25 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
         spec->flags |= NDT_FORTRAN;
     }
 
-    if (in_f) {
-        if (all_inner_c_contiguous(out, spec->nout, 0)) {
-            for (i=spec->nout-1; i>=0; i--) {
-                ndt_t *t = spec->out[i];
-                if (t->ndim <= 1) {
-                    continue;
-                }
-                ndt_t *u = ndt_to_fortran(t, ctx);
-                if (u == NULL) {
-                    return -1;
-                }
-                ndt_del(t);
-                spec->out[i] = u;
-            }
+    for (i = 0; i < spec->nout; i++) {
+        ndt_t *t;
+
+        if (!req_fortran(sig->Function.types[nin+i])) {
+            continue;
         }
+
+        t = spec->out[i];
+        if (t->ndim <= 1) {
+            continue;
+        }
+
+        ndt_t *u = ndt_to_fortran(t, ctx);
+        if (u == NULL) {
+            return -1;
+        }
+        ndt_del(t);
+
+        spec->out[i] = u;
     }
 
     if (all_ndarray(in, nin) && all_ndarray(out, spec->nout)) {

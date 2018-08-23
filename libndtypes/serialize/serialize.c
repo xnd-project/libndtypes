@@ -201,6 +201,7 @@ static int64_t
 write_fixed_dim(char * const ptr, int64_t offset, const ndt_t * const t,
                 bool *overflow)
 {
+    offset = write_uint8(ptr, offset, (uint8_t)t->FixedDim.tag, overflow);
     offset = write_int64(ptr, offset, t->FixedDim.shape, overflow);
     offset = write_int64(ptr, offset, t->Concrete.FixedDim.step, overflow);
     offset = write_int64(ptr, offset, t->Concrete.FixedDim.itemsize, overflow);
@@ -211,6 +212,7 @@ static int64_t
 write_symbolic_dim(char * const ptr, int64_t offset, const ndt_t * const t,
                    bool *overflow)
 {
+    offset = write_uint8(ptr, offset, (uint8_t)t->SymbolicDim.tag, overflow);
     offset = write_string(ptr, offset, t->SymbolicDim.name, overflow);
     return write_type(ptr, offset, t->SymbolicDim.type, overflow);
 }
@@ -220,6 +222,7 @@ write_ellipsis_dim(char * const ptr, int64_t offset, const ndt_t * const t,
                    bool *overflow)
 {
     char *cp = t->EllipsisDim.name ? t->EllipsisDim.name : "";
+    offset = write_uint8(ptr, offset, (uint8_t)t->EllipsisDim.tag, overflow);
     offset = write_string(ptr, offset, cp, overflow);
     return write_type(ptr, offset, t->EllipsisDim.type, overflow);
 }

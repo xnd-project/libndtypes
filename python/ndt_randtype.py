@@ -353,7 +353,7 @@ BROADCAST_TEST_CASES = [
 
     ApplySpec(
         flags = 'C|Fortran|Strided|Xnd',
-        sig = ndt("... * uint8 -> ... * float64"),
+        sig = ndt("F[... * uint8] -> F[... * float64]"),
         in_types = [ndt("!2 * 3 * uint8")],
         out_types = [ndt("!2 * 3 * float64")],
         in_broadcast = [ndt("!2 * 3 * uint8")],

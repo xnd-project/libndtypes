@@ -103,6 +103,30 @@ resolve_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 }
 
 static int
+check_contig(ndt_t *ptypes[], ndt_t *ctypes[], int64_t nargs, symtable_t *tbl)
+{
+    const char *key = "00_ELLIPSIS";
+    symtable_entry_t *v;
+
+    v = symtable_find_ptr(tbl, key);
+    if (v == NULL) {
+        return 1;
+    }
+
+    for (int i = 0; i < nargs; i++) {
+        const ndt_t *p = ptypes[i];
+        const ndt_t *c = ctypes[i];
+        if (p->tag == EllipsisDim &&
+            p->EllipsisDim.tag != RequireNA &&
+            c->ndim != v->BroadcastSeq.size) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int
 resolve_fixed(const char *key, symtable_entry_t w,
               symtable_t *tbl, ndt_context_t *ctx)
 {
@@ -371,6 +395,13 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
         if (c->tag != FixedDim || p->FixedDim.shape != c->FixedDim.shape) {
             return 0;
         }
+        if (p->FixedDim.tag == RequireC && !ndt_is_c_contiguous(c)) {
+            return 0;
+        }
+        if (p->FixedDim.tag == RequireF && !ndt_is_f_contiguous(c)) {
+            return 0;
+        }
+
         return match_datashape(p->FixedDim.type, c->FixedDim.type, tbl, ctx);
     }
 
@@ -383,6 +414,14 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
 
     case SymbolicDim: {
         if (c->tag != FixedDim) return 0;
+
+        if (p->SymbolicDim.tag == RequireC && !ndt_is_c_contiguous(c)) {
+            return 0;
+        }
+        if (p->SymbolicDim.tag == RequireF && !ndt_is_f_contiguous(c)) {
+            return 0;
+        }
+
         n = resolve_shape(p->SymbolicDim.name, c->FixedDim.shape, tbl, ctx);
         if (n <= 0) {
             return n;
@@ -393,6 +432,13 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
     case EllipsisDim: {
         symtable_entry_t outer;
         const ndt_t *inner;
+
+        if (p->EllipsisDim.tag == RequireC && !ndt_is_c_contiguous(c)) {
+            return 0;
+        }
+        if (p->EllipsisDim.tag == RequireF && !ndt_is_f_contiguous(c)) {
+            return 0;
+        }
 
         if (p->EllipsisDim.name == NULL) {
             outer.tag = BroadcastSeq;
@@ -491,7 +537,8 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
             if (n <= 0) return n;
         }
 
-        return 1;
+        return check_contig(p->Function.types, c->Function.types, p->Function.nargs,
+                            tbl);
     }
     case Typevar: {
         if (c->tag == Typevar) {

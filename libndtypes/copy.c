@@ -241,7 +241,8 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        u = ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.step, ctx);
+        u = ndt_fixed_dim_tag(type, t->FixedDim.tag, t->FixedDim.shape,
+                              t->Concrete.FixedDim.step, ctx);
         goto copy_common_fields;
     }
 
@@ -264,7 +265,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        u = ndt_symbolic_dim(name, type, ctx);
+        u = ndt_symbolic_dim_tag(name, type, t->SymbolicDim.tag, ctx);
         goto copy_common_fields;
     }
 
@@ -284,7 +285,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             }
         }
 
-        u = ndt_ellipsis_dim(name, type, ctx);
+        u = ndt_ellipsis_dim_tag(name, type, t->EllipsisDim.tag, ctx);
         goto copy_common_fields;
     }
 
@@ -431,7 +432,8 @@ fixed_copy_contiguous(const ndt_t *t, ndt_t *type, ndt_context_t *ctx)
         return NULL;
     }
 
-    return ndt_fixed_dim(type, t->FixedDim.shape, INT64_MAX, ctx);
+    return ndt_fixed_dim_tag(type, t->FixedDim.tag, t->FixedDim.shape,
+                             INT64_MAX, ctx);
 }
 
 typedef struct {
