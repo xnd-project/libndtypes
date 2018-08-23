@@ -53,7 +53,6 @@ typedef enum ndt_access ndt_access;
 typedef enum ndt_variadic ndt_variadic;
 typedef enum ndt_encoding ndt_encoding;
 typedef enum ndt_value ndt_value;
-typedef enum ndt_contig ndt_contig;
 
 typedef struct {
     enum ndt tag;
@@ -199,7 +198,6 @@ READ_CAST(ndt_variadic, uint8)
 READ_CAST(ndt_encoding, uint8)
 READ_CAST(ndt_value, uint8)
 READ_CAST(bool, uint8)
-READ_CAST(ndt_contig, uint8)
 
 READ_POS(int64)
 READ_POS(int32)
@@ -429,15 +427,11 @@ static ndt_t *
 read_fixed_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
                int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
-    ndt_contig tag;
     int64_t shape;
     int64_t step;
     int64_t itemsize;
     ndt_t *type;
     ndt_t *t;
-
-    offset = ndt_contig_from_uint8(&tag, ptr, offset, len, ctx);
-    if (offset < 0) return NULL;
 
     offset = read_pos_int64(&shape, ptr, offset, len, ctx);
     if (offset < 0) return NULL;
@@ -458,7 +452,6 @@ read_fixed_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
         ndt_del(type);
         return NULL;
     }
-    t->FixedDim.tag = tag;
     t->FixedDim.shape = shape;
     t->FixedDim.type = type;
     t->Concrete.FixedDim.step = step;
@@ -471,15 +464,9 @@ static ndt_t *
 read_symbolic_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
                   int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
-    ndt_contig tag;
     char *name;
     ndt_t *type;
     ndt_t *t;
-
-    offset = ndt_contig_from_uint8(&tag, ptr, offset, len, ctx);
-    if (offset < 0) {
-        return NULL;
-    }
 
     offset = read_string(&name, ptr, offset, len, ctx);
     if (offset < 0) {
@@ -498,7 +485,6 @@ read_symbolic_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
         ndt_free(name);
         return NULL;
     }
-    t->SymbolicDim.tag = tag;
     t->SymbolicDim.name = name;
     t->SymbolicDim.type = type;
 
@@ -509,15 +495,9 @@ static ndt_t *
 read_ellipsis_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
                   int64_t offset, const int64_t len, ndt_context_t *ctx)
 {
-    ndt_contig tag;
     char *name;
     ndt_t *type;
     ndt_t *t;
-
-    offset = ndt_contig_from_uint8(&tag, ptr, offset, len, ctx);
-    if (offset < 0) {
-        return NULL;
-    }
 
     offset = read_string(&name, ptr, offset, len, ctx);
     if (offset < 0) {
@@ -540,7 +520,6 @@ read_ellipsis_dim(ndt_meta_t *m, const common_t *fields, const char * const ptr,
         ndt_free(name);
         return NULL;
     }
-    t->EllipsisDim.tag = tag;
     t->EllipsisDim.name = name;
     t->EllipsisDim.type = type;
 
