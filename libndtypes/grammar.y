@@ -217,7 +217,6 @@ fixed_ellipsis:
 
 datashape:
   dimensions         { $$ = $1; }
-| BANG dimensions    { $$ = mk_fortran($2, ctx); if ($$ == NULL) YYABORT; }
 | dtype              { $$ = $1; }
 | QUESTIONMARK dtype { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 
@@ -225,6 +224,7 @@ dimensions:
   dimensions_nooption                 { $$ = $1; }
 | QUESTIONMARK dimensions_nooption    { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LBRACK dimensions RBRACK { $$ = mk_contig($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| BANG dimensions                     { $$ = mk_fortran($2, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_nooption:
   INTEGER STAR dimensions_tail                           { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }

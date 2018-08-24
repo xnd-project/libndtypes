@@ -1161,8 +1161,14 @@ fixed_step(ndt_t *type, int64_t step, bool *overflow)
 
     switch (type->tag) {
     case FixedDim:
-        return MULi64(type->FixedDim.shape, type->Concrete.FixedDim.step,
-                      overflow);
+        if (type->Concrete.FixedDim.itemsize == 0) {
+            return MULi64(type->FixedDim.shape, type->Concrete.FixedDim.step,
+                          overflow);
+        }
+        else {
+            return DIVi64(type->datasize, type->Concrete.FixedDim.itemsize,
+                          overflow);
+        }
     default:
         return 1;
     }

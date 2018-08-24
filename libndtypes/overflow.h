@@ -63,6 +63,13 @@ MULi64(int64_t a, int64_t b, bool *overflow)
     return c;
 }
 
+static inline int64_t
+DIVi64(int64_t a, int64_t b, bool *overflow)
+{
+    *overflow |= (b == 0 || (a == INT64_MIN && b == -1));
+    return *overflow ? INT64_MIN : a / b;
+}
+
 static inline size_t
 MULi64_size(int64_t a, int64_t b, bool *overflow)
 {
@@ -114,6 +121,13 @@ MULi64(int64_t a, int64_t b, bool *overflow)
     int64_t c = (uint64_t)a * (uint64_t)b;
     *overflow |= ((b < 0 && a == INT64_MIN) || (b != 0 && a != c / b));
     return c;
+}
+
+static inline int64_t
+DIVi64(int64_t a, int64_t b, bool *overflow)
+{
+    *overflow |= (b == 0 || (a == INT64_MIN && b == -1));
+    return *overflow ? INT64_MIN : a / b;
 }
 
 static inline size_t
