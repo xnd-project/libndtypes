@@ -253,6 +253,16 @@ enum ndt_access {
   Concrete
 };
 
+/*
+ * Require C or Fortran contiguity in abstract signatures.  For concrete types
+ * the field is irrelevant and set to RequireNA.
+ */
+enum ndt_contig {
+  RequireNA,
+  RequireC,
+  RequireF
+};
+
 /* Tuple or record field, used in the parser. */
 typedef struct {
   enum ndt_access access;
@@ -355,6 +365,7 @@ struct _ndt {
         } Function;
 
         struct {
+            enum ndt_contig tag;
             int64_t shape;
             ndt_t *type;
         } FixedDim;
@@ -364,11 +375,13 @@ struct _ndt {
         } VarDim;
 
         struct {
+            enum ndt_contig tag;
             char *name;
             ndt_t *type;
         } SymbolicDim;
 
         struct {
+            enum ndt_contig tag;
             char *name;
             ndt_t *type;
         } EllipsisDim;
@@ -731,6 +744,7 @@ NDTYPES_API ndt_t *ndt_any_kind(ndt_context_t *ctx);
 /* Dimensions */
 NDTYPES_API ndt_t *ndt_to_fortran(const ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_fixed_dim_tag(ndt_t *type, enum ndt_contig tag, int64_t shape, int64_t step, ndt_context_t *ctx);
 
 NDTYPES_API ndt_t *ndt_abstract_var_dim(ndt_t *type, ndt_context_t *ctx);
 NDTYPES_API int64_t ndt_var_indices(int64_t *res_start, int64_t *res_step, const ndt_t *t,
@@ -744,7 +758,9 @@ NDTYPES_API ndt_t *ndt_var_dim(ndt_t *type,
                                ndt_context_t *ctx);
 
 NDTYPES_API ndt_t *ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_symbolic_dim_tag(char *name, ndt_t *type, enum ndt_contig tag, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_ellipsis_dim_tag(char *name, ndt_t *type, enum ndt_contig tag, ndt_context_t *ctx);
 
 /* Dtypes */
 NDTYPES_API ndt_t *ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,

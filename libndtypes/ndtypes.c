@@ -1193,7 +1193,6 @@ _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
     ndt_t *dt;
     int64_t next_step;
 
-    assert(ndt_is_concrete(t));
     if (t->ndim == 0) {
         return ndt_copy(t, ctx);
     }
@@ -1218,6 +1217,12 @@ _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 ndt_t *
 ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
 {
+    if (ndt_is_abstract(t)) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "cannot convert abstract type to Fortran order");
+        return NULL;
+    }
+
     if (!ndt_is_c_contiguous(t)) {
         ndt_err_format(ctx, NDT_TypeError,
             "array must be C-contiguous for conversion to Fortran order");
@@ -1249,6 +1254,7 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
+    t->FixedDim.tag = RequireNA;
     t->FixedDim.shape = shape;
     t->FixedDim.type = type;
     t->ndim = type->ndim + 1;
@@ -1273,6 +1279,23 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
         ndt_err_format(ctx, NDT_ValueError, "data size too large");
         ndt_del(t);
         return NULL;
+    }
+
+    return t;
+}
+
+ndt_t *
+ndt_fixed_dim_tag(ndt_t *type, enum ndt_contig tag, int64_t shape, int64_t step,
+                  ndt_context_t *ctx)
+{
+    ndt_t *t = ndt_fixed_dim(type, shape, step, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->FixedDim.tag = tag;
+
+    if (tag != RequireNA) {
+        t->access = Abstract;
     }
 
     return t;
@@ -1495,10 +1518,23 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
+    t->SymbolicDim.tag = RequireNA;
     t->SymbolicDim.name = name;
     t->SymbolicDim.type = type;
     t->ndim = type->ndim + 1;
     t->flags = ndt_dim_flags(type);
+
+    return t;
+}
+
+ndt_t *
+ndt_symbolic_dim_tag(char *name, ndt_t *type, enum ndt_contig tag, ndt_context_t *ctx)
+{
+    ndt_t *t = ndt_symbolic_dim(name, type, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->SymbolicDim.tag = tag;
 
     return t;
 }
@@ -1530,6 +1566,7 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
         ndt_del(type);
         return NULL;
     }
+    t->EllipsisDim.tag = RequireNA;
     t->EllipsisDim.name = name;
     t->EllipsisDim.type = type;
     t->flags = flags | NDT_ELLIPSIS;
@@ -1537,6 +1574,19 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
 
     return t;
 }
+
+ndt_t *
+ndt_ellipsis_dim_tag(char *name, ndt_t *type, enum ndt_contig tag, ndt_context_t *ctx)
+{
+    ndt_t *t = ndt_ellipsis_dim(name, type, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->EllipsisDim.tag = tag;
+
+    return t;
+}
+
 
 /******************************************************************************/
 /*                             Container types                                */

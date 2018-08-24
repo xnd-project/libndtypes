@@ -159,7 +159,8 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
     }
 
     case FixedDim: {
-        return t->FixedDim.shape == u->FixedDim.shape &&
+        return t->FixedDim.tag == u->FixedDim.tag &&
+               t->FixedDim.shape == u->FixedDim.shape &&
                t->Concrete.FixedDim.itemsize == u->Concrete.FixedDim.itemsize &&
                t->Concrete.FixedDim.step == u->Concrete.FixedDim.step &&
                ndt_equal(t->FixedDim.type, u->FixedDim.type);
@@ -183,11 +184,16 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
     }
 
     case SymbolicDim: {
-        return strcmp(t->SymbolicDim.name, u->SymbolicDim.name) == 0 &&
+        return t->SymbolicDim.tag == u->SymbolicDim.tag &&
+               strcmp(t->SymbolicDim.name, u->SymbolicDim.name) == 0 &&
                ndt_equal(t->SymbolicDim.type, u->SymbolicDim.type);
     }
 
     case EllipsisDim: {
+        if (t->EllipsisDim.tag != u->EllipsisDim.tag) {
+            return 0;
+        }
+
         if (!!t->EllipsisDim.name != !!u->EllipsisDim.name) {
             return 0;
         }

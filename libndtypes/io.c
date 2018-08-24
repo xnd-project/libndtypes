@@ -174,6 +174,19 @@ ndt_type_name(const ndt_t *t)
     ndt_internal_error("invalid encoding");
 }
 
+static const char *
+fixed_tag_as_string(enum ndt_contig tag)
+{
+    switch (tag) {
+    case RequireNA: return "None";
+    case RequireC: return "C";
+    case RequireF: return "Fortran";
+    }
+
+    /* NOT REACHED: tags should be exhaustive. */
+    ndt_internal_error("invalid contiguity tag");
+}
+
 
 /******************************************************************************/
 /*                                String buffer                               */
@@ -505,10 +518,19 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         }
 
         case FixedDim: {
+            n = ndt_snprintf(ctx, buf, "%s", t->FixedDim.tag==RequireC ? "C[" : "");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "%s", t->FixedDim.tag==RequireF ? "F[" : "");
+            if (n < 0) return -1;
+
             n = ndt_snprintf(ctx, buf, "%" PRIi64 " * ", t->FixedDim.shape);
             if (n < 0) return -1;
 
-            return datashape(buf, t->FixedDim.type, d, ctx);
+            n = datashape(buf, t->FixedDim.type, d, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf(ctx, buf, "%s", t->FixedDim.tag==RequireNA ? "" : "]");
         }
 
         case VarDim: {
@@ -519,18 +541,36 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         }
 
         case SymbolicDim: {
+            n = ndt_snprintf(ctx, buf, "%s", t->SymbolicDim.tag==RequireC ? "C[" : "");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "%s", t->SymbolicDim.tag==RequireF ? "F[" : "");
+            if (n < 0) return -1;
+
             n = ndt_snprintf(ctx, buf, "%s * ", t->SymbolicDim.name);
             if (n < 0) return -1;
 
-            return datashape(buf, t->SymbolicDim.type, d, ctx);
+            n = datashape(buf, t->SymbolicDim.type, d, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf(ctx, buf, "%s", t->SymbolicDim.tag==RequireNA ? "" : "]");
         }
 
         case EllipsisDim: {
+            n = ndt_snprintf(ctx, buf, "%s", t->EllipsisDim.tag==RequireC ? "C[" : "");
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, "%s", t->EllipsisDim.tag==RequireF ? "F[" : "");
+            if (n < 0) return -1;
+
             n = ndt_snprintf(ctx, buf, "%s... * ",
                     t->EllipsisDim.name ? t->EllipsisDim.name : "");
             if (n < 0) return -1;
 
-            return datashape(buf, t->EllipsisDim.type, d, ctx);
+            n = datashape(buf, t->EllipsisDim.type, d, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf(ctx, buf, "%s", t->EllipsisDim.tag==RequireNA ? "" : "]");
         }
 
         case Tuple: {
@@ -1003,7 +1043,9 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "shape=%" PRIi64, t->FixedDim.shape);
+            n = ndt_snprintf_d(ctx, buf, d+2, "tag=%s, shape=%" PRIi64,
+                               fixed_tag_as_string(t->FixedDim.tag),
+                               t->FixedDim.shape);
             if (n < 0) return -1;
 
             if (ndt_is_abstract(t)) {
@@ -1086,7 +1128,9 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, d+2, "name='%s',\n", t->SymbolicDim.name);
+            n = ndt_snprintf_d(ctx, buf, d+2, "tag=%s, name='%s',\n",
+                               t->SymbolicDim.tag,
+                               t->SymbolicDim.name);
             if (n < 0) return -1;
 
             n = ast_common_attributes_with_newline(buf, t, d+2, ctx);

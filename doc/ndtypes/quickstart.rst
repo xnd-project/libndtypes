@@ -136,9 +136,9 @@ This is how to display the internal type AST:
    FixedDim(
      FixedDim(
        Int64(access=Concrete, ndim=0, datasize=8, align=8, flags=[]),
-       shape=3, itemsize=8, step=1,
+       tag=None, shape=3, itemsize=8, step=1,
        access=Concrete, ndim=1, datasize=24, align=8, flags=[]
      ),
-     shape=2, itemsize=8, step=3,
+     tag=None, shape=2, itemsize=8, step=3,
      access=Concrete, ndim=2, datasize=48, align=8, flags=[]
    )

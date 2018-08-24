@@ -172,6 +172,68 @@ mk_fortran(ndt_t *type, ndt_context_t *ctx)
 }
 
 ndt_t *
+mk_contig(char *name, ndt_t *type, ndt_context_t *ctx)
+{
+    enum ndt_contig tag = RequireNA;
+
+    if (strcmp(name, "C") == 0) {
+        tag = RequireC;
+    }
+    else if (strcmp(name, "F") == 0) {
+        tag = RequireF;
+    }
+    ndt_free(name);
+
+    if (tag == RequireNA) {
+        ndt_err_format(ctx, NDT_ParseError,
+            "valid contiguity modifiers are 'C' or 'F'");
+        ndt_del(type);
+        return NULL;
+    }
+
+    switch (type->tag) {
+    case FixedDim: {
+        ndt_t *t = type;
+
+        if (ndt_is_concrete(type)) {
+            if (!ndt_is_c_contiguous(type)) {
+                ndt_err_format(ctx, NDT_ParseError,
+                    "valid contiguity modifiers are 'C' or 'F'");
+                ndt_del(type);
+                return NULL;
+            }
+
+            if (tag == RequireF) {
+                t = ndt_to_fortran(type, ctx);
+                ndt_del(type);
+                if (t == NULL) {
+                    return NULL;
+                }
+            }
+        }
+
+        t->access = Abstract;
+        t->FixedDim.tag = tag;
+        return t;
+    }
+    case SymbolicDim: {
+        type->SymbolicDim.tag = tag;
+        return type;
+    }
+    case EllipsisDim: {
+        type->EllipsisDim.tag = tag;
+        return type;
+    }
+    default: {
+        ndt_err_format(ctx, NDT_ParseError,
+            "'C' or 'F' can only be applied to fixed or symbolic dimensions");
+        ndt_del(type);
+        return NULL;
+      }
+    }
+}
+
+ndt_t *
 mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx)
 {
     int64_t shape;

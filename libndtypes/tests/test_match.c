@@ -2197,6 +2197,199 @@ const match_testcase_t match_tests[] = {
   { "var... * int64",
     "var(offsets=[0,2]) * var(offsets=[0,2,3]) * var(offsets=[0,1,2,3]) * int64", 1 },
 
+  /* C input required, concrete shapes */
+  { "C[2 * 3 * float64]",
+    "2 * 3 * float64", 1 },
+
+  { "C[2 * 3 * float64]",
+    "!2 * 3 * float64", 0 },
+
+  /* C input required, symbolic shapes */
+  { "C[N * M * float64]",
+    "2 * 3 * float64", 1 },
+
+  { "C[N * M * float64]",
+    "!2 * 3 * float64", 0 },
+
+  /* C input required in inner dimensions, concrete shapes */
+  { "... * C[2 * 3 * float64]",
+    "3 * float64", 0 },
+
+  { "... * C[2 * 3 * float64]",
+    "2 * 3 * float64", 1 },
+
+  { "... * C[2 * 3 * float64]",
+    "10 * 2 * 3 * float64", 1 },
+
+  { "... * C[2 * 3 * float64]",
+    "3 * float64", 0 },
+
+  { "... * C[2 * 3 * float64]",
+    "!2 * 3 * float64", 0 },
+
+  { "... * C[2 * 3 * float64]",
+    "!10 * 2 * 3 * float64", 0 },
+
+  /* C input required in inner dimensions, symbolic shapes */
+  { "... * C[N * M * float64]",
+    "3 * float64", 0 },
+
+  { "... * C[N * M * float64]",
+    "2 * 3 * float64", 1 },
+
+  { "... * C[N * M * float64]",
+    "10 * 2 * 3 * float64", 1 },
+
+  { "... * C[N * M * float64]",
+    "3 * float64", 0 },
+
+  { "... * C[N * M * float64]",
+    "!2 * 3 * float64", 0 },
+
+  { "... * C[N * M * float64]",
+    "!10 * 2 * 3 * float64", 0 },
+
+  /* C input required in all dimensions, concrete shapes */
+  { "C[... * 2 * 3 * float64]",
+    "3 * float64", 0 },
+
+  { "C[... * 2 * 3 * float64]",
+    "2 * 3 * float64", 1 },
+
+  { "C[... * 2 * 3 * float64]",
+    "10 * 2 * 3 * float64", 1 },
+
+  { "C[... * 2 * 3 * float64]",
+    "3 * float64", 0 },
+
+  { "C[... * 2 * 3 * float64]",
+    "10 * 2 * 3 * float64", 1 },
+
+  { "... * C[2 * 3 * float64]",
+    "!2 * 3 * float64", 0 },
+
+  { "... * C[2 * 3 * float64]",
+    "!10 * 2 * 3 * float64", 0 },
+
+  /* C input required in all dimensions, symbolic shapes */
+  { "C[... * N * M * float64]",
+    "3 * float64", 0 },
+
+  { "C[... * N * M * float64]",
+    "2 * 3 * float64", 1 },
+
+  { "C[... * N * M * float64]",
+    "10 * 2 * 3 * float64", 1 },
+
+  { "C[... * N * M * float64]",
+    "3 * float64", 0 },
+
+  { "C[... * N * M * float64]",
+    "!2 * 3 * float64", 0 },
+
+  { "C[... * N * M * float64]",
+    "!10 * 2 * 3 * float64", 0 },
+
+  /* F input required, concrete shapes */
+  { "F[2 * 3 * float64]",
+    "!2 * 3 * float64", 1 },
+
+  { "F[2 * 3 * float64]",
+    "2 * 3 * float64", 0 },
+
+  /* F input required, symbolic shapes */
+  { "F[N * M * float64]",
+    "!2 * 3 * float64", 1 },
+
+  { "F[N * M * float64]",
+    "2 * 3 * float64", 0 },
+
+  /* F input required in inner dimensions, concrete shapes */
+  { "... * F[2 * 3 * float64]",
+    "!3 * float64", 0 },
+
+  { "... * F[2 * 3 * float64]",
+    "!2 * 3 * float64", 1 },
+
+  { "... * F[2 * 3 * float64]",
+    "3 * float64", 0 },
+
+  { "... * F[2 * 3 * float64]",
+    "2 * 3 * float64", 0 },
+
+  { "... * F[2 * 3 * float64]",
+    "10 * 2 * 3 * float64", 0 },
+
+  /* F input required in inner dimensions, symbolic shapes */
+  { "... * F[2 * 3 * float64]",
+    "!3 * float64", 0 },
+
+  { "... * F[2 * 3 * float64]",
+    "!2 * 3 * float64", 1 },
+
+  { "... * F[2 * 3 * float64]",
+    "!3 * float64", 0 },
+
+  { "... * F[2 * 3 * float64]",
+    "2 * 3 * float64", 0 },
+
+  { "... * F[2 * 3 * float64]",
+    "10 * 2 * 3 * float64", 0 },
+
+  /* F input required in all dimensions, concrete shapes */
+  { "F[... * 2 * 3 * float64]",
+    "!3 * float64", 0 },
+
+  { "F[... * 2 * 3 * float64]",
+    "!2 * 3 * float64", 1 },
+
+  { "F[... * 2 * 3 * float64]",
+    "2 * 3 * float64", 0 },
+
+  { "F[... * 2 * 3 * float64]",
+    "10 * 2 * 3 * float64", 0 },
+
+  /* F input required in all dimensions, symbolic shapes */
+  { "F[... * N * M * float64]",
+    "!3 * float64", 0 },
+
+  { "F[... * N * M * float64]",
+    "!2 * 3 * float64", 1 },
+
+  { "F[... * N * M * float64]",
+    "2 * 3 * float64", 0 },
+
+  { "F[... * N * M * float64]",
+    "10 * 2 * 3 * float64", 0 },
+
+  /* C input required, mixed symbolic and fixed */
+  { "... * C[N * 2 * float64]",
+    "2 * float64", 0 },
+
+  { "... * C[N * 2 * float64]",
+    "3 * 1 * float64", 0 },
+
+  { "... * C[N * 2 * float64]",
+    "3 * 2 * float64", 1 },
+
+  { "... * C[N * 2 * float64]",
+    "10 * 3 * 2 * float64", 1 },
+
+  { "... * C[N * 2 * float64]",
+    "!10 * 3 * 2 * float64", 0 },
+
+  /* F input required, mixed symbolic and fixed */
+  { "... * F[N * 2 * float64]",
+    "!2 * float64", 0 },
+
+  { "... * F[N * 2 * float64]",
+    "!3 * 1 * float64", 0 },
+
+  { "... * F[N * 2 * float64]",
+    "!3 * 2 * float64", 1 },
+
+  { "... * F[N * 2 * float64]",
+    "!10 * 3 * 2 * float64", 0 },
 
   /* END MANUALLY GENERATED */
 

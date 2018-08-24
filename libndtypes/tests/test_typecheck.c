@@ -288,5 +288,12 @@ const typecheck_testcase_t typecheck_tests[] = {
     .outer_dims=0,
     .success=true },
 
+  { .signature="... * C[2 * 3 * float64], ... * F[3 * 4 * float32] -> ... * F[10 * 2 * float64]",
+    .in={"2 * 3 * float64", "!3 * 4 * float32"},
+    .out={"!10 * 2 * float64"},
+    .broadcast={"2 * 3 * float64", "!3 * 4 * float32"},
+    .outer_dims=0,
+    .success=true },
+
   { NULL, {NULL}, {NULL}, {NULL}, 0, false }
 };
