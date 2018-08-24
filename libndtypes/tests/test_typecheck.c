@@ -295,5 +295,51 @@ const typecheck_testcase_t typecheck_tests[] = {
     .outer_dims=0,
     .success=true },
 
+  { .signature="... * C[2 * 3 * float64], ... * F[3 * 4 * float32] -> ... * F[10 * 2 * float64]",
+    .in={"20 * 2 * 3 * float64", "20 * !3 * 4 * float32"},
+    .out={"20 * !10 * 2 * float64"},
+    .broadcast={"20 * 2 * 3 * float64", "20 * !3 * 4 * float32"},
+    .outer_dims=1,
+    .success=true },
+
+  { .signature="... * C[2 * 3 * float64], ... * F[3 * 4 * float32] -> ... * F[10 * 2 * float64]",
+    .in={"20 * 2 * 3 * float64", "!3 * 4 * float32"},
+    .out={"20 * !10 * 2 * float64"},
+    .broadcast={"20 * 2 * 3 * float64", "fixed(shape=20, step=0) * !3 * 4 * float32"},
+    .outer_dims=1,
+    .success=true },
+
+  { .signature="... * C[2 * 3 * float64], ... * F[3 * 4 * float32] -> ... * F[10 * 2 * float64]",
+    .in={"2 * 3 * float64", "20 * 30 * !3 * 4 * float32"},
+    .out={"20 * 30 * !10 * 2 * float64"},
+    .broadcast={"fixed(shape=20, step=0) * fixed(shape=30, step=0) * 2 * 3 * float64",
+                "20 * 30 * !3 * 4 * float32"},
+    .outer_dims=2,
+    .success=true },
+
+  { .signature="... * C[2 * 3 * float64], ... * F[3 * 4 * float32] -> ... * C[10 * 2 * float64]",
+    .in={"2 * 3 * float64", "20 * 30 * !3 * 4 * float32"},
+    .out={"20 * 30 * 10 * 2 * float64"},
+    .broadcast={"fixed(shape=20, step=0) * fixed(shape=30, step=0) * 2 * 3 * float64",
+                "20 * 30 * !3 * 4 * float32"},
+    .outer_dims=2,
+    .success=true },
+
+  { .signature="... * C[2 * 3 * float64], ... * F[3 * 4 * float32] -> C[... * 10 * 2 * float64]",
+    .in={"2 * 3 * float64", "20 * 30 * !3 * 4 * float32"},
+    .out={"20 * 30 * 10 * 2 * float64"},
+    .broadcast={"fixed(shape=20, step=0) * fixed(shape=30, step=0) * 2 * 3 * float64",
+                "20 * 30 * !3 * 4 * float32"},
+    .outer_dims=2,
+    .success=true },
+
+  { .signature="... * C[2 * 3 * float64], ... * F[3 * 4 * float32] -> F[... * 10 * 2 * float64]",
+    .in={"2 * 3 * float64", "20 * 30 * !3 * 4 * float32"},
+    .out={"!20 * 30 * 10 * 2 * float64"},
+    .broadcast={"fixed(shape=20, step=0) * fixed(shape=30, step=0) * 2 * 3 * float64",
+                "20 * 30 * !3 * 4 * float32"},
+    .outer_dims=2,
+    .success=true },
+
   { NULL, {NULL}, {NULL}, {NULL}, 0, false }
 };
