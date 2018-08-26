@@ -434,25 +434,12 @@ all_ndarray(const ndt_t *types[], int n)
     return true;
 }
 
-static bool
-req_fortran(const ndt_t *t)
-{
-    switch (t->tag) {
-    case FixedDim: return t->FixedDim.tag == RequireF;
-    case SymbolicDim: return t->SymbolicDim.tag == RequireF;
-    case EllipsisDim: return t->EllipsisDim.tag == RequireF;
-    default: return false;
-    }
-}
-
-int
+void
 ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
-                           const ndt_t *in[], int nin,
-                           ndt_context_t *ctx)
+                           const ndt_t *in[], int nin)
 {
     const ndt_t **out = (const ndt_t **)spec->out;
     bool in_inner_c, in_inner_f, out_inner_c;
-    int i;
 
     assert(sig->tag == Function);
     assert(spec->flags == 0);
@@ -481,30 +468,7 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
         spec->flags |= NDT_FORTRAN;
     }
 
-    for (i = 0; i < spec->nout; i++) {
-        ndt_t *t;
-
-        if (!req_fortran(sig->Function.types[nin+i])) {
-            continue;
-        }
-
-        t = spec->out[i];
-        if (t->ndim <= 1) {
-            continue;
-        }
-
-        ndt_t *u = ndt_to_fortran(t, ctx);
-        if (u == NULL) {
-            return -1;
-        }
-        ndt_del(t);
-
-        spec->out[i] = u;
-    }
-
     if (all_ndarray(in, nin) && all_ndarray(out, spec->nout)) {
         spec->flags |= NDT_STRIDED;
     }
-
-    return 0;
 }

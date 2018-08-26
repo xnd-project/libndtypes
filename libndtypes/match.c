@@ -103,27 +103,43 @@ resolve_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 }
 
 static int
-check_contig(ndt_t *ptypes[], ndt_t *ctypes[], int64_t nargs, symtable_t *tbl)
+check_contig(ndt_t *ptypes[], ndt_t *ctypes[], int64_t nargs)
 {
-    const char *key = "00_ELLIPSIS";
-    symtable_entry_t *v;
-
-    v = symtable_find_ptr(tbl, key);
-    if (v == NULL) {
-        return 1;
-    }
-
     for (int i = 0; i < nargs; i++) {
         const ndt_t *p = ptypes[i];
         const ndt_t *c = ctypes[i];
-        if (p->tag == EllipsisDim &&
-            p->EllipsisDim.tag != RequireNA &&
-            c->ndim != v->BroadcastSeq.size) {
-            return 0;
+
+        if (p->tag == EllipsisDim) {
+            switch (p->EllipsisDim.tag) {
+            case RequireNA:
+                break;
+            case RequireC:
+                if (!ndt_is_c_contiguous(c)) {
+                    return 0;
+                }
+                break;
+            case RequireF:
+                if (!ndt_is_f_contiguous(c)) {
+                    return 0;
+                }
+                break;
+            }
         }
     }
 
     return 1;
+}
+
+static ndt_t *
+to_fortran(const ndt_t *p, ndt_t *c, ndt_context_t *ctx)
+{
+    if (p->tag == EllipsisDim && p->EllipsisDim.tag == RequireF) {
+        ndt_t *t = ndt_to_fortran(c, ctx);
+        return t;
+    }
+    else {
+        return c;
+    }
 }
 
 static int
@@ -537,8 +553,7 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
             if (n <= 0) return n;
         }
 
-        return check_contig(p->Function.types, c->Function.types, p->Function.nargs,
-                            tbl);
+        return check_contig(p->Function.types, c->Function.types, p->Function.nargs);
     }
     case Typevar: {
         if (c->tag == Typevar) {
@@ -840,10 +855,30 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
 
     symtable_del(tbl);
 
-    if (ndt_select_kernel_strategy(spec, sig, in, nin, ctx) < 0) {
-        ndt_apply_spec_clear(spec);
+    for (i = 0; i < sig->Function.nout; i++) {
+        ndt_t *p = sig->Function.types[nin+i];
+        ndt_t *c = spec->out[i];
+        ndt_t *t = to_fortran(p, c, ctx);
+        if (t == NULL) {
+            ndt_apply_spec_clear(spec);
+            return -1;
+        }
+        if (t != c) {
+            ndt_del(c);
+        }
+        spec->out[i] = t;
+    }
+
+    if (!check_contig(sig->Function.types, (ndt_t **)in, nin)) {
+        ndt_err_format(ctx, NDT_TypeError, "argument types do not match");
         return -1;
     }
+    if (!check_contig(sig->Function.types+nin, spec->out, spec->nout)) {
+        ndt_err_format(ctx, NDT_TypeError, "argument types do not match");
+        return -1;
+    }
+
+    ndt_select_kernel_strategy(spec, sig, in, nin);
 
     return 0;
 }
@@ -970,10 +1005,7 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
         }
     }
 
-    if (ndt_select_kernel_strategy(spec, sig, in, nin, ctx) < 0) {
-        ndt_apply_spec_clear(spec);
-        return -1;
-    }
+    ndt_select_kernel_strategy(spec, sig, in, nin);
 
     return 0;
 }
