@@ -348,5 +348,28 @@ const typecheck_testcase_t typecheck_tests[] = {
     .outer_dims=0,
     .success=true },
 
+  { .signature="C[... * 2 * 3 * int64], ... * F[3 * 4 * float32] -> F[... * 20 * 30 * 10 * 2 * float64]",
+    .in={"2 * 3 * int64", "!3 * 4 * float32"},
+    .out={"!20 * 30 * 10 * 2 * float64"},
+    .broadcast={"2 * 3 * int64", "!3 * 4 * float32"},
+    .outer_dims=0,
+    .success=true },
+
+  /* First argument is not C after broadcasting. */
+  { .signature="C[... * 2 * 3 * int64], ... * F[2 * 3 * 4 * float32] -> F[... * 20 * 30 * 10 * 2 * float64]",
+    .in={"2 * 3 * float64", "!2 * 3 * 4 * float32"},
+    .out={NULL},
+    .broadcast={NULL},
+    .outer_dims=0,
+    .success=false },
+
+  /* Second argument is not F after broadcasting. */
+  { .signature="... * C[2 * 3 * 4 * int64], F[... * 3 * 4 * float32] -> F[... * 20 * 30 * 10 * 2 * float64]",
+    .in={"3 * 4 * float64", "!3 * 4 * float32"},
+    .out={NULL},
+    .broadcast={NULL},
+    .outer_dims=0,
+    .success=false },
+
   { NULL, {NULL}, {NULL}, {NULL}, 0, false }
 };
