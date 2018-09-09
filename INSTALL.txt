@@ -87,7 +87,7 @@ Alternative install with conda (for developing)
 # Install the ndtypes package into a local directory.
 
 # Create and activate a new conda environment:
-conda create --name xnd python=3
+conda create --name xnd python=3.7
 conda activate xnd
 
 # Use conda to build libndtypes and ndtypes:
