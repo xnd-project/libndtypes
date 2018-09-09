@@ -856,17 +856,17 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     symtable_del(tbl);
 
     for (i = 0; i < sig->Function.nout; i++) {
-        ndt_t *p = sig->Function.types[nin+i];
-        ndt_t *c = spec->out[i];
-        ndt_t *t = to_fortran(p, c, ctx);
-        if (t == NULL) {
+        ndt_t *_p = sig->Function.types[nin+i];
+        ndt_t *_c = spec->out[i];
+        ndt_t *_t = to_fortran(_p, _c, ctx);
+        if (_t == NULL) {
             ndt_apply_spec_clear(spec);
             return -1;
         }
-        if (t != c) {
-            ndt_del(c);
+        if (_t != _c) {
+            ndt_del(_c);
         }
-        spec->out[i] = t;
+        spec->out[i] = _t;
     }
 
     if (!check_contig(sig->Function.types, (ndt_t **)in, nin)) {
