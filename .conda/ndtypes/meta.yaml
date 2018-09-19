@@ -12,7 +12,7 @@ test:
   commands:
     - python test/test_ndtypes.py --long
   requires:
-    - nomkl
+    - nomkl # [not win]
     - numpy
 
 requirements:
