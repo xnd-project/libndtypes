@@ -1,4 +1,5 @@
 require 'ndtypes/errors'
+
 require "ruby_ndtypes.so"
 
 class NDTypes

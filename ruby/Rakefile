@@ -3,6 +3,7 @@ require 'rake/extensiontask'
 require 'rspec/core/rake_task'
 require 'bundler/gem_tasks'
 require 'fileutils'
+require "ndtypes/version.rb"
 
 gemspec = eval(IO.read("ndtypes.gemspec"))
 
@@ -104,4 +105,21 @@ task :clobber do |task|
   Dir.chdir("ext/#{ext_name}/ndtypes/libndtypes/") do
     system("make clean")
   end
+end
+
+task :deploy do |task|
+  ext_ndtypes = "ext/ruby_ndtypes/ndtypes"
+  puts "deleting previously created #{ext_ndtypes} directory..."
+  FileUtils.rm_rf(ext_ndtypes)
+  Dir.mkdir(ext_ndtypes)
+
+  puts "cloning ndtypes repo into ext/ folder..."
+  system("git clone https://github.com/plures/ndtypes #{ext_ndtypes}")
+
+  Dir.chdir(ext_ndtypes) do
+    system("git checkout #{NDTypes::COMMIT}")
+  end
+
+  puts "building gem with rake build..."
+  system("rake build")
 end
