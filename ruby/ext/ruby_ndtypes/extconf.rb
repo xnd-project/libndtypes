@@ -1,21 +1,33 @@
 require 'mkmf'
 
+def windows?
+  (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
+end
+
+def mac?
+  (/darwin/ =~ RUBY_PLATFORM) != nil
+end
+
 def unix?
-  true
+  !windows?
 end
 
 puts "compiling libndtypes on your machine..."
 Dir.chdir(File.join(File.dirname(__FILE__) + "/ndtypes")) do
   if unix?
-    system("./configure --prefix=#{File.expand_path("../")}")
-    system("make -j4")
+    ["libndtypes", "libndtypes/compat", "libndtypes/serialize"].each do |f|
+      Dir.chdir(f) do
+        Dir.mkdir(".objs") unless Dir.exists? ".objs"  
+      end
+    end
+    
+    system("./configure --prefix=#{File.expand_path("../")} --with-docs=no")
+    system("make")
     system("make install")
   elsif windows?
     raise NotImplementedError, "need to specify build instructions for windows."
   end
 end
-
-FileUtils.rm_rf("share")
 
 $INSTALLFILES = [
   ["ruby_ndtypes.h", "$(archdir)"]
@@ -39,8 +51,5 @@ basenames = %w{gc_guard ruby_ndtypes}
 $objs = basenames.map { |b| "#{b}.o"   }
 $srcs = basenames.map { |b| "#{b}.c" }
 
-puts "LOAD_PATH :: #{$LOAD_PATH}."
-
 $CFLAGS += " -O0 -g "
 create_makefile("ruby_ndtypes/ruby_ndtypes")
-

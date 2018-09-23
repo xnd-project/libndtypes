@@ -1,6 +1,10 @@
 require 'ndtypes/errors'
 
-require "ruby_ndtypes.so"
+begin
+  require "ruby_ndtypes.so"
+rescue LoadError
+  require 'ruby_ndtypes/ruby_ndtypes.so'
+end
 
 class NDTypes
   # It so happens that over riding the .new method in a super class also
