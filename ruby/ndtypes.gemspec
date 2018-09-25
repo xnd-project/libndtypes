@@ -3,7 +3,7 @@ $:.unshift File.expand_path("../lib", __FILE__)
 
 require 'ndtypes/version.rb'
 
-def get_files
+def self.get_files
   files = []
   ['ext', 'lib', 'spec'].each do |folder|
     files.concat Dir.glob "#{folder}/**/*"

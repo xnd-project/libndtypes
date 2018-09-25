@@ -48,6 +48,10 @@ end
   have_header(header)
 end
 
+FileUtils.copy_file File.expand_path(File.join(File.dirname(__FILE__) +
+                                               "/ruby_ndtypes.h")),
+                    "#{headers}/ruby_ndtypes.h"
+
 dir_config("ndtypes", [headers], [binaries])
 
 basenames = %w{gc_guard ruby_ndtypes}

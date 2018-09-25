@@ -27,3 +27,4 @@ ruby/pkg/
 ruby/Gemfile.lock
 ruby/ext/ndtypes/
 ruby/ext/ruby_ndtypes/share/
+ruby/ext/ruby_ndtypes/include/
