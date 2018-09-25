@@ -107,7 +107,7 @@ task :clobber do |task|
   end
 end
 
-task :deploy do |task|
+task :develop do |task|
   ext_ndtypes = "ext/ruby_ndtypes/ndtypes"
   puts "deleting previously created #{ext_ndtypes} directory..."
   FileUtils.rm_rf(ext_ndtypes)

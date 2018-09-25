@@ -30,8 +30,10 @@ Dir.chdir(File.join(File.dirname(__FILE__) + "/ndtypes")) do
 end
 
 $INSTALLFILES = [
-  ["ruby_ndtypes.h", "$(archdir)"]
+  ["ruby_ndtypes.h", "$(archdir)"],
+  ["ndtypes.h", "$(archdir)"]
 ]
+
 binaries = File.expand_path(File.join(File.dirname(__FILE__) + "/lib/"))
 headers = File.expand_path(File.join(File.dirname(__FILE__) + "/include/"))
 $LOAD_PATH << File.expand_path(binaries)
