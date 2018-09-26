@@ -1,5 +1,17 @@
 # Developer notes
 
+## Contributing to ndtypes Ruby wrapper
+
+If you're interested in contributing to the ndtypes Ruby wrapper, follow the following
+steps for getting started:
+
+* Clone the ndtypes repo: `git clone https://github.com/plures/ndtypes.git`.
+* Switch to the `ruby-wrapper` branch: `git checkout ruby-wrapper`.
+* Run `bundle install`.
+* Run `rake develop`. This will build ndtypes with the latest working master branch
+of libndtypes.
+* Run `rspec` for running the tests.
+
 ## Interfacing with Ruby's GC
 
 ### Background

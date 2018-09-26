@@ -365,21 +365,21 @@ NDTypes_from_object(VALUE self, VALUE type)
 }
 
 static VALUE
-NDTypes_from_offsets_and_dtype(VALUE offsets, VALUE type)
+NDTypes_from_offsets_and_dtype(VALUE self, VALUE offsets, VALUE type)
 {
   NDT_STATIC_CONTEXT(ctx);
-  VALUE self;
   NdtObject *self_p;
+  ResourceBufferObject *rbuf_p;
   const char *cp;
 
   Check_Type(type, T_STRING);
 
   cp = StringValuePtr(type);
 
-  self = NdtObject_alloc();
   GET_NDT(self, self_p);
   RBUF(self_p) = rbuf_from_offset_lists(offsets);
-  NDT(self_p) = ndt_from_metadata_and_dtype(rbuf_ndt_meta(self_p), cp, &ctx);
+  GET_RBUF(RBUF(self_p), rbuf_p);
+  NDT(self_p) = ndt_from_metadata_and_dtype(rbuf_p->m, cp, &ctx);
 
   rb_ndtypes_gc_guard_register(self_p, RBUF(self_p));
 
@@ -407,7 +407,7 @@ NDTypes_initialize(int argc, VALUE *argv, VALUE self)
     return NDTypes_from_object(self, type);
   }
 
-  return NDTypes_from_offsets_and_dtype(offsets, type);
+  return NDTypes_from_offsets_and_dtype(self, offsets, type);
 }
 
 /* String representation of the type. */
@@ -436,15 +436,15 @@ NDTypes_to_s(VALUE self)
 static VALUE
 NDTypes_serialize(VALUE self)
 {
-  NdtObject *ndt;
+  NdtObject *self_p;
   char *bytes;
   int64_t size;
   VALUE str;
   
   NDT_STATIC_CONTEXT(ctx);
-  GET_NDT(self, ndt);
+  GET_NDT(self, self_p);
 
-  size = ndt_serialize(&bytes, NDT(ndt), &ctx);
+  size = ndt_serialize(&bytes, NDT(self_p), &ctx);
   if (size < 0) {
     seterr(&ctx);
     raise_error();
