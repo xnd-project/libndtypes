@@ -131,6 +131,12 @@ describe NDTypes do
           # raises tests.
         end
       end
+    end # context FixedDim
+
+    context "VarDim" do
+      it "test_var_dim_predicates" do
+        
+      end
     end
   end
 
