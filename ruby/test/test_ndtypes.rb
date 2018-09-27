@@ -1,5 +1,125 @@
 require 'test_helper'
 
+class TestModule < Minitest::Test
+  def test_module_predicates
+    # Namespaces are not yet supported in xnd. One can construct the
+    # types, however.  Modules are for pattern matching only, so they 
+    # are abstract.
+    t = NDT.new("SomeNamespace:: 2 * 3 * float64")
+    assert_serialize(t)
+
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_module_common_fields
+    t = NDT.new "SomeNamespace:: 2 * 3 * float64"
+    assert_serialize t
+
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+    
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestModule
+
+class TestFunction < Minitest::Test
+  def test_function_predicates
+    t = NDT.new("(10 * float64, string) -> float64")
+    assert_serialize(t)
+
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_function_common_fields
+    t = NDT.new("(10 * float64, string) -> float64")
+    assert_serialize(t)
+
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+    
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestFunction
+
+class TestVoid < Minitest::Test
+  def test_void_as_return_value
+    t = NDT.new "() -> void"
+    assert_serialize t
+ 
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_void_exception
+    assert_raises(ValueError) { NDT.new("void") }
+  end
+end # class TestVoid
+
+class TestAny < Minitest::Test
+  def test_any_predicates
+    t = NDT.new "Any"
+    
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_any_common_fields
+    t = NDT.new "Any"
+    assert_serialize t
+
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+    
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestAny
+
+# Put FixedDim here
+
 class TestVarDim < Minitest::Test
   def test_var_dim_predicates
     t = NDT.new "var(offsets=[0,2]) * var(offsets=[0,3,10]) * complex128"
@@ -476,4 +596,544 @@ class TestFixedStringKind < Minitest::Test
   end
 end # class TestFixedStringKind
 
+class TestFixedString < Minitest::Test
+  def test_fixed_string_predicates
+    t = NDT.new "fixed_string(380, 'utf16')"
+    assert_serialize t
 
+    assert_false t.abstract?
+    assert_false t.complex?
+    assert_true t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_true t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_true t.c_contiguous?
+    assert_true t.f_contiguous?
+  end
+
+  def test_fixed_string_common_fields
+    [
+      ['ascii', 1],
+      ['utf8', 1],
+      ['utf16', 2],
+      ['utf32', 4]
+    ].each do |encoding, codepoint_size|
+      t = NDT.new "fixed_string(20, '#{encoding}')"
+      assert_serialize t
+
+      assert_equal t.itemsize, 20 * codepoint_size
+      assert_equal t.align, codepoint_size
+
+      assert_raises(NoMethodError) { t.shape }
+      assert_raises(NoMethodError) { t.strides }
+    end
+  end
+end # class TestFixedString
+
+class TestFixedBytesKind < Minitest::Test
+  def test_fixed_bytes_kind_predicates
+    t = NDT.new "FixedBytes"
+    assert_serialize t
+
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_true t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_fixed_string_kind_common_fields
+    t = NDT.new "FixedBytes"
+    
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestFixedBytesKind
+
+class TestFixedBytes < Minitest::Test
+  def test_fixed_bytes_predicates
+    t = NDT.new "fixed_bytes(size=1020)"
+    assert_serialize t
+
+    assert_false t.abstract?
+    assert_false t.complex?
+    assert_true t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_true t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_true t.c_contiguous?
+    assert_true t.f_contiguous?    
+  end
+
+  def test_fixed_bytes_common_fields
+    [1,2,4,8,16,32,64].each do |align|
+      t = NDT.new "fixed_bytes(size=1024, align=#{align})"
+      assert_serialize t
+
+      assert_equal t.ndim, 0
+
+      assert_equal t.itemsize, 1024
+      assert_equal t.align, align
+
+      assert_equal(NoMethodError) { t.shape }
+      assert_equal(NoMethodError) { t.strides }
+    end
+  end
+
+  def test_fixed_bytes_exceptions
+    # data size must be a mutliple of align
+    assert_raises(ValueError) { NDT.new("fixed_bytes(size=20, align=8)")}
+  end
+end # class TestFixedBytes
+
+class TestString < Minitest::Test
+  def test_string_predicates
+    t = NDT.new "string"
+    assert_serialize t
+
+    assert_false t.abstract?
+    assert_false t.complex?
+    assert_true t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_true t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_true t.c_contiguous?
+    assert_true t.f_contiguous?
+  end
+
+  def test_string_common_fields
+    t = NDT.new "string"
+
+    assert_equal t.ndim, 0
+    assert_equal t.itemsize, SIZEOF_PTR
+    assert_equal t.align, SIZEOF_PTR
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestString
+
+class TestBytes < Minitest::Test
+  def test_bytes_predicates
+    t = NDT.new "bytes"
+    assert_serialize t
+
+    assert_false t.abstract?
+    assert_false t.complex?
+    assert_true t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_true t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_true t.c_contiguous?
+    assert_true t.f_contiguous?
+  end
+
+  def test_bytes_common_fields
+    t = NDT.new "bytes"
+
+    assert_equal t.ndim, 0
+
+    assert_equal t.itemsize, 16
+    assert_equal t.align, 8
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestBytes
+
+class TestChar < Minitest::Test
+  def test_char_predicates
+    t = NDT.new "char"
+    assert_serialize t
+
+    assert_false t.abstract?
+    assert_false t.complex?
+    assert_true t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_true t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_true t.c_contiguous?
+    assert_true t.f_contiguous?
+  end
+
+  def test_char_common_fields
+    t = NDT.new "char('utf32')"
+    assert_serialize t
+
+    assert_equal t.ndim, 0
+    assert_equal t.itemsize, 4
+    assert_equal t.align, 4
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestChar
+
+class TestBool < Minitest::Test
+  def test_bool_predicates
+    t = NDT.new "bool"
+    assert_serialize t
+
+    assert_false t.abstract?
+    assert_false t.complex?
+    assert_true t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_true t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_true t.c_contiguous?
+    assert_true t.f_contiguous?
+  end
+
+  def test_bool_common_fields
+    t = NDT.new "bool"
+
+    assert_equal t.ndim, 0
+    assert_equal t.itemsize, 1
+    assert_equal t.align, 1
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestBool
+
+class TestSignedKind < Minitest::Test
+  def test_signed_kind_predicates
+    t = NDT.new "Signed"
+    assert_serialize t
+
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_signed_kind_common_fields
+    t = NDT.new "Signed"
+
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestSignedKind
+
+class TestSigned < Minitest::Test
+  def test_signed_predicates
+    signed = ['int8', 'int16', 'int32', 'int64']
+
+    signed.each do |s|
+      t = NDT.new s
+      assert_serialize t
+      
+      assert_false t.abstract?
+      assert_false t.complex?
+      assert_true t.concrete?
+      assert_false t.float?
+      assert_false t.optional?
+      assert_true t.scalar?
+      assert_true t.signed?
+      assert_false t.unsigned?
+
+      assert_true t.c_contiguous?
+      assert_true t.f_contiguous?
+    end
+  end
+
+  def test_signed_common_fields
+    [
+      ['int8', 1],
+      ['int16', 2],
+      ['int32', 4],
+      ['int64', 8]
+    ].each do |s, itemsize|
+      t = NDT.new s
+
+      assert_equal t.ndim, 0
+
+      assert_equal t.itemsize, itemsize
+      assert_equal t.align, itemsize
+
+      assert_raises(NoMethodError) { t.shape }
+    end
+  end
+end # class TestSigned
+
+class TestUnsignedKind < Minitest::Test
+  def test_unsigned_kind_predicates
+    t = NDT.new "Unsigned"
+    assert_serialize t
+
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_unsigned_kind_common_fields
+    t = NDT.new "Unsigned"
+
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestUnsignedKind
+
+
+class TestUnsigned < Minitest::Test
+  def test_unsigned_predicates
+    unsigned = ['uint8', 'uint16', 'uint32', 'uint64']
+
+    unsigned.each do |s|
+      t = NDT.new s
+      assert_serialize t
+
+      assert_false t.abstract?
+      assert_false t.complex?
+      assert_true t.concrete?
+      assert_false t.float?
+      assert_false t.optional?
+      assert_true t.scalar?
+      assert_false t.signed?
+      assert_true t.unsigned?
+
+      assert_true t.c_contiguous?
+      assert_true t.f_contiguous?
+    end
+  end
+
+  def test_unsigned_common_fields
+    [
+      ['uint8', 1],
+      ['uint16', 2],
+      ['uint32', 4],
+      ['uint64', 8]
+    ].each do |s, itemsize|
+      t = NDT.new s
+
+      assert_equal t.ndim, 0
+
+      assert_equal t.itemsize, itemsize
+      assert_equal t.align, itemsize
+
+      assert_raises(NoMethodError) { t.shape }
+    end
+  end
+end # class TestUnsigned
+
+
+class TestFloatKind < Minitest::Test
+  def test_float_kind_predicates
+    t = NDT.new "Float"
+    assert_serialize t
+
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_float_kind_common_fields
+    t = NDT.new "Float"
+    
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestFloatKind
+
+class TestFloat < Minitest::Test
+  def test_float_predicates
+    _float = ['float32', 'float64']
+
+    _float.each do |s|
+      t = NDT.new s
+      assert_serialize t
+
+      assert_false t.abstract?
+      assert_false t.complex?
+      assert_true t.concrete?
+      assert_true t.float?
+      assert_false t.optional?
+      assert_true t.scalar?
+      assert_false t.signed?
+      assert_false t.unsigned?
+
+      assert_true t.c_contiguous?
+      assert_true t.f_contiguous?
+    end
+  end
+
+  def test_float_common_fields
+    _float = [['float32', 4], ['float64', 8]]
+
+    _float.each do |s, itemsize|
+      t = NDT.new s
+
+      assert_equal t.ndim, 0
+
+      assert_equal t.itemsize, itemsize
+      assert_equal t.align, itemsize
+
+      assert_raises(NoMethodError) { t.shape }
+    end
+  end
+end # class TestFloat
+
+class TestComplexKind < Minitest::Test
+  def test_complex_kind_predicates
+    t = NDT.new "Complex"
+    assert_serialize t
+
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_complex_kind_common_fields
+    t = NDT.new "Complex"
+
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestComplexKind
+
+class TestComplex < Minitest::Test
+  def test_complex_predicates
+    _complex = ['complex64', 'complex128']
+
+    _complex.each do |s|
+      t = NDT.new s
+      assert_serialize t
+
+      assert_false t.abstract?
+      assert_true t.complex?
+      assert_true t.concrete?
+      assert_false t.float?
+      assert_false t.optional?
+      assert_true t.scalar?
+      assert_false t.signed?
+      assert_false t.unsigned?
+
+      assert_true t.c_contiguous?
+      assert_true t.f_contiguous?
+    end
+  end
+
+  def test_complex_common_fields
+    _complex = [['complex64', 8], ['complex128', 16]]
+
+    _complex.each do |s, itemsize|
+      t = NDT.new s
+
+      assert_equal t.ndim, 0
+
+      assert_equal t.itemsize, itemsize
+      assert_equal t.align, itemsize / 2
+
+      assert_raises(NoMethodError) { t.shape }
+    end
+  end
+end # class TestComplex
+
+class TestTypevar < Minitest::Test
+  def test_typevar_predicates
+    t = NDT.new "T"
+    assert_serialize t
+
+    assert_true t.abstract?
+    assert_false t.complex?
+    assert_false t.concrete?
+    assert_false t.float?
+    assert_false t.optional?
+    assert_false t.scalar?
+    assert_false t.signed?
+    assert_false t.unsigned?
+
+    assert_false t.c_contiguous?
+    assert_false t.f_contiguous?
+  end
+
+  def test_typevar_common_fields
+    t = NDT.new "T"
+
+    assert_raises(NoMethodError) { t.ndim }
+    assert_raises(NoMethodError) { t.itemsize }
+    assert_raises(NoMethodError) { t.align }
+
+    assert_raises(NoMethodError) { t.shape }
+    assert_raises(NoMethodError) { t.strides }
+  end
+end # class TestTypevar
+
+class TestDup < Minitest::Test
+  # TODO: Add #dup test here from rspec. Call the method `test_dup`
+end
