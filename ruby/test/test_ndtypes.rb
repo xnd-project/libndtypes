@@ -1137,3 +1137,260 @@ end # class TestTypevar
 class TestDup < Minitest::Test
   # TODO: Add #dup test here from rspec. Call the method `test_dup`
 end
+
+class TestBufferProtocol < Minitest::Test
+  def test_array
+    test_cases = [
+      # format, itemsize, alignment
+      ["(0)f", 4, 4],
+      ["(1)d", 8, 8],
+      ["(125)d", 8, 8],
+      ["(2,3)d", 8, 8],
+      ["(2,10)T{<b:a:Q:b:}", 9, 1],
+      ["(2,19)T{<b:a:xxxQ:b:}", 12, 4],
+      ["(31,221)T{<b:a:xxxxxxxQ:b:}", 16, 8],
+      ["(2,3,10)T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16],
+      ["(2,10)T{=L:a:(2,3)D:b:}", 100, 1]
+    ]
+
+    test_error_cases = [
+      # empty shape (scalars are not arrays in datashape)
+      "()Q",
+      # Ambiguous (tuple of 10 or array of 10)?
+      "10Q"
+    ]
+
+    test_cases.each do |fmt, itemsize, align|
+      t = NDT.from_format fmt
+
+      assert_equal t.itemsize, itemsize
+      assert_equal t.align, align
+    end
+
+    test_error_cases.each do |fmt|
+      assert_raises(ValueError) { NDT.from_format(fmt) }
+    end
+  end
+
+  def test_record
+    test_cases = [
+      # format, itemsize, alignment
+      ["T{<b:a:Q:b:}", 9, 1],
+      ["T{<b:a:xQ:b:}", 10, 2],
+      ["T{<b:a:xxxQ:b:}", 12, 4],
+      ["T{<b:a:xxxxxxxQ:b:}", 16, 8],
+      ["T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16],
+      ["T{=i:foo:f:bar:10s:baz:}", 18, 1]
+    ]
+
+    test_error_cases = [
+      # sizeof(signed char) + padding is not a power of two.
+      "T{<b:a:xxQ:b:}",
+      # Missing padding bytes at the end of the struct.  The only
+      # reason a compiler would add three padding bytes to field
+      # zero is an artificial forced alignment of four for the short
+      # in field one.  This in turn requires that the entire struct
+      # has alignment four, which necessitates two padding bytes at
+      # the end of the struct.
+      "T{<b:a:xxxh:b:}",
+      # Unnatural padding at the end of the struct (expect two padding
+      # bytes instead of four).
+      "T{<b:a:xxxh:b:xxxx}"
+    ]
+
+    test_cases.each do |fmt, itemsize, align|
+      t = NDT.from_format fmt
+
+      assert_equal t.itemsize, itemsize
+      assert_equal t.align, align
+    end
+
+    test_error_cases.each do |fmt|
+      assert_raises(ValueError) { NDT.from_format(fmt) }
+    end
+  end
+
+  def test_fixed_bytes
+    ['s', '100s'].each do |fmt|
+      t = NDT.from_format fmt
+      assert_equal t.itemsize, fmt.size
+    end
+
+    # For consistency (it would be easy to allow, but other dtypes
+    # cannot have size 0).
+    assert_raises(ValueError) { NDT.from_format('0s') }
+
+    ['0s', 's', '100s'].each do |fmt|
+      ['@', '=', '<', '>', '!'].each do |modifier|
+        f = modifier + fmt
+
+        assert_raises(ValueError) { NDT.from_format(f) }
+      end
+    end
+
+    t = NDT.from_format('c')
+    assert_equal t, NDT.new("char('ascii')")
+  end
+
+  def test_primitive
+    standard = [
+      '?',
+      'c', 'b', 'B',
+      'h', 'i', 'l', 'q',
+      'H', 'I', 'L', 'Q',
+      'f', 'd']
+
+    native = ['n', 'N']
+
+    standard.each do |fmt|
+      ['', '@', '=', '<', '>', '!'].each do |modifier|
+        f = modifier + fmt
+        n = NDT.from_format f
+        assert_equal t.itemsize, f.size # FIXME: might need to be something else
+      end
+    end
+
+    native.each do |fmt|
+      ['', '@'].each do |modifier|
+        f = modifier + fmt
+        t = NDT.from_format f
+
+        assert_equal t.itemsize, f.size
+      end
+    end
+
+    native.each do |fmt|
+      ['=', '<', '>', '!'].each do |modifier|
+        f = modifier + fmt
+
+        assert_raises(ValueError) { NDT.from_format(f) }
+      end
+    end
+
+    # complex64
+    fmt = 'F'
+    ['', '@', '=', '<', '>', '!'].each do |modifier|
+      f = modifier + fmt
+      t = NDT.from_format f
+
+      assert_equal t.itemsize, 8
+    end
+
+    # complex128
+    fmt = 'D'
+    ['', '@', '=', '<', '>', '!'].each do |modifier|
+      f = modifier + fmt
+      t = NDT.from_format(f)
+
+      assert_equal t.itemsize, 16
+    end
+  end
+end # class TestBufferProtocol
+
+class TestApply < Minitest::Test
+  def test_apply
+    # Type checking and return type inference for function applications.
+
+    # Function type:
+    sig = NDT.new "Dims... * N * M * int64, Dims... * M * P * int64 -> Dims... * N * P * float64"
+    assert_serialize sig
+
+    # argument types:
+    in_types = [NDT.new("20 * 2 * 3 * int64"), NDT.new("20 * 3 * 4 * int64")]
+
+    spec = sig.apply(in_types)
+
+    assert_equal spec.sig, sig
+    assert_equal spec.in_types, in_types
+    assert_equal spec.out_types, [NDT.new("20 * 2 * 4 * float64")]
+    assert_equal spec.outer_dims, 1
+  end
+
+  def test_apply_error
+    sig = NDT.new("Dims... * N * M * int64, Dims... * M * P * int64 -> Dims... * N * P * float64")
+    lst = [["20 * 2 * 3 * int8", "20 * 3 * 4 * int64"],
+           ["10 * 2 * 3 * int64", "20 * 3 * 4 * int64"],
+           ["20 * 2 * 100 * int64", "20 * 3 * 4 * int64"]]
+
+    lst.each do |l|
+      in_types = l.map { |x| NDT.new(x) }
+      assert_raises(TypeError) { sig.apply(in_types) }
+    end
+  end
+end # class TestApply
+
+class TestBroadcast < Minitest::Test
+  def test_broadcast
+    BROADCAST_TEST_CASES.each do |c|
+      spec = c.sig.apply(c.in_types)
+
+      assert_equal spec.size, c.size
+      spec.zip(c).each do |v, u|
+        assert_equal v, u
+      end
+    end
+  end
+end # class TestBroadcast
+
+class LongFixedDimTests < Minitest::Test
+  def test_steps_random
+    DTYPE_TEST_CASES.each do |dtype, _|
+      1000.times do
+        s = dtype
+        ndim = rand(1...10)
+
+        ndim.times do |n|
+          shape = rand(1...100)
+          step = rand(-100...100)
+          s = "fixed(shape=#{shape}, step=#{step}) * #{s}"
+        end
+
+        t = NDT.new s
+        assert_true verify_datasize(t)
+      end
+    end
+  end
+
+  def test_steps_brute_force
+    DTYPE_TEST_CASES.each do |dtype, _|
+      10.times do |m|
+        (-10...10).to_a.each do |i|
+          s = "fixed(shape=#{m} step=#{i}) * #{dtype}"
+          t = NDT.new s
+
+          assert_true verify_datasize(t)
+        end
+      end
+
+      10.times do |m|
+        10.times do |n|
+          (-10...10).to_a.each do |i|
+            (-10...10).to_a.each do |j|
+              s = "fixed(shape=#{m}, step=#{s}) * fixed(shape=#{n}, step=#{j}) * #{dtype}"
+              t = NDT.new s
+
+              assert_true verify_datasize(t)
+            end
+          end
+        end
+      end
+
+      3.times do |m|
+        3.times do |n|
+          3.times do |p|
+            (-5...5).to_a.each do |i|
+              (-5...5).to_a.each do |j|
+                (-5...5).to_a.each do |k|
+                  s = "fixed(shape=#{m}, step=#{i}) * fixed(shape=#{n}, step=#{j})" +
+                      " * fixed(shape=#{p}, step=#{k}) * #{dtype}"
+                  t = NDT.new s
+                  assert_true verify_datasize(t)
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end # class LongFixedDimTests

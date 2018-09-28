@@ -7,6 +7,10 @@ rescue LoadError
 end
 
 class NDTypes
+  Struct.new("ApplySpec", :flags, :sig, :in_types,
+             :in_broadcast, :out_types, :outer_dims)
+  ApplySpec = Struct::ApplySpec
+  
   # It so happens that over riding the .new method in a super class also
   # tampers with the default .new method for class that inherit from the
   # super class (Index in this case). Thus we first alias the original
