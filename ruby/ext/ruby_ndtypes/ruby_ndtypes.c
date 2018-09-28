@@ -335,6 +335,22 @@ NDTYPES_BOOL_FUNC(ndt_is_c_contiguous)
 NDTYPES_BOOL_FUNC(ndt_is_f_contiguous)
 
 static VALUE
+array_from_int64(int64_t x[NDT_MAX_DIM], int ndim)
+{
+  VALUE array;
+  int i;
+
+  array = rb_ary_new2(ndim);
+
+  for (i = 0; i < ndim; ++i) {
+    VALUE v = LL2NUM(x[i]);
+    rb_ary_store(array, i, v);
+  }
+
+  return array;
+}
+
+static VALUE
 NDTypes_from_object(VALUE self, VALUE type)
 {
   NDT_STATIC_CONTEXT(ctx);
@@ -373,13 +389,19 @@ NDTypes_from_offsets_and_dtype(VALUE self, VALUE offsets, VALUE type)
   const char *cp;
 
   Check_Type(type, T_STRING);
+  Check_Type(offsets, T_ARRAY);
 
   cp = StringValuePtr(type);
 
   GET_NDT(self, self_p);
   RBUF(self_p) = rbuf_from_offset_lists(offsets);
   GET_RBUF(RBUF(self_p), rbuf_p);
+  
   NDT(self_p) = ndt_from_metadata_and_dtype(rbuf_p->m, cp, &ctx);
+  if(NDT(self_p) == NULL) {
+    seterr(&ctx);
+    raise_error();
+  }
 
   rb_ndtypes_gc_guard_register(self_p, RBUF(self_p));
 
@@ -467,7 +489,7 @@ NDTypes_ndim(VALUE self)
   const ndt_t *t = NDT(ndt_p);
 
   if (ndt_is_abstract(t)) {
-    rb_raise(rb_eTypeError, "abstract type has no ndim.");
+    rb_raise(rb_eNoMethodError, "abstract type has no ndim.");
   }
 
   return LL2NUM(t->ndim);
@@ -502,7 +524,7 @@ NDTypes_itemsize(VALUE self)
   const ndt_t *t = NDT(ndt_p);
 
   if (ndt_is_abstract(t)) {
-    rb_raise(rb_eTypeError, "abstract type has no datasize.");
+    rb_raise(rb_eNoMethodError, "abstract type has no datasize.");
   }
 
   switch (t->tag) {
@@ -531,7 +553,7 @@ NDTypes_align(VALUE self)
   const ndt_t *t = NDT(ndt_p);
 
   if (ndt_is_abstract(t)) {
-    rb_raise(rb_eTypeError, "abstract type has no datasize.");
+    rb_raise(rb_eNoMethodError, "abstract type has no datasize.");
   }
 
   return LL2NUM(t->align);
@@ -675,6 +697,103 @@ NDTypes_pretty(VALUE self)
   return result;
 }
 
+/* NDT#shape */
+static VALUE
+NDTypes_shape(VALUE self)
+{
+  NDT_STATIC_CONTEXT(ctx);
+  ndt_ndarray_t x;
+  NdtObject *self_p;
+
+  GET_NDT(self, self_p);
+
+  if (ndt_as_ndarray(&x, NDT(self_p), &ctx) < 0) {
+    seterr(&ctx);
+    raise_error();
+  }
+
+  return array_from_int64(x.shape, x.ndim);
+}
+
+static VALUE
+NDTypes_strides(VALUE self)
+{
+  NDT_STATIC_CONTEXT(ctx);
+  ndt_ndarray_t x;
+  NdtObject *self_p;
+
+  GET_NDT(self, self_p);
+
+  if (ndt_as_ndarray(&x, NDT(self_p), &ctx) < 0) {
+    seterr(&ctx);
+    raise_error();
+  }
+
+  return array_from_int64(x.strides, x.ndim);  
+}
+
+static VALUE
+NDTypes_apply(VALUE self, VALUE types)
+{
+  NDT_STATIC_CONTEXT(ctx);
+  NdtObject *self_p, *x_p;
+  ndt_t *sig;
+  const ndt_t *in[NDT_MAX_ARGS];
+  ndt_apply_spec_t spec;
+  VALUE flags, out, broadcast, outer_dims;
+  size_t nin, i;
+
+  Check_Type(types, T_ARRAY);
+
+  GET_NDT(self, self_p);
+  sig = NDT(self_p);
+
+  nin = RARRAY_LEN(types);
+  if (nin > NDT_MAX_ARGS) {
+    rb_raise(rb_eArgError, "maximum number of arguments is %d", NDT_MAX_ARGS);
+  }
+
+  for (i = 0; i < nin; ++i) {
+    VALUE temp = rb_ary_entry(types, i);
+    if (!NDT_CHECK_TYPE(temp)) {
+      rb_raise(rb_eTypeError, "argument types must be NDT.");
+    }
+    in[i] = rb_ndtypes_const_ndt(temp);
+  }
+
+  spec = ndt_apply_spec_empty;
+  if (ndt_typecheck(&spec, sig, in, (int)nin, NULL, NULL, &ctx) < 0) {
+    seterr(&ctx);
+    raise_error();
+  }
+
+  flags = rb_str_new2(ndt_apply_flags_as_string(&spec));
+  out = rb_ary_new2(spec.nout);
+
+  for (i = spec.nout - 1;i >= 0; i--) {
+    VALUE x = NdtObject_alloc();
+    GET_NDT(x, x_p);
+    NDT(x_p) = spec.out[i];
+    spec.out[i]= NULL; spec.nout--;
+    rb_ary_store(out, i, x);
+  }
+
+  broadcast = rb_ary_new2(spec.nbroadcast);
+
+  for (i = spec.nbroadcast-1; i >= 0; i--) {
+    VALUE x = NdtObject_alloc();
+    GET_NDT(x, x_p);
+    NDT(x_p) = spec.broadcast[i];
+    spec.broadcast[i] = NULL; spec.nbroadcast--;
+    rb_ary_store(broadcast, i, x);
+  }
+
+  outer_dims = LL2NUM(spec.outer_dims);
+
+  return rb_funcall(rb_const_get(cNDTypes, rb_intern("ApplySpec")), rb_intern("new"),
+                    6, flags, self, types, broadcast, out, outer_dims);
+}
+
 /****************************************************************************/
 /*                                  Class methods                           */
 /****************************************************************************/
@@ -693,21 +812,20 @@ NDTypes_s_deserialize(VALUE klass, VALUE str)
   Check_Type(str, T_STRING);
 
   cp = StringValuePtr(str);
-  if (cp == NULL) {
-    // raise
-  }
   len = RSTRING_LEN(str);
 
   rbuf_p = ALLOC(ResourceBufferObject);
   rbuf_p->m = ndt_meta_new(&ctx);
   if (rbuf_p->m == NULL) {
-    /* TODO: cannot alloc meta data */
+    seterr(&ctx);
+    raise_error();
   }
 
   ndt_p = ALLOC(NdtObject);
   NDT(ndt_p) = ndt_deserialize(RBUF_NDT_M(rbuf_p), cp, len, &ctx);
   if (NDT(ndt_p) == NULL) {
-    /* TODO: raise error for cannot deserialize */
+    seterr(&ctx);
+    raise_error();
   }
 
   rbuf = WRAP_RBUF(cNDTypes_RBuf, rbuf_p);
@@ -730,22 +848,17 @@ NDTypes_s_typedef(VALUE klass, VALUE new_type, VALUE old_type)
   Check_Type(old_type, T_STRING);
 
   cname = StringValueCStr(new_type);
-  if (cname == NULL) {
-    
-  }
-
   ctype = StringValueCStr(old_type);
-  if (ctype == NULL) {
-    
-  }
 
   t = ndt_from_string(ctype, &ctx);
   if (t == NULL) {
-    
+    seterr(&ctx);
+    raise_error();
   }
 
   if (ndt_typedef(cname, t, NULL, &ctx) < 0) {
-    
+    seterr(&ctx);
+    raise_error();    
   }
 
   return Qnil;
@@ -791,6 +904,30 @@ NDTypes_s_instantiate(VALUE klass, VALUE name, VALUE type)
   }
 
   return rb_ndtypes_move_subtree(type, t);
+}
+
+static VALUE
+NDTypes_s_from_format(VALUE klass, VALUE format)
+{
+  NDT_STATIC_CONTEXT(ctx);
+  VALUE self;
+  NdtObject *self_p;
+  const char *cp;
+
+  Check_Type(format, T_STRING);
+
+  cp = StringValueCStr(format);
+  self = NdtObject_alloc();
+  
+  GET_NDT(self, self_p);
+  
+  NDT(self_p) = ndt_from_bpformat(cp, &ctx);
+  if (NDT(self_p) == NULL) {
+    seterr(&ctx);
+    raise_error();
+  }
+
+  return self;
 }
 
 /****************************************************************************/
@@ -974,6 +1111,9 @@ void Init_ruby_ndtypes(void)
   rb_define_method(cNDTypes, "match", NDTypes_match, 1);
   rb_define_method(cNDTypes, "ast", NDTypes_ast, 0);
   rb_define_method(cNDTypes, "pretty", NDTypes_pretty, 0);
+  rb_define_method(cNDTypes, "shape", NDTypes_shape, 0);
+  rb_define_method(cNDTypes, "strides", NDTypes_strides, 0);
+  rb_define_method(cNDTypes, "apply", NDTypes_apply, 1);
 
   /* Boolean functions */
   rb_define_method(cNDTypes, "concrete?", NDTypes_ndt_is_concrete, 0);
@@ -993,6 +1133,7 @@ void Init_ruby_ndtypes(void)
   rb_define_singleton_method(cNDTypes, "deserialize", NDTypes_s_deserialize, 1);
   rb_define_singleton_method(cNDTypes, "typedef", NDTypes_s_typedef, 2);
   rb_define_singleton_method(cNDTypes, "instantiate", NDTypes_s_instantiate, 2);
+  rb_define_singleton_method(cNDTypes, "from_format", NDTypes_s_from_format, 1);
 
   /* Constants */
   rb_define_const(cNDTypes, "MAX_DIM", INT2NUM(NDT_MAX_DIM));
