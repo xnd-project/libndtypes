@@ -741,7 +741,8 @@ NDTypes_apply(VALUE self, VALUE types)
   const ndt_t *in[NDT_MAX_ARGS];
   ndt_apply_spec_t spec;
   VALUE flags, out, broadcast, outer_dims;
-  size_t nin, i;
+  size_t nin;
+  int i;
 
   Check_Type(types, T_ARRAY);
 
@@ -770,7 +771,7 @@ NDTypes_apply(VALUE self, VALUE types)
   flags = rb_str_new2(ndt_apply_flags_as_string(&spec));
   out = rb_ary_new2(spec.nout);
 
-  for (i = spec.nout - 1;i >= 0; i--) {
+  for (i = spec.nout - 1; i >= 0 ; i--) {
     VALUE x = NdtObject_alloc();
     GET_NDT(x, x_p);
     NDT(x_p) = spec.out[i];
@@ -791,7 +792,7 @@ NDTypes_apply(VALUE self, VALUE types)
   outer_dims = LL2NUM(spec.outer_dims);
 
   return rb_funcall(rb_const_get(cNDTypes, rb_intern("ApplySpec")), rb_intern("new"),
-                    6, flags, self, types, broadcast, out, outer_dims);
+                    6, flags, self, types, out, broadcast, outer_dims);
 }
 
 /****************************************************************************/

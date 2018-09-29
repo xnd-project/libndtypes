@@ -8,7 +8,7 @@ end
 
 class NDTypes
   Struct.new("ApplySpec", :flags, :sig, :in_types,
-             :in_broadcast, :out_types, :outer_dims)
+             :out_types, :in_broadcast, :outer_dims)
   ApplySpec = Struct::ApplySpec
   
   # It so happens that over riding the .new method in a super class also

@@ -31,16 +31,17 @@ end
 def verify_datasize t
   return t.datasize == 0 if t.itemsize == 0
   return false if t.datasize % t.itemsize != 0
-  return t.ndim == 0 && !t.shape && !t.strides if t.ndim <= 0
+  return (t.ndim == 0) && !t.shape && !t.strides if t.ndim <= 0
   return false if t.shape.any? { |v| v < 0 }
-  return false if t.strides.any? { |v| v % t.itemsize }
+  return false if t.strides.any? { |v| v % t.itemsize != 0 }
   return t.datasize == 0 if t.shape.include?(0)
 
+
   imin = t.ndim.times.
-         map { |j| t.strides[j]*(t.shape[j]-1) if t.strides[j] <= 0}.
+         map { |j| (t.strides[j] <= 0) ? t.strides[j]*(t.shape[j]-1) : 0 }.
          inject(:+)
   imax = t.ndim.times.
-         map { |j| t.strides[j]*(t.shape[j]-1) if t.strides[j] > 0 }.
+         map { |j| (t.strides[j] > 0) ? t.strides[j]*(t.shape[j]-1) : 0 }.
          inject(:+)
 
   return t.datasize == (imin.abs + imax + t.itemsize)
