@@ -700,6 +700,101 @@ test_match(void)
     return 0;
 }
 
+static int
+test_unify(void)
+{
+    const unify_testcase_t *t;
+    ndt_context_t *ctx;
+    ndt_t *t1;
+    ndt_t *t2;
+    ndt_t *expected;
+    ndt_t *ret;
+    int count = 0;
+
+    ctx = ndt_context_new();
+    if (ctx == NULL) {
+        fprintf(stderr, "error: out of memory");
+        return -1;
+    }
+
+    for (t = unify_tests; t->t1 != NULL; t++) {
+        t1 = ndt_from_string(t->t1, ctx);
+        if (t1 == NULL) {
+            fprintf(stderr, "test_unify: FAIL: could not parse t1 \"%s\"\n", t->t1);
+            ndt_context_del(ctx);
+            return -1;
+        }
+
+        t2 = ndt_from_string(t->t2, ctx);
+        if (t2 == NULL) {
+            ndt_del(t1);
+            ndt_context_del(ctx);
+            fprintf(stderr, "test_unify: FAIL: could not parse t2 \"%s\"\n", t->t2);
+            return -1;
+        }
+
+        expected = NULL;
+        if (t->expected) {
+            expected = ndt_from_string(t->expected, ctx);
+            if (expected == NULL) {
+                ndt_del(t1);
+                ndt_del(t2);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_unify: FAIL: could not parse expected \"%s\"\n", t->expected);
+                return -1;
+            }
+        }
+
+        for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
+            ndt_err_clear(ctx);
+
+            ndt_set_alloc_fail();
+            ret = ndt_unify(t1, t2, ctx);
+            ndt_set_alloc();
+
+            if (ctx->err != NDT_MemoryError) {
+                break;
+            }
+
+            if (ret != NULL) {
+                ndt_del(t1);
+                ndt_del(t2);
+                ndt_del(expected);
+                ndt_context_del(ctx);
+                fprintf(stderr, "test_unify: FAIL: expect ret == NULL after MemoryError\n");
+                fprintf(stderr, "test_unify: FAIL: \"%s\"\n", t->t1);
+                return -1;
+            }
+        }
+
+        ndt_del(t1);
+        ndt_del(t2);
+
+        if (ret == NULL && expected == NULL) {
+            ndt_err_clear(ctx);
+            continue;
+        }
+
+        if ((ret != NULL && expected != NULL) && ndt_equal(ret, expected)) {
+            ndt_del(ret);
+            ndt_del(expected);
+            count++;
+            continue;
+        }
+
+        ndt_del(expected);
+        ndt_del(ret);
+        fprintf(stderr, "test_unify: FAIL: expected \"%s\"\n", t->expected);
+        fprintf(stderr, "test_unify: FAIL: t1:      \"%s\"\n", t->t1);
+        fprintf(stderr, "test_unify: FAIL: t2:      \"%s\"\n", t->t2);
+        return -1;
+    }
+    fprintf(stderr, "test_unify (%d test cases)\n", count);
+
+    ndt_context_del(ctx);
+    return 0;
+}
+
 typedef struct {
     int64_t size;
     ndt_t *types[NDT_MAX_ARGS];
@@ -1608,6 +1703,7 @@ static int (*tests[])(void) = {
   test_typedef_error,
   test_equal,
   test_match,
+  test_unify,
   test_typecheck,
   test_numba,
   test_static_context,

@@ -1703,6 +1703,33 @@ class TestMatch(unittest.TestCase):
         self.assertFalse(p.match(c))
 
 
+class TestUnify(unittest.TestCase):
+
+    def test_unify(self):
+
+        t = ndt("2 * 3 * float32")
+        u = ndt("2 * 3 * float32")
+        w = t.unify(u)
+        self.assertEqual(w, ndt("2 * 3 * float32"))
+
+        t = ndt("2 * 3 * float32")
+        u = ndt("2 * 3 * ?float64")
+        w = t.unify(u)
+        self.assertEqual(w, ndt("2 * 3 * ?float64"))
+
+        t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * (int64, complex128)")
+        u = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * ?(int8, complex64)")
+        w = t.unify(u)
+        del t
+        del u
+        gc.collect()
+        self.assertEqual(w, ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * ?(int64, complex128)"))
+
+        x = copy(w)
+        del(w)
+        self.assertEqual(x, ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * ?(int64, complex128)"))
+
+
 class TestApply(unittest.TestCase):
 
     def test_apply(self):
@@ -1945,6 +1972,7 @@ ALL_TESTS = [
   TestConstruction,
   TestError,
   TestMatch,
+  TestUnify,
   TestApply,
   TestBroadcast,
   TestTypedef,

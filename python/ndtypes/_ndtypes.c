@@ -658,6 +658,25 @@ ndtype_match(PyObject *self, PyObject *other)
 }
 
 static PyObject *
+ndtype_unify(PyObject *self, PyObject *other)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    ndt_t *t;
+
+    if (!Ndt_Check(other)) {
+        PyErr_SetString(PyExc_TypeError, "argument must be 'ndt'");
+        return NULL;
+    }
+
+    t = ndt_unify(NDT(self), NDT(other), &ctx);
+    if (t == NULL) {
+        return seterr(&ctx);
+    }
+
+    return Ndt_FromType(t);
+}
+
+static PyObject *
 ndtype_apply(PyObject *self, PyObject *args)
 {
     NDT_STATIC_CONTEXT(ctx);
@@ -973,6 +992,7 @@ static PyMethodDef ndtype_methods [] =
 
   /* Binary functions */
   { "match", (PyCFunction)ndtype_match, METH_O, doc_match },
+  { "unify", (PyCFunction)ndtype_unify, METH_O, NULL },
   { "apply", (PyCFunction)ndtype_apply, METH_O, "method likely to change" },
 
   /* Other functions */

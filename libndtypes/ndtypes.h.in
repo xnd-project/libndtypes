@@ -170,9 +170,9 @@ typedef struct {
 enum ndt_encoding {
   Ascii,
   Utf8,
+  Ucs2,
   Utf16,
   Utf32,
-  Ucs2,
 };
 
 
@@ -673,6 +673,8 @@ NDTYPES_API int ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const nd
                                                 ndt_context_t *ctx);
 
 NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
+
+NDTYPES_API ndt_t *ndt_unify(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx);
 
 
 /*****************************************************************************/

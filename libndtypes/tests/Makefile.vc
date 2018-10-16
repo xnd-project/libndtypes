@@ -14,23 +14,23 @@ default: runtest runtest_shared
 
 runtest:\
 Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
-test_indent.c test_typecheck.c test_numba.c test_typedef.c test_match.c test_buffer.c \
-test.h alloc_fail.h \
+test_indent.c test_typecheck.c test_numba.c test_typedef.c test_match.c test_unify.c \
+test_buffer.c test.h alloc_fail.h \
 $(SRCDIR)\ndtypes.h $(SRCDIR)\$(LIBSTATIC)
 	$(CC) -I$(SRCDIR) $(CFLAGS) -DTEST_ALLOC /Feruntest runtest.c \
             alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
             test_indent.c test_typecheck.c test_numba.c test_typedef.c test_match.c \
-            test_buffer.c \
+            test_unify.c test_buffer.c \
             $(SRCDIR)\$(LIBSTATIC)
 
 runtest_shared:\
 Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
-test_indent.c test_typedef.c test_match.c test.h alloc_fail.h \
+test_indent.c test_typedef.c test_match.c test_unify.c test.h alloc_fail.h \
 $(SRCDIR)\ndtypes.h $(SRCDIR)\$(LIBSHARED)
 	$(CC) -I$(SRCDIR) $(CFLAGS_SHARED) -DTEST_ALLOC /Feruntest_shared runtest.c \
             alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
             test_indent.c test_typecheck.c test_numba.c test_typedef.c test_match.c \
-            test_buffer.c \
+            test_unify.c test_buffer.c \
             $(SRCDIR)\$(LIBSHARED)
 
 

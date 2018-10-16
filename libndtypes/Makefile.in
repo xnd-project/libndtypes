@@ -34,13 +34,13 @@ default: $(LIBSTATIC) $(LIBSHARED)
 
 OBJS = alloc.o attr.o context.o copy.o encodings.o equal.o grammar.o io.o \
        lexer.o match.o ndtypes.o parsefuncs.o parser.o seq.o substitute.o \
-       symtable.o util.o values.o
+       symtable.o unify.o util.o values.o
 
 SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/context.o .objs/copy.o \
               .objs/encodings.o .objs/equal.o .objs/grammar.o .objs/io.o \
               .objs/lexer.o .objs/match.o .objs/ndtypes.o .objs/parsefuncs.o \
               .objs/parser.o .objs/seq.o .objs/substitute.o .objs/symtable.o \
-              .objs/util.o .objs/values.o
+              .objs/unify.o .objs/util.o .objs/values.o
 
 
 COMPAT_OBJS = compat/bpgrammar.o compat/bplexer.o compat/import.o compat/export.o
@@ -191,6 +191,14 @@ Makefile symtable.c ndtypes.h symtable.h
 .objs/symtable.o:\
 Makefile symtable.c ndtypes.h symtable.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c symtable.c -o .objs/symtable.o
+
+unify.o:\
+Makefile unify.c ndtypes.h
+	$(CC) $(NDT_CFLAGS) -c unify.c
+
+.objs/unify.o:\
+Makefile unify.c ndtypes.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c unify.c -o .objs/unify.o
 
 util.o:\
 Makefile util.c ndtypes.h

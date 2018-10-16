@@ -24,23 +24,23 @@ coverage: runtest runtest_shared
 
 runtest:\
 Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
-test_indent.c test_typecheck.c test_numba.c test_typedef.c test_match.c test_record.c \
-test_buffer.c test.h alloc_fail.h \
+test_indent.c test_typecheck.c test_numba.c test_typedef.c test_match.c test_unify.c \
+test_record.c test_buffer.c test.h alloc_fail.h \
 $(SRCDIR)/ndtypes.h $(SRCDIR)/$(LIBSTATIC)
 	$(CC) -DTEST_ALLOC $(NDT_CFLAGS) -o runtest runtest.c \
             alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
-            test_indent.c test_typedef.c test_match.c test_typecheck.c test_numba.c \
-            test_record.c test_array.c test_buffer.c $(SRCDIR)/$(LIBSTATIC)
+            test_indent.c test_typedef.c test_match.c test_unify.c test_typecheck.c \
+            test_numba.c test_record.c test_array.c test_buffer.c $(SRCDIR)/$(LIBSTATIC)
 
 runtest_shared:\
 Makefile runtest.c alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
-test_indent.c test_typecheck.c test_numba.c test_typedef.c test_match.c test_record.c \
-test_buffer.c test.h alloc_fail.h \
+test_indent.c test_typecheck.c test_numba.c test_typedef.c test_match.c test_unify.c \
+test_record.c test_buffer.c test.h alloc_fail.h \
 $(SRCDIR)/ndtypes.h $(SRCDIR)/$(LIBSHARED)
 	$(CC) -L$(SRCDIR) -DTEST_ALLOC $(NDT_CFLAGS) -o runtest_shared runtest.c \
             alloc_fail.c test_parse.c test_parse_error.c test_parse_roundtrip.c \
-            test_indent.c test_typedef.c test_match.c test_typecheck.c test_numba.c \
-            test_record.c test_array.c test_buffer.c -lndtypes
+            test_indent.c test_typedef.c test_match.c test_unify.c test_typecheck.c \
+            test_numba.c test_record.c test_array.c test_buffer.c -lndtypes
 
 
 FORCE:

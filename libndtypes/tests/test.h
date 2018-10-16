@@ -50,6 +50,12 @@ typedef struct {
 } match_testcase_t;
 
 typedef struct {
+    const char *t1;
+    const char *t2;
+    const char *expected;
+} unify_testcase_t;
+
+typedef struct {
     const char *signature;
     const char *in[128];
     const char *out[128];
@@ -72,6 +78,7 @@ extern const indent_testcase_t indent_tests[];
 extern const char *typedef_tests[];
 extern const char *typedef_error_tests[];
 extern const match_testcase_t match_tests[];
+extern const unify_testcase_t unify_tests[];
 extern const typecheck_testcase_t typecheck_tests[];
 extern const numba_testcase_t numba_tests[];
 extern const char *buffer_tests[];
