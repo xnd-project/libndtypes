@@ -1717,6 +1717,11 @@ class TestUnify(unittest.TestCase):
         w = t.unify(u)
         self.assertEqual(w, ndt("2 * 3 * ?float64"))
 
+        t = ndt("2 * 3 * (?Any, int64)")
+        u = ndt("2 * 3 * (float64, Any)")
+        w = t.unify(u)
+        self.assertEqual(w, ndt("2 * 3 * (?float64, int64)"))
+
         t = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * (int64, complex128)")
         u = ndt("var(offsets=[0,2]) * var(offsets=[0,3,10]) * ?(int8, complex64)")
         w = t.unify(u)

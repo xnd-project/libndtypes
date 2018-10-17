@@ -246,8 +246,22 @@ ndt_unify(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 {
     ndt_t *type, *w;
 
-    if (ndt_is_abstract(t) || ndt_is_abstract(u)) {
-        return unification_error("cannot unify abstract types", ctx);
+    if (u->tag == AnyKind) {
+        w = ndt_copy(t, ctx);
+        if (w == NULL) {
+            return NULL;
+        }
+
+        return unify_common(w, t, u, ctx);
+    }
+
+    if (t->tag == AnyKind) {
+        w = ndt_copy(u, ctx);
+        if (w == NULL) {
+            return NULL;
+        }
+
+        return unify_common(w, t, u, ctx);
     }
 
     switch (t->tag) {
@@ -539,7 +553,6 @@ ndt_unify(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
         return unify_common(w, t, u, ctx);
     }
 
-    /* NOT REACHED: intercepted by is_abstract() */
     case AnyKind:
     case Module: case Function:
     case SymbolicDim: case EllipsisDim:
@@ -548,7 +561,7 @@ ndt_unify(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
     case FloatKind: case ComplexKind:
     case FixedStringKind: case FixedBytesKind:
     case Typevar:
-        ;
+        return unification_error("abstract type", ctx);
     }
 
     ndt_internal_error("invalid type tag");
