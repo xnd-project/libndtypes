@@ -1268,6 +1268,11 @@ PyInit__ndtypes(void)
     static int initialized = 0;
 
     if (!initialized) {
+        ndt_mallocfunc = PyMem_Malloc;
+        ndt_reallocfunc = PyMem_Realloc;
+        ndt_callocfunc = PyMem_Calloc;
+        ndt_freefunc = PyMem_Free;
+
         capsule = init_api();
         if (capsule == NULL) {
             return NULL;
