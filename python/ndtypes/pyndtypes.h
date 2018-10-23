@@ -96,7 +96,11 @@ typedef struct {
 #define Ndt_FromObject_RETURN PyObject *
 #define Ndt_FromObject_ARGS (PyObject *)
 
-#define NDTYPES_MAX_API 8
+#define Ndt_FromOffsetsAndDtype_INDEX 8
+#define Ndt_FromOffsetsAndDtype_RETURN PyObject *
+#define Ndt_FromOffsetsAndDtype_ARGS (PyObject *offsets, bool *opt, ndt_t *dtype)
+
+#define NDTYPES_MAX_API 9
 
 
 #ifdef NDTYPES_MODULE
@@ -108,6 +112,7 @@ static Ndt_CopySubtree_RETURN Ndt_CopySubtree Ndt_CopySubtree_ARGS;
 static Ndt_MoveSubtree_RETURN Ndt_MoveSubtree Ndt_MoveSubtree_ARGS;
 static Ndt_FromType_RETURN Ndt_FromType Ndt_FromType_ARGS;
 static Ndt_FromObject_RETURN Ndt_FromObject Ndt_FromObject_ARGS;
+static Ndt_FromOffsetsAndDtype_RETURN Ndt_FromOffsetsAndDtype Ndt_FromOffsetsAndDtype_ARGS;
 #else
 static void **_ndtypes_api;
 
@@ -134,6 +139,9 @@ static void **_ndtypes_api;
 
 #define Ndt_FromObject \
     (*(Ndt_FromObject_RETURN (*)Ndt_FromObject_ARGS) _ndtypes_api[Ndt_FromObject_INDEX])
+
+#define Ndt_FromOffsetsAndDtype \
+    (*(Ndt_FromOffsetsAndDtype_RETURN (*)Ndt_FromOffsetsAndDtype_ARGS) _ndtypes_api[Ndt_FromOffsetsAndDtype_INDEX])
 
 static int
 import_ndtypes(void)

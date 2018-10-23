@@ -413,6 +413,34 @@ ndtype_from_offsets_and_dtype(PyTypeObject *tp, PyObject *offsets, PyObject *dty
 }
 
 static PyObject *
+ndtype_from_offsets_opt_and_dtype(PyTypeObject *tp, PyObject *offsets, bool *opt,
+                                  ndt_t *dtype)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *self;
+
+    self = ndtype_alloc(tp);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    RBUF(self) = rbuf_from_offset_lists(offsets);
+    if (RBUF(self) == NULL) {
+        Py_DECREF(self);
+        return NULL;
+    }
+
+    NDT(self) = ndt_from_metadata_opt_and_dtype(RBUF_NDT_META(self), opt, dtype, &ctx);
+
+    if (NDT(self) == NULL) {
+        Py_DECREF(self);
+        return seterr(&ctx);
+    }
+
+    return self;
+}
+
+static PyObject *
 ndtype_deserialize(PyTypeObject *tp, PyObject *bytes)
 {
     NDT_STATIC_CONTEXT(ctx);
@@ -1139,6 +1167,13 @@ Ndt_FromObject(PyObject *obj)
 }
 
 static PyObject *
+Ndt_FromOffsetsAndDtype(PyObject *offsets, bool *opt, ndt_t *dtype)
+{
+    return ndtype_from_offsets_opt_and_dtype(&Ndt_Type, offsets, opt, dtype);
+}
+
+
+static PyObject *
 init_api(void)
 {
     ndtypes_api[Ndt_CheckExact_INDEX] = (void *)Ndt_CheckExact;
@@ -1149,6 +1184,7 @@ init_api(void)
     ndtypes_api[Ndt_MoveSubtree_INDEX] = (void *)Ndt_MoveSubtree;
     ndtypes_api[Ndt_FromType_INDEX] = (void *)Ndt_FromType;
     ndtypes_api[Ndt_FromObject_INDEX] = (void *)Ndt_FromObject;
+    ndtypes_api[Ndt_FromOffsetsAndDtype_INDEX] = (void *)Ndt_FromOffsetsAndDtype;
 
     return PyCapsule_New(ndtypes_api, "ndtypes._ndtypes._API", NULL);
 }

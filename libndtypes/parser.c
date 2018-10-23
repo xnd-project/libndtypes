@@ -244,3 +244,35 @@ ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_
 
     return t;
 }
+
+ndt_t *
+ndt_from_metadata_opt_and_dtype(const ndt_meta_t *m, bool *opt, ndt_t *dtype,
+                                ndt_context_t *ctx)
+{
+    ndt_t *t;
+    int i;
+
+    if (ndt_is_abstract(dtype)) {
+        ndt_err_format(ctx, NDT_InvalidArgumentError,
+            "cannot create abstract type with offsets");
+        ndt_free(opt);
+        ndt_del(dtype);
+        return NULL;
+    }
+
+    t = dtype;
+    for (i = 0; i < m->ndims; i++) {
+        t = ndt_var_dim(t, ExternalOffsets, m->noffsets[i], m->offsets[i],
+                        0, NULL, ctx);
+        if (t == NULL) {
+            ndt_free(opt);
+            return NULL;
+        }
+        if (opt[i]) {
+            t = ndt_option(t);
+        }
+    }
+
+    ndt_free(opt);
+    return t;
+}
