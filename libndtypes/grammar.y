@@ -245,9 +245,6 @@ dtype:
 | record_type                            { $$ = $1; }
 | NAME_LOWER                             { $$ = ndt_nominal($1, NULL, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LPAREN datashape RPAREN     { $$ = ndt_constr($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER LPAREN attribute_seq RPAREN { (void)$1; (void)$3; ndt_free($1); ndt_attr_seq_del($3); $$ = NULL;
-                                            ndt_err_format(ctx, NDT_NotImplementedError, "general attributes are not implemented");
-                                            YYABORT; }
 | NAME_UPPER                             { $$ = ndt_typevar($1, ctx); if ($$ == NULL) YYABORT; }
 
 scalar:
@@ -400,8 +397,7 @@ untyped_value_seq:
 | untyped_value_seq COMMA untyped_value { $$ = ndt_string_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 untyped_value:
-  NAME_LOWER  { $$ = $1; if ($$ == NULL) YYABORT; }
-| INTEGER     { $$ = $1; if ($$ == NULL) YYABORT; }
+  INTEGER     { $$ = $1; if ($$ == NULL) YYABORT; }
 | FLOATNUMBER { $$ = $1; if ($$ == NULL) YYABORT; }
 | STRINGLIT   { $$ = $1; if ($$ == NULL) YYABORT; }
 
