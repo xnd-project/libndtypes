@@ -49,7 +49,7 @@ copy_common(ndt_t *u, const ndt_t *t)
 }
 
 static ndt_t *
-ndt_copy_var_dim(const ndt_t *t, ndt_context_t *ctx)
+ndt_copy_var_dim(const ndt_t *t, bool opt, ndt_context_t *ctx)
 {
     ndt_t *type;
     ndt_slice_t *slices;
@@ -63,7 +63,7 @@ ndt_copy_var_dim(const ndt_t *t, ndt_context_t *ctx)
     }
 
     if (ndt_is_abstract(t))  {
-        return ndt_abstract_var_dim(type, ctx);
+        return ndt_abstract_var_dim(type, opt, ctx);
     }
 
     slices = NULL;
@@ -81,8 +81,8 @@ ndt_copy_var_dim(const ndt_t *t, ndt_context_t *ctx)
     return ndt_var_dim(type, ExternalOffsets,
                        t->Concrete.VarDim.noffsets,
                        t->Concrete.VarDim.offsets,
-                       nslices,
-                       slices, ctx);
+                       nslices, slices,
+                       opt, ctx);
 }
 
 static ndt_t *
@@ -114,14 +114,14 @@ ndt_copy_function(const ndt_t *t, ndt_context_t *ctx)
 }
 
 static ndt_t *
-ndt_copy_tuple(const ndt_t *t, ndt_context_t *ctx)
+ndt_copy_tuple(const ndt_t *t, bool opt, ndt_context_t *ctx)
 {
     ndt_t *u;
     int64_t i;
 
     assert(t->tag == Tuple);
 
-    u = ndt_tuple_new(t->Tuple.flag, t->Tuple.shape, ctx);
+    u = ndt_tuple_new(t->Tuple.flag, t->Tuple.shape, opt, ctx);
     if (u == NULL) {
         return NULL;
     }
@@ -144,14 +144,14 @@ ndt_copy_tuple(const ndt_t *t, ndt_context_t *ctx)
 }
 
 static ndt_t *
-ndt_copy_record(const ndt_t *t, ndt_context_t *ctx)
+ndt_copy_record(const ndt_t *t, bool opt, ndt_context_t *ctx)
 {
     ndt_t *u;
     int64_t i;
 
     assert(t->tag == Record);
 
-    u = ndt_record_new(t->Record.flag, t->Record.shape, ctx);
+    u = ndt_record_new(t->Record.flag, t->Record.shape, opt, ctx);
     if (u == NULL) {
         return NULL;
     }
@@ -201,7 +201,7 @@ ndt_copy_value(ndt_value_t *v, const ndt_value_t *u, ndt_context_t *ctx)
 }
 
 static ndt_t *
-ndt_copy_categorical(const ndt_t *t, ndt_context_t *ctx)
+ndt_copy_categorical(const ndt_t *t, bool opt, ndt_context_t *ctx)
 {
     int64_t ntypes = t->Categorical.ntypes;
     ndt_value_t *types;
@@ -225,12 +225,13 @@ ndt_copy_categorical(const ndt_t *t, ndt_context_t *ctx)
         }
     }
 
-    return ndt_categorical(types, ntypes, ctx);
+    return ndt_categorical(types, ntypes, opt, ctx);
 }
 
 ndt_t *
 ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 {
+    bool opt = ndt_is_optional(t);
     ndt_t *u = NULL;
     ndt_t *type;
 
@@ -247,7 +248,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     }
 
     case VarDim: {
-        u = ndt_copy_var_dim(t, ctx);
+        u = ndt_copy_var_dim(t, opt, ctx);
         goto copy_common_fields;
     }
 
@@ -290,11 +291,11 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     }
 
     case Tuple: {
-        return ndt_copy_tuple(t, ctx);
+        return ndt_copy_tuple(t, opt, ctx);
     }
 
     case Record: {
-        return ndt_copy_record(t, ctx);
+        return ndt_copy_record(t, opt, ctx);
     }
 
     case Ref: {
@@ -303,7 +304,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        u = ndt_ref(type, ctx);
+        u = ndt_ref(type, opt, ctx);
         goto copy_common_fields;
     }
 
@@ -319,7 +320,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        u = ndt_constr(name, type, ctx);
+        u = ndt_constr(name, type, opt, ctx);
         goto copy_common_fields;
     }
 
@@ -335,12 +336,12 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        u = ndt_nominal(name, type, ctx);
+        u = ndt_nominal(name, type, opt, ctx);
         goto copy_common_fields;
     }
 
     case Categorical: {
-        u = ndt_copy_categorical(t, ctx);
+        u = ndt_copy_categorical(t, opt, ctx);
         goto copy_common_fields;
     }
 
@@ -391,7 +392,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     case FixedString: case FixedBytes:
     case String: case Bytes:
     case Char: {
-        u = ndt_new(t->tag, ctx);
+        u = ndt_new(t->tag, opt, ctx);
         if (u == NULL) {
             return NULL;
         }
@@ -537,7 +538,7 @@ var_from_offsets_and_dtype(offsets_t *m, ndt_t *type, ndt_context_t *ctx)
 
     for (i=1, t=type; i <= m->maxdim; i++, type=t) {
         t = ndt_var_dim(type, InternalOffsets, m->noffsets[i], m->offsets[i],
-                        0, NULL, ctx);
+                        0, NULL, false, ctx);
         m->offsets[i] = NULL;
         if (t == NULL) {
             clear_offsets(m);
@@ -608,6 +609,8 @@ ndt_copy_contiguous(const ndt_t *t, ndt_context_t *ctx)
 ndt_t *
 ndt_copy_abstract_var_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
 {
+    bool opt = ndt_is_optional(t);
+
     if (t->ndim == 0) {
         return dtype;
     }
@@ -624,7 +627,7 @@ ndt_copy_abstract_var_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
             return NULL;
         }
 
-        return ndt_abstract_var_dim(u, ctx);
+        return ndt_abstract_var_dim(u, opt, ctx);
     }
     default:
         ndt_err_format(ctx, NDT_ValueError,

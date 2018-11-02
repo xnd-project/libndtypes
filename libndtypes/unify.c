@@ -100,6 +100,7 @@ unify_common(ndt_t *w, const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 static ndt_t *
 unify_tuple(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
 {
+    bool opt = ndt_is_optional(t) || ndt_is_optional(u);
     ndt_field_seq_t *seq;
     ndt_field_t *field;
     ndt_t *tmp, *w;
@@ -108,7 +109,7 @@ unify_tuple(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx
 
     shape = t->Tuple.shape;
     if (shape == 0) {
-        return mk_tuple(t->Tuple.flag, NULL, NULL, ctx);
+        return mk_tuple(t->Tuple.flag, NULL, NULL, opt, ctx);
     }
 
     tmp = unify(t->Tuple.types[0], u->Tuple.types[0], replace_any, ctx);
@@ -145,7 +146,7 @@ unify_tuple(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx
         }
     }
 
-    w = mk_tuple(t->Tuple.flag, seq, NULL, ctx);
+    w = mk_tuple(t->Tuple.flag, seq, NULL, opt, ctx);
     if (w == NULL) {
         return NULL;
     }
@@ -156,6 +157,7 @@ unify_tuple(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx
 static ndt_t *
 unify_record(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
 {
+    bool opt = ndt_is_optional(t) || ndt_is_optional(u);
     ndt_field_seq_t *seq;
     ndt_field_t *field;
     ndt_t *tmp, *w;
@@ -171,7 +173,7 @@ unify_record(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ct
     }
 
     if (shape == 0) {
-        return mk_record(t->Record.flag, NULL, NULL, ctx);
+        return mk_record(t->Record.flag, NULL, NULL, opt, ctx);
     }
 
     name = ndt_strdup(t->Record.names[0], ctx);
@@ -221,7 +223,7 @@ unify_record(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ct
         }
     }
 
-    w = mk_record(t->Record.flag, seq, NULL, ctx);
+    w = mk_record(t->Record.flag, seq, NULL, opt, ctx);
     if (w == NULL) {
         return NULL;
     }
@@ -246,14 +248,11 @@ unify_primitive(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 static ndt_t *
 unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
 {
+    bool opt = ndt_is_optional(t) || ndt_is_optional(u);
     ndt_t *type, *w;
 
     if (replace_any && t->tag == AnyKind && u->tag == AnyKind) {
-        w = ndt_primitive(Float64, 0, ctx);
-        if (w != NULL && (ndt_is_optional(t) || ndt_is_optional(u))) {
-            return ndt_option(w);
-        }
-        return w;
+        return ndt_primitive(Float64, opt, ctx);
     }
 
     if (u->tag == AnyKind) {
@@ -330,7 +329,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         }
         memcpy(offsets, t->Concrete.VarDim.offsets, noffsets * (sizeof *offsets));
 
-        w = ndt_var_dim(type, InternalOffsets, noffsets, offsets, 0, NULL, ctx);
+        w = ndt_var_dim(type, InternalOffsets, noffsets, offsets, 0, NULL, opt, ctx);
         if (w == NULL) {
             return NULL;
         }
@@ -374,7 +373,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        w = ndt_ref(type, ctx);
+        w = ndt_ref(type, opt, ctx);
         if (w == NULL) {
             return NULL;
         }
@@ -404,7 +403,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        w = ndt_constr(name, type, ctx);
+        w = ndt_constr(name, type, opt, ctx);
         if (w == NULL) {
             return NULL;
         }
@@ -449,7 +448,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         size = max_i64(t->FixedString.size, u->FixedString.size);
         encoding = max_encoding(t->FixedString.encoding, u->FixedString.encoding);
 
-        w = ndt_fixed_string(size, encoding, ctx);
+        w = ndt_fixed_string(size, encoding, opt, ctx);
         if (w == NULL) {
             return NULL;
         }
@@ -468,7 +467,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         size = max_i64(t->FixedBytes.size, u->FixedBytes.size);
         align.Some = max_u16(t->FixedBytes.align, u->FixedBytes.align);
 
-        w = ndt_fixed_bytes(size, align, ctx);
+        w = ndt_fixed_bytes(size, align, opt, ctx);
         if (w == NULL) {
             return NULL;
         }
@@ -485,7 +484,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
 
         align.Some = max_u16(t->Bytes.target_align, u->Bytes.target_align);
 
-        w = ndt_bytes(align, ctx);
+        w = ndt_bytes(align, opt, ctx);
         if (w == NULL) {
             return NULL;
         }
@@ -502,7 +501,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
 
         encoding = max_encoding(t->Char.encoding, u->Char.encoding);
 
-        w = ndt_char(encoding, ctx);
+        w = ndt_char(encoding, opt, ctx);
         if (w == NULL) {
             return NULL;
         }
@@ -555,7 +554,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return unification_error("different types", ctx);
         }
 
-        w = ndt_string(ctx);
+        w = ndt_string(opt, ctx);
         if (w == NULL) {
             return NULL;
         }

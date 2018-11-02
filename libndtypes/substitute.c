@@ -96,6 +96,7 @@ ndt_t *
 ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
                ndt_context_t *ctx)
 {
+    bool opt = ndt_is_optional(t);
     ndt_t *u;
 
     if (ndt_is_concrete(t)) {
@@ -188,7 +189,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
             return NULL;
         }
 
-        return ndt_constr(name, u, ctx);
+        return ndt_constr(name, u, opt, ctx);
     }
 
     case Nominal: {
@@ -203,7 +204,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
             return NULL;
         }
 
-        return ndt_nominal(name, u, ctx);
+        return ndt_nominal(name, u, opt, ctx);
     }
 
     case Ref:
@@ -212,7 +213,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
             return NULL;
         }
 
-        return ndt_ref(u, ctx);
+        return ndt_ref(u, opt, ctx);
 
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
@@ -222,7 +223,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
     case FixedString: case FixedBytes:
     case String: case Bytes:
     case Char: {
-        u = ndt_new(t->tag, ctx);
+        u = ndt_new(t->tag, 0, ctx);
         if (u == NULL) {
             return NULL;
         }

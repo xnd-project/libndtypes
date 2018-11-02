@@ -236,7 +236,7 @@ ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_
 
     for (i=0, t=type; i < m->ndims; i++, type=t) {
         t = ndt_var_dim(type, ExternalOffsets, m->noffsets[i], m->offsets[i],
-                        0, NULL, ctx);
+                        0, NULL, false, ctx);
         if (t == NULL) {
             return NULL;
         }
@@ -263,13 +263,10 @@ ndt_from_metadata_opt_and_dtype(const ndt_meta_t *m, bool *opt, ndt_t *dtype,
     t = dtype;
     for (i = 0; i < m->ndims; i++) {
         t = ndt_var_dim(t, ExternalOffsets, m->noffsets[i], m->offsets[i],
-                        0, NULL, ctx);
+                        0, NULL, opt[i], ctx);
         if (t == NULL) {
             ndt_free(opt);
             return NULL;
-        }
-        if (opt[i]) {
-            t = ndt_option(t);
         }
     }
 

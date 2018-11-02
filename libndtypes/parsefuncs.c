@@ -268,7 +268,7 @@ mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
 }
 
 ndt_t *
-mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
+mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {1, 2, {"offsets", "_noffsets"}, {AttrInt32List, AttrInt64}};
 
@@ -293,7 +293,7 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
         }
 
         if (m == NULL) {
-            t = ndt_var_dim(type, InternalOffsets, (int32_t)noffsets, offsets, 0, NULL, ctx);
+            t = ndt_var_dim(type, InternalOffsets, (int32_t)noffsets, offsets, 0, NULL, opt, ctx);
         }
         else {
             if (m->ndims >= NDT_MAX_DIM) {
@@ -306,13 +306,13 @@ mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx
             m->offsets[m->ndims] = offsets;
             m->ndims++;
 
-            t = ndt_var_dim(type, ExternalOffsets, (int32_t)noffsets, offsets, 0, NULL, ctx);
+            t = ndt_var_dim(type, ExternalOffsets, (int32_t)noffsets, offsets, 0, NULL, opt, ctx);
         }
 
         return t;
     }
     else {
-        return ndt_abstract_var_dim(type, ctx);
+        return ndt_abstract_var_dim(type, opt, ctx);
     }
 }
 
@@ -352,7 +352,7 @@ mk_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 
 ndt_t *
 mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields,
-         ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+         ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
@@ -372,17 +372,17 @@ mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields,
     }
 
     if (fields == NULL) {
-        return ndt_tuple(flag, NULL, 0, align, pack, ctx);
+        return ndt_tuple(flag, NULL, 0, align, pack, opt, ctx);
     }
 
-    t = ndt_tuple(flag, fields->ptr, fields->len, align, pack, ctx);
+    t = ndt_tuple(flag, fields->ptr, fields->len, align, pack, opt, ctx);
     ndt_free(fields);
     return t;
 }
 
 ndt_t *
 mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
-          ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+          ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
@@ -402,28 +402,28 @@ mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
     }
 
     if (fields == NULL) {
-        return ndt_record(flag, NULL, 0, align, pack, ctx);
+        return ndt_record(flag, NULL, 0, align, pack, opt, ctx);
     }
 
-    t = ndt_record(flag, fields->ptr, fields->len, align, pack, ctx);
+    t = ndt_record(flag, fields->ptr, fields->len, align, pack, opt, ctx);
     ndt_free(fields);
     return t;
 }
 
 ndt_t *
-mk_categorical(ndt_value_seq_t *seq, ndt_context_t *ctx)
+mk_categorical(ndt_value_seq_t *seq, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
 
     seq = ndt_value_seq_finalize(seq);
-    t = ndt_categorical(seq->ptr, seq->len, ctx);
+    t = ndt_categorical(seq->ptr, seq->len, opt, ctx);
 
     ndt_free(seq);
     return t;
 }
 
 ndt_t *
-mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
+mk_fixed_string(char *v, enum ndt_encoding encoding, bool opt, ndt_context_t *ctx)
 {
     int64_t size;
 
@@ -434,11 +434,11 @@ mk_fixed_string(char *v, enum ndt_encoding encoding, ndt_context_t *ctx)
         return NULL;
     }
 
-    return ndt_fixed_string(size, encoding, ctx);
+    return ndt_fixed_string(size, encoding, opt, ctx);
 }
 
 ndt_t *
-mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+mk_fixed_bytes(ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrInt64, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
@@ -452,11 +452,11 @@ mk_fixed_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
         }
     }
 
-    return ndt_fixed_bytes(datasize, align, ctx);
+    return ndt_fixed_bytes(datasize, align, opt, ctx);
 }
 
 ndt_t *
-mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+mk_bytes(ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {0, 1, {"align"}, {AttrUint16Opt}};
     uint16_opt_t target_align = {None, 0};
@@ -469,5 +469,5 @@ mk_bytes(ndt_attr_seq_t *attrs, ndt_context_t *ctx)
         }
     }
 
-    return ndt_bytes(target_align, ctx);
+    return ndt_bytes(target_align, opt, ctx);
 }

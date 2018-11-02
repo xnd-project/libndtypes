@@ -85,6 +85,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %union {
     ndt_t *ndt;
+    enum ndt tag;
     ndt_field_t *field;
     ndt_field_seq_t *field_seq;
     ndt_value_t *typed_value;
@@ -110,11 +111,13 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> dimensions_tail
 %type <ndt> dtype
 %type <ndt> scalar
-%type <ndt> signed
-%type <ndt> unsigned
-%type <ndt> ieee_float
-%type <ndt> ieee_complex
-%type <ndt> alias
+
+%type <tag> signed
+%type <tag> unsigned
+%type <tag> ieee_float
+%type <tag> ieee_complex
+%type <tag> alias
+
 %type <ndt> character
 %type <ndt> string
 %type <ndt> fixed_string
@@ -148,6 +151,8 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %type <ndt> function_type
 
+%type <uint32> flags_opt
+%type <uint32> option_opt
 %type <uint32> endian_opt
 %type <encoding> encoding
 %type <variadic_flag> variadic_flag
@@ -209,7 +214,6 @@ datashape_with_ellipsis:
 | fixed_ellipsis                           { $$ = $1; }
 | NAME_UPPER LBRACK fixed_ellipsis RBRACK  { $$ = mk_contig($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | VAR ELLIPSIS STAR dtype                  { $$ = mk_var_ellipsis($4, ctx); if ($$ == NULL) YYABORT; }
-| VAR ELLIPSIS STAR QUESTIONMARK dtype     { $$ = mk_var_ellipsis(ndt_option($5), ctx); if ($$ == NULL) YYABORT; }
 
 fixed_ellipsis:
   ELLIPSIS STAR dimensions_tail            { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
@@ -218,11 +222,9 @@ fixed_ellipsis:
 datashape:
   dimensions         { $$ = $1; }
 | dtype              { $$ = $1; }
-| QUESTIONMARK dtype { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 
 dimensions:
   dimensions_nooption                 { $$ = $1; }
-| QUESTIONMARK dimensions_nooption    { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LBRACK dimensions RBRACK { $$ = mk_contig($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | BANG dimensions                     { $$ = mk_fortran($2, ctx); if ($$ == NULL) YYABORT; }
 
@@ -230,82 +232,92 @@ dimensions_nooption:
   INTEGER STAR dimensions_tail                           { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | FIXED LPAREN attribute_seq RPAREN STAR dimensions_tail { $$ = mk_fixed_dim_from_attrs($3, $6, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER STAR dimensions_tail                        { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| VAR arguments_opt STAR dimensions_tail                 { $$ = mk_var_dim(meta, $2, $4, ctx); if ($$ == NULL) YYABORT; }
+| VAR arguments_opt STAR dimensions_tail                 { $$ = mk_var_dim(meta, $2, $4, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK VAR arguments_opt STAR dimensions_tail    { $$ = mk_var_dim(meta, $3, $5, true, ctx); if ($$ == NULL) YYABORT; }
+
 
 dimensions_tail:
   dtype              { $$ = $1; }
-| QUESTIONMARK dtype { $$ = ndt_option($2); if ($$ == NULL) YYABORT; }
 | dimensions         { $$ = $1; }
 
 dtype:
-  ANY_KIND                               { $$ = ndt_any_kind(ctx); if ($$ == NULL) YYABORT; }
-| SCALAR_KIND                            { $$ = ndt_scalar_kind(ctx); if ($$ == NULL) YYABORT; }
-| scalar                                 { $$ = $1; }
-| tuple_type                             { $$ = $1; }
-| record_type                            { $$ = $1; }
-| NAME_LOWER                             { $$ = ndt_nominal($1, NULL, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER LPAREN datashape RPAREN     { $$ = ndt_constr($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER                             { $$ = ndt_typevar($1, ctx); if ($$ == NULL) YYABORT; }
+  option_opt ANY_KIND                             { $$ = ndt_any_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| option_opt SCALAR_KIND                          { $$ = ndt_scalar_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| scalar                                          { $$ = $1; }
+| tuple_type                                      { $$ = $1; }
+| record_type                                     { $$ = $1; }
+| NAME_LOWER                                      { $$ = ndt_nominal($1, NULL, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK NAME_LOWER                         { $$ = ndt_nominal($2, NULL, true, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER LPAREN datashape RPAREN              { $$ = ndt_constr($1, $3, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK NAME_UPPER LPAREN datashape RPAREN { $$ = ndt_constr($2, $4, true, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER                                      { $$ = ndt_typevar($1, ctx); if ($$ == NULL) YYABORT; }
 
 scalar:
-  endian_opt BOOL    { $$ = ndt_primitive(Bool, $1, ctx); if ($$ == NULL) YYABORT; }
-| SIGNED_KIND        { $$ = ndt_signed_kind(ctx); if ($$ == NULL) YYABORT; }
-| signed             { $$ = $1; }
-| UNSIGNED_KIND      { $$ = ndt_unsigned_kind(ctx); if ($$ == NULL) YYABORT; }
-| unsigned           { $$ = $1; }
-| FLOAT_KIND         { $$ = ndt_float_kind(ctx); if ($$ == NULL) YYABORT; }
-| ieee_float         { $$ = $1; }
-| COMPLEX_KIND       { $$ = ndt_complex_kind(ctx); if ($$ == NULL) YYABORT; }
-| ieee_complex       { $$ = $1; }
-| alias              { $$ = $1; }
-| character          { $$ = $1; }
-| string             { $$ = $1; }
-| FIXED_STRING_KIND  { $$ = ndt_fixed_string_kind(ctx); if ($$ == NULL) YYABORT; }
-| fixed_string       { $$ = $1; }
-| bytes              { $$ = $1; }
-| FIXED_BYTES_KIND   { $$ = ndt_fixed_bytes_kind(ctx); if ($$ == NULL) YYABORT; }
-| fixed_bytes        { $$ = $1; }
-| categorical        { $$ = $1; }
-| ref                { $$ = $1; }
+  flags_opt BOOL               { $$ = ndt_primitive(Bool, $1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt SIGNED_KIND        { $$ = ndt_signed_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt signed             { $$ = ndt_primitive($2, $1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt UNSIGNED_KIND      { $$ = ndt_unsigned_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt unsigned           { $$ = ndt_primitive($2, $1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt FLOAT_KIND         { $$ = ndt_float_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt ieee_float         { $$ = ndt_primitive($2, $1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt COMPLEX_KIND       { $$ = ndt_complex_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt ieee_complex       { $$ = ndt_primitive($2, $1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt alias              { $$ = ndt_from_alias($2, $1, ctx); if ($$ == NULL) YYABORT; }
+| character                    { $$ = $1; }
+| string                       { $$ = $1; }
+| option_opt FIXED_STRING_KIND { $$ = ndt_fixed_string_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| fixed_string                 { $$ = $1; }
+| bytes                        { $$ = $1; }
+| option_opt FIXED_BYTES_KIND  { $$ = ndt_fixed_bytes_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| fixed_bytes                  { $$ = $1; }
+| categorical                  { $$ = $1; }
+| ref                          { $$ = $1; }
 
 signed:
-  endian_opt INT8  { $$ = ndt_primitive(Int8, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt INT16 { $$ = ndt_primitive(Int16, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt INT32 { $$ = ndt_primitive(Int32, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt INT64 { $$ = ndt_primitive(Int64, $1, ctx); if ($$ == NULL) YYABORT; }
+  INT8  { $$ = Int8; }
+| INT16 { $$ = Int16; }
+| INT32 { $$ = Int32; }
+| INT64 { $$ = Int64; }
 
 unsigned:
-  endian_opt UINT8  { $$ = ndt_primitive(Uint8, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt UINT16 { $$ = ndt_primitive(Uint16, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt UINT32 { $$ = ndt_primitive(Uint32, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt UINT64 { $$ = ndt_primitive(Uint64, $1, ctx); if ($$ == NULL) YYABORT; }
+  UINT8  { $$ = Uint8; }
+| UINT16 { $$ = Uint16; }
+| UINT32 { $$ = Uint32; }
+| UINT64 { $$ = Uint64; }
 
 ieee_float:
-  endian_opt FLOAT16 { $$ = ndt_primitive(Float16, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt FLOAT32 { $$ = ndt_primitive(Float32, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt FLOAT64 { $$ = ndt_primitive(Float64, $1, ctx); if ($$ == NULL) YYABORT; }
+  FLOAT16 { $$ = Float16; }
+| FLOAT32 { $$ = Float32; }
+| FLOAT64 { $$ = Float64; }
 
 ieee_complex:
-  endian_opt COMPLEX32  { $$ = ndt_primitive(Complex32, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt COMPLEX64  { $$ = ndt_primitive(Complex64, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt COMPLEX128 { $$ = ndt_primitive(Complex128, $1, ctx); if ($$ == NULL) YYABORT; }
+  COMPLEX32  { $$ = Complex32; }
+| COMPLEX64  { $$ = Complex64; }
+| COMPLEX128 { $$ = Complex128; }
 
 alias:
   /* machine dependent */
-  endian_opt INTPTR  { $$ = ndt_from_alias(Intptr, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt UINTPTR { $$ = ndt_from_alias(Uintptr, $1, ctx); if ($$ == NULL) YYABORT; }
-| endian_opt SIZE    { $$ = ndt_from_alias(Size, $1, ctx); if ($$ == NULL) YYABORT; }
+  INTPTR  { $$ = Intptr; }
+| UINTPTR { $$ = Uintptr; }
+| SIZE    { $$ = Size; }
 
 character:
-  CHAR                        { $$ = ndt_char(Utf32, ctx); if ($$ == NULL) YYABORT; }
-| CHAR LPAREN encoding RPAREN { $$ = ndt_char($3, ctx); if ($$ == NULL) YYABORT; }
+  option_opt CHAR                        { $$ = ndt_char(Utf32, $1, ctx); if ($$ == NULL) YYABORT; }
+| option_opt CHAR LPAREN encoding RPAREN { $$ = ndt_char($4, $1, ctx); if ($$ == NULL) YYABORT; }
 
 string:
-  STRING { $$ = ndt_string(ctx); if ($$ == NULL) YYABORT; }
+  option_opt STRING { $$ = ndt_string($1, ctx); if ($$ == NULL) YYABORT; }
 
 fixed_string:
-  FIXED_STRING LPAREN INTEGER RPAREN                { $$ = mk_fixed_string($3, Utf8, ctx); if ($$ == NULL) YYABORT; }
-| FIXED_STRING LPAREN INTEGER COMMA encoding RPAREN { $$ = mk_fixed_string($3, $5, ctx); if ($$ == NULL) YYABORT; }
+  option_opt FIXED_STRING LPAREN INTEGER RPAREN                { $$ = mk_fixed_string($4, Utf8, $1, ctx); if ($$ == NULL) YYABORT; }
+| option_opt FIXED_STRING LPAREN INTEGER COMMA encoding RPAREN { $$ = mk_fixed_string($4, $6, $1, ctx); if ($$ == NULL) YYABORT; }
+
+flags_opt:
+  option_opt endian_opt { $$ = $1 | $2; }
+
+option_opt:
+  %empty       { $$ = 0; }
+| QUESTIONMARK { $$ = NDT_OPTION; }
 
 endian_opt:
   %empty  { $$ = 0; }
@@ -318,17 +330,17 @@ encoding:
   STRINGLIT { $$ = encoding_from_string($1, ctx); if (ndt_err_occurred(ctx)) YYABORT; }
 
 bytes:
-  BYTES arguments_opt { $$ = mk_bytes($2, ctx); if ($$ == NULL) YYABORT; }
+  option_opt BYTES arguments_opt { $$ = mk_bytes($3, $1, ctx); if ($$ == NULL) YYABORT; }
 
 fixed_bytes:
-  FIXED_BYTES LPAREN attribute_seq RPAREN { $$ = mk_fixed_bytes($3, ctx); if ($$ == NULL) YYABORT; }
+  option_opt FIXED_BYTES LPAREN attribute_seq RPAREN { $$ = mk_fixed_bytes($4, $1, ctx); if ($$ == NULL) YYABORT; }
 
 ref:
-  REF LPAREN datashape RPAREN { $$ = ndt_ref($3, ctx); if ($$ == NULL) YYABORT; }
-| AMPERSAND datashape         { $$ = ndt_ref($2, ctx); if ($$ == NULL) YYABORT; }
+  option_opt REF LPAREN datashape RPAREN { $$ = ndt_ref($4, $1, ctx); if ($$ == NULL) YYABORT; }
+| option_opt AMPERSAND datashape         { $$ = ndt_ref($3, $1, ctx); if ($$ == NULL) YYABORT; }
 
 categorical:
-  CATEGORICAL LPAREN typed_value_seq RPAREN { $$ = mk_categorical($3, ctx); if ($$ == NULL) YYABORT; }
+  option_opt CATEGORICAL LPAREN typed_value_seq RPAREN { $$ = mk_categorical($4, $1, ctx); if ($$ == NULL) YYABORT; }
 
 typed_value_seq:
   typed_value                       { $$ = ndt_value_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
@@ -350,9 +362,12 @@ comma_variadic_flag:
 | COMMA ELLIPSIS { $$ = Variadic; }
 
 tuple_type:
-  LPAREN variadic_flag RPAREN                       { $$ = mk_tuple($2, NULL, NULL, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN tuple_field_seq comma_variadic_flag RPAREN { $$ = mk_tuple($3, $2, NULL, ctx); if ($$ == NULL) YYABORT; }
-| LPAREN tuple_field_seq COMMA attribute_seq RPAREN { $$ = mk_tuple(Nonvariadic, $2, $4, ctx); if ($$ == NULL) YYABORT; }
+  LPAREN variadic_flag RPAREN                                    { $$ = mk_tuple($2, NULL, NULL, false, ctx); if ($$ == NULL) YYABORT; }
+| LPAREN tuple_field_seq comma_variadic_flag RPAREN              { $$ = mk_tuple($3, $2, NULL, false, ctx); if ($$ == NULL) YYABORT; }
+| LPAREN tuple_field_seq COMMA attribute_seq RPAREN              { $$ = mk_tuple(Nonvariadic, $2, $4, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK LPAREN variadic_flag RPAREN                       { $$ = mk_tuple($3, NULL, NULL, true, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK LPAREN tuple_field_seq comma_variadic_flag RPAREN { $$ = mk_tuple($4, $3, NULL, true, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK LPAREN tuple_field_seq COMMA attribute_seq RPAREN { $$ = mk_tuple(Nonvariadic, $3, $5, true, ctx); if ($$ == NULL) YYABORT; }
 
 tuple_field_seq:
   tuple_field                       { $$ = ndt_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
@@ -363,9 +378,12 @@ tuple_field:
 | datashape BAR attribute_seq BAR { $$ = mk_field(NULL, $1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 record_type:
-  LBRACE variadic_flag RBRACE                        { $$ = mk_record($2, NULL, NULL, ctx); if ($$ == NULL) YYABORT; }
-| LBRACE record_field_seq comma_variadic_flag RBRACE { $$ = mk_record($3, $2, NULL, ctx); if ($$ == NULL) YYABORT; }
-| LBRACE record_field_seq COMMA attribute_seq RBRACE { $$ = mk_record(Nonvariadic, $2, $4, ctx); if ($$ == NULL) YYABORT; }
+  LBRACE variadic_flag RBRACE                                     { $$ = mk_record($2, NULL, NULL, false, ctx); if ($$ == NULL) YYABORT; }
+| LBRACE record_field_seq comma_variadic_flag RBRACE              { $$ = mk_record($3, $2, NULL, false, ctx); if ($$ == NULL) YYABORT; }
+| LBRACE record_field_seq COMMA attribute_seq RBRACE              { $$ = mk_record(Nonvariadic, $2, $4, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK LBRACE variadic_flag RBRACE                        { $$ = mk_record($3, NULL, NULL, true, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK LBRACE record_field_seq comma_variadic_flag RBRACE { $$ = mk_record($4, $3, NULL, true, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK LBRACE record_field_seq COMMA attribute_seq RBRACE { $$ = mk_record(Nonvariadic, $3, $5, true, ctx); if ($$ == NULL) YYABORT; }
 
 record_field_seq:
   record_field                         { $$ = ndt_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }

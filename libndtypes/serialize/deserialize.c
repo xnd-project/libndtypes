@@ -247,7 +247,7 @@ copy_common(ndt_t *t, const common_t *f)
 static ndt_t *
 new_copy_common(const common_t *f, ndt_context_t *ctx)
 {
-    ndt_t *t = ndt_new(f->tag, ctx);
+    ndt_t *t = ndt_new(f->tag, f->flags, ctx);
     if (t == NULL) {
         return NULL;
     }
@@ -641,7 +641,7 @@ read_tuple(ndt_meta_t *m, const common_t *fields, const char * const ptr,
     offset = read_pos_int64(&shape, ptr, offset, len, ctx);
     if (offset < 0) return NULL;
 
-    t = ndt_tuple_new(flag, shape, ctx);
+    t = ndt_tuple_new(flag, shape, 0, ctx);
     if (t == NULL) {
         return NULL;
     }
@@ -689,7 +689,7 @@ read_record(ndt_meta_t *m, const common_t *fields, const char * const ptr,
     offset = read_pos_int64(&shape, ptr, offset, len, ctx);
     if (offset < 0) return NULL;
 
-    t = ndt_record_new(flag, shape, ctx);
+    t = ndt_record_new(flag, shape, 0, ctx);
     if (t == NULL) {
         return NULL;
     }

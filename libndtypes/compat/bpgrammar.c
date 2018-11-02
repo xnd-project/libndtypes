@@ -144,7 +144,7 @@ primitive_native(char dtype, ndt_context_t *ctx)
     switch (dtype) {
     case '?': return ndt_primitive(Bool, 0, ctx);
 
-    case 'c': return ndt_char(Ascii, ctx);
+    case 'c': return ndt_char(Ascii, false, ctx);
     case 'b': return ndt_primitive(Int8, 0, ctx);
     case 'B': return ndt_primitive(Uint8, 0, ctx);
 
@@ -181,7 +181,7 @@ primitive_fixed(char dtype, uint32_t flags, ndt_context_t *ctx)
     switch (dtype) {
     case '?': return ndt_primitive(Bool, flags, ctx);
 
-    case 'c': return ndt_char(Ascii, ctx);
+    case 'c': return ndt_char(Ascii, false, ctx);
     case 'b': return ndt_primitive(Int8, flags, ctx);
     case 'B': return ndt_primitive(Uint8, flags, ctx);
 
@@ -251,7 +251,7 @@ make_fixed_bytes(char *v, ndt_context_t *ctx)
         return NULL;
     }
 
-    return ndt_fixed_bytes(datasize, align, ctx);
+    return ndt_fixed_bytes(datasize, align, false, ctx);
 }
 
 static ndt_t *
@@ -309,7 +309,7 @@ make_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 
     fields = ndt_field_seq_finalize(fields);
     if (fields == NULL) {
-        return ndt_record(Nonvariadic, NULL, 0, align, pack, ctx);
+        return ndt_record(Nonvariadic, NULL, 0, align, pack, false, ctx);
     }
 
     assert(fields->len >= 1);
@@ -326,7 +326,7 @@ make_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
         fields->ptr[i].Concrete.explicit_align = true;
     }
 
-    t = ndt_record(Nonvariadic, fields->ptr, fields->len, align, pack, ctx);
+    t = ndt_record(Nonvariadic, fields->ptr, fields->len, align, pack, false, ctx);
     ndt_free(fields);
 
     return t;

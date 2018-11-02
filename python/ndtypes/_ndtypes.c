@@ -1264,7 +1264,7 @@ ndtype_instantiate(PyObject *mod UNUSED, PyObject *args, PyObject *kwds)
         return seterr(&ctx);
     }
 
-    t = ndt_nominal(cp, tp, &ctx);
+    t = ndt_nominal(cp, tp, false, &ctx);
     if (t == NULL) {
         return seterr(&ctx);
     }

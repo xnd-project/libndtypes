@@ -341,14 +341,6 @@ const match_testcase_t match_tests[] = {
     "complex128",
     1 },
 
-  { "?Complex",
-    "?X",
-    0 },
-
-  { "?X",
-    "?Complex",
-    0 },
-
   { "10 * complex64",
     "10 * complex64",
     1 },
