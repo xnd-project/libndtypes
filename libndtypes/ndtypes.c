@@ -1070,14 +1070,6 @@ free_type:
 /*                               Type functions                               */
 /******************************************************************************/
 
-/* Set the option flag of a type */
-ndt_t *
-ndt_option(ndt_t *t)
-{
-    t->flags |= NDT_OPTION;
-    return t;
-}
-
 /* Abstract namespace type */
 ndt_t *
 ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
