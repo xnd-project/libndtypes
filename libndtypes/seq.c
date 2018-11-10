@@ -178,22 +178,23 @@ ndt_type_seq_t *
 ndt_type_seq_new(ndt_t *elt, ndt_context_t *ctx)
 {
     ndt_type_seq_t *seq;
-    ndt_t **ptr;
+    const ndt_t **ptr;
 
     seq = ndt_alloc_size(sizeof *seq);
     if (seq == NULL) {
-        ndt_del(elt);
+        ndt_decref(elt);
         return ndt_memory_error(ctx);
     }
 
     ptr = ndt_alloc_size(2 * (sizeof *ptr));
     if (ptr == NULL) {
         ndt_free(seq);
-        ndt_del(elt);
+        ndt_decref(elt);
         return ndt_memory_error(ctx);
     }
 
     ptr[0] = elt;
+
     seq->len = 1;
     seq->reserved = 2;
     seq->ptr = ptr;
@@ -213,7 +214,7 @@ ndt_type_seq_del(ndt_type_seq_t *seq)
 static int
 ndt_type_seq_grow(ndt_type_seq_t *seq, ndt_context_t *ctx)
 {
-    ndt_t **ptr;
+    const ndt_t **ptr;
 
     ptr = ndt_realloc(seq->ptr, seq->reserved, 2 * (sizeof *ptr));
     if (ptr == NULL) {
@@ -235,7 +236,6 @@ ndt_type_seq_append(ndt_type_seq_t *seq, ndt_t *elt, ndt_context_t *ctx)
     if (seq->len == seq->reserved) {
         if (ndt_type_seq_grow(seq, ctx) < 0) {
             ndt_type_seq_del(seq);
-            ndt_free(elt);
             return NULL;
         }
     }
@@ -249,7 +249,7 @@ ndt_type_seq_append(ndt_type_seq_t *seq, ndt_t *elt, ndt_context_t *ctx)
 ndt_type_seq_t *
 ndt_type_seq_finalize(ndt_type_seq_t *seq)
 {
-    ndt_t **ptr;
+    const ndt_t **ptr;
 
     if (seq == NULL) {
         return NULL;

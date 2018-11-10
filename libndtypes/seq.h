@@ -168,7 +168,7 @@ typedef struct {
 typedef struct {
     int64_t len;
     int64_t reserved;
-    ndt_t **ptr;
+    const ndt_t **ptr;
 } ndt_type_seq_t;
 
 

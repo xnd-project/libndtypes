@@ -36,12 +36,11 @@
 
 
 void
-yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta,
-        ndt_context_t *ctx, const char *msg)
+yyerror(YYLTYPE *loc, yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx,
+        const char *msg)
 {
     (void)scanner;
     (void)ast;
-    (void)meta;
 
     ndt_err_format(ctx, NDT_ParseError, "%d:%d: %s", loc->first_line,
                    loc->first_column, msg);
@@ -66,7 +65,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %code provides {
   #define YY_DECL extern int ndt_yylexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
-  void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_meta_t *meta, ndt_context_t *ctx, const char *msg);
+  void yyerror(YYLTYPE *loc, yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx, const char *msg);
 }
 
 %pure-parser
@@ -81,10 +80,10 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 }
 
 %lex-param   {yyscan_t scanner} {ndt_context_t *ctx}
-%parse-param {yyscan_t scanner} {ndt_t **ast} {ndt_meta_t *meta} {ndt_context_t *ctx}
+%parse-param {yyscan_t scanner} {const ndt_t **ast} {ndt_context_t *ctx}
 
 %union {
-    ndt_t *ndt;
+    const ndt_t *ndt;
     enum ndt tag;
     ndt_field_t *field;
     ndt_field_seq_t *field_seq;
@@ -186,7 +185,7 @@ ERRTOKEN
 
 %token ENDMARKER 0 "end of file"
 
-%destructor { ndt_del($$); } <ndt>
+%destructor { ndt_decref($$); } <ndt>
 %destructor { ndt_field_del($$); } <field>
 %destructor { ndt_field_seq_del($$); } <field_seq>
 %destructor { ndt_value_del($$); } <typed_value>
@@ -206,18 +205,18 @@ input:
 datashape_or_module:
   datashape_with_ellipsis                        { $$ = $1; }
 | function_type                                  { $$ = $1; }
-| NAME_UPPER COLON COLON datashape_with_ellipsis { $$ = ndt_module($1, $4, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER COLON COLON datashape_with_ellipsis { $$ = mk_module($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 /* types */
 datashape_with_ellipsis:
   datashape                                { $$ = $1; }
 | fixed_ellipsis                           { $$ = $1; }
-| NAME_UPPER LBRACK fixed_ellipsis RBRACK  { $$ = mk_contig($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER LBRACK fixed_ellipsis RBRACK  { $$ = mk_contig($1, (ndt_t *)$3, ctx); if ($$ == NULL) YYABORT; }
 | VAR ELLIPSIS STAR dtype                  { $$ = mk_var_ellipsis($4, ctx); if ($$ == NULL) YYABORT; }
 
 fixed_ellipsis:
-  ELLIPSIS STAR dimensions_tail            { $$ = ndt_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER ELLIPSIS STAR dimensions_tail { $$ = ndt_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
+  ELLIPSIS STAR dimensions_tail            { $$ = mk_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER ELLIPSIS STAR dimensions_tail { $$ = mk_ellipsis_dim($1, $4, ctx); if ($$ == NULL) YYABORT; }
 
 datashape:
   dimensions         { $$ = $1; }
@@ -225,15 +224,15 @@ datashape:
 
 dimensions:
   dimensions_nooption                 { $$ = $1; }
-| NAME_UPPER LBRACK dimensions RBRACK { $$ = mk_contig($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER LBRACK dimensions RBRACK { $$ = mk_contig($1, (ndt_t *)$3, ctx); if ($$ == NULL) YYABORT; }
 | BANG dimensions                     { $$ = mk_fortran($2, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_nooption:
   INTEGER STAR dimensions_tail                           { $$ = mk_fixed_dim_from_shape($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | FIXED LPAREN attribute_seq RPAREN STAR dimensions_tail { $$ = mk_fixed_dim_from_attrs($3, $6, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER STAR dimensions_tail                        { $$ = ndt_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
-| VAR arguments_opt STAR dimensions_tail                 { $$ = mk_var_dim(meta, $2, $4, false, ctx); if ($$ == NULL) YYABORT; }
-| QUESTIONMARK VAR arguments_opt STAR dimensions_tail    { $$ = mk_var_dim(meta, $3, $5, true, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER STAR dimensions_tail                        { $$ = mk_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
+| VAR arguments_opt STAR dimensions_tail                 { $$ = mk_var_dim($2, $4, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK VAR arguments_opt STAR dimensions_tail    { $$ = mk_var_dim($3, $5, true, ctx); if ($$ == NULL) YYABORT; }
 
 
 dimensions_tail:
@@ -248,8 +247,8 @@ dtype:
 | record_type                                     { $$ = $1; }
 | NAME_LOWER                                      { $$ = ndt_nominal($1, NULL, false, ctx); if ($$ == NULL) YYABORT; }
 | QUESTIONMARK NAME_LOWER                         { $$ = ndt_nominal($2, NULL, true, ctx); if ($$ == NULL) YYABORT; }
-| NAME_UPPER LPAREN datashape RPAREN              { $$ = ndt_constr($1, $3, false, ctx); if ($$ == NULL) YYABORT; }
-| QUESTIONMARK NAME_UPPER LPAREN datashape RPAREN { $$ = ndt_constr($2, $4, true, ctx); if ($$ == NULL) YYABORT; }
+| NAME_UPPER LPAREN datashape RPAREN              { $$ = mk_constr($1, $3, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK NAME_UPPER LPAREN datashape RPAREN { $$ = mk_constr($2, $4, true, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER                                      { $$ = ndt_typevar($1, ctx); if ($$ == NULL) YYABORT; }
 
 scalar:
@@ -336,8 +335,8 @@ fixed_bytes:
   option_opt FIXED_BYTES LPAREN attribute_seq RPAREN { $$ = mk_fixed_bytes($4, $1, ctx); if ($$ == NULL) YYABORT; }
 
 ref:
-  option_opt REF LPAREN datashape RPAREN { $$ = ndt_ref($4, $1, ctx); if ($$ == NULL) YYABORT; }
-| option_opt AMPERSAND datashape         { $$ = ndt_ref($3, $1, ctx); if ($$ == NULL) YYABORT; }
+  option_opt REF LPAREN datashape RPAREN { $$ = mk_ref($4, $1, ctx); if ($$ == NULL) YYABORT; }
+| option_opt AMPERSAND datashape         { $$ = mk_ref($3, $1, ctx); if ($$ == NULL) YYABORT; }
 
 categorical:
   option_opt CATEGORICAL LPAREN typed_value_seq RPAREN { $$ = mk_categorical($4, $1, ctx); if ($$ == NULL) YYABORT; }
@@ -423,9 +422,9 @@ function_type:
   type_seq_or_void RARROW type_seq_or_void { $$ = mk_function($1, $3, ctx); if ($$ == NULL) YYABORT; }
 
 type_seq_or_void:
-  type_seq { $$ = $1; if ($$ == NULL) YYABORT; }
+  type_seq { $$ = $1; }
 | VOID     { $$ = ndt_type_seq_empty(ctx); if ($$ == NULL) YYABORT; }
 
 type_seq:
-  datashape_with_ellipsis                { $$ = ndt_type_seq_new($1, ctx); if ($$ == NULL) YYABORT; }
-| type_seq COMMA datashape_with_ellipsis { $$ = ndt_type_seq_append($1, $3, ctx); if ($$ == NULL) YYABORT; }
+  datashape_with_ellipsis                { $$ = ndt_type_seq_new((ndt_t *)$1, ctx); if ($$ == NULL) YYABORT; }
+| type_seq COMMA datashape_with_ellipsis { $$ = ndt_type_seq_append($1, (ndt_t *)$3, ctx); if ($$ == NULL) YYABORT; }

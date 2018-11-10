@@ -41,7 +41,7 @@
 /* LOCAL SCOPE */
 NDT_PRAGMA(NDT_HIDE_SYMBOLS_START)
 
-ndt_t *ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete, ndt_context_t *ctx);
+const ndt_t *ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete, ndt_context_t *ctx);
 
 /* END LOCAL SCOPE */
 NDT_PRAGMA(NDT_HIDE_SYMBOLS_END)

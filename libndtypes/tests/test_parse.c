@@ -299,6 +299,7 @@ const char *parse_tests[] = {
   "(int32, float64) -> int32",
   "int32, float64 -> int32",
   "(...) -> int32",
+  "void -> float32",
 
   "10 * defined_t",
   "defined_t",

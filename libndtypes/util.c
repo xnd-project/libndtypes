@@ -207,7 +207,7 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
 
 /* Unoptimized hash function for experimenting. */
 ndt_ssize_t
-ndt_hash(ndt_t *t, ndt_context_t *ctx)
+ndt_hash(const ndt_t *t, ndt_context_t *ctx)
 {
     unsigned char *s, *cp;
     size_t len;
@@ -276,11 +276,11 @@ ndt_apply_spec_clear(ndt_apply_spec_t *spec)
     }
 
     for (i = 0; i < spec->nbroadcast; i++) {
-        ndt_del(spec->broadcast[i]);
+        ndt_decref(spec->broadcast[i]);
     }
 
     for (i = 0; i < spec->nout; i++) {
-        ndt_del(spec->out[i]);
+        ndt_decref(spec->out[i]);
     }
 
     spec->flags = 0U;
@@ -362,16 +362,21 @@ ndt_meta_new(ndt_context_t *ctx)
 }
 
 void
-ndt_meta_del(ndt_meta_t *m)
+ndt_meta_clear(ndt_meta_t *m)
 {
     if (m == NULL) {
         return;
     }
 
     for (int i = 0; i < m->ndims; i++) {
-        ndt_free(m->offsets[i]);
+        ndt_decref_offsets(m->offsets[i]);
     }
+}
 
+void
+ndt_meta_del(ndt_meta_t *m)
+{
+    ndt_meta_clear(m);
     ndt_free(m);
 }
 

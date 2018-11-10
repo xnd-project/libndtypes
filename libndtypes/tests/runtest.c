@@ -53,7 +53,8 @@ static int
 init_tests(void)
 {
     ndt_context_t *ctx;
-    ndt_t *t = NULL;
+    const ndt_t *t = NULL;
+    int ret;
 
     ctx = ndt_context_new();
     if (ctx == NULL) {
@@ -73,7 +74,10 @@ init_tests(void)
         ndt_context_del(ctx);
         return -1;
     }
-    if (ndt_typedef("defined_t", t, NULL, ctx) < 0) {
+
+    ret = ndt_typedef("defined_t", t, NULL, ctx);
+    ndt_decref(t);
+    if (ret < 0) {
         ndt_err_fprint(stderr, ctx);
         ndt_context_del(ctx);
         return -1;
@@ -85,7 +89,10 @@ init_tests(void)
         ndt_context_del(ctx);
         return -1;
     }
-    if (ndt_typedef("foo_t", t, NULL, ctx) < 0) {
+
+    ret = ndt_typedef("foo_t", t, NULL, ctx);
+    ndt_decref(t);
+    if (ret < 0) {
         ndt_err_fprint(stderr, ctx);
         ndt_context_del(ctx);
         return -1;
@@ -100,7 +107,7 @@ test_parse(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     char *s;
     int count = 0;
 
@@ -123,7 +130,7 @@ test_parse(void)
             }
 
             if (t != NULL) {
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_parse: parse: FAIL: t != NULL after MemoryError\n");
                 fprintf(stderr, "test_parse: parse: FAIL: %s\n", *c);
@@ -152,7 +159,7 @@ test_parse(void)
 
             if (s != NULL) {
                 ndt_free(s);
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_parse: convert: FAIL: s != NULL after MemoryError\n");
                 fprintf(stderr, "test_parse: parse: FAIL: %s\n", *c);
@@ -164,13 +171,13 @@ test_parse(void)
             fprintf(stderr, "test_parse: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
 
         ndt_free(s);
-        ndt_del(t);
+        ndt_decref(t);
         count++;
     }
     fprintf(stderr, "test_parse (%d test cases)\n", count);
@@ -184,7 +191,7 @@ test_parse_roundtrip(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     char *s;
     int count = 0;
 
@@ -211,7 +218,7 @@ test_parse_roundtrip(void)
             fprintf(stderr, "test_parse_roundtrip: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
@@ -220,13 +227,13 @@ test_parse_roundtrip(void)
             fprintf(stderr, "test_parse_roundtrip: convert: FAIL: input:     \"%s\"\n", *c);
             fprintf(stderr, "test_parse_roundtrip: convert: FAIL: roundtrip: \"%s\"\n", s);
             ndt_free(s);
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
 
         ndt_free(s);
-        ndt_del(t);
+        ndt_decref(t);
         count++;
     }
     fprintf(stderr, "test_parse_roundtrip (%d test cases)\n", count);
@@ -240,7 +247,7 @@ test_parse_error(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -262,7 +269,7 @@ test_parse_error(void)
             }
 
             if (t != NULL) {
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_parse_error: FAIL: t != NULL after MemoryError\n");
                 fprintf(stderr, "test_parse_error: FAIL: input: %s\n", *c);
@@ -274,7 +281,7 @@ test_parse_error(void)
             fprintf(stderr, "test_parse_error: FAIL: t != NULL after %s: %s\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
@@ -292,7 +299,7 @@ test_indent(void)
     const indent_testcase_t *tc;
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     char *s;
     int count = 0;
 
@@ -326,7 +333,7 @@ test_indent(void)
 
             if (s != NULL) {
                 ndt_free(s);
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_indent: convert: FAIL: s != NULL after MemoryError\n");
                 fprintf(stderr, "test_indent: convert: FAIL: %s\n", *c);
@@ -338,13 +345,13 @@ test_indent(void)
             fprintf(stderr, "test_indent: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
 
         ndt_free(s);
-        ndt_del(t);
+        ndt_decref(t);
         count++;
     }
 
@@ -372,7 +379,7 @@ test_indent(void)
 
             if (s != NULL) {
                 ndt_free(s);
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_indent: convert: FAIL: s != NULL after MemoryError\n");
                 fprintf(stderr, "test_indent: convert: FAIL: %s\n", tc->input);
@@ -384,7 +391,7 @@ test_indent(void)
             fprintf(stderr, "test_indent: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
@@ -394,13 +401,13 @@ test_indent(void)
             fprintf(stderr, "test_indent: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
 
         ndt_free(s);
-        ndt_del(t);
+        ndt_decref(t);
         count++;
     }
 
@@ -415,7 +422,7 @@ test_typedef(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -433,6 +440,7 @@ test_typedef(void)
             ndt_set_alloc_fail();
             (void)ndt_typedef(*c, t, NULL, ctx);
             ndt_set_alloc();
+            ndt_decref(t);
 
             if (ctx->err != NDT_MemoryError) {
                 break;
@@ -469,7 +477,7 @@ test_typedef_duplicates(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -487,18 +495,22 @@ test_typedef_duplicates(void)
             ndt_set_alloc_fail();
             (void)ndt_typedef(*c, t, NULL, ctx);
             ndt_set_alloc();
+            ndt_decref(t);
 
             if (ctx->err != NDT_MemoryError) {
+                if (ndt_typedef_find(*c, ctx) == NULL) {
+                    fprintf(stderr, "test_typedef: FAIL: key should be in map\n");
+                    fprintf(stderr, "test_typedef: FAIL: input: %s\n", *c);
+                    ndt_context_del(ctx);
+                    return -1;
+                }
                 break;
             }
-
-            if (ndt_typedef_find(*c, ctx) == NULL) {
-                fprintf(stderr, "test_typedef: FAIL: key should be in map\n");
-                fprintf(stderr, "test_typedef: FAIL: input: %s\n", *c);
-                ndt_context_del(ctx);
-                return -1;
-            }
         }
+
+        t = ndt_from_string("10 * 20 * {a : int64, b : ref(float64)}", ctx);
+        (void)ndt_typedef(*c, t, NULL, ctx);
+        ndt_decref(t);
 
         if (ctx->err != NDT_ValueError) {
             fprintf(stderr, "test_typedef: FAIL: no value error after duplicate key\n");
@@ -521,7 +533,7 @@ test_typedef_error(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -539,6 +551,7 @@ test_typedef_error(void)
             ndt_set_alloc_fail();
             (void)ndt_typedef(*c, t, NULL, ctx);
             ndt_set_alloc();
+            ndt_decref(t);
 
             if (ctx->err != NDT_MemoryError) {
                 break;
@@ -575,7 +588,7 @@ test_equal(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t, *u;
+    const ndt_t *t, *u;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -596,29 +609,29 @@ test_equal(void)
 
         u = ndt_from_string(*(c+1), ctx);
         if (u == NULL) {
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             fprintf(stderr, "test_equal: FAIL: could not parse \"%s\"\n", *(c+1));
             return -1;
         }
 
         if (!ndt_equal(t, t)) {
-            ndt_del(t);
-            ndt_del(u);
+            ndt_decref(t);
+            ndt_decref(u);
             ndt_context_del(ctx);
             fprintf(stderr, "test_equal: FAIL: \"%s\" != \"%s\"\n", *c, *c);
             return -1;
         }
 
         if (ndt_equal(t, u)) {
-            ndt_del(t);
-            ndt_del(u);
+            ndt_decref(t);
+            ndt_decref(u);
             fprintf(stderr, "test_equal: FAIL: \"%s\" == \"%s\"\n", *c, *(c+1));
             return -1;
         }
 
-        ndt_del(t);
-        ndt_del(u);
+        ndt_decref(t);
+        ndt_decref(u);
         count++;
     }
 
@@ -633,8 +646,8 @@ test_match(void)
 {
     const match_testcase_t *t;
     ndt_context_t *ctx;
-    ndt_t *p;
-    ndt_t *c;
+    const ndt_t *p;
+    const ndt_t *c;
     int ret, count = 0;
 
     ctx = ndt_context_new();
@@ -653,7 +666,7 @@ test_match(void)
 
         c = ndt_from_string(t->candidate, ctx);
         if (c == NULL) {
-            ndt_del(p);
+            ndt_decref(p);
             ndt_context_del(ctx);
             fprintf(stderr, "test_match: FAIL: could not parse \"%s\"\n", t->candidate);
             return -1;
@@ -671,8 +684,8 @@ test_match(void)
             }
 
             if (ret != -1) {
-                ndt_del(p);
-                ndt_del(c);
+                ndt_decref(p);
+                ndt_decref(c);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_match: FAIL: expect ret == -1 after MemoryError\n");
                 fprintf(stderr, "test_match: FAIL: \"%s\"\n", t->pattern);
@@ -681,8 +694,8 @@ test_match(void)
         }
 
         if (ret != t->expected) {
-            ndt_del(p);
-            ndt_del(c);
+            ndt_decref(p);
+            ndt_decref(c);
             ndt_context_del(ctx);
             fprintf(stderr, "test_match: FAIL: expected %s\n", t->expected ? "true" : "false");
             fprintf(stderr, "test_match: FAIL: pattern: \"%s\"\n", t->pattern);
@@ -690,8 +703,8 @@ test_match(void)
             return -1;
         }
 
-        ndt_del(p);
-        ndt_del(c);
+        ndt_decref(p);
+        ndt_decref(c);
         count++;
     }
     fprintf(stderr, "test_match (%d test cases)\n", count);
@@ -705,10 +718,10 @@ test_unify(void)
 {
     const unify_testcase_t *t;
     ndt_context_t *ctx;
-    ndt_t *t1;
-    ndt_t *t2;
-    ndt_t *expected;
-    ndt_t *ret;
+    const ndt_t *t1;
+    const ndt_t *t2;
+    const ndt_t *expected;
+    const ndt_t *ret;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -727,7 +740,7 @@ test_unify(void)
 
         t2 = ndt_from_string(t->t2, ctx);
         if (t2 == NULL) {
-            ndt_del(t1);
+            ndt_decref(t1);
             ndt_context_del(ctx);
             fprintf(stderr, "test_unify: FAIL: could not parse t2 \"%s\"\n", t->t2);
             return -1;
@@ -737,8 +750,8 @@ test_unify(void)
         if (t->expected) {
             expected = ndt_from_string(t->expected, ctx);
             if (expected == NULL) {
-                ndt_del(t1);
-                ndt_del(t2);
+                ndt_decref(t1);
+                ndt_decref(t2);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_unify: FAIL: could not parse expected \"%s\"\n", t->expected);
                 return -1;
@@ -757,9 +770,9 @@ test_unify(void)
             }
 
             if (ret != NULL) {
-                ndt_del(t1);
-                ndt_del(t2);
-                ndt_del(expected);
+                ndt_decref(t1);
+                ndt_decref(t2);
+                ndt_decref(expected);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_unify: FAIL: expect ret == NULL after MemoryError\n");
                 fprintf(stderr, "test_unify: FAIL: \"%s\"\n", t->t1);
@@ -767,8 +780,8 @@ test_unify(void)
             }
         }
 
-        ndt_del(t1);
-        ndt_del(t2);
+        ndt_decref(t1);
+        ndt_decref(t2);
 
         if (ret == NULL && expected == NULL) {
             ndt_err_clear(ctx);
@@ -776,14 +789,14 @@ test_unify(void)
         }
 
         if ((ret != NULL && expected != NULL) && ndt_equal(ret, expected)) {
-            ndt_del(ret);
-            ndt_del(expected);
+            ndt_decref(ret);
+            ndt_decref(expected);
             count++;
             continue;
         }
 
-        ndt_del(expected);
-        ndt_del(ret);
+        ndt_decref(expected);
+        ndt_decref(ret);
         fprintf(stderr, "test_unify: FAIL: expected \"%s\"\n", t->expected);
         fprintf(stderr, "test_unify: FAIL: t1:      \"%s\"\n", t->t1);
         fprintf(stderr, "test_unify: FAIL: t2:      \"%s\"\n", t->t2);
@@ -797,7 +810,7 @@ test_unify(void)
 
 typedef struct {
     int64_t size;
-    ndt_t *types[NDT_MAX_ARGS];
+    const ndt_t *types[NDT_MAX_ARGS];
 } type_array_t;
 
 static type_array_t
@@ -950,7 +963,7 @@ test_typecheck(void)
         ret = validate_typecheck_test(test, sig, &spec, ret, &ctx);
         ndt_type_array_clear(in.types, in.size);
         ndt_apply_spec_clear(&spec);
-        ndt_del((ndt_t *)sig);
+        ndt_decref((ndt_t *)sig);
 
         if (ret < 0) {
             goto error;
@@ -978,7 +991,7 @@ test_numba(void)
 {
     NDT_STATIC_CONTEXT(ctx);
     const numba_testcase_t *test;
-    ndt_t *t;
+    const ndt_t *t;
     char *sig = NULL;
     char *core = NULL;
     int count = 0;
@@ -1004,7 +1017,7 @@ test_numba(void)
             }
 
             if (ret != -1) {
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_err_format(&ctx, NDT_RuntimeError,
                     "test_numba: expect ret == -1 after MemoryError\n"
                     "test_numba: \"%s\"\n", test->signature);
@@ -1013,7 +1026,7 @@ test_numba(void)
         }
 
         ndt_err_clear(&ctx);
-        ndt_del(t);
+        ndt_decref(t);
 
         if (sig == NULL || strcmp(sig, test->sig) != 0) {
             ndt_err_format(&ctx, NDT_RuntimeError,
@@ -1053,7 +1066,7 @@ test_static_context(void)
 {
     const char **c;
     NDT_STATIC_CONTEXT(ctx);
-    ndt_t *t;
+    const ndt_t *t;
     char *s;
     int count = 0;
 
@@ -1070,7 +1083,7 @@ test_static_context(void)
             }
 
             if (t != NULL) {
-                ndt_del(t);
+                ndt_decref(t);
                 fprintf(stderr, "test_static_context: FAIL: t != NULL after MemoryError\n");
                 fprintf(stderr, "test_static_context: FAIL: %s\n", *c);
                 return -1;
@@ -1098,7 +1111,7 @@ test_static_context(void)
 
             if (s != NULL) {
                 ndt_free(s);
-                ndt_del(t);
+                ndt_decref(t);
                 fprintf(stderr, "test_static_context: FAIL: s != NULL after MemoryError\n");
                 fprintf(stderr, "test_static_context: FAIL: %s\n", *c);
                 ndt_context_del(&ctx);
@@ -1110,13 +1123,13 @@ test_static_context(void)
             fprintf(stderr, "test_static_context: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(&ctx);
             return -1;
         }
 
         ndt_free(s);
-        ndt_del(t);
+        ndt_decref(t);
         count++;
     }
 
@@ -1124,7 +1137,7 @@ test_static_context(void)
     t = ndt_from_string(s, &ctx);
     if (s == NULL) {
         fprintf(stderr, "test_static_context: FAIL: expected failure: \"%s\"\n", s);
-        ndt_del(t);
+        ndt_decref(t);
         ndt_context_del(&ctx);
         return -1;
     }
@@ -1164,7 +1177,7 @@ test_hash(void)
     hash_testcase_t buf[1000];
     ptrdiff_t n = 1;
     const char **c;
-    ndt_t *t;
+    const ndt_t *t;
     hash_testcase_t x;
     int i;
 
@@ -1188,7 +1201,7 @@ test_hash(void)
 
         x.hash = ndt_hash(t, &ctx);
         x.str = *c;
-        ndt_del(t);
+        ndt_decref(t);
 
         if (x.hash == -1) {
             fprintf(stderr, "test_hash: FAIL: hash==-1\n\n");
@@ -1220,7 +1233,7 @@ test_hash(void)
     x.hash = ndt_hash(t, &ctx);
     ndt_set_alloc();
 
-    ndt_del(t);
+    ndt_decref(t);
 
     if (x.hash != -1 || ctx.err != NDT_MemoryError) {
         fprintf(stderr, "test_hash: FAIL: expected failure, got %" PRI_ndt_ssize "\n\n", x.hash);
@@ -1239,7 +1252,7 @@ test_copy(void)
 {
     NDT_STATIC_CONTEXT(ctx);
     const char **c;
-    ndt_t *t, *u;
+    const ndt_t *t, *u;
     int count = 0;
 
     for (c = parse_tests; *c != NULL; c++) {
@@ -1266,8 +1279,8 @@ test_copy(void)
 
             if (u != NULL) {
                 fprintf(stderr, "test_copy: FAIL: unexpected success: \"%s\"\n", *c);
-                ndt_del(u);
-                ndt_del(t);
+                ndt_decref(u);
+                ndt_decref(t);
                 ndt_context_del(&ctx);
                 return -1;
             }
@@ -1277,21 +1290,21 @@ test_copy(void)
             fprintf(stderr, "test_copy: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx.err),
                     ndt_context_msg(&ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(&ctx);
             return -1;
         }
 
         if (!ndt_equal(t, u)) {
             fprintf(stderr, "test_copy: FAIL: copy: not equal\n\n");
-            ndt_del(t);
-            ndt_del(u);
+            ndt_decref(t);
+            ndt_decref(u);
             ndt_context_del(&ctx);
             return -1;
         }
 
-        ndt_del(u);
-        ndt_del(t);
+        ndt_decref(u);
+        ndt_decref(t);
         count++;
     }
 
@@ -1306,7 +1319,7 @@ test_buffer(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -1328,7 +1341,7 @@ test_buffer(void)
             }
 
             if (t != NULL) {
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_buffer: convert: FAIL: t != NULL after MemoryError\n");
                 fprintf(stderr, "test_buffer: convert: FAIL: %s\n", *c);
@@ -1344,7 +1357,7 @@ test_buffer(void)
             return -1;
         }
 
-        ndt_del(t);
+        ndt_decref(t);
         count++;
     }
     fprintf(stderr, "test_buffer (%d test cases)\n", count);
@@ -1358,7 +1371,7 @@ test_buffer_roundtrip(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     char *s;
     int count = 0;
     int ret;
@@ -1382,7 +1395,7 @@ test_buffer_roundtrip(void)
             }
 
             if (t != NULL) {
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_buffer: convert: FAIL: t != NULL after MemoryError\n");
                 fprintf(stderr, "test_buffer: convert: FAIL: %s\n", *c);
@@ -1411,7 +1424,7 @@ test_buffer_roundtrip(void)
 
             if (s != NULL) {
                 ndt_free(s);
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: s != NULL after MemoryError\n");
                 fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: %s\n", *c);
@@ -1423,13 +1436,13 @@ test_buffer_roundtrip(void)
             fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
 
         ret = strcmp(s, *c);
-        ndt_del(t);
+        ndt_decref(t);
 
         if (ret != 0) {
             fprintf(stderr, "test_buffer_roundtrip: convert: FAIL: input: \"%s\" output: \"%s\"\n", *c, s);
@@ -1452,7 +1465,7 @@ test_buffer_error(void)
 {
     const char **c;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
     int count = 0;
 
     ctx = ndt_context_new();
@@ -1474,7 +1487,7 @@ test_buffer_error(void)
             }
 
             if (t != NULL) {
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_buffer_error: FAIL: t != NULL after MemoryError\n");
                 fprintf(stderr, "test_buffer_error: FAIL: input: %s\n", *c);
@@ -1486,7 +1499,7 @@ test_buffer_error(void)
             fprintf(stderr, "test_buffer_error: FAIL: t != NULL after %s: %s\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_context_del(ctx);
             return -1;
         }
@@ -1502,9 +1515,8 @@ static int
 test_serialize(void)
 {
     const char **c;
-    ndt_meta_t *m;
     ndt_context_t *ctx;
-    ndt_t *t, *u;
+    const ndt_t *t, *u;
     int count = 0;
     char *bytes;
     int64_t len;
@@ -1516,17 +1528,8 @@ test_serialize(void)
     }
 
     for (c = parse_tests; *c != NULL; c++) {
-        m = ndt_meta_new(ctx);
-        if (m == NULL) {
-            ndt_context_del(ctx);
-            fprintf(stderr,
-                "test_serialize: FAIL: unexpected failure in meta_new");
-            return -1;
-        }
-
         t = ndt_from_string(*c, ctx);
         if (t == NULL) {
-            ndt_meta_del(m);
             ndt_context_del(ctx);
             fprintf(stderr,
                 "test_serialize: FAIL: unexpected failure in from_string");
@@ -1546,9 +1549,8 @@ test_serialize(void)
             }
 
             if (len >= 0 || bytes != NULL) {
-                ndt_del(t);
+                ndt_decref(t);
                 ndt_free(bytes);
-                ndt_meta_del(m);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_serialize: FAIL: invalid len or bytes after MemoryError\n");
                 fprintf(stderr, "test_serialize: FAIL: %s\n", *c);
@@ -1557,9 +1559,8 @@ test_serialize(void)
         }
 
         if (len < 0 || bytes == NULL) {
-            ndt_del(t);
+            ndt_decref(t);
             ndt_free(bytes);
-            ndt_meta_del(m);
             ndt_context_del(ctx);
             fprintf(stderr, "test_serialize: FAIL: invalid len or bytes (expected success)\n");
             fprintf(stderr, "test_serialize: FAIL: %s\n", *c);
@@ -1570,7 +1571,7 @@ test_serialize(void)
             ndt_err_clear(ctx);
 
             ndt_set_alloc_fail();
-            u = ndt_deserialize(m, bytes, len, ctx);
+            u = ndt_deserialize(bytes, len, ctx);
             ndt_set_alloc();
 
             if (ctx->err != NDT_MemoryError) {
@@ -1578,10 +1579,9 @@ test_serialize(void)
             }
 
             if (u != NULL) {
-                ndt_del(t);
-                ndt_del(u);
+                ndt_decref(t);
+                ndt_decref(u);
                 ndt_free(bytes);
-                ndt_meta_del(m);
                 ndt_context_del(ctx);
                 fprintf(stderr, "test_serialize: FAIL: u != NULL after MemoryError\n");
                 fprintf(stderr, "test_serialize: FAIL: %s\n", *c);
@@ -1594,9 +1594,8 @@ test_serialize(void)
             fprintf(stderr, "test_serialize: FAIL: got: %s: %s\n\n",
                     ndt_err_as_string(ctx->err),
                     ndt_context_msg(ctx));
-            ndt_del(t);
+            ndt_decref(t);
             ndt_free(bytes);
-            ndt_meta_del(m);
             ndt_context_del(ctx);
             return -1;
         }
@@ -1605,17 +1604,15 @@ test_serialize(void)
 
         if (!ndt_equal(u, t)) {
             fprintf(stderr, "test_serialize: FAIL: u != v in %s\n", *c);
-            ndt_del(t);
-            ndt_del(u);
-            ndt_meta_del(m);
+            ndt_decref(t);
+            ndt_decref(u);
             ndt_context_del(ctx);
             return -1;
         }
 
-        ndt_del(t);
-        ndt_del(u);
+        ndt_decref(t);
+        ndt_decref(u);
 
-        ndt_meta_del(m);
         count++;
     }
     fprintf(stderr, "test_serialize (%d test cases)\n", count);
@@ -1629,7 +1626,6 @@ static int
 test_serialize_fuzz(void)
 {
     ndt_context_t *ctx;
-    ndt_meta_t *m;
     char *buf;
     ssize_t ret, n;
     int src;
@@ -1667,23 +1663,13 @@ test_serialize_fuzz(void)
             return -1;
         }
 
-        m = ndt_meta_new(ctx);
-        if (m == NULL) {
-            ndt_free(buf);
-            close(src);
-            ndt_context_del(ctx);
-            fprintf(stderr, "\nmalloc error in fuzz tests\n");
-            return -1;
-        }
-
         ndt_err_clear(ctx);
-        ndt_t *t = ndt_deserialize(m, buf, n, ctx);
+        const ndt_t *t = ndt_deserialize(buf, n, ctx);
         if (t != NULL) {
-            ndt_del(t);
+            ndt_decref(t);
         }
 
         ndt_free(buf);
-        ndt_meta_del(m);
     }
     fprintf(stderr, "test_serialize_fuzz (%" PRIi64 " test cases)\n", i);
 

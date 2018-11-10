@@ -51,13 +51,10 @@ extern "C" {
 
 typedef struct {
     PyObject_HEAD
-    PyObject *rbuf; /* resource buffer */
-    ndt_t *ndt;     /* type */
+    const ndt_t *ndt;
 } NdtObject;
 
 #define NDT(v) (((NdtObject *)v)->ndt)
-#define RBUF(v) (((NdtObject *)v)->rbuf)
-#define RBUF_NDT_META(v) (((ResourceBufferObject *)(((NdtObject *)v)->rbuf))->m)
 
 
 /****************************************************************************/
@@ -80,27 +77,19 @@ typedef struct {
 #define Ndt_SetError_RETURN PyObject *
 #define Ndt_SetError_ARGS (ndt_context_t *)
 
-#define Ndt_CopySubtree_INDEX 4
-#define Ndt_CopySubtree_RETURN PyObject *
-#define Ndt_CopySubtree_ARGS (const PyObject *, const ndt_t *)
-
-#define Ndt_MoveSubtree_INDEX 5
-#define Ndt_MoveSubtree_RETURN PyObject *
-#define Ndt_MoveSubtree_ARGS (const PyObject *, ndt_t *)
-
-#define Ndt_FromType_INDEX 6
+#define Ndt_FromType_INDEX 4
 #define Ndt_FromType_RETURN PyObject *
-#define Ndt_FromType_ARGS (ndt_t *)
+#define Ndt_FromType_ARGS (const ndt_t *)
 
-#define Ndt_FromObject_INDEX 7
+#define Ndt_FromObject_INDEX 5
 #define Ndt_FromObject_RETURN PyObject *
 #define Ndt_FromObject_ARGS (PyObject *)
 
-#define Ndt_FromOffsetsAndDtype_INDEX 8
+#define Ndt_FromOffsetsAndDtype_INDEX 6
 #define Ndt_FromOffsetsAndDtype_RETURN PyObject *
-#define Ndt_FromOffsetsAndDtype_ARGS (PyObject *offsets, bool *opt, ndt_t *dtype)
+#define Ndt_FromOffsetsAndDtype_ARGS (PyObject *offsets, bool *opt, const ndt_t *dtype)
 
-#define NDTYPES_MAX_API 9
+#define NDTYPES_MAX_API 7
 
 
 #ifdef NDTYPES_MODULE
@@ -108,8 +97,6 @@ static Ndt_CheckExact_RETURN Ndt_CheckExact Ndt_CheckExact_ARGS;
 static Ndt_Check_RETURN Ndt_Check Ndt_Check_ARGS;
 static CONST_NDT_RETURN CONST_NDT CONST_NDT_ARGS;
 static Ndt_SetError_RETURN Ndt_SetError Ndt_SetError_ARGS;
-static Ndt_CopySubtree_RETURN Ndt_CopySubtree Ndt_CopySubtree_ARGS;
-static Ndt_MoveSubtree_RETURN Ndt_MoveSubtree Ndt_MoveSubtree_ARGS;
 static Ndt_FromType_RETURN Ndt_FromType Ndt_FromType_ARGS;
 static Ndt_FromObject_RETURN Ndt_FromObject Ndt_FromObject_ARGS;
 static Ndt_FromOffsetsAndDtype_RETURN Ndt_FromOffsetsAndDtype Ndt_FromOffsetsAndDtype_ARGS;
@@ -127,12 +114,6 @@ static void **_ndtypes_api;
 
 #define Ndt_SetError \
     (*(Ndt_SetError_RETURN (*)Ndt_SetError_ARGS) _ndtypes_api[Ndt_SetError_INDEX])
-
-#define Ndt_CopySubtree \
-    (*(Ndt_CopySubtree_RETURN (*)Ndt_CopySubtree_ARGS) _ndtypes_api[Ndt_CopySubtree_INDEX])
-
-#define Ndt_MoveSubtree \
-    (*(Ndt_MoveSubtree_RETURN (*)Ndt_MoveSubtree_ARGS) _ndtypes_api[Ndt_MoveSubtree_INDEX])
 
 #define Ndt_FromType \
     (*(Ndt_FromType_RETURN (*)Ndt_FromType_ARGS) _ndtypes_api[Ndt_FromType_INDEX])

@@ -64,25 +64,33 @@ ndt_attr_t *mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *c
 /*                    Parser functions for creating types                    */
 /*****************************************************************************/
 
-ndt_t *mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, ndt_context_t *ctx);
+const ndt_t *mk_module(char *name, const ndt_t *type, ndt_context_t *ctx);
+const ndt_t *mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, ndt_context_t *ctx);
 
-ndt_t *mk_fortran(ndt_t *type, ndt_context_t *ctx);
-ndt_t *mk_contig(char *name, ndt_t *type, ndt_context_t *ctx);
-ndt_t *mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx);
-ndt_t *mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx);
+const ndt_t *mk_fortran(const ndt_t *type, ndt_context_t *ctx);
+const ndt_t *mk_contig(char *name, ndt_t *type, ndt_context_t *ctx);
+const ndt_t *mk_fixed_dim_from_shape(char *v, const ndt_t *type, ndt_context_t *ctx);
+const ndt_t *mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, const ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *seq, ndt_t *type, bool opt, ndt_context_t *ctx);
-ndt_t *mk_var_ellipsis(ndt_t *type, ndt_context_t *ctx);
+const ndt_t *mk_var_dim(ndt_attr_seq_t *seq, const ndt_t *type, bool opt, ndt_context_t *ctx);
+const ndt_t *mk_var_ellipsis(const ndt_t *type, ndt_context_t *ctx);
 
-ndt_field_t *mk_field(char *name, ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
-ndt_t *mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx);
-ndt_t *mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx);
+const ndt_t *mk_ellipsis_dim(char *name, const ndt_t *type, ndt_context_t *ctx);
+const ndt_t *mk_symbolic_dim(char *name, const ndt_t *type, ndt_context_t *ctx);
 
-ndt_t *mk_categorical(ndt_value_seq_t *seq, bool opt, ndt_context_t *ctx);
+ndt_field_t *mk_field(char *name, const ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
+const ndt_t *mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx);
+const ndt_t *mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx);
 
-ndt_t *mk_fixed_string(char *v, enum ndt_encoding encoding, bool opt, ndt_context_t *ctx);
-ndt_t *mk_bytes(ndt_attr_seq_t *seq, bool opt, ndt_context_t *ctx);
-ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, bool opt, ndt_context_t *ctx);
+const ndt_t *mk_constr(char *name, const ndt_t *type, bool opt, ndt_context_t *ctx);
+const ndt_t *mk_ref(const ndt_t *type, bool opt, ndt_context_t *ctx);
+
+const ndt_t *mk_categorical(ndt_value_seq_t *seq, bool opt, ndt_context_t *ctx);
+
+const ndt_t *mk_fixed_string(char *v, enum ndt_encoding encoding, bool opt, ndt_context_t *ctx);
+const ndt_t *mk_bytes(ndt_attr_seq_t *seq, bool opt, ndt_context_t *ctx);
+const ndt_t *mk_fixed_bytes(ndt_attr_seq_t *seq, bool opt, ndt_context_t *ctx);
+
 
 
 /* END LOCAL SCOPE */

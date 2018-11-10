@@ -231,13 +231,15 @@ static int64_t
 write_var_dim(char * const ptr, int64_t offset, const ndt_t * const t,
               bool *overflow)
 {
-    const int32_t noffsets = t->Concrete.VarDim.noffsets;
+    const ndt_offsets_t *offsets = t->Concrete.VarDim.offsets;
+    const int32_t noffsets = offsets ? offsets->n : 0;
+    const int32_t *offset_array = offsets ? offsets->v : NULL;
     const int32_t nslices = t->Concrete.VarDim.nslices;
 
     offset = write_int64(ptr, offset, t->Concrete.VarDim.itemsize, overflow);
     offset = write_int32(ptr, offset, noffsets, overflow);
     offset = write_int32(ptr, offset, t->Concrete.VarDim.nslices, overflow);
-    offset = write_int32_array(ptr, offset, t->Concrete.VarDim.offsets, noffsets, overflow);
+    offset = write_int32_array(ptr, offset, offset_array, noffsets, overflow);
     offset = write_ndt_slice_array(ptr, offset, t->Concrete.VarDim.slices, nslices, overflow);
     return write_type(ptr, offset, t->VarDim.type, overflow);
 }

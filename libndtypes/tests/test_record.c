@@ -90,7 +90,7 @@ test_struct_align_pack(void)
     packed_with_trailing_padding_t packed_with_trail;
     aligned_t aligned;
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
 
     ctx = ndt_context_new();
     if (ctx == NULL) {
@@ -127,7 +127,7 @@ test_struct_align_pack(void)
         fprintf(stderr, "test_struct_align_pack: packed_no_trail: FAIL");
         ndt_context_del(ctx);
     }
-    ndt_del(t);
+    ndt_decref(t);
 
 
     t = ndt_from_string(s1_abbrev, ctx);
@@ -159,7 +159,7 @@ test_struct_align_pack(void)
         fprintf(stderr, "test_struct_align_pack: packed_no_trail_abbrev: FAIL\n");
         ndt_context_del(ctx);
     }
-    ndt_del(t);
+    ndt_decref(t);
 
 
     t = ndt_from_string(s2, ctx);
@@ -191,7 +191,7 @@ test_struct_align_pack(void)
         fprintf(stderr, "test_struct_align_pack: packed_with_trail: FAIL");
         ndt_context_del(ctx);
     }
-    ndt_del(t);
+    ndt_decref(t);
 
 
     t = ndt_from_string(s3, ctx);
@@ -219,7 +219,7 @@ test_struct_align_pack(void)
         fprintf(stderr, "test_struct_align_pack: aligned: FAIL");
         ndt_context_del(ctx);
     }
-    ndt_del(t);
+    ndt_decref(t);
 
     fprintf(stderr, "test_struct_align_pack (4 test cases)\n");
 

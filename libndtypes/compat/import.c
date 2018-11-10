@@ -49,14 +49,14 @@ int ndt_bpdebug = 1;
 jmp_buf ndt_bp_lexerror;
 
 
-ndt_t *
+const ndt_t *
 ndt_from_bpformat(const char *input, ndt_context_t *ctx)
 {
     volatile yyscan_t scanner = NULL;
     volatile YY_BUFFER_STATE state = NULL;
     char *buffer;
     size_t size;
-    ndt_t *ast = NULL;
+    const ndt_t *ast = NULL;
     int ret;
 
     size = strlen(input);

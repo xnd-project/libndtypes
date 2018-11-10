@@ -128,13 +128,27 @@ mk_attr_from_seq(char *name, ndt_string_seq_t *seq, ndt_context_t *ctx)
 /*                    Parser functions for creating types                    */
 /*****************************************************************************/
 
-ndt_t *
+/*
+ * NOTE: These functions should be considered internal.  Many of these
+ * deallocate "const ndt_t *type" for convenience in grammar.y.
+ */
+
+const ndt_t *
+mk_module(char *name, const ndt_t *type, ndt_context_t *ctx)
+{
+    const ndt_t *t = ndt_module(name, type, ctx);
+    ndt_decref(type);
+    return t;
+}
+
+const ndt_t *
 mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, ndt_context_t *ctx)
 {
-    ndt_t *types[NDT_MAX_ARGS];
+    const ndt_t *types[NDT_MAX_ARGS];
     int64_t nin = in->len;
     int64_t nout = out->len;
     int64_t nargs, i;
+    const ndt_t *t;
 
     nargs = nin + nout;
 
@@ -148,30 +162,64 @@ mk_function(ndt_type_seq_t *in, ndt_type_seq_t *out, ndt_context_t *ctx)
 
     for (i = 0; i < nin; i++) {
         types[i] = in->ptr[i];
+        ndt_incref(types[i]);
     }
 
     for (i = 0; i < nout; i++) {
         types[nin+i] = out->ptr[i];
+        ndt_incref(types[nin+i]);
     }
 
-    ndt_free(in->ptr);
-    ndt_free(in);
-    ndt_free(out->ptr);
-    ndt_free(out);
+    ndt_type_seq_del(in);
+    ndt_type_seq_del(out);
 
-    return ndt_function(types, nargs, nin, nout, ctx);
-}
+    t = ndt_function(types, nargs, nin, nout, ctx);
 
-ndt_t *
-mk_fortran(ndt_t *type, ndt_context_t *ctx)
-{
-    ndt_t *t = ndt_to_fortran(type, ctx);
-
-    ndt_del(type);
+    ndt_type_array_clear(types, nargs);
     return t;
 }
 
-ndt_t *
+const ndt_t *
+mk_ellipsis_dim(char *name, const ndt_t *type, ndt_context_t *ctx)
+{
+    const ndt_t *t = ndt_ellipsis_dim(name, type, ctx);
+    ndt_decref(type);
+    return t;
+}
+
+const ndt_t *
+mk_symbolic_dim(char *name, const ndt_t *type, ndt_context_t *ctx)
+{
+    const ndt_t *t = ndt_symbolic_dim(name, type, ctx);
+    ndt_decref(type);
+    return t;
+}
+
+const ndt_t *
+mk_constr(char *name, const ndt_t *type, bool opt, ndt_context_t *ctx)
+{
+    const ndt_t *t = ndt_constr(name, type, opt, ctx);
+    ndt_decref(type);
+    return t;
+}
+
+const ndt_t *
+mk_ref(const ndt_t *type, bool opt, ndt_context_t *ctx)
+{
+    const ndt_t *t = ndt_ref(type, opt, ctx);
+    ndt_decref(type);
+    return t;
+}
+
+const ndt_t *
+mk_fortran(const ndt_t *type, ndt_context_t *ctx)
+{
+    const ndt_t *t = ndt_to_fortran(type, ctx);
+    ndt_decref(type);
+    return t;
+}
+
+const ndt_t *
 mk_contig(char *name, ndt_t *type, ndt_context_t *ctx)
 {
     enum ndt_contig tag = RequireNA;
@@ -187,7 +235,7 @@ mk_contig(char *name, ndt_t *type, ndt_context_t *ctx)
     if (tag == RequireNA) {
         ndt_err_format(ctx, NDT_ParseError,
             "valid contiguity modifiers are 'C' or 'F'");
-        ndt_del(type);
+        ndt_decref(type);
         return NULL;
     }
 
@@ -199,13 +247,13 @@ mk_contig(char *name, ndt_t *type, ndt_context_t *ctx)
             if (!ndt_is_c_contiguous(type)) {
                 ndt_err_format(ctx, NDT_ParseError,
                     "valid contiguity modifiers are 'C' or 'F'");
-                ndt_del(type);
+                ndt_decref(type);
                 return NULL;
             }
 
             if (tag == RequireF) {
-                t = ndt_to_fortran(type, ctx);
-                ndt_del(type);
+                t = (ndt_t *)ndt_to_fortran(type, ctx);
+                ndt_decref(type);
                 if (t == NULL) {
                     return NULL;
                 }
@@ -227,32 +275,36 @@ mk_contig(char *name, ndt_t *type, ndt_context_t *ctx)
     default: {
         ndt_err_format(ctx, NDT_ParseError,
             "'C' or 'F' can only be applied to fixed or symbolic dimensions");
-        ndt_del(type);
+        ndt_decref(type);
         return NULL;
       }
     }
 }
 
-ndt_t *
-mk_fixed_dim_from_shape(char *v, ndt_t *type, ndt_context_t *ctx)
+const ndt_t *
+mk_fixed_dim_from_shape(char *v, const ndt_t *type, ndt_context_t *ctx)
 {
+    const ndt_t *t;
     int64_t shape;
 
     shape = ndt_strtoll(v, 0, INT64_MAX, ctx);
     ndt_free(v);
 
     if (ndt_err_occurred(ctx)) {
-        ndt_del(type);
+        ndt_decref(type);
         return NULL;
     }
 
-    return ndt_fixed_dim(type, shape, INT64_MAX, ctx);
+    t = ndt_fixed_dim(type, shape, INT64_MAX, ctx);
+    ndt_decref(type);
+    return t;
 }
 
-ndt_t *
-mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
+const ndt_t *
+mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, const ndt_t *type, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {1, 2, {"shape", "step"}, {AttrInt64, AttrInt64}};
+    const ndt_t *t;
     int64_t shape;
     int64_t step = INT64_MAX;
     int ret;
@@ -260,81 +312,82 @@ mk_fixed_dim_from_attrs(ndt_attr_seq_t *attrs, ndt_t *type, ndt_context_t *ctx)
     ret = ndt_parse_attr(&kwlist, ctx, attrs, &shape, &step);
     ndt_attr_seq_del(attrs);
     if (ret < 0) {
-        ndt_del(type);
+        ndt_decref(type);
         return NULL;
     }
 
-    return ndt_fixed_dim(type, shape, step, ctx);
+    t = ndt_fixed_dim(type, shape, step, ctx);
+    ndt_decref(type);
+    return t;
 }
 
-ndt_t *
-mk_var_dim(ndt_meta_t *m, ndt_attr_seq_t *attrs, ndt_t *type, bool opt, ndt_context_t *ctx)
+const ndt_t *
+mk_var_dim(ndt_attr_seq_t *attrs, const ndt_t *type, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {1, 2, {"offsets", "_noffsets"}, {AttrInt32List, AttrInt64}};
+    const ndt_t *t;
 
     if (attrs) {
-        int32_t *offsets = NULL;
-        int64_t noffsets = 0;
-        ndt_t *t;
+        ndt_offsets_t *offsets;
+        int32_t *ptr;
+        int64_t n;
         int ret;
 
-        ret = ndt_parse_attr(&kwlist, ctx, attrs, &offsets, &noffsets);
+        ret = ndt_parse_attr(&kwlist, ctx, attrs, &ptr, &n);
         ndt_attr_seq_del(attrs);
         if (ret < 0) {
-            ndt_del(type);
+            ndt_decref(type);
             return NULL;
         }
 
-        if (noffsets > INT32_MAX) {
+        if (n > INT32_MAX) {
             ndt_err_format(ctx, NDT_ValueError, "too many offsets");
-            ndt_del(type);
-            ndt_free(offsets);
+            ndt_free(ptr);
+            ndt_decref(type);
             return NULL;
         }
 
-        if (m == NULL) {
-            t = ndt_var_dim(type, InternalOffsets, (int32_t)noffsets, offsets, 0, NULL, opt, ctx);
-        }
-        else {
-            if (m->ndims >= NDT_MAX_DIM) {
-                ndt_err_format(ctx, NDT_RuntimeError, "too many dimensions");
-                ndt_del(type);
-                ndt_free(offsets);
-                return NULL;
-            }
-            m->noffsets[m->ndims] = (int32_t)noffsets;
-            m->offsets[m->ndims] = offsets;
-            m->ndims++;
-
-            t = ndt_var_dim(type, ExternalOffsets, (int32_t)noffsets, offsets, 0, NULL, opt, ctx);
+        offsets = ndt_offsets_from_ptr(ptr, (int32_t)n, ctx);
+        if (offsets == NULL) {
+            ndt_decref(type);
+            return NULL;
         }
 
-        return t;
+        t = ndt_var_dim(type, offsets, 0, NULL, opt, ctx);
+        ndt_decref_offsets(offsets);
     }
     else {
-        return ndt_abstract_var_dim(type, opt, ctx);
+        t = ndt_abstract_var_dim(type, opt, ctx);
     }
+
+    ndt_decref(type);
+    return t;
 }
 
-ndt_t *
-mk_var_ellipsis(ndt_t *type, ndt_context_t *ctx)
+const ndt_t *
+mk_var_ellipsis(const ndt_t *type, ndt_context_t *ctx)
 {
-    char *s = ndt_strdup("var", ctx);
+    const ndt_t *t;
+    char *s;
 
+    s = ndt_strdup("var", ctx);
     if (s == NULL) {
         return NULL;
     }
 
-    return ndt_ellipsis_dim(s, type, ctx);
+    t = ndt_ellipsis_dim(s, type, ctx);
+    ndt_decref(type);
+    return t;
 }
 
 ndt_field_t *
-mk_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
+mk_field(char *name, const ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
     uint16_opt_t pad = {None, 0};
+    ndt_field_t *f;
 
     if (attrs) {
         int ret = ndt_parse_attr(&kwlist, ctx, attrs, &align, &pack);
@@ -342,22 +395,24 @@ mk_field(char *name, ndt_t *type, ndt_attr_seq_t *attrs, ndt_context_t *ctx)
 
         if (ret < 0) {
             ndt_free(name);
-            ndt_del(type);
+            ndt_decref(type);
             return NULL;
         }
     }
 
-    return ndt_field(name, type, align, pack, pad, ctx);
+    f = ndt_field(name, type, align, pack, pad, ctx);
+    ndt_decref(type);
+    return f;
 }
 
-ndt_t *
+const ndt_t *
 mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields,
          ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
-    ndt_t *t;
+    const ndt_t *t;
 
     fields = ndt_field_seq_finalize(fields);
 
@@ -376,18 +431,18 @@ mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields,
     }
 
     t = ndt_tuple(flag, fields->ptr, fields->len, align, pack, opt, ctx);
-    ndt_free(fields);
+    ndt_field_seq_del(fields);
     return t;
 }
 
-ndt_t *
+const ndt_t *
 mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
           ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {0, 2, {"align", "pack"}, {AttrUint16Opt, AttrUint16Opt}};
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
-    ndt_t *t;
+    const ndt_t *t;
 
     fields = ndt_field_seq_finalize(fields);
 
@@ -406,14 +461,14 @@ mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
     }
 
     t = ndt_record(flag, fields->ptr, fields->len, align, pack, opt, ctx);
-    ndt_free(fields);
+    ndt_field_seq_del(fields);
     return t;
 }
 
-ndt_t *
+const ndt_t *
 mk_categorical(ndt_value_seq_t *seq, bool opt, ndt_context_t *ctx)
 {
-    ndt_t *t;
+    const ndt_t *t;
 
     seq = ndt_value_seq_finalize(seq);
     t = ndt_categorical(seq->ptr, seq->len, opt, ctx);
@@ -422,7 +477,7 @@ mk_categorical(ndt_value_seq_t *seq, bool opt, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
+const ndt_t *
 mk_fixed_string(char *v, enum ndt_encoding encoding, bool opt, ndt_context_t *ctx)
 {
     int64_t size;
@@ -437,7 +492,7 @@ mk_fixed_string(char *v, enum ndt_encoding encoding, bool opt, ndt_context_t *ct
     return ndt_fixed_string(size, encoding, opt, ctx);
 }
 
-ndt_t *
+const ndt_t *
 mk_fixed_bytes(ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {1, 2, {"size", "align"}, {AttrInt64, AttrUint16Opt}};
@@ -455,7 +510,7 @@ mk_fixed_bytes(ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
     return ndt_fixed_bytes(datasize, align, opt, ctx);
 }
 
-ndt_t *
+const ndt_t *
 mk_bytes(ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx)
 {
     static const attr_spec kwlist = {0, 1, {"align"}, {AttrUint16Opt}};

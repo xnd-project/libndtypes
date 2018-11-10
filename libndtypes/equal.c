@@ -122,7 +122,7 @@ record_fields_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
 }
 
 static int
-categorical_equal(ndt_value_t *t, ndt_value_t *u, int64_t shape)
+categorical_equal(const ndt_value_t *t, const ndt_value_t *u, int64_t shape)
 {
     int64_t i;
 
@@ -134,6 +134,24 @@ categorical_equal(ndt_value_t *t, ndt_value_t *u, int64_t shape)
 
     return 1;
 }
+
+static int
+offsets_equal(const ndt_offsets_t *x, const ndt_offsets_t *y)
+{
+    if (x == NULL) {
+        return y == NULL;
+    }
+    if (y == NULL) {
+        return x == NULL;
+    }
+
+    if (x->n != y->n) {
+        return 0;
+    }
+
+    return memcmp(x->v, y->v, x->n * (sizeof *x->v)) == 0;
+}
+
 
 int
 ndt_equal(const ndt_t *t, const ndt_t *u)
@@ -168,15 +186,16 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
 
     case VarDim: {
         if (t->Concrete.VarDim.itemsize != u->Concrete.VarDim.itemsize ||
-            t->Concrete.VarDim.noffsets != u->Concrete.VarDim.noffsets ||
             t->Concrete.VarDim.nslices != u->Concrete.VarDim.nslices) {
             return 0;
         }
 
-        if (memcmp(t->Concrete.VarDim.offsets, u->Concrete.VarDim.offsets,
-                   t->Concrete.VarDim.noffsets * (sizeof *t->Concrete.VarDim.offsets)) ||
-            memcmp(t->Concrete.VarDim.slices, u->Concrete.VarDim.slices,
+        if (memcmp(t->Concrete.VarDim.slices, u->Concrete.VarDim.slices,
                    t->Concrete.VarDim.nslices * (sizeof *t->Concrete.VarDim.slices))) {
+            return 0;
+        }
+
+        if (!offsets_equal(t->Concrete.VarDim.offsets, u->Concrete.VarDim.offsets)) {
             return 0;
         }
 

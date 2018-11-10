@@ -449,7 +449,7 @@ get_align(uint16_opt_t align, uint16_t default_align, ndt_context_t *ctx)
  * 'name' is NULL for a tuple field.
  */
 ndt_field_t *
-ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack,
+ndt_field(char *name, const ndt_t *type, uint16_opt_t align, uint16_opt_t pack,
           uint16_opt_t pad, ndt_context_t *ctx)
 {
     ndt_field_t *field;
@@ -462,7 +462,6 @@ ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack,
     min_align = min_field_align(type, align, pack, ctx);
     if (min_align == UINT16_MAX) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
 
@@ -470,10 +469,11 @@ ndt_field(char *name, ndt_t *type, uint16_opt_t align, uint16_opt_t pack,
     field = ndt_alloc_size(sizeof *field);
     if (field == NULL) {
         ndt_free(name);
-        ndt_del(type);
         return ndt_memory_error(ctx);
     }
     field->name = name;
+
+    ndt_incref(type);
     field->type = type;
 
     /* concrete access */
@@ -493,7 +493,7 @@ ndt_field_del(ndt_field_t *field)
 {
     if (field) {
         ndt_free(field->name);
-        ndt_del(field->type);
+        ndt_decref(field->type);
         ndt_free(field);
     }
 }
@@ -509,14 +509,14 @@ ndt_field_array_del(ndt_field_t *fields, int64_t shape)
 
     for (i = 0; i < shape; i++) {
         ndt_free(fields[i].name);
-        ndt_del(fields[i].type);
+        ndt_decref(fields[i].type);
     }
 
     ndt_free(fields);
 }
 
 void
-ndt_type_array_clear(ndt_t **types, int64_t shape)
+ndt_type_array_clear(const ndt_t **types, int64_t shape)
 {
     int64_t i;
 
@@ -525,12 +525,12 @@ ndt_type_array_clear(ndt_t **types, int64_t shape)
     }
 
     for (i = 0; i < shape; i++) {
-        ndt_del(types[i]);
+        ndt_decref(types[i]);
     }
 }
 
 void
-ndt_type_array_del(ndt_t **types, int64_t shape)
+ndt_type_array_del(const ndt_t **types, int64_t shape)
 {
     ndt_type_array_clear(types, shape);
     ndt_free(types);
@@ -542,35 +542,29 @@ ndt_type_array_del(ndt_t **types, int64_t shape)
 /*****************************************************************************/
 
 /*
- * Add a typedef name -> type to the symbol table.  Steals the 'type'
- * reference.
+ * Add a typedef name -> type to the symbol table.
  */
 int
-ndt_typedef(const char *name, ndt_t *type, const ndt_methods_t *m, ndt_context_t *ctx)
+ndt_typedef(const char *name, const ndt_t *type, const ndt_methods_t *m, ndt_context_t *ctx)
 {
-    if (ndt_typedef_add(name, type, m, ctx) < 0) {
-        return -1;
-    }
-
-    return 0;
+    return ndt_typedef_add(name, type, m, ctx);
 }
 
 int
 ndt_typedef_from_string(const char *name, const char *type, const ndt_methods_t *m,
                         ndt_context_t *ctx)
 {
-    ndt_t *t;
+    const ndt_t *t;
+    int ret;
 
     t = ndt_from_string(type, ctx);
     if (t == NULL) {
         return -1;
     }
 
-    if (ndt_typedef_add(name, t, m, ctx) < 0) {
-        return -1;
-    }
-
-    return 0;
+    ret = ndt_typedef_add(name, t, m, ctx);
+    ndt_decref(t);
+    return ret;
 }
 
 
@@ -634,7 +628,7 @@ check_abstract_var_invariants(const ndt_t *type, ndt_context_t *ctx)
 
 /* Invariants for concrete var dimensions. */
 static int
-check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ctx)
+check_var_invariants(const ndt_t *type, ndt_context_t *ctx)
 {
     if (type->tag == Module) {
         ndt_err_format(ctx, NDT_TypeError,
@@ -652,11 +646,6 @@ check_var_invariants(enum ndt_offsets flag, const ndt_t *type, ndt_context_t *ct
         if (ndt_is_abstract(type)) {
             ndt_err_format(ctx, NDT_TypeError,
                 "mixing abstract and concrete var dimensions is not allowed");
-            return 0;
-        }
-        if (flag != type->Concrete.VarDim.flag) {
-            ndt_err_format(ctx, NDT_TypeError,
-                "mixing internal and external offsets is not allowed");
             return 0;
         }
     }
@@ -697,7 +686,7 @@ strcmp_null(const char *s, const char *t)
 }
 
 static int
-check_function_invariants(ndt_t * const *types, int64_t nin, int64_t nargs,
+check_function_invariants(const ndt_t **types, int64_t nin, int64_t nargs,
                           ndt_context_t *ctx)
 {
     int64_t count = 0;
@@ -746,7 +735,7 @@ error:
 }
 
 static bool
-is_elemwise(ndt_t * const *types, int64_t nargs)
+is_elemwise(const ndt_t **types, int64_t nargs)
 {
     for (int64_t i = 0; i < nargs; i++) {
         if ((types[i]->ndim == 1 && types[i]->tag == EllipsisDim) ||
@@ -782,6 +771,8 @@ ndt_new(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
     t->datasize = 0;
     t->align = UINT16_MAX;
 
+    t->refcnt = 1;
+
     return t;
 }
 
@@ -811,6 +802,8 @@ ndt_new_extra(enum ndt tag, int64_t n, uint32_t flags, ndt_context_t *ctx)
     t->datasize = 0;
     t->align = UINT16_MAX;
 
+    t->refcnt = 1;
+
     return t;
 }
 
@@ -833,7 +826,7 @@ ndt_function_new(int64_t nargs, ndt_context_t *ctx)
         return NULL;
     }
     t->Function.nargs = nargs;
-    t->Function.types = (ndt_t **)t->extra;
+    t->Function.types = (const ndt_t **)t->extra;
 
     for (i = 0; i < nargs; i++) {
         t->Function.types[i] = NULL;
@@ -877,7 +870,7 @@ ndt_tuple_new(enum ndt_variadic flag, int64_t shape, bool opt, ndt_context_t *ct
 
     t->Tuple.flag = flag;
     t->Tuple.shape = shape;
-    t->Tuple.types = (ndt_t **)t->extra;
+    t->Tuple.types = (const ndt_t **)t->extra;
     t->Concrete.Tuple.offset = (int64_t *)(t->extra + offset_offset);
     t->Concrete.Tuple.align = (uint16_t *)(t->extra + align_offset);
     t->Concrete.Tuple.pad = (uint16_t *)(t->extra + pad_offset);
@@ -931,7 +924,7 @@ ndt_record_new(enum ndt_variadic flag, int64_t shape, bool opt, ndt_context_t *c
     t->Record.flag = flag;
     t->Record.shape = shape;
     t->Record.names = (char **)t->extra;
-    t->Record.types = (ndt_t **)(t->extra + types_offset);
+    t->Record.types = (const ndt_t **)(t->extra + types_offset);
     t->Concrete.Record.offset = (int64_t *)(t->extra + offset_offset);
     t->Concrete.Record.align = (uint16_t *)(t->extra + align_offset);
     t->Concrete.Record.pad = (uint16_t *)(t->extra + pad_offset);
@@ -947,7 +940,7 @@ ndt_record_new(enum ndt_variadic flag, int64_t shape, bool opt, ndt_context_t *c
     return t;
 }
 
-void
+static void
 ndt_del(ndt_t *t)
 {
     if (t == NULL) {
@@ -957,29 +950,27 @@ ndt_del(ndt_t *t)
     switch (t->tag) {
     case Module: {
         ndt_free(t->Module.name);
-        ndt_del(t->Module.type);
+        ndt_decref(t->Module.type);
         goto free_type;
     }
 
     case Function: {
         int64_t i;
         for (i = 0; i < t->Function.nargs; i++) {
-            ndt_del(t->Function.types[i]);
+            ndt_decref(t->Function.types[i]);
         }
         goto free_type;
     }
 
     case FixedDim: {
-        ndt_del(t->FixedDim.type);
+        ndt_decref(t->FixedDim.type);
         goto free_type;
     }
 
     case VarDim: {
-        ndt_del(t->VarDim.type);
+        ndt_decref(t->VarDim.type);
         if (ndt_is_concrete(t)) {
-            if (t->Concrete.VarDim.flag == InternalOffsets) {
-                ndt_free((int32_t *)t->Concrete.VarDim.offsets);
-            }
+            ndt_decref_offsets(t->Concrete.VarDim.offsets);
             ndt_free(t->Concrete.VarDim.slices);
         }
         goto free_type;
@@ -987,20 +978,20 @@ ndt_del(ndt_t *t)
 
     case SymbolicDim: {
         ndt_free(t->SymbolicDim.name);
-        ndt_del(t->SymbolicDim.type);
+        ndt_decref(t->SymbolicDim.type);
         goto free_type;
     }
 
     case EllipsisDim: {
         ndt_free(t->EllipsisDim.name);
-        ndt_del(t->EllipsisDim.type);
+        ndt_decref(t->EllipsisDim.type);
         goto free_type;
     }
 
     case Tuple: {
         int64_t i;
         for (i = 0; i < t->Tuple.shape; i++) {
-            ndt_del(t->Tuple.types[i]);
+            ndt_decref(t->Tuple.types[i]);
         }
         goto free_type;
     }
@@ -1009,25 +1000,25 @@ ndt_del(ndt_t *t)
         int64_t i;
         for (i = 0; i < t->Record.shape; i++) {
             ndt_free(t->Record.names[i]);
-            ndt_del(t->Record.types[i]);
+            ndt_decref(t->Record.types[i]);
         }
         goto free_type;
     }
 
     case Ref: {
-        ndt_del(t->Ref.type);
+        ndt_decref(t->Ref.type);
         goto free_type;
     }
 
     case Constr: {
         ndt_free(t->Constr.name);
-        ndt_del(t->Constr.type);
+        ndt_decref(t->Constr.type);
         goto free_type;
     }
 
     case Nominal: {
         ndt_free(t->Nominal.name);
-        ndt_del(t->Nominal.type);
+        ndt_decref(t->Nominal.type);
         goto free_type;
     }
 
@@ -1065,23 +1056,135 @@ free_type:
     ndt_free(t);
 }
 
+void
+ndt_incref(const ndt_t *t)
+{
+    ndt_t *u = (ndt_t *)t;
+#ifdef _MSC_VER
+    (void)InterlockedIncrement64(&u->refcnt);
+#else
+    ++u->refcnt;
+#endif
+}
+
+void
+ndt_decref(const ndt_t *t)
+{
+    ndt_t *u = (ndt_t *)t;
+
+    if (u == NULL) {
+        return;
+    }
+
+#ifdef _MSC_VER
+    if (InterlockedDecrement64(&u->refcnt) == 0) {
+        ndt_del(u);
+    }
+#else
+    if (--u->refcnt == 0) {
+        ndt_del(u);
+    }
+#endif
+}
+
+void
+ndt_move(const ndt_t **dst, const ndt_t *src)
+{
+    ndt_decref(*dst);
+    *dst = src;
+}
+
+
+ndt_offsets_t *
+ndt_offsets_new(int32_t size, ndt_context_t  *ctx)
+{
+    ndt_offsets_t *offsets;
+
+    offsets = ndt_alloc(1, sizeof *offsets);
+    if (offsets == NULL) {
+        return ndt_memory_error(ctx);
+    }
+
+    offsets->v = ndt_calloc(size, sizeof *offsets->v);
+    if (offsets->v == NULL) {
+        ndt_free(offsets);
+        return ndt_memory_error(ctx);
+    }
+
+    offsets->refcnt = 1;
+    offsets->n = size;
+
+    return offsets;
+}
+ 
+ndt_offsets_t *
+ndt_offsets_from_ptr(int32_t *ptr, int32_t size, ndt_context_t  *ctx)
+{
+    ndt_offsets_t *offsets;
+
+    offsets = ndt_alloc(1, sizeof *offsets);
+    if (offsets == NULL) {
+        ndt_free(ptr);
+        return ndt_memory_error(ctx);
+    }
+    offsets->refcnt = 1;
+    offsets->n = size;
+    offsets->v = ptr;
+
+    return offsets;
+}
+ 
+void
+ndt_incref_offsets(const ndt_offsets_t *x)
+{
+    ndt_offsets_t *offsets = (ndt_offsets_t *)x;
+#ifdef _MSC_VER
+    (void)InterlockedIncrement64(&u->refcnt);
+#else
+    ++offsets->refcnt;
+#endif
+}
+
+void
+ndt_decref_offsets(const ndt_offsets_t *x)
+{
+    ndt_offsets_t *offsets = (ndt_offsets_t *)x;
+
+    if (offsets == NULL) {
+        return;
+    }
+
+#ifdef _MSC_VER
+    if (InterlockedDecrement64(&u->refcnt) == 0) {
+        ndt_free((void *)offsets->v);
+        ndt_free(offsets);
+    }
+#else
+    if (--offsets->refcnt == 0) {
+        ndt_free((void *)offsets->v);
+        ndt_free(offsets);
+    }
+#endif
+}
+
 
 /******************************************************************************/
 /*                               Type functions                               */
 /******************************************************************************/
 
 /* Abstract namespace type */
-ndt_t *
-ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
+const ndt_t *
+ndt_module(char *name, const ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
     t = ndt_new(Module, 0, ctx);
     if (t == NULL) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
+
+    ndt_incref(type);
 
     /* abstract type */
     t->Module.name = name;
@@ -1092,8 +1195,8 @@ ndt_module(char *name, ndt_t *type, ndt_context_t *ctx)
 }
 
 /* Abstract function signatures */
-ndt_t *
-ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
+const ndt_t *
+ndt_function(const ndt_t **types, int64_t nargs, int64_t nin, int64_t nout,
              ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -1102,16 +1205,12 @@ ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
     assert(0 <= nin && 0 <= nout && nargs == nin+nout);
 
     if (!check_function_invariants(types, nin, nargs, ctx)) {
-        ndt_type_array_clear((ndt_t **)types, nargs);
         return NULL;
     }
 
     /* abstract type */
     t = ndt_function_new(nargs, ctx);
     if (t == NULL) {
-        for (i = 0; i < nargs; i++) {
-            ndt_del(types[i]);
-        }
         return NULL;
     }
     t->Function.elemwise = is_elemwise(types, nargs);
@@ -1119,6 +1218,7 @@ ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
     t->Function.nout = nout;
 
     for (i = 0; i < nargs; i++) {
+        ndt_incref(types[i]);
         t->Function.types[i] = types[i];
         t->flags |= ndt_dim_flags(types[i]);
     }
@@ -1126,7 +1226,7 @@ ndt_function(ndt_t * const *types, int64_t nargs, int64_t nin, int64_t nout,
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_any_kind(bool opt, ndt_context_t *ctx)
 {
     return ndt_new(AnyKind, opt, ctx);
@@ -1142,7 +1242,7 @@ ndt_any_kind(bool opt, ndt_context_t *ctx)
  * is assumed to be either a dtype with ndim==0 or a FixedDim.
  */
 static inline int64_t
-fixed_step(ndt_t *type, int64_t step, bool *overflow)
+fixed_step(const ndt_t *type, int64_t step, bool *overflow)
 {
     assert(ndt_is_concrete(type));
     assert(type->tag != VarDim);
@@ -1167,7 +1267,7 @@ fixed_step(ndt_t *type, int64_t step, bool *overflow)
 }
 
 static inline int64_t
-fixed_datasize(ndt_t *type, int64_t shape, int64_t step, int64_t itemsize,
+fixed_datasize(const ndt_t *type, int64_t shape, int64_t step, int64_t itemsize,
                bool *overflow)
 {
     int64_t index_range;
@@ -1184,15 +1284,17 @@ fixed_datasize(ndt_t *type, int64_t shape, int64_t step, int64_t itemsize,
     return ADDi64(datasize, type->datasize, overflow);
 }
  
-static ndt_t *
+static const ndt_t *
 _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 {
     bool overflow = 0;
-    ndt_t *dt;
+    const ndt_t *u;
+    const ndt_t *dt;
     int64_t next_step;
 
     if (t->ndim == 0) {
-        return ndt_copy(t, ctx);
+        ndt_incref(t);
+        return t;
     }
 
     next_step = MULi64(step, t->FixedDim.shape, &overflow);
@@ -1208,11 +1310,13 @@ _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
         return NULL;
     }
 
-    return ndt_fixed_dim(dt, t->FixedDim.shape, step, ctx);
+    u = ndt_fixed_dim(dt, t->FixedDim.shape, step, ctx);
+    ndt_decref(dt);
+    return u;
 }
 
 /* Return a copy of a C-contiguous array in Fortran order. */
-ndt_t *
+const ndt_t *
 ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
 {
     if (ndt_is_abstract(t)) {
@@ -1230,14 +1334,13 @@ ndt_to_fortran(const ndt_t *t, ndt_context_t *ctx)
     return _ndt_to_fortran(t, 1, ctx);
 }
 
-ndt_t *
-ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
+const ndt_t *
+ndt_fixed_dim(const ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
 {
     ndt_t *t;
     bool overflow = 0;
 
     if (!check_type_invariants(type, ctx)) {
-        ndt_del(type);
         return NULL;
     }
 
@@ -1249,12 +1352,14 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
     /* abstract type */
     t = ndt_new(FixedDim, 0, ctx);
     if (t == NULL) {
-        ndt_del(type);
         return NULL;
     }
     t->FixedDim.tag = RequireNA;
     t->FixedDim.shape = shape;
+
+    ndt_incref(type);
     t->FixedDim.type = type;
+
     t->ndim = type->ndim + 1;
     t->flags |= ndt_dim_flags(type);
 
@@ -1275,18 +1380,18 @@ ndt_fixed_dim(ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx)
 
     if (overflow) {
         ndt_err_format(ctx, NDT_ValueError, "data size too large");
-        ndt_del(t);
+        ndt_decref(t);
         return NULL;
     }
 
     return t;
 }
 
-ndt_t *
-ndt_fixed_dim_tag(ndt_t *type, enum ndt_contig tag, int64_t shape, int64_t step,
+const ndt_t *
+ndt_fixed_dim_tag(const ndt_t *type, enum ndt_contig tag, int64_t shape, int64_t step,
                   ndt_context_t *ctx)
 {
-    ndt_t *t = ndt_fixed_dim(type, shape, step, ctx);
+    ndt_t *t = (ndt_t *)ndt_fixed_dim(type, shape, step, ctx);
     if (t == NULL) {
         return NULL;
     }
@@ -1299,31 +1404,29 @@ ndt_fixed_dim_tag(ndt_t *type, enum ndt_contig tag, int64_t shape, int64_t step,
     return t;
 }
 
-ndt_t *
-ndt_abstract_var_dim(ndt_t *type, bool opt, ndt_context_t *ctx)
+const ndt_t *
+ndt_abstract_var_dim(const ndt_t *type, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t = NULL;
 
     if (!check_abstract_var_invariants(type, ctx)) {
-        ndt_del(type);
         return NULL;
     }
 
     /* abstract type */
     t = ndt_new(VarDim, opt, ctx);
     if (t == NULL) {
-        ndt_del(type);
         return NULL;
     }
+    ndt_incref(type);
     t->VarDim.type = type;
+
     t->ndim = type->ndim+1;
     t->flags |= ndt_dim_flags(type);
 
     /* concrete access */
     t->access = Abstract;
-    t->Concrete.VarDim.flag = ExternalOffsets;
     t->Concrete.VarDim.itemsize = 0;
-    t->Concrete.VarDim.noffsets = 0;
     t->Concrete.VarDim.offsets = NULL;
     t->Concrete.VarDim.nslices = 0;
     t->Concrete.VarDim.slices = NULL;
@@ -1349,15 +1452,15 @@ ndt_var_indices(int64_t *res_start, int64_t *res_step, const ndt_t *t,
     assert(ndt_is_concrete(t));
     assert(t->tag == VarDim);
 
-    if (index < 0 || index+1 >= t->Concrete.VarDim.noffsets) {
+    if (index < 0 || index+1 >= t->Concrete.VarDim.offsets->n) {
         ndt_err_format(ctx, NDT_ValueError,
             "var dim index out of range: index=%" PRIi64 ", noffsets=%" PRIi32,
-            index, t->Concrete.VarDim.noffsets);
+            index, t->Concrete.VarDim.offsets->n);
         return -1;
     }
 
-    list_start = t->Concrete.VarDim.offsets[index];
-    list_stop = t->Concrete.VarDim.offsets[index+1];
+    list_start = t->Concrete.VarDim.offsets->v[index];
+    list_stop = t->Concrete.VarDim.offsets->v[index+1];
     list_shape = list_stop - list_start;
 
     *res_start = 0;
@@ -1410,10 +1513,9 @@ ndt_var_add_slice(int32_t *nslices, const ndt_t *t,
     return slices;
 }
 
-ndt_t *
-ndt_var_dim(ndt_t *type,
-            enum ndt_offsets flag,
-            int32_t noffsets, const int32_t *offsets,
+const ndt_t *
+ndt_var_dim(const ndt_t *type,
+            const ndt_offsets_t *offsets,
             int32_t nslices, ndt_slice_t *slices,
             bool opt, ndt_context_t *ctx)
 {
@@ -1424,37 +1526,33 @@ ndt_var_dim(ndt_t *type,
     assert(offsets != NULL);
     assert(!!nslices == !!slices);
 
-    if (!check_var_invariants(flag, type, ctx)) {
-        ndt_del(type);
+    if (!check_var_invariants(type, ctx)) {
         goto error;
     }
 
-    if (noffsets < 2) {
+    if (offsets->n < 2) {
         ndt_err_format(ctx, NDT_InvalidArgumentError, "var_dim: noffsets < 2");
-        ndt_del(type);
         goto error;
     }
 
     if (!ndt_is_concrete(type)) {
         ndt_err_format(ctx, NDT_InvalidArgumentError,
                        "var_dim: expected concrete type");
-        ndt_del(type);
         goto error;
     }
 
     switch (type->tag) {
     case VarDim:
-        if (offsets[noffsets-1] != type->Concrete.VarDim.noffsets-1) {
+        if (offsets->v[offsets->n-1] != type->Concrete.VarDim.offsets->n-1) {
             ndt_err_format(ctx, NDT_ValueError,
                 "var_dim: missing or invalid number of offset arguments");
-            ndt_del(type);
             goto error;
         }
         datasize = type->datasize;
         itemsize = type->Concrete.VarDim.itemsize;
         break;
     default:
-        datasize = MULi64(offsets[noffsets-1], type->datasize, &overflow);
+        datasize = MULi64(offsets->v[offsets->n-1], type->datasize, &overflow);
         itemsize = type->datasize;
         break;
     }
@@ -1462,16 +1560,17 @@ ndt_var_dim(ndt_t *type,
     if (overflow) {
         ndt_err_format(ctx, NDT_ValueError,
             "overflow in creating var dimension");
-        ndt_del(type);
         goto error;
     }
 
     /* abstract type */
     t = ndt_new(VarDim, opt, ctx);
     if (t == NULL) {
-        ndt_del(type);
         goto error;
     }
+    ndt_incref(type);
+    ndt_incref_offsets(offsets);
+
     t->VarDim.type = type;
     t->ndim = type->ndim+1;
     t->flags |= ndt_dim_flags(type);
@@ -1480,9 +1579,7 @@ ndt_var_dim(ndt_t *type,
     t->access = Concrete;
     t->datasize = datasize;
     t->align = type->align;
-    t->Concrete.VarDim.flag = flag;
     t->Concrete.VarDim.itemsize = itemsize;
-    t->Concrete.VarDim.noffsets = noffsets;
     t->Concrete.VarDim.offsets = offsets;
     t->Concrete.VarDim.nslices = nslices;
     t->Concrete.VarDim.slices = slices;
@@ -1491,21 +1588,17 @@ ndt_var_dim(ndt_t *type,
 
 
 error:
-    if (flag == InternalOffsets) {
-        ndt_free((int32_t *)offsets);
-    }
     ndt_free(slices);
     return NULL;
 }
 
-ndt_t *
-ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
+const ndt_t *
+ndt_symbolic_dim(char *name, const ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
     if (!check_type_invariants(type, ctx)) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
 
@@ -1513,22 +1606,24 @@ ndt_symbolic_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     t = ndt_new(SymbolicDim, 0, ctx);
     if (t == NULL) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
     t->SymbolicDim.tag = RequireNA;
     t->SymbolicDim.name = name;
+
+    ndt_incref(type);
     t->SymbolicDim.type = type;
+
     t->ndim = type->ndim + 1;
     t->flags |= ndt_dim_flags(type);
 
     return t;
 }
 
-ndt_t *
-ndt_symbolic_dim_tag(char *name, ndt_t *type, enum ndt_contig tag, ndt_context_t *ctx)
+const ndt_t *
+ndt_symbolic_dim_tag(char *name, const ndt_t *type, enum ndt_contig tag, ndt_context_t *ctx)
 {
-    ndt_t *t = ndt_symbolic_dim(name, type, ctx);
+    ndt_t *t = (ndt_t *)ndt_symbolic_dim(name, type, ctx);
     if (t == NULL) {
         return NULL;
     }
@@ -1537,15 +1632,14 @@ ndt_symbolic_dim_tag(char *name, ndt_t *type, enum ndt_contig tag, ndt_context_t
     return t;
 }
 
-ndt_t *
-ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
+const ndt_t *
+ndt_ellipsis_dim(char *name, const ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
     uint32_t flags;
 
     if (!check_ellipsis_invariants(type, ctx)) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
 
@@ -1553,7 +1647,6 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     if (flags & NDT_ELLIPSIS) {
         ndt_err_format(ctx, NDT_ValueError, "more than one ellipsis");
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
 
@@ -1561,22 +1654,24 @@ ndt_ellipsis_dim(char *name, ndt_t *type, ndt_context_t *ctx)
     t = ndt_new(EllipsisDim, 0, ctx);
     if (t == NULL) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
     t->EllipsisDim.tag = RequireNA;
     t->EllipsisDim.name = name;
+
+    ndt_incref(type);
     t->EllipsisDim.type = type;
+
     t->flags |= (flags|NDT_ELLIPSIS);
     t->ndim = type->ndim + 1;
 
     return t;
 }
 
-ndt_t *
-ndt_ellipsis_dim_tag(char *name, ndt_t *type, enum ndt_contig tag, ndt_context_t *ctx)
+const ndt_t *
+ndt_ellipsis_dim_tag(char *name, const ndt_t *type, enum ndt_contig tag, ndt_context_t *ctx)
 {
-    ndt_t *t = ndt_ellipsis_dim(name, type, ctx);
+    ndt_t *t = (ndt_t *)ndt_ellipsis_dim(name, type, ctx);
     if (t == NULL) {
         return NULL;
     }
@@ -1678,8 +1773,8 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
     return 0;
 }
 
-ndt_t *
-ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+const ndt_t *
+ndt_tuple(enum ndt_variadic flag, const ndt_field_t *fields, int64_t shape,
           uint16_opt_t align, uint16_opt_t pack, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -1689,7 +1784,6 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
 
     for (i = 0; i < shape; i++) {
         if (!check_type_invariants(fields[i].type, ctx)) {
-            ndt_field_array_del(fields, shape);
             return NULL;
         }
     }
@@ -1697,7 +1791,6 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
     /* abstract type */
     t = ndt_tuple_new(flag, shape, opt, ctx);
     if (t == NULL) {
-        ndt_field_array_del(fields, shape);
         return NULL;
     }
 
@@ -1716,17 +1809,16 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                 fields[i].Concrete.explicit_align) {
                 ndt_err_format(ctx, NDT_InvalidArgumentError,
                                "explicit field alignment in abstract tuple");
-                ndt_field_array_del(fields, shape);
                 ndt_free(t);
                 return NULL;
             }
         }
         for (i = 0; i < shape; i++) {
             assert(fields[i].name == NULL);
+            ndt_incref(fields[i].type);
             t->Tuple.types[i] = fields[i].type;
             t->flags |= ndt_subtree_flags(fields[i].type);
         }
-        ndt_free(fields);
         return t;
     }
     else {
@@ -1735,22 +1827,21 @@ ndt_tuple(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                                  t->Concrete.Tuple.align,
                                  t->Concrete.Tuple.pad,
                                  fields, shape, align, pack, ctx) < 0) {
-            ndt_field_array_del(fields, shape);
             ndt_free(t);
             return NULL;
         }
         for (i = 0; i < shape; i++) {
             assert(fields[i].name == NULL);
+            ndt_incref(fields[i].type);
             t->Tuple.types[i] = fields[i].type;
             t->flags |= ndt_subtree_flags(fields[i].type);
         }
-        ndt_free(fields);
         return t;
     }
 }
 
-ndt_t *
-ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
+const ndt_t *
+ndt_record(enum ndt_variadic flag, const ndt_field_t *fields, int64_t shape,
            uint16_opt_t align, uint16_opt_t pack, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -1760,7 +1851,6 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
 
     for (i = 0; i < shape; i++) {
         if (!check_type_invariants(fields[i].type, ctx)) {
-            ndt_field_array_del(fields, shape);
             return NULL;
         }
     }
@@ -1768,7 +1858,6 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
     /* abstract type */
     t = ndt_record_new(flag, shape, opt, ctx);
     if (t == NULL) {
-        ndt_field_array_del(fields, shape);
         return NULL;
     }
 
@@ -1787,18 +1876,23 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                 fields[i].Concrete.explicit_align) {
                 ndt_err_format(ctx, NDT_InvalidArgumentError,
                                "explicit field alignment in abstract tuple");
-                /* at this point names and types still belong to the fields */
-                ndt_field_array_del(fields, shape);
                 ndt_free(t);
                 return NULL;
             }
         }
         for (i = 0; i < shape; i++) {
-            t->Record.names[i] = fields[i].name;
+            char *s = ndt_strdup(fields[i].name, ctx);
+            if (s == NULL) {
+                ndt_decref(t);
+                return NULL;
+            }
+            t->Record.names[i] = s;
+
+            ndt_incref(fields[i].type);
             t->Record.types[i] = fields[i].type;
+
             t->flags |= ndt_subtree_flags(fields[i].type);
         }
-        ndt_free(fields);
         return t;
     }
     else {
@@ -1807,38 +1901,43 @@ ndt_record(enum ndt_variadic flag, ndt_field_t *fields, int64_t shape,
                                  t->Concrete.Record.align,
                                  t->Concrete.Record.pad,
                                  fields, shape, align, pack, ctx) < 0) {
-            /* at this point names and types still belong to the fields */
-            ndt_field_array_del(fields, shape);
             ndt_free(t);
             return NULL;
         }
         for (i = 0; i < shape; i++) {
-            t->Record.names[i] = fields[i].name;
+            char *s = ndt_strdup(fields[i].name, ctx);
+            if (s == NULL) {
+                ndt_decref(t);
+                return NULL;
+            }
+            t->Record.names[i] = s;
+
+            ndt_incref(fields[i].type);
             t->Record.types[i] = fields[i].type;
+
             t->flags |= ndt_subtree_flags(fields[i].type);
         }
-        ndt_free(fields);
         return t;
     }
 }
 
-ndt_t *
-ndt_ref(ndt_t *type, bool opt, ndt_context_t *ctx)
+const ndt_t *
+ndt_ref(const ndt_t *type, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
 
     if (!check_type_invariants(type, ctx)) {
-        ndt_del(type);
         return NULL;
     }
 
     /* abstract type */
     t = ndt_new(Ref, opt, ctx);
     if (t == NULL) {
-        ndt_del(type);
         return NULL;
     }
+    ndt_incref(type);
     t->Ref.type = type;
+
     t->flags |= ndt_subtree_flags(type);
 
     /* concrete access */
@@ -1849,27 +1948,28 @@ ndt_ref(ndt_t *type, bool opt, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
-ndt_constr(char *name, ndt_t *type, bool opt, ndt_context_t *ctx)
+const ndt_t *
+ndt_constr(char *name, const ndt_t *type, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
 
     if (!check_type_invariants(type, ctx)) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
 
     t = ndt_new(Constr, opt, ctx);
     if (t == NULL) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
 
     /* abstract type */
     t->Constr.name = name;
+
+    ndt_incref(type);
     t->Constr.type = type;
+
     t->flags |= ndt_subtree_flags(type);
 
     /* concrete access */
@@ -1882,8 +1982,8 @@ ndt_constr(char *name, ndt_t *type, bool opt, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
-ndt_nominal(char *name, ndt_t *type, bool opt, ndt_context_t *ctx)
+const ndt_t *
+ndt_nominal(char *name, const ndt_t *type, bool opt, ndt_context_t *ctx)
 {
     const ndt_typedef_t *d;
     ndt_t *t;
@@ -1891,7 +1991,6 @@ ndt_nominal(char *name, ndt_t *type, bool opt, ndt_context_t *ctx)
     d = ndt_typedef_find(name, ctx);
     if (d == NULL) {
         ndt_free(name);
-        ndt_del(type);
         return NULL;
     }
 
@@ -1903,23 +2002,19 @@ ndt_nominal(char *name, ndt_t *type, bool opt, ndt_context_t *ctx)
                     "type is not an instance of %s", name);
             }
             ndt_free(name);
-            ndt_del(type);
             return NULL;
         }
     }
     else {
-        type = ndt_copy(d->type, ctx);
-        if (type == NULL) {
-            ndt_free(name);
-            return NULL;
-        }
+        type = d->type;
     }
+    ndt_incref(type);
 
     /* abstract type */
     t = ndt_new(Nominal, opt, ctx);
     if (t == NULL) {
         ndt_free(name);
-        ndt_del(type);
+        ndt_decref(type);
         return NULL;
     }
     t->Nominal.name = name;
@@ -1940,7 +2035,7 @@ ndt_nominal(char *name, ndt_t *type, bool opt, ndt_context_t *ctx)
 /*                               Scalar types                                 */
 /******************************************************************************/
 
-ndt_t *
+const ndt_t *
 ndt_scalar_kind(bool opt, ndt_context_t *ctx)
 {
     return ndt_new(ScalarKind, opt, ctx);
@@ -1956,8 +2051,8 @@ cmp(const void *x, const void *y)
     return ndt_value_compare(p, q);
 }
 
-ndt_t *
-ndt_categorical(ndt_value_t *types, int64_t ntypes, bool opt, ndt_context_t *ctx)
+const ndt_t *
+ndt_categorical(const ndt_value_t *types, int64_t ntypes, bool opt, ndt_context_t *ctx)
 {
     ndt_value_t *tmp;
     ndt_t *t;
@@ -2001,13 +2096,13 @@ ndt_categorical(ndt_value_t *types, int64_t ntypes, bool opt, ndt_context_t *ctx
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_fixed_string_kind(bool opt, ndt_context_t *ctx)
 {
     return ndt_new(FixedStringKind, opt, ctx);
 }
 
-ndt_t *
+const ndt_t *
 ndt_fixed_string(int64_t size, enum ndt_encoding encoding, bool opt, ndt_context_t *ctx)
 {
     bool overflow = 0;
@@ -2029,20 +2124,20 @@ ndt_fixed_string(int64_t size, enum ndt_encoding encoding, bool opt, ndt_context
     if (overflow) {
         ndt_err_format(ctx, NDT_ValueError,
             "overflow while creating fixed string");
-        ndt_del(t);
+        ndt_decref(t);
         return NULL;
     }
 
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_fixed_bytes_kind(bool opt, ndt_context_t *ctx)
 {
     return ndt_new(FixedBytesKind, opt, ctx);
 }
 
-ndt_t *
+const ndt_t *
 ndt_fixed_bytes(int64_t size, uint16_opt_t align_attr, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -2075,7 +2170,7 @@ ndt_fixed_bytes(int64_t size, uint16_opt_t align_attr, bool opt, ndt_context_t *
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_string(bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -2094,7 +2189,7 @@ ndt_string(bool opt, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_bytes(uint16_opt_t target_align, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -2120,7 +2215,7 @@ ndt_bytes(uint16_opt_t target_align, bool opt, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_char(enum ndt_encoding encoding, bool opt, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -2140,31 +2235,31 @@ ndt_char(enum ndt_encoding encoding, bool opt, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_signed_kind(uint32_t flags, ndt_context_t *ctx)
 {
     return ndt_new(SignedKind, flags, ctx);
 }
 
-ndt_t *
+const ndt_t *
 ndt_unsigned_kind(uint32_t flags, ndt_context_t *ctx)
 {
     return ndt_new(UnsignedKind, flags, ctx);
 }
 
-ndt_t *
+const ndt_t *
 ndt_float_kind(uint32_t flags, ndt_context_t *ctx)
 {
     return ndt_new(FloatKind, flags, ctx);
 }
 
-ndt_t *
+const ndt_t *
 ndt_complex_kind(uint32_t flags, ndt_context_t *ctx)
 {
     return ndt_new(ComplexKind, flags, ctx);
 }
 
-ndt_t *
+const ndt_t *
 ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
 {
     ndt_t *t;
@@ -2255,7 +2350,7 @@ ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_signed(int size, uint32_t flags, ndt_context_t *ctx)
 {
     switch (size) {
@@ -2270,7 +2365,7 @@ ndt_signed(int size, uint32_t flags, ndt_context_t *ctx)
     }
 }
 
-ndt_t *
+const ndt_t *
 ndt_unsigned(int size, uint32_t flags, ndt_context_t *ctx)
 {
     switch (size) {
@@ -2285,7 +2380,7 @@ ndt_unsigned(int size, uint32_t flags, ndt_context_t *ctx)
     }
 }
 
-ndt_t *
+const ndt_t *
 ndt_from_alias(enum ndt_alias tag, uint32_t flags, ndt_context_t *ctx)
 {
     switch (tag) {
@@ -2298,7 +2393,7 @@ ndt_from_alias(enum ndt_alias tag, uint32_t flags, ndt_context_t *ctx)
     }
 }
 
-ndt_t *
+const ndt_t *
 ndt_typevar(char *name, ndt_context_t *ctx)
 {
     ndt_t *t;

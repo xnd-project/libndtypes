@@ -50,7 +50,7 @@
  * in general to describe an existing memory block.
  */
 
-static ndt_t *unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx);
+static const ndt_t *unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx);
 
 static enum ndt
 max_tag(enum ndt x, enum ndt y)
@@ -84,12 +84,12 @@ unification_error(const char *msg, ndt_context_t *ctx)
     return NULL;
 }
 
-static ndt_t *
+static const ndt_t *
 unify_common(ndt_t *w, const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 {
     if ((t->flags & ~(NDT_OPTION|NDT_SUBTREE_OPTION)) !=
         (u->flags & ~(NDT_OPTION|NDT_SUBTREE_OPTION))) {
-        ndt_del(w);
+        ndt_decref(w);
         return unification_error("flags differ", ctx);
     }
     w->flags = t->flags | u->flags;
@@ -97,13 +97,13 @@ unify_common(ndt_t *w, const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
     return w;
 }
 
-static ndt_t *
+static const ndt_t *
 unify_tuple(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
 {
     bool opt = ndt_is_optional(t) || ndt_is_optional(u);
     ndt_field_seq_t *seq;
     ndt_field_t *field;
-    ndt_t *tmp, *w;
+    const ndt_t *tmp, *w;
     int64_t shape;
     int64_t i;
 
@@ -151,16 +151,16 @@ unify_tuple(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx
         return NULL;
     }
 
-    return unify_common(w, t, u, ctx);
+    return unify_common((ndt_t *)w, t, u, ctx);
 }
 
-static ndt_t *
+static const ndt_t *
 unify_record(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
 {
     bool opt = ndt_is_optional(t) || ndt_is_optional(u);
     ndt_field_seq_t *seq;
     ndt_field_t *field;
-    ndt_t *tmp, *w;
+    const ndt_t *tmp, *w;
     char *name;
     int64_t shape;
     int64_t i;
@@ -228,28 +228,28 @@ unify_record(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ct
         return NULL;
     }
 
-    return unify_common(w, t, u, ctx);
+    return unify_common((ndt_t *)w, t, u, ctx);
 }
 
-static ndt_t *
+static const ndt_t *
 unify_primitive(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 {
     enum ndt tag = max_tag(t->tag, u->tag);
-    ndt_t *w;
+    const ndt_t *w;
 
     w = ndt_primitive(tag, 0, ctx);
     if (w == NULL) {
         return NULL;
     }
 
-    return unify_common(w, t, u, ctx);
+    return unify_common((ndt_t *)w, t, u, ctx);
 }
 
-static ndt_t *
+static const ndt_t *
 unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
 {
     bool opt = ndt_is_optional(t) || ndt_is_optional(u);
-    ndt_t *type, *w;
+    const ndt_t *type, *w;
 
     if (replace_any && t->tag == AnyKind && u->tag == AnyKind) {
         return ndt_primitive(Float64, opt, ctx);
@@ -261,7 +261,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     if (t->tag == AnyKind) {
@@ -270,7 +270,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     switch (t->tag) {
@@ -289,31 +289,35 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         }
 
         w = ndt_fixed_dim(type, t->FixedDim.shape, t->Concrete.FixedDim.step, ctx);
+        ndt_decref(type);
         if (w == NULL) {
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case VarDim: {
-        int32_t noffsets = t->Concrete.VarDim.noffsets;
-        int32_t *offsets;
 
         if (u->tag != VarDim) {
             return unification_error("different types", ctx);
+        }
+
+        if (ndt_is_abstract(t) || ndt_is_abstract(u)) {
+            return unification_error("cannot unify abstract var dimension", ctx);
         }
 
         if (t->Concrete.VarDim.nslices != 0 || u->Concrete.VarDim.nslices != 0) {
             return unification_error("cannot unify sliced var dimension", ctx);
         }
 
-        if (t->Concrete.VarDim.noffsets != u->Concrete.VarDim.noffsets) {
+        int32_t noffsets = t->Concrete.VarDim.offsets->n;
+        if (u->Concrete.VarDim.offsets->n != noffsets) {
             return unification_error("offset mismatch in var dimension", ctx);
         }
 
-        if (memcmp(t->Concrete.VarDim.offsets, u->Concrete.VarDim.offsets,
-                   noffsets * (sizeof *t->Concrete.VarDim.offsets))) {
+        if (memcmp(t->Concrete.VarDim.offsets->v, u->Concrete.VarDim.offsets->v,
+                   noffsets * (sizeof *t->Concrete.VarDim.offsets->v))) {
             return unification_error("shape mismatch in var dimension", ctx);
         }
 
@@ -322,19 +326,13 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        offsets = ndt_alloc(noffsets, sizeof *offsets);
-        if (offsets == NULL) {
-            ndt_del(type);
-            return ndt_memory_error(ctx);       
-        }
-        memcpy(offsets, t->Concrete.VarDim.offsets, noffsets * (sizeof *offsets));
-
-        w = ndt_var_dim(type, InternalOffsets, noffsets, offsets, 0, NULL, opt, ctx);
+        w = ndt_var_dim(type, t->Concrete.VarDim.offsets, 0, NULL, opt, ctx);
+        ndt_decref(type);
         if (w == NULL) {
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case Tuple: {
@@ -374,11 +372,12 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         }
 
         w = ndt_ref(type, opt, ctx);
+        ndt_decref(type);
         if (w == NULL) {
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case Constr: {
@@ -404,11 +403,12 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         }
 
         w = ndt_constr(name, type, opt, ctx);
+        ndt_decref(type);
         if (w == NULL) {
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case Nominal: {
@@ -421,7 +421,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case Categorical: {
@@ -434,7 +434,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case FixedString: {
@@ -453,7 +453,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case FixedBytes: {
@@ -472,7 +472,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case Bytes: {
@@ -489,7 +489,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case Char: {
@@ -506,7 +506,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case Bool: {
@@ -559,7 +559,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
             return NULL;
         }
 
-        return unify_common(w, t, u, ctx);
+        return unify_common((ndt_t *)w, t, u, ctx);
     }
 
     case AnyKind:
@@ -576,13 +576,13 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
     ndt_internal_error("invalid type tag");
 }
 
-ndt_t *
+const ndt_t *
 ndt_unify(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 {
     return unify(t, u, false, ctx);
 }
 
-ndt_t *
+const ndt_t *
 ndt_unify_replace_any(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 {
     return unify(t, u, true, ctx);

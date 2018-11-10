@@ -63,11 +63,11 @@ ndt_fopen(const char *name, const char *mode)
 jmp_buf ndt_lexerror;
 
 
-static ndt_t *
-_ndt_from_fp(ndt_meta_t *m, FILE *fp, ndt_context_t *ctx)
+static const ndt_t *
+_ndt_from_fp(FILE *fp, ndt_context_t *ctx)
 {
     volatile yyscan_t scanner = NULL;
-    ndt_t *ast = NULL;
+    const ndt_t *ast = NULL;
     int ret;
 
     if (setjmp(ndt_lexerror) == 0) {
@@ -80,7 +80,7 @@ _ndt_from_fp(ndt_meta_t *m, FILE *fp, ndt_context_t *ctx)
             ndt_yyset_in(fp, scanner);
         }
 
-        ret = ndt_yyparse(scanner, &ast, m, ctx);
+        ret = ndt_yyparse(scanner, &ast, ctx);
         ndt_yylex_destroy(scanner);
 
         if (ret == 2) {
@@ -99,11 +99,11 @@ _ndt_from_fp(ndt_meta_t *m, FILE *fp, ndt_context_t *ctx)
     }
 }
 
-static ndt_t *
-_ndt_from_file(ndt_meta_t *m, const char *name, ndt_context_t *ctx)
+static const ndt_t *
+_ndt_from_file(const char *name, ndt_context_t *ctx)
 {
     FILE *fp;
-    ndt_t *t;
+    const ndt_t *t;
 
     if (strcmp(name, "-") == 0) {
         fp = stdin;
@@ -116,32 +116,26 @@ _ndt_from_file(ndt_meta_t *m, const char *name, ndt_context_t *ctx)
         }
     }
 
-    t = _ndt_from_fp(m, fp, ctx);
+    t = _ndt_from_fp(fp, ctx);
     fclose(fp);
 
     return t;
 }
 
-ndt_t *
+const ndt_t *
 ndt_from_file(const char *name, ndt_context_t *ctx)
 {
-    return _ndt_from_file(NULL, name, ctx);
+    return _ndt_from_file(name, ctx);
 }
 
-ndt_t *
-ndt_from_file_fill_meta(ndt_meta_t *m, const char *name, ndt_context_t *ctx)
-{
-    return _ndt_from_file(m, name, ctx);
-}
-
-static ndt_t *
-_ndt_from_string(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
+static const ndt_t *
+_ndt_from_string(const char *input, ndt_context_t *ctx)
 {
     volatile yyscan_t scanner = NULL;
     volatile YY_BUFFER_STATE state = NULL;
     char *buffer;
     size_t size;
-    ndt_t *ast = NULL;
+    const ndt_t *ast = NULL;
     int ret;
 
     size = strlen(input);
@@ -170,7 +164,7 @@ _ndt_from_string(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
         state->yy_bs_lineno = 1;
         state->yy_bs_column = 1;
 
-        ret = ndt_yyparse(scanner, &ast, m, ctx);
+        ret = ndt_yyparse(scanner, &ast, ctx);
         ndt_yy_delete_buffer(state, scanner);
         ndt_yylex_destroy(scanner);
         ndt_free(buffer);
@@ -194,32 +188,27 @@ _ndt_from_string(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
     }
 }
 
-ndt_t *
+const ndt_t *
 ndt_from_string(const char *input, ndt_context_t *ctx)
 {
-    return _ndt_from_string(NULL, input, ctx);
+    return _ndt_from_string(input, ctx);
 }
 
-ndt_t *
+const ndt_t *
 ndt_from_string_v(const char *input, ndt_context_t *ctx)
 {
-    ndt_t *t = _ndt_from_string(NULL, input, ctx);
+    const ndt_t *t = _ndt_from_string(input, ctx);
     if (t == NULL) {
         ndt_err_append(ctx, input);
     }
     return t;
 }
 
-ndt_t *
-ndt_from_string_fill_meta(ndt_meta_t *m, const char *input, ndt_context_t *ctx)
-{
-    return _ndt_from_string(m, input, ctx);
-}
-
-ndt_t *
+const ndt_t *
 ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_t *ctx)
 {
-    ndt_t *t, *type;
+    const ndt_t *t;
+    const ndt_t *type;
     int i;
 
     type = ndt_from_string(dtype, ctx);
@@ -230,13 +219,14 @@ ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_
     if (ndt_is_abstract(type)) {
         ndt_err_format(ctx, NDT_InvalidArgumentError,
             "cannot create abstract type with offsets");
-        ndt_del(type);
+        ndt_decref(type);
         return NULL;
     }
 
     for (i=0, t=type; i < m->ndims; i++, type=t) {
-        t = ndt_var_dim(type, ExternalOffsets, m->noffsets[i], m->offsets[i],
-                        0, NULL, false, ctx);
+        t = ndt_var_dim(type, m->offsets[i], 0, NULL, false,
+                        ctx);
+        ndt_decref(type);
         if (t == NULL) {
             return NULL;
         }
@@ -245,25 +235,28 @@ ndt_from_metadata_and_dtype(const ndt_meta_t *m, const char *dtype, ndt_context_
     return t;
 }
 
-ndt_t *
-ndt_from_metadata_opt_and_dtype(const ndt_meta_t *m, bool *opt, ndt_t *dtype,
+const ndt_t *
+ndt_from_metadata_opt_and_dtype(const ndt_meta_t *m, bool *opt, const ndt_t *dtype,
                                 ndt_context_t *ctx)
 {
-    ndt_t *t;
+    const ndt_t *t;
+    const ndt_t *type;
     int i;
 
     if (ndt_is_abstract(dtype)) {
         ndt_err_format(ctx, NDT_InvalidArgumentError,
             "cannot create abstract type with offsets");
         ndt_free(opt);
-        ndt_del(dtype);
         return NULL;
     }
 
-    t = dtype;
-    for (i = 0; i < m->ndims; i++) {
-        t = ndt_var_dim(t, ExternalOffsets, m->noffsets[i], m->offsets[i],
-                        0, NULL, opt[i], ctx);
+    type = dtype;
+    ndt_incref(type);
+
+    for (i=0, t=type; i < m->ndims; i++, type=t) {
+        t = ndt_var_dim(type, m->offsets[i], 0, NULL, opt[i],
+                        ctx);
+        ndt_decref(type);
         if (t == NULL) {
             ndt_free(opt);
             return NULL;

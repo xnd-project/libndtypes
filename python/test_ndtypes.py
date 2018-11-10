@@ -478,9 +478,6 @@ class TestVarDim(unittest.TestCase):
         self.assertRaises(ValueError, ndt, "N * int8", [[0, 2], [0, 10, 20]])
         self.assertRaises(ValueError, ndt, "var * int8", [[0, 2], [0, 10, 20]])
 
-        # Mixing external and internal offsets.
-        self.assertRaises(TypeError, ndt, "var(offsets=[0,2,10]) * int8", [[0, 1], [0, 2]])
-
 
 class TestSymbolicDim(unittest.TestCase):
 

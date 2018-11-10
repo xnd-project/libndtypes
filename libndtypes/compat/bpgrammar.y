@@ -37,7 +37,7 @@
 
 
 void
-yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx,
+yyerror(YYLTYPE *loc, yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx,
         const char *msg)
 {
     (void)scanner;
@@ -67,7 +67,7 @@ add_uint16(uint16_t a, uint16_t b, ndt_context_t *ctx)
     return c;
 }
 
-static ndt_t *
+static const ndt_t *
 primitive_native(char dtype, ndt_context_t *ctx)
 {
     switch (dtype) {
@@ -104,7 +104,7 @@ primitive_native(char dtype, ndt_context_t *ctx)
     }
 }
 
-static ndt_t *
+static const ndt_t *
 primitive_fixed(char dtype, uint32_t flags, ndt_context_t *ctx)
 {
     switch (dtype) {
@@ -139,7 +139,7 @@ primitive_fixed(char dtype, uint32_t flags, ndt_context_t *ctx)
     }
 }
 
-static ndt_t *
+static const ndt_t *
 make_dtype(char modifier, char dtype, ndt_context_t *ctx)
 {
     switch (modifier) {
@@ -160,7 +160,7 @@ make_dtype(char modifier, char dtype, ndt_context_t *ctx)
     }
 }
 
-static ndt_t *
+static const ndt_t *
 make_fixed_bytes(char *v, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
@@ -183,10 +183,10 @@ make_fixed_bytes(char *v, ndt_context_t *ctx)
     return ndt_fixed_bytes(datasize, align, false, ctx);
 }
 
-static ndt_t *
-make_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
+static const ndt_t *
+make_dimensions(ndt_string_seq_t *seq, const ndt_t *type, ndt_context_t *ctx)
 {
-    ndt_t *t;
+    const ndt_t *t;
     int64_t shape;
     int64_t i;
 
@@ -194,18 +194,21 @@ make_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
         ndt_err_format(ctx, NDT_ValueError,
             "number of dimensions must be between 1 and %d", NDT_MAX_DIM);
         ndt_string_seq_del(seq);
-        ndt_del(type);
+        ndt_decref(type);
         return NULL;
     }
+
 
     for (i=seq->len-1, t=type; i>=0; i--, type=t) {
         shape = ndt_strtoll(seq->ptr[i], 0, INT_MAX, ctx);
         if (ndt_err_occurred(ctx)) {
             ndt_string_seq_del(seq);
+            ndt_decref(type);
             return NULL;
         }
 
         t = ndt_fixed_dim(type, shape, INT64_MAX, ctx);
+        ndt_decref(type);
         if (t == NULL) {
             ndt_string_seq_del(seq);
             return NULL;
@@ -218,27 +221,32 @@ make_dimensions(ndt_string_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 }
 
 static ndt_field_t *
-make_field(char *name, ndt_t *type, uint16_t padding, ndt_context_t *ctx)
+make_field(char *name, const ndt_t *type, uint16_t padding, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
     uint16_opt_t pad = {Some, 0};
+    ndt_field_t *f;
 
     pad.Some = padding;
-    return ndt_field(name, type, align, pack, pad, ctx);
+    f = ndt_field(name, type, align, pack, pad, ctx);
+    ndt_decref(type);
+    return f;
 }
 
-static ndt_t *
+static const ndt_t *
 make_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
 {
     uint16_opt_t align = {None, 0};
     uint16_opt_t pack = {None, 0};
-    ndt_t *t;
+    const ndt_t *t;
     int64_t i;
 
     fields = ndt_field_seq_finalize(fields);
     if (fields == NULL) {
-        return ndt_record(Nonvariadic, NULL, 0, align, pack, false, ctx);
+        t = ndt_record(Nonvariadic, NULL, 0, align, pack, false, ctx);
+        ndt_field_seq_del(fields);
+        return t;
     }
 
     assert(fields->len >= 1);
@@ -256,17 +264,18 @@ make_record(ndt_field_seq_t *fields, ndt_context_t *ctx)
     }
 
     t = ndt_record(Nonvariadic, fields->ptr, fields->len, align, pack, false, ctx);
-    ndt_free(fields);
+    ndt_field_seq_del(fields);
 
     return t;
 }
 
 static ndt_type_seq_t *
-broadcast_seq_new(ndt_t *type, ndt_context_t *ctx)
+broadcast_seq_new(const ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    t = ndt_ellipsis_dim(NULL, type, ctx);
+    t = (ndt_t *)ndt_ellipsis_dim(NULL, type, ctx);
+    ndt_decref(type);
     if (t == NULL) {
         return NULL;
     }
@@ -275,11 +284,12 @@ broadcast_seq_new(ndt_t *type, ndt_context_t *ctx)
 }
 
 static ndt_type_seq_t *
-broadcast_seq_append(ndt_type_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
+broadcast_seq_append(ndt_type_seq_t *seq, const ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    t = ndt_ellipsis_dim(NULL, type, ctx);
+    t = (ndt_t *)ndt_ellipsis_dim(NULL, type, ctx);
+    ndt_decref(type);
     if (t == NULL) {
         ndt_type_seq_del(seq);
         return NULL;
@@ -303,7 +313,7 @@ broadcast_seq_append(ndt_type_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 %code provides {
   #define YY_DECL extern int ndt_bplexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int ndt_bplexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
-  void yyerror(YYLTYPE *loc, yyscan_t scanner, ndt_t **ast, ndt_context_t *ctx, const char *msg);
+  void yyerror(YYLTYPE *loc, yyscan_t scanner, const  ndt_t **ast, ndt_context_t *ctx, const char *msg);
 }
 
 
@@ -320,10 +330,10 @@ broadcast_seq_append(ndt_type_seq_t *seq, ndt_t *type, ndt_context_t *ctx)
 }
 
 %lex-param   {yyscan_t scanner} {ndt_context_t *ctx}
-%parse-param {yyscan_t scanner} {ndt_t **ast} {ndt_context_t *ctx}
+%parse-param {yyscan_t scanner} {const ndt_t **ast} {ndt_context_t *ctx}
 
 %union {
-    ndt_t *ndt;
+    const ndt_t *ndt;
     ndt_field_t *field;
     ndt_field_seq_t *field_seq;
     ndt_string_seq_t *string_seq;
@@ -366,7 +376,7 @@ ERRTOKEN
 
 %token ENDMARKER 0 "end of file"
 
-%destructor { ndt_del($$); } <ndt>
+%destructor { ndt_decref($$); } <ndt>
 %destructor { ndt_field_del($$); } <field>
 %destructor { ndt_field_seq_del($$); } <field_seq>
 %destructor { ndt_string_seq_del($$); } <string_seq>

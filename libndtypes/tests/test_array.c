@@ -75,7 +75,7 @@ int
 test_array(void)
 {
     ndt_context_t *ctx;
-    ndt_t *t;
+    const ndt_t *t;
 
     ctx = ndt_context_new();
     if (ctx == NULL) {
@@ -105,7 +105,7 @@ test_array(void)
         fprintf(stderr, "test_array (1 test case)\n");
     }
 
-    ndt_del(t);
+    ndt_decref(t);
     ndt_context_del(ctx);
 
     return 0;

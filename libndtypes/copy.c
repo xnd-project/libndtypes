@@ -48,22 +48,16 @@ copy_common(ndt_t *u, const ndt_t *t)
     u->align = t->align;
 }
 
-static ndt_t *
+static const ndt_t *
 ndt_copy_var_dim(const ndt_t *t, bool opt, ndt_context_t *ctx)
 {
-    ndt_t *type;
     ndt_slice_t *slices;
     int nslices;
 
     assert(t->tag == VarDim);
 
-    type = ndt_copy(t->VarDim.type, ctx);
-    if (type == NULL) {
-        return NULL;
-    }
-
     if (ndt_is_abstract(t))  {
-        return ndt_abstract_var_dim(type, opt, ctx);
+        return ndt_abstract_var_dim(t->VarDim.type, opt, ctx);
     }
 
     slices = NULL;
@@ -78,14 +72,12 @@ ndt_copy_var_dim(const ndt_t *t, bool opt, ndt_context_t *ctx)
                nslices * (sizeof *slices));
     }
 
-    return ndt_var_dim(type, ExternalOffsets,
-                       t->Concrete.VarDim.noffsets,
-                       t->Concrete.VarDim.offsets,
+    return ndt_var_dim(t->VarDim.type, t->Concrete.VarDim.offsets,
                        nslices, slices,
                        opt, ctx);
 }
 
-static ndt_t *
+static const ndt_t *
 ndt_copy_function(const ndt_t *t, ndt_context_t *ctx)
 {
     ndt_t *u;
@@ -103,17 +95,14 @@ ndt_copy_function(const ndt_t *t, ndt_context_t *ctx)
     copy_common(u, t);
 
     for (i = 0; i < t->Function.nargs; i++) {
-        u->Function.types[i] = ndt_copy(t->Function.types[i], ctx);
-        if (u->Function.types[i] == NULL) {
-            ndt_del(u);
-            return NULL;
-        }
+        ndt_incref(t->Function.types[i]);
+        u->Function.types[i] = t->Function.types[i];
     }
 
     return u;
 }
 
-static ndt_t *
+static const ndt_t *
 ndt_copy_tuple(const ndt_t *t, bool opt, ndt_context_t *ctx)
 {
     ndt_t *u;
@@ -129,11 +118,8 @@ ndt_copy_tuple(const ndt_t *t, bool opt, ndt_context_t *ctx)
     copy_common(u, t);
 
     for (i = 0; i < t->Tuple.shape; i++) {
-        u->Tuple.types[i] = ndt_copy(t->Tuple.types[i], ctx);
-        if (u->Tuple.types[i] == NULL) {
-            ndt_del(u);
-            return NULL;
-        }
+        ndt_incref(t->Tuple.types[i]);
+        u->Tuple.types[i] = t->Tuple.types[i];
 
         u->Concrete.Tuple.offset[i] = t->Concrete.Tuple.offset[i];
         u->Concrete.Tuple.align[i] = t->Concrete.Tuple.align[i];
@@ -143,7 +129,7 @@ ndt_copy_tuple(const ndt_t *t, bool opt, ndt_context_t *ctx)
     return u;
 }
 
-static ndt_t *
+static const ndt_t *
 ndt_copy_record(const ndt_t *t, bool opt, ndt_context_t *ctx)
 {
     ndt_t *u;
@@ -161,15 +147,12 @@ ndt_copy_record(const ndt_t *t, bool opt, ndt_context_t *ctx)
     for (i = 0; i < t->Record.shape; i++) {
         u->Record.names[i] = ndt_strdup(t->Record.names[i], ctx);
         if (u->Record.names[i] == NULL) {
-            ndt_del(u);
+            ndt_decref(u);
             return NULL;
         }
 
-        u->Record.types[i] = ndt_copy(t->Record.types[i], ctx);
-        if (u->Record.types[i] == NULL) {
-            ndt_del(u);
-            return NULL;
-        }
+        ndt_incref(t->Record.types[i]);
+        u->Record.types[i] = t->Record.types[i];
 
         u->Concrete.Record.offset[i] = t->Concrete.Record.offset[i];
         u->Concrete.Record.align[i] = t->Concrete.Record.align[i];
@@ -200,7 +183,7 @@ ndt_copy_value(ndt_value_t *v, const ndt_value_t *u, ndt_context_t *ctx)
     return -1;
 }
 
-static ndt_t *
+static const ndt_t *
 ndt_copy_categorical(const ndt_t *t, bool opt, ndt_context_t *ctx)
 {
     int64_t ntypes = t->Categorical.ntypes;
@@ -228,65 +211,48 @@ ndt_copy_categorical(const ndt_t *t, bool opt, ndt_context_t *ctx)
     return ndt_categorical(types, ntypes, opt, ctx);
 }
 
-ndt_t *
+/* shallow copy */
+const ndt_t *
 ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 {
     bool opt = ndt_is_optional(t);
     ndt_t *u = NULL;
-    ndt_t *type;
 
     switch (t->tag) {
     case FixedDim: {
-        type = ndt_copy(t->FixedDim.type, ctx);
-        if (type == NULL) {
-            return NULL;
-        }
-
-        u = ndt_fixed_dim_tag(type, t->FixedDim.tag, t->FixedDim.shape,
-                              t->Concrete.FixedDim.step, ctx);
+        u = (ndt_t *)ndt_fixed_dim_tag(t->FixedDim.type, t->FixedDim.tag, t->FixedDim.shape,
+                                       t->Concrete.FixedDim.step, ctx);
         goto copy_common_fields;
     }
 
     case VarDim: {
-        u = ndt_copy_var_dim(t, opt, ctx);
+        u = (ndt_t *)ndt_copy_var_dim(t, opt, ctx);
         goto copy_common_fields;
     }
 
     case SymbolicDim: {
         char *name;
 
-        type = ndt_copy(t->SymbolicDim.type, ctx);
-        if (type == NULL) {
-            return NULL;
-        }
-
         name = ndt_strdup(t->SymbolicDim.name, ctx);
         if (name == NULL) {
-            ndt_del(type);
             return NULL;
         }
 
-        u = ndt_symbolic_dim_tag(name, type, t->SymbolicDim.tag, ctx);
+        u = (ndt_t *)ndt_symbolic_dim_tag(name, t->SymbolicDim.type, t->SymbolicDim.tag, ctx);
         goto copy_common_fields;
     }
 
     case EllipsisDim: {
         char *name = NULL;
 
-        type = ndt_copy(t->EllipsisDim.type, ctx);
-        if (type == NULL) {
-            return NULL;
-        }
-
         if (t->EllipsisDim.name != NULL) {
             name = ndt_strdup(t->SymbolicDim.name, ctx);
             if (name == NULL) {
-                ndt_del(type);
                 return NULL;
             }
         }
 
-        u = ndt_ellipsis_dim_tag(name, type, t->EllipsisDim.tag, ctx);
+        u = (ndt_t *)ndt_ellipsis_dim_tag(name, t->EllipsisDim.type, t->EllipsisDim.tag, ctx);
         goto copy_common_fields;
     }
 
@@ -299,12 +265,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     }
 
     case Ref: {
-        type = ndt_copy(t->Ref.type, ctx);
-        if (type == NULL) {
-            return NULL;
-        }
-
-        u = ndt_ref(type, opt, ctx);
+        u = (ndt_t *)ndt_ref(t->Ref.type, opt, ctx);
         goto copy_common_fields;
     }
 
@@ -314,13 +275,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        type = ndt_copy(t->Constr.type, ctx);
-        if (type == NULL) {
-            ndt_free(name);
-            return NULL;
-        }
-
-        u = ndt_constr(name, type, opt, ctx);
+        u = (ndt_t *)ndt_constr(name, t->Constr.type, opt, ctx);
         goto copy_common_fields;
     }
 
@@ -330,18 +285,12 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        type = ndt_copy(t->Nominal.type, ctx);
-        if (type == NULL) {
-            ndt_free(name);
-            return NULL;
-        }
-
-        u = ndt_nominal(name, type, opt, ctx);
+        u = (ndt_t *)ndt_nominal(name, t->Nominal.type, opt, ctx);
         goto copy_common_fields;
     }
 
     case Categorical: {
-        u = ndt_copy_categorical(t, opt, ctx);
+        u = (ndt_t *)ndt_copy_categorical(t, opt, ctx);
         goto copy_common_fields;
     }
 
@@ -353,7 +302,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
 
-        u = ndt_typevar(name, ctx);
+        u = (ndt_t *)ndt_typevar(name, ctx);
         goto copy_common_fields;
     }
 
@@ -364,18 +313,12 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     case Module: {
         char *name;
 
-        type = ndt_copy(t->Module.type, ctx);
-        if (type == NULL) {
-            return NULL;
-        }
-
         name = ndt_strdup(t->Module.name, ctx);
         if (name == NULL) {
-            ndt_del(type);
             return NULL;
         }
 
-        u = ndt_module(name, type, ctx);
+        u = (ndt_t *)ndt_module(name, t->Module.type, ctx);
         goto copy_common_fields;
     }
 
@@ -418,23 +361,28 @@ invalid_tag:
     return NULL;
 }
 
-static ndt_t *
-fixed_copy_contiguous(const ndt_t *t, ndt_t *type, ndt_context_t *ctx)
+static const ndt_t *
+fixed_copy_contiguous(const ndt_t *t, const ndt_t *type, ndt_context_t *ctx)
 {
+    const ndt_t *u, *v;
+
     if (t->ndim == 0) {
+        ndt_incref(type);
         return type;
     }
 
     assert(t->tag == FixedDim);
     assert(ndt_is_concrete(t));
-    type = fixed_copy_contiguous(t->FixedDim.type, type, ctx);
-    if (type == NULL) {
-        ndt_del(type);
+
+    u = fixed_copy_contiguous(t->FixedDim.type, type, ctx);
+    if (u == NULL) {
         return NULL;
     }
 
-    return ndt_fixed_dim_tag(type, t->FixedDim.tag, t->FixedDim.shape,
-                             INT64_MAX, ctx);
+    v = ndt_fixed_dim_tag(u, t->FixedDim.tag, t->FixedDim.shape,
+                          INT64_MAX, ctx);
+    ndt_decref(u);
+    return v;
 }
 
 typedef struct {
@@ -530,16 +478,28 @@ var_sum_shapes(offsets_t *m)
    }
 }
 
-ndt_t *
-var_from_offsets_and_dtype(offsets_t *m, ndt_t *type, ndt_context_t *ctx)
+const ndt_t *
+var_from_offsets_and_dtype(offsets_t *m, const ndt_t *t, ndt_context_t *ctx)
 {
-    ndt_t *t;
+    const ndt_t *u;
     int i;
 
-    for (i=1, t=type; i <= m->maxdim; i++, type=t) {
-        t = ndt_var_dim(type, InternalOffsets, m->noffsets[i], m->offsets[i],
-                        0, NULL, false, ctx);
+    ndt_incref(t);
+
+    for (i = 1; i <= m->maxdim; i++) {
+        ndt_offsets_t *offsets = ndt_offsets_from_ptr(m->offsets[i], m->noffsets[i], ctx);
+
         m->offsets[i] = NULL;
+        if (offsets == NULL) {
+            ndt_decref(t);
+            clear_offsets(m);
+            return NULL;
+        }
+
+        u = ndt_var_dim(t, offsets, 0, NULL, false, ctx);
+        ndt_move(&t, u);
+        ndt_decref_offsets(offsets);
+
         if (t == NULL) {
             clear_offsets(m);
             return NULL;
@@ -549,23 +509,21 @@ var_from_offsets_and_dtype(offsets_t *m, ndt_t *type, ndt_context_t *ctx)
     return t;
 }
  
-static ndt_t *
-var_copy_contiguous(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
+static const ndt_t *
+var_copy_contiguous(const ndt_t *t, const ndt_t *dtype, ndt_context_t *ctx)
 {
     offsets_t m = {.maxdim=0, .index={0}, .noffsets={0}, .offsets={NULL}};
 
     assert(t->tag == VarDim);
     assert(ndt_is_concrete(t));
-    assert(t->Concrete.VarDim.noffsets == 2);
+    assert(t->Concrete.VarDim.offsets->n == 2);
 
     if (var_init_offsets(&m, t, 2, ctx) < 0) {
-        ndt_del(dtype);
         return NULL;
     }
     m.maxdim = t->ndim;
 
     if (var_copy_shapes(&m, 0, t, ctx) < 0) {
-        ndt_del(dtype);
         return NULL;
     }
 
@@ -574,8 +532,8 @@ var_copy_contiguous(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
     return var_from_offsets_and_dtype(&m, dtype, ctx);
 }
 
-ndt_t *
-ndt_copy_contiguous_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
+const ndt_t *
+ndt_copy_contiguous_dtype(const ndt_t *t, const ndt_t *dtype, ndt_context_t *ctx)
 {
     if (ndt_is_abstract(t) || ndt_is_abstract(dtype)) {
         ndt_err_format(ctx, NDT_ValueError,
@@ -591,27 +549,26 @@ ndt_copy_contiguous_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
         return var_copy_contiguous(t, dtype, ctx);
     }
     default:
+        ndt_incref(dtype);
         return dtype;
     }
 }
 
-ndt_t *
+const ndt_t *
 ndt_copy_contiguous(const ndt_t *t, ndt_context_t *ctx)
 {
-    ndt_t *dtype = ndt_copy(ndt_dtype(t), ctx);
-    if (dtype == NULL) {
-        return NULL;
-    }
+    const ndt_t *dtype = ndt_dtype(t);
 
     return ndt_copy_contiguous_dtype(t, dtype, ctx);
 }
 
-ndt_t *
-ndt_copy_abstract_var_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
+const ndt_t *
+ndt_copy_abstract_var_dtype(const ndt_t *t, const ndt_t *dtype, ndt_context_t *ctx)
 {
     bool opt = ndt_is_optional(t);
 
     if (t->ndim == 0) {
+        ndt_incref(dtype);
         return dtype;
     }
 
@@ -622,12 +579,14 @@ ndt_copy_abstract_var_dtype(const ndt_t *t, ndt_t *dtype, ndt_context_t *ctx)
                 "ndt_copy_abstract_var_dtype() called on concrete type");
             return NULL;
         }
-        ndt_t *u = ndt_copy_abstract_var_dtype(t->VarDim.type, dtype, ctx);
+        const ndt_t *u = ndt_copy_abstract_var_dtype(t->VarDim.type, dtype, ctx);
         if (u == NULL) {
             return NULL;
         }
 
-        return ndt_abstract_var_dim(u, opt, ctx);
+        const ndt_t *w = ndt_abstract_var_dim(u, opt, ctx);
+        ndt_decref(u);
+        return w;
     }
     default:
         ndt_err_format(ctx, NDT_ValueError,

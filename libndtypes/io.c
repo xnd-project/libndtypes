@@ -440,7 +440,7 @@ value(buf_t *buf, const ndt_value_t *mem, ndt_context_t *ctx)
 }
 
 static int
-categorical(buf_t *buf, ndt_value_t *mem, int64_t ntypes, ndt_context_t *ctx)
+categorical(buf_t *buf, const ndt_value_t *mem, int64_t ntypes, ndt_context_t *ctx)
 {
     int64_t i;
     int n;
@@ -983,7 +983,7 @@ ast_value(buf_t *buf, const ndt_value_t *mem, ndt_context_t *ctx)
 }
 
 static int
-ast_categorical(buf_t *buf, ndt_value_t *mem, int64_t ntypes, ndt_context_t *ctx)
+ast_categorical(buf_t *buf, const ndt_value_t *mem, int64_t ntypes, ndt_context_t *ctx)
 {
     int64_t i;
     int n;
@@ -1082,10 +1082,10 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                 n = ndt_snprintf_d(ctx, buf, d+2, "offsets=[");
                 if (n < 0) return -1;
 
-                for (i = 0; i < t->Concrete.VarDim.noffsets; i++) {
+                for (i = 0; i < t->Concrete.VarDim.offsets->n; i++) {
                     n = ndt_snprintf(ctx, buf, "%" PRIi32 "%s",
-                                     t->Concrete.VarDim.offsets[i],
-                                     i==t->Concrete.VarDim.noffsets-1 ? "" : ", ");
+                                     t->Concrete.VarDim.offsets->v[i],
+                                     i==t->Concrete.VarDim.offsets->n-1 ? "" : ", ");
                     if (n < 0) return -1;
                 }
 

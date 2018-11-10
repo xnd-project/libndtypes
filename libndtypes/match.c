@@ -103,7 +103,7 @@ resolve_broadcast(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 }
 
 static int
-check_contig(ndt_t *ptypes[], ndt_t *ctypes[], int64_t nargs)
+check_contig(const ndt_t *ptypes[], const ndt_t *ctypes[], int64_t nargs)
 {
     for (int i = 0; i < nargs; i++) {
         const ndt_t *p = ptypes[i];
@@ -130,14 +130,14 @@ check_contig(ndt_t *ptypes[], ndt_t *ctypes[], int64_t nargs)
     return 1;
 }
 
-static ndt_t *
-to_fortran(const ndt_t *p, ndt_t *c, ndt_context_t *ctx)
+static const ndt_t *
+to_fortran(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
 {
     if (p->tag == EllipsisDim && p->EllipsisDim.tag == RequireF) {
-        ndt_t *t = ndt_to_fortran(c, ctx);
-        return t;
+        return ndt_to_fortran(c, ctx);
     }
     else {
+        ndt_incref(c);
         return c;
     }
 }
@@ -332,8 +332,8 @@ match_record_fields(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
 }
 
 static int
-match_categorical(ndt_value_t *p, int64_t plen,
-                  ndt_value_t *c, int64_t clen)
+match_categorical(const ndt_value_t *p, int64_t plen,
+                  const ndt_value_t *c, int64_t clen)
 {
     int64_t i;
 
@@ -602,14 +602,13 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
     return ret;
 }
 
-static ndt_t *
+static const ndt_t *
 broadcast(const ndt_t *t, const int64_t *shape,
           int outer_dims, int inner_dims,
           bool use_max, ndt_context_t *ctx)
 {
     ndt_ndarray_t u;
-    const ndt_t *dtype;
-    ndt_t *v;
+    const ndt_t *v, *w;
     int64_t step;
     int ndim;
     int i, k;
@@ -619,14 +618,12 @@ broadcast(const ndt_t *t, const int64_t *shape,
         return NULL;
     }
 
-    dtype = ndt_dtype(t);
-    v = ndt_copy(dtype, ctx);
-    if (v == NULL) {
-        return NULL;
-    }
+    v = ndt_dtype(t);
+    ndt_incref(v);
 
     for (i=ndim-1; i>=ndim-inner_dims; i--) {
-        v = ndt_fixed_dim(v, u.shape[i], u.steps[i], ctx);
+        w = ndt_fixed_dim(v, u.shape[i], u.steps[i], ctx);
+        ndt_move(&v, w);
         if (v == NULL) {
             return NULL;
         }
@@ -634,7 +631,8 @@ broadcast(const ndt_t *t, const int64_t *shape,
 
     for (k=outer_dims-1; i>=0 && k>=0; i--, k--) {
         step = u.shape[i]<=1 ? 0 : u.steps[i];
-        v = ndt_fixed_dim(v, shape[k], step, ctx);
+        w = ndt_fixed_dim(v, shape[k], step, ctx);
+        ndt_move(&v, w);
         if (v == NULL) {
             return NULL;
         }
@@ -642,11 +640,12 @@ broadcast(const ndt_t *t, const int64_t *shape,
 
     for (; k>=0; k--) {
         if (use_max) {
-            v = ndt_fixed_dim(v, shape[k], INT64_MAX, ctx);
+            w = ndt_fixed_dim(v, shape[k], INT64_MAX, ctx);
         }
         else {
-            v = ndt_fixed_dim(v, shape[k], 0, ctx);
+            w = ndt_fixed_dim(v, shape[k], 0, ctx);
         }
+        ndt_move(&v, w);
         if (v == NULL) {
             return NULL;
         }
@@ -661,7 +660,7 @@ ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
                   const int64_t *shape, int outer_dims,
                   ndt_context_t *ctx)
 {
-    ndt_t *u;
+    const ndt_t *u;
     int inner_dims;
     int i;
 
@@ -682,7 +681,7 @@ ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
         if (u == NULL) {
             return -1;
         }
-        ndt_del(spec->out[i]);
+        ndt_decref(spec->out[i]);
         spec->out[i] = u;
     }
 
@@ -751,7 +750,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
               ndt_context_t *ctx)
 {
     symtable_t *tbl;
-    ndt_t *t;
+    const ndt_t *t;
     const char *name;
     int ret;
     int64_t i;
@@ -856,20 +855,20 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     symtable_del(tbl);
 
     for (i = 0; i < sig->Function.nout; i++) {
-        ndt_t *_p = sig->Function.types[nin+i];
-        ndt_t *_c = spec->out[i];
-        ndt_t *_t = to_fortran(_p, _c, ctx);
+        const ndt_t *_p = sig->Function.types[nin+i];
+        const ndt_t *_c = spec->out[i];
+        const ndt_t *_t = to_fortran(_p, _c, ctx);
+
         if (_t == NULL) {
             ndt_apply_spec_clear(spec);
             return -1;
         }
-        if (_t != _c) {
-            ndt_del(_c);
-        }
+
+        ndt_decref(_c);
         spec->out[i] = _t;
     }
 
-    if (!check_contig(sig->Function.types, (ndt_t **)in, nin)) {
+    if (!check_contig(sig->Function.types, in, nin)) {
         ndt_err_format(ctx, NDT_TypeError, "argument types do not match");
         return -1;
     }
@@ -888,11 +887,11 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
 /*                  Optimized binary typecheck for fixed input               */
 /*****************************************************************************/
 
-static ndt_t *
+static const ndt_t *
 binary_broadcast_1D(const ndt_ndarray_t *t, const ndt_t *dtype,
                     const int64_t *shape, int size, ndt_context_t *ctx)
 {
-    ndt_t *v;
+    const ndt_t *v;
     int64_t step;
     int i, k;
 
@@ -903,14 +902,18 @@ binary_broadcast_1D(const ndt_ndarray_t *t, const ndt_t *dtype,
 
     for (i=t->ndim-1, k=size-1; i>=0 && k>=0; i--, k--) {
         step = t->shape[i]<=1 ? 0 : t->steps[i];
-        v = ndt_fixed_dim(v, shape[k], step, ctx);
+        const ndt_t *w = ndt_fixed_dim(v, shape[k], step, ctx);
+        ndt_decref(v);
+        v = w;
         if (v == NULL) {
             return NULL;
         }
     }
 
     for (; k>=0; k--) {
-        v = ndt_fixed_dim(v, shape[k], 0, ctx);
+        const ndt_t *w = ndt_fixed_dim(v, shape[k], 0, ctx);
+        ndt_decref(v);
+        v = w;
         if (v == NULL) {
             return NULL;
         }
@@ -919,15 +922,17 @@ binary_broadcast_1D(const ndt_ndarray_t *t, const ndt_t *dtype,
     return v;
 }
 
-static ndt_t *
-fixed_dim_from_shape(const int64_t shape[], int len, ndt_t *dtype,
+static const ndt_t *
+fixed_dim_from_shape(const int64_t shape[], int len, const ndt_t *dtype,
                      ndt_context_t *ctx)
 {
-    ndt_t *t;
+    const ndt_t *t;
     int i;
 
     for (i=len-1, t=dtype; i >= 0; i--) {
-        t = ndt_fixed_dim(t, shape[i], INT64_MAX, ctx);
+        const ndt_t *u = ndt_fixed_dim(t, shape[i], INT64_MAX, ctx);
+        ndt_decref(t);
+        t = u;
         if (t == NULL) {
             return NULL;
         }
@@ -955,7 +960,7 @@ shape_equal(const ndt_ndarray_t *a, const ndt_ndarray_t *b)
 static int
 _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
                       const ndt_ndarray_t *x, const ndt_ndarray_t *y,
-                      const ndt_t *in[], const int nin, ndt_t *dtype,
+                      const ndt_t *in[], const int nin, const ndt_t *dtype,
                       int inner, ndt_context_t *ctx)
 {
     int64_t shape[NDT_MAX_DIM];
@@ -978,7 +983,6 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
         size = _resolve_broadcast(shape, x->ndim, y->shape, y->ndim);
         if (size < 0) {
             ndt_err_format(ctx, NDT_TypeError, "broadcast error");
-            ndt_del(dtype);
             return -1;
         }
 
@@ -993,14 +997,14 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
 
         spec->broadcast[0] = binary_broadcast_1D(x, ndt_dtype(in[0]), shape, size, ctx);
         if (spec->broadcast[0] == NULL) {
-            ndt_del(spec->out[0]);
+            ndt_decref(spec->out[0]);
             return -1;
         }
 
         spec->broadcast[1] = binary_broadcast_1D(y, ndt_dtype(in[1]), shape, size, ctx);
         if (spec->broadcast[1] == NULL) {
-            ndt_del(spec->out[0]);
-            ndt_del(spec->broadcast[0]);
+            ndt_decref(spec->out[0]);
+            ndt_decref(spec->broadcast[0]);
             return -1;
         }
     }
@@ -1055,10 +1059,10 @@ all_ndim0(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
  */
 int
 ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
-                                const ndt_t *in[], const int nin, ndt_t *dtype,
+                                const ndt_t *in[], const int nin, const ndt_t *dtype,
                                 ndt_context_t *ctx)
 {
-    ndt_t *p0, *p1, *p2;
+    const ndt_t *p0, *p1, *p2;
     ndt_ndarray_t x, y;
 
     assert(spec->flags == 0);
@@ -1096,12 +1100,10 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     }
 
     if (ndt_as_ndarray(&x, in[0], ctx) < 0) {
-        ndt_del(dtype);
         return -1;
     }
 
     if (ndt_as_ndarray(&y, in[1], ctx) < 0) {
-        ndt_del(dtype);
         return -1;
     }
 
@@ -1115,7 +1117,6 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
             const int64_t yshape = y.shape[y.ndim-1];
             if (xshape != 1 && yshape != 1 && xshape != yshape) {
                 ndt_err_format(ctx, NDT_TypeError, "mismatch in inner dimensions");
-                ndt_del(dtype);
                 return -1;
             }
         }

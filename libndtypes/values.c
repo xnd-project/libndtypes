@@ -56,7 +56,7 @@ ndt_value_del(ndt_value_t *mem)
 }
 
 void
-ndt_value_array_del(ndt_value_t *mem, int64_t ntypes)
+ndt_value_array_del(const ndt_value_t *mem, int64_t ntypes)
 {
     int64_t i;
 
@@ -70,7 +70,7 @@ ndt_value_array_del(ndt_value_t *mem, int64_t ntypes)
         }
     }
 
-    ndt_free(mem);
+    ndt_free((void *)mem);
 }
 
 /* Value sequences */
