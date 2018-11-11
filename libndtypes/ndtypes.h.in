@@ -848,7 +848,7 @@ NDTYPES_API const ndt_t *ndt_from_metadata_and_dtype(const ndt_meta_t *m, const 
 NDTYPES_API const ndt_t *ndt_from_metadata_opt_and_dtype(const ndt_meta_t *m, bool *opt, const ndt_t *dtype, ndt_context_t *ctx);
 
 NDTYPES_API ndt_meta_t *ndt_meta_new(ndt_context_t *ctx);
-void ndt_meta_clear(ndt_meta_t *m);
+NDTYPES_API void ndt_meta_clear(ndt_meta_t *m);
 NDTYPES_API void ndt_meta_del(ndt_meta_t *m);
 
 
