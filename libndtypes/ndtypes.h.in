@@ -67,8 +67,6 @@
     #define NDTYPES_API
   #endif
 
-  #include <WinBase.h>
-
   typedef _Dcomplex ndt_complex128_t;
   typedef _Fcomplex ndt_complex64_t;
   #define alignof __alignof
