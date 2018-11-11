@@ -201,7 +201,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
             return NULL;
         }
 
-        const ndt_t *w = ndt_constr(name, u, opt, ctx);
+        w = ndt_constr(name, u, opt, ctx);
         ndt_decref(u);
         return w;
     }
@@ -218,7 +218,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
             return NULL;
         }
 
-        const ndt_t *w = ndt_nominal(name, u, opt, ctx);
+        w = ndt_nominal(name, u, opt, ctx);
         ndt_decref(u);
         return w;
     }
@@ -229,7 +229,7 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
             return NULL;
         }
 
-        const ndt_t *w = ndt_ref(u, opt, ctx);
+        w = ndt_ref(u, opt, ctx);
         ndt_decref(u);
         return w;
     }
