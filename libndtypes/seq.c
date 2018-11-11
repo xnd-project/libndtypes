@@ -216,7 +216,7 @@ ndt_type_seq_grow(ndt_type_seq_t *seq, ndt_context_t *ctx)
 {
     const ndt_t **ptr;
 
-    ptr = (const ndt_t **)ndt_realloc(seq->ptr, seq->reserved, 2 * (sizeof *ptr));
+    ptr = ndt_realloc((void *)seq->ptr, seq->reserved, 2 * (sizeof *ptr));
     if (ptr == NULL) {
         ndt_err_format(ctx, NDT_MemoryError, "out of memory");
         return -1;
@@ -257,7 +257,7 @@ ndt_type_seq_finalize(ndt_type_seq_t *seq)
 
     assert(seq->len <= seq->reserved);
 
-    ptr = (const ndt_t **)ndt_realloc(seq->ptr, seq->len, sizeof *ptr);
+    ptr = ndt_realloc((void *)seq->ptr, seq->len, sizeof *ptr);
     if (ptr == NULL) {
         return seq; /* seq is still valid */
     }

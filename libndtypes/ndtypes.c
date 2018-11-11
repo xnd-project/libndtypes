@@ -537,7 +537,7 @@ void
 ndt_type_array_del(const ndt_t **types, int64_t shape)
 {
     ndt_type_array_clear(types, shape);
-    ndt_free(types);
+    ndt_free((void *)types);
 }
 
 
