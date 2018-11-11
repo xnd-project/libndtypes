@@ -1143,7 +1143,7 @@ ndt_incref_offsets(const ndt_offsets_t *x)
 {
     ndt_offsets_t *offsets = (ndt_offsets_t *)x;
 #ifdef _MSC_VER
-    (void)InterlockedIncrement64(&u->refcnt);
+    (void)InterlockedIncrement64(&offsets->refcnt);
 #else
     ++offsets->refcnt;
 #endif
@@ -1159,7 +1159,7 @@ ndt_decref_offsets(const ndt_offsets_t *x)
     }
 
 #ifdef _MSC_VER
-    if (InterlockedDecrement64(&u->refcnt) == 0) {
+    if (InterlockedDecrement64(&offsets->refcnt) == 0) {
         ndt_free((void *)offsets->v);
         ndt_free(offsets);
     }
