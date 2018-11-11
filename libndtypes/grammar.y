@@ -85,6 +85,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %union {
     const ndt_t *ndt;
     enum ndt tag;
+    enum ndt_alias alias;
     ndt_field_t *field;
     ndt_field_seq_t *field_seq;
     ndt_value_t *typed_value;
@@ -115,7 +116,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <tag> unsigned
 %type <tag> ieee_float
 %type <tag> ieee_complex
-%type <tag> alias
+%type <alias> alias
 
 %type <ndt> character
 %type <ndt> string

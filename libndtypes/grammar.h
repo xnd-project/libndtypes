@@ -131,6 +131,7 @@ union YYSTYPE
 
     const ndt_t *ndt;
     enum ndt tag;
+    enum ndt_alias alias;
     ndt_field_t *field;
     ndt_field_seq_t *field_seq;
     ndt_value_t *typed_value;
@@ -144,7 +145,7 @@ union YYSTYPE
     ndt_string_seq_t *string_seq;
     ndt_type_seq_t *type_seq;
 
-#line 148 "grammar.h" /* yacc.c:1909  */
+#line 149 "grammar.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -176,6 +177,6 @@ int ndt_yyparse (yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx);
   extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 180 "grammar.h" /* yacc.c:1909  */
+#line 181 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_NDT_YY_GRAMMAR_H_INCLUDED  */
