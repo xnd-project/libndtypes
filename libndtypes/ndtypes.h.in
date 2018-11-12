@@ -163,9 +163,6 @@ NDTYPES_API void ndt_incref_offsets(const ndt_offsets_t *);
 NDTYPES_API void ndt_decref_offsets(const ndt_offsets_t *);
 
 /*
- * Collect offsets during parsing for transferring ownership to an external
- * resource manager later.
- *
  * The arrays are addressed by t->ndim-1, where t->ndim > 0. It follows that
  * offsets[0] are the offsets of the innermost dimension and offsets[ndims-1]
  * the offsets of the outermost dimension.
