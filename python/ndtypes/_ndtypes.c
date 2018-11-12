@@ -639,7 +639,7 @@ ndtype_apply(PyObject *self, PyObject *args)
             PyErr_Format(PyExc_TypeError, "argument types must be ndt");
             return NULL;
         }
-        in[i] = CONST_NDT(tmp);
+        in[i] = NDT(tmp);
     }
 
     spec = ndt_apply_spec_empty;
@@ -974,13 +974,6 @@ Ndt_Check(const PyObject *v)
     return PyObject_TypeCheck(v, &Ndt_Type);
 }
 
-static const ndt_t *
-CONST_NDT(const PyObject *v)
-{
-    assert(Ndt_Check(v));
-    return ((NdtObject *)v)->ndt;
-}
-
 static PyObject *
 Ndt_SetError(ndt_context_t *ctx)
 {
@@ -1021,7 +1014,6 @@ init_api(void)
 {
     ndtypes_api[Ndt_CheckExact_INDEX] = (void *)Ndt_CheckExact;
     ndtypes_api[Ndt_Check_INDEX] = (void *)Ndt_Check;
-    ndtypes_api[CONST_NDT_INDEX] = (void *)CONST_NDT;
     ndtypes_api[Ndt_SetError_INDEX] = (void *)Ndt_SetError;
     ndtypes_api[Ndt_FromType_INDEX] = (void *)Ndt_FromType;
     ndtypes_api[Ndt_FromObject_INDEX] = (void *)Ndt_FromObject;

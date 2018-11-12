@@ -69,33 +69,28 @@ typedef struct {
 #define Ndt_Check_RETURN int
 #define Ndt_Check_ARGS (const PyObject *)
 
-#define CONST_NDT_INDEX 2
-#define CONST_NDT_RETURN const ndt_t *
-#define CONST_NDT_ARGS (const PyObject *)
-
-#define Ndt_SetError_INDEX 3
+#define Ndt_SetError_INDEX 2
 #define Ndt_SetError_RETURN PyObject *
 #define Ndt_SetError_ARGS (ndt_context_t *)
 
-#define Ndt_FromType_INDEX 4
+#define Ndt_FromType_INDEX 3
 #define Ndt_FromType_RETURN PyObject *
 #define Ndt_FromType_ARGS (const ndt_t *)
 
-#define Ndt_FromObject_INDEX 5
+#define Ndt_FromObject_INDEX 4
 #define Ndt_FromObject_RETURN PyObject *
 #define Ndt_FromObject_ARGS (PyObject *)
 
-#define Ndt_FromOffsetsAndDtype_INDEX 6
+#define Ndt_FromOffsetsAndDtype_INDEX 5
 #define Ndt_FromOffsetsAndDtype_RETURN PyObject *
 #define Ndt_FromOffsetsAndDtype_ARGS (PyObject *offsets, bool *opt, const ndt_t *dtype)
 
-#define NDTYPES_MAX_API 7
+#define NDTYPES_MAX_API 6
 
 
 #ifdef NDTYPES_MODULE
 static Ndt_CheckExact_RETURN Ndt_CheckExact Ndt_CheckExact_ARGS;
 static Ndt_Check_RETURN Ndt_Check Ndt_Check_ARGS;
-static CONST_NDT_RETURN CONST_NDT CONST_NDT_ARGS;
 static Ndt_SetError_RETURN Ndt_SetError Ndt_SetError_ARGS;
 static Ndt_FromType_RETURN Ndt_FromType Ndt_FromType_ARGS;
 static Ndt_FromObject_RETURN Ndt_FromObject Ndt_FromObject_ARGS;
@@ -108,9 +103,6 @@ static void **_ndtypes_api;
 
 #define Ndt_Check \
     (*(Ndt_Check_RETURN (*)Ndt_Check_ARGS) _ndtypes_api[Ndt_Check_INDEX])
-
-#define CONST_NDT \
-    (*(CONST_NDT_RETURN (*)CONST_NDT_ARGS) _ndtypes_api[CONST_NDT_INDEX])
 
 #define Ndt_SetError \
     (*(Ndt_SetError_RETURN (*)Ndt_SetError_ARGS) _ndtypes_api[Ndt_SetError_INDEX])
