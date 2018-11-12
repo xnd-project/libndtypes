@@ -445,12 +445,6 @@ class TestVarDim(unittest.TestCase):
         # Too many dimensions.
         self.assertRaises(TypeError, ndt, "var * " * (MAX_DIM + 1) + "float64")
 
-        # Nested var is disallowed.
-        self.assertRaises(TypeError, ndt, "2 * {a: var * complex128}")
-        self.assertRaises(TypeError, ndt, "var * {a: var * complex128}")
-        self.assertRaises(TypeError, ndt, "var * ref(var * string)")
-        self.assertRaises(TypeError, ndt, "var * SomeConstr(var * string)")
-
     def test_var_dim_external_offsets(self):
         # Invalid offsets.
         self.assertRaises(TypeError, ndt, "int8", [""])

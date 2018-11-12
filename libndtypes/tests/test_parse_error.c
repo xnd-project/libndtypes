@@ -27833,6 +27833,15 @@ const char *parse_error_tests[] = {
   "10 * 2 * (Dims... * int64)",
   "(Dims... * M * N * T, Dims... * N * P * T)",
 
+  /* Nested variable dimensions */
+  "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3]) * float32, int64)",
+  "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=[0,1]) * var(offsets=[0,3,5]) * float32, int64)",
+  "var(offsets=[0,2]) * var(offsets=[0,4]) * (var(offsets=[0,2]) * var(offsets=[0,3,5]) * float32, int64)",
+  "var(offsets=[0,1]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3,5]) * float32, int64)",
+  "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3,5]) * float32, intXX)",
+  "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3,5)) * float32, int64)",
+  "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=(0,2]) * var(offsets=[0,3,5]) * float32, int64)",
+
   /* END MANUALLY GENERATED */
 
   NULL

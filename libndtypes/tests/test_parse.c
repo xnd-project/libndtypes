@@ -337,6 +337,9 @@ const char *parse_tests[] = {
   "!2 * 10 * {a: !2 * 10 * float16}",
   "!2 * 10 * {a: !2 * 10 * (int64, string)}",
 
+  /* Nested variable dimensions */
+  "var(offsets=[0, 2]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3,5]) * float32, int64)",
+
   "2 * N * {a: !2 * 10 * (int64, string)}",
 
   /* Overflow */

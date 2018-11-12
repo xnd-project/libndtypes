@@ -576,7 +576,7 @@ ndt_typedef_from_string(const char *name, const char *type, const ndt_methods_t 
 /*                              Type invariants                               */
 /******************************************************************************/
 
-/* Invariants for all types except for var and ellipsis dimensions. */
+/* Invariants for all types except for dimensions. */
 static int
 check_type_invariants(const ndt_t *type, ndt_context_t *ctx)
 {
@@ -586,9 +586,27 @@ check_type_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
+    if (type->ndim >= NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %d", NDT_MAX_DIM);
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Invariants for fixed dimensions. */
+static int
+check_fixed_invariants(const ndt_t *type, ndt_context_t *ctx)
+{
+    if (type->tag == Module) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "nested module types are not supported");
+        return 0;
+    }
+
     if (type->tag == VarDim) {
         ndt_err_format(ctx, NDT_TypeError,
-            "nested or non-uniform var dimensions are not supported");
+            "mixed fixed and var dim are not supported");
         return 0;
     }
 
@@ -1344,7 +1362,7 @@ ndt_fixed_dim(const ndt_t *type, int64_t shape, int64_t step, ndt_context_t *ctx
     ndt_t *t;
     bool overflow = 0;
 
-    if (!check_type_invariants(type, ctx)) {
+    if (!check_fixed_invariants(type, ctx)) {
         return NULL;
     }
 
@@ -1601,7 +1619,7 @@ ndt_symbolic_dim(char *name, const ndt_t *type, ndt_context_t *ctx)
 {
     ndt_t *t;
 
-    if (!check_type_invariants(type, ctx)) {
+    if (!check_fixed_invariants(type, ctx)) {
         ndt_free(name);
         return NULL;
     }
