@@ -102,6 +102,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 
 %start input
 %type <ndt> input
+%type <ndt> union
 %type <ndt> datashape
 %type <ndt> datashape_or_module
 %type <ndt> datashape_with_ellipsis
@@ -246,11 +247,16 @@ dtype:
 | scalar                                          { $$ = $1; }
 | tuple_type                                      { $$ = $1; }
 | record_type                                     { $$ = $1; }
+| union                                           { $$ = $1; }
 | NAME_LOWER                                      { $$ = ndt_nominal($1, NULL, false, ctx); if ($$ == NULL) YYABORT; }
 | QUESTIONMARK NAME_LOWER                         { $$ = ndt_nominal($2, NULL, true, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER LPAREN datashape RPAREN              { $$ = mk_constr($1, $3, false, ctx); if ($$ == NULL) YYABORT; }
 | QUESTIONMARK NAME_UPPER LPAREN datashape RPAREN { $$ = mk_constr($2, $4, true, ctx); if ($$ == NULL) YYABORT; }
 | NAME_UPPER                                      { $$ = ndt_typevar($1, ctx); if ($$ == NULL) YYABORT; }
+
+union:
+  LBRACK type_seq RBRACK              { $$ = mk_union($2, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK LBRACK type_seq RBRACK { $$ = mk_union($3, true, ctx); if ($$ == NULL) YYABORT; }
 
 scalar:
   flags_opt BOOL               { $$ = ndt_primitive(Bool, $1, ctx); if ($$ == NULL) YYABORT; }

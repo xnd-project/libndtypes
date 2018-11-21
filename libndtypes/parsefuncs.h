@@ -85,6 +85,8 @@ const ndt_t *mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr
 const ndt_t *mk_constr(char *name, const ndt_t *type, bool opt, ndt_context_t *ctx);
 const ndt_t *mk_ref(const ndt_t *type, bool opt, ndt_context_t *ctx);
 
+const ndt_t *mk_union(ndt_type_seq_t *types, bool opt, ndt_context_t *ctx);
+
 const ndt_t *mk_categorical(ndt_value_seq_t *seq, bool opt, ndt_context_t *ctx);
 
 const ndt_t *mk_fixed_string(char *v, enum ndt_encoding encoding, bool opt, ndt_context_t *ctx);

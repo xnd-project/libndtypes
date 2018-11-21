@@ -811,6 +811,38 @@ read_nominal(const common_t *fields, const char * const ptr, int64_t offset,
 }
 
 static const ndt_t *
+read_union(common_t *fields, const char * const ptr, int64_t offset,
+           const int64_t len, ndt_context_t *ctx)
+{
+    int64_t metaoffset;
+    int64_t ntypes;
+    ndt_t *t;
+
+    offset = read_pos_int64(&ntypes, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    t = ndt_union_new(ntypes, 0, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    copy_common(t, fields);
+
+    metaoffset = offset;
+    for (int64_t i = 0; i < ntypes; i++) {
+        metaoffset = next_metaoffset(&offset, ptr, metaoffset, len, ctx);
+        if (metaoffset < 0) return NULL;
+
+        t->Union.types[i] = read_type(ptr, offset, len, ctx);
+        if (t->Union.types[i] == NULL) {
+            ndt_decref(t);
+            return NULL;
+        }
+    }
+
+    return t;
+}
+
+static const ndt_t *
 read_categorical(const common_t *fields, const char * const ptr, int64_t offset,
                  const int64_t len, ndt_context_t *ctx)
 {
@@ -970,6 +1002,7 @@ read_type(const char * const ptr, int64_t offset, const int64_t len,
     case Ref: return read_ref(&fields, ptr, offset, len, ctx);
     case Constr: return read_constr(&fields, ptr, offset, len, ctx);
     case Nominal: return read_nominal(&fields, ptr, offset, len, ctx);
+    case Union: return read_union(&fields, ptr, offset, len, ctx);
     case Categorical: return read_categorical(&fields, ptr, offset, len, ctx);
     case FixedString: return read_fixed_string(&fields, ptr, offset, len, ctx);
     case FixedBytes: return read_fixed_bytes(&fields, ptr, offset, len, ctx);

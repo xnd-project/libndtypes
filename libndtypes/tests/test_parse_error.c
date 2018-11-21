@@ -27842,6 +27842,12 @@ const char *parse_error_tests[] = {
   "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3,5)) * float32, int64)",
   "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=(0,2]) * var(offsets=[0,3,5]) * float32, int64)",
 
+  /* Union */
+  "[int8)",
+  "[int8, intx]",
+  "2 * 3 * ?[int8, intx]",
+  "2 * 3 * [int8, [int64, intx]]",
+
   /* END MANUALLY GENERATED */
 
   NULL

@@ -234,6 +234,27 @@ ndt_substitute(const ndt_t *t, const symtable_t *tbl, const bool req_concrete,
         return w;
     }
 
+    case Union: {
+        const ndt_t **types;
+
+        types = ndt_calloc(t->Union.ntypes, sizeof *types); 
+        if (types == NULL) {
+            return ndt_memory_error(ctx);
+        }
+
+        for (int64_t i = 0; i < t->Union.ntypes; i++) {
+            types[i] = ndt_substitute(t->Union.types[i], tbl, req_concrete, ctx);
+            if (types[i] == NULL) {
+                ndt_type_array_del(types, t->Union.ntypes);
+                return NULL;
+            }
+        }
+
+        w = ndt_union(types, t->Union.ntypes, opt, ctx);
+        ndt_type_array_del(types, t->Union.ntypes);
+        return w;
+    }
+
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:

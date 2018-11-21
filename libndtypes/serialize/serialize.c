@@ -319,6 +319,26 @@ write_nominal(char * const ptr, int64_t offset, const ndt_t * const t,
 }
 
 static int64_t
+write_union(char * const ptr, int64_t offset, const ndt_t * const t,
+            bool *overflow)
+{
+    const int64_t ntypes = t->Union.ntypes;
+    int64_t metaoffset;
+
+    offset = write_int64(ptr, offset, t->Union.ntypes, overflow);
+
+    metaoffset = offset;
+    offset = alloc_int64_array(offset, ntypes, overflow);
+
+    for (int64_t i = 0; i < ntypes; i++) {
+        metaoffset = write_int64(ptr, metaoffset, offset, overflow); 
+        offset = write_type(ptr, offset, t->Union.types[i], overflow);
+    }
+
+    return offset;
+}
+
+static int64_t
 write_categorical(char * const ptr, int64_t offset, const ndt_t * const t,
                   bool *overflow)
 {
@@ -383,6 +403,7 @@ write_type(char * const ptr, int64_t offset, const ndt_t * const t,
     case Ref: return write_ref(ptr, offset, t, overflow);
     case Constr: return write_constr(ptr, offset, t, overflow);
     case Nominal: return write_nominal(ptr, offset, t, overflow);
+    case Union: return write_union(ptr, offset, t, overflow);
     case Categorical: return write_categorical(ptr, offset, t, overflow);
     case FixedString: return write_fixed_string(ptr, offset, t, overflow);
     case FixedBytes: return write_fixed_bytes(ptr, offset, t, overflow);

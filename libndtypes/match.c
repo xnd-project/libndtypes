@@ -576,6 +576,19 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
     case Constr:
         return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
                ndt_equal(p->Constr.type, c->Constr.type);
+    case Union: {
+        int64_t i;
+        if (c->tag != Union || c->Union.ntypes != p->Union.ntypes) {
+            return 0;
+        }
+
+        for (i = 0; i < p->Union.ntypes; i++) {
+            n = match_datashape(p->Union.types[i], c->Union.types[i], tbl, ctx);
+            if (n <= 0) return n;
+        }
+
+        return 1;
+      }
     }
 
     /* NOT REACHED: tags should be exhaustive. */
