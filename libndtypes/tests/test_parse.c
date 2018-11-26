@@ -342,12 +342,6 @@ const char *parse_tests[] = {
 
   "2 * N * {a: !2 * 10 * (int64, string)}",
 
-  /* Union */
-  "[int8, int32]",
-  "[int8, (int64, complex128)]",
-  "2 * 3 * [int8, (int64, complex128)]",
-  "var(offsets=[0, 2]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3,5]) * [float32, uint8], int64)",
-
   /* Overflow */
   "9223372036854775807 * uint8",
   "1 * 1 * 9223372036854775807 * uint8",

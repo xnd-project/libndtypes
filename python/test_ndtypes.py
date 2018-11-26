@@ -771,33 +771,6 @@ class TestNominal(unittest.TestCase):
         self.assertRaises(ValueError, typedef, "some_t", "int64")
 
 
-class TestUnion(unittest.TestCase):
-
-    def test_union_predicates(self):
-        t = ndt("[float64, int8, complex128]")
-        check_serialize(self, t)
- 
-        self.assertTrue(t.isconcrete())
-        self.assertFalse(t.iscomplex())
-        self.assertFalse(t.isabstract())
-        self.assertFalse(t.isfloat())
-        self.assertFalse(t.isoptional())
-        self.assertFalse(t.isscalar())
-        self.assertFalse(t.issigned())
-        self.assertFalse(t.isunsigned())
-
-        self.assertTrue(t.is_c_contiguous())
-        self.assertTrue(t.is_f_contiguous())
-
-    def test_union_common_fields(self):
-        t = ndt("[float16, [int32, uint64]]")
-        check_serialize(self, t)
-
-        self.assertEqual(t.ndim, 0)
-        self.assertEqual(t.itemsize, 8)
-        self.assertEqual(t.align, 8)
-
-
 class TestScalarKind(unittest.TestCase):
 
     def test_scalar_kind_predicates(self):
@@ -1971,7 +1944,6 @@ ALL_TESTS = [
   TestRef,
   TestConstr,
   TestNominal,
-  TestUnion,
   TestScalarKind,
   TestCategorical,
   TestFixedStringKind,

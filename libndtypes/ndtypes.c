@@ -962,34 +962,6 @@ ndt_record_new(enum ndt_variadic flag, int64_t shape, bool opt, ndt_context_t *c
     return t;
 }
 
-ndt_t *
-ndt_union_new(int64_t ntypes, bool opt, ndt_context_t *ctx)
-{
-    ndt_t *t = NULL;
-    bool overflow = 0;
-    int64_t extra, i;
-
-    extra = MULi64(ntypes, sizeof(ndt_t *), &overflow);
-
-    if (overflow) {
-        ndt_err_format(ctx, NDT_ValueError, "union size too large");
-        return NULL;
-    }
-
-    t = ndt_new_extra(Union, extra, opt, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    t->Union.ntypes = ntypes;
-    t->Union.types = (const ndt_t **)t->extra;
-
-    for (i = 0; i < ntypes; i++) {
-        t->Union.types[i] = NULL;
-    }
-
-    return t;
-}
-
 static void
 ndt_del(ndt_t *t)
 {
@@ -1069,14 +1041,6 @@ ndt_del(ndt_t *t)
     case Nominal: {
         ndt_free(t->Nominal.name);
         ndt_decref(t->Nominal.type);
-        goto free_type;
-    }
-
-    case Union: {
-        int64_t i;
-        for (i = 0; i < t->Union.ntypes; i++) {
-            ndt_decref(t->Union.types[i]);
-        }
         goto free_type;
     }
 
@@ -2084,60 +2048,6 @@ ndt_nominal(char *name, const ndt_t *type, bool opt, ndt_context_t *ctx)
     t->access = type->access;
     t->datasize = type->datasize;
     t->align = type->align;
-
-    return t;
-}
-
-
-/******************************************************************************/
-/*                                   Union                                    */
-/******************************************************************************/
-
-const ndt_t *
-ndt_union(const ndt_t **types, int64_t ntypes, bool opt, ndt_context_t *ctx)
-{
-    enum ndt_access access = Concrete;
-    int64_t datasize = 0;
-    uint16_t align = 1;
-    ndt_t *t;
-    int64_t i;
-
-    if (ntypes == 0) {
-        ndt_err_format(ctx, NDT_ValueError, "cannot create empty union");
-        return NULL;
-    }
-
-    for (i = 0; i < ntypes; i++) {
-        if (!check_type_invariants(types[i], ctx)) {
-            return NULL;
-        }
-    }
-
-    t = ndt_union_new(ntypes, opt, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-
-    t->access = Concrete;
-    for (i = 0; i < ntypes; i++) {
-        const ndt_t *u = types[i];
-
-        if (ndt_is_abstract(u)) {
-            access = Abstract;
-        }
-        datasize = u->datasize > datasize ? u->datasize : datasize;
-        align = u->align > align ? u->align : align;
-
-        ndt_incref(types[i]);
-        t->Union.types[i] = types[i];
-        t->flags |= ndt_dim_flags(types[i]);
-    }
-
-    if (access == Concrete) {
-        t->access = Concrete;
-        t->datasize = datasize;
-        t->align =align;
-    }
 
     return t;
 }

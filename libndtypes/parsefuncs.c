@@ -212,16 +212,6 @@ mk_ref(const ndt_t *type, bool opt, ndt_context_t *ctx)
 }
 
 const ndt_t *
-mk_union(ndt_type_seq_t *types, bool opt, ndt_context_t *ctx)
-{
-    const ndt_t *t;
-
-    t = ndt_union(types->ptr, types->len, opt, ctx);
-    ndt_type_seq_del(types);
-    return t;
-}
-
-const ndt_t *
 mk_fortran(const ndt_t *type, ndt_context_t *ctx)
 {
     const ndt_t *t = ndt_to_fortran(type, ctx);

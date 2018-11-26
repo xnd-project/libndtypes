@@ -70,22 +70,6 @@ function_types_equal(const ndt_t *t, const ndt_t *u, int64_t nargs)
 }
 
 static int
-union_types_equal(const ndt_t *t, const ndt_t *u, int64_t ntypes)
-{
-    int64_t i;
-
-    assert(t->tag == Union && u->tag == Union);
-
-    for (i = 0; i < ntypes; i++) {
-        if (!ndt_equal(t->Union.types[i], u->Union.types[i])) {
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-static int
 tuple_fields_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
 {
     int64_t i;
@@ -239,14 +223,6 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
         }
 
         return ndt_equal(t->EllipsisDim.type, u->EllipsisDim.type);
-    }
-
-    case Union: {
-        if (t->Union.ntypes != u->Union.ntypes) {
-            return 0;
-        }
-
-        return union_types_equal(t, u, t->Union.ntypes);
     }
 
     case Tuple: {

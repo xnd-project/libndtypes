@@ -340,12 +340,6 @@ const char *parse_roundtrip_tests[] = {
   "!2 * 3 * uint8",
   "!2 * 3 * {a : !10 * 20 * int64, b : !10 * 2 * float64}",
 
-  /* Union */
-  "[complex128]",
-  "[complex128, int64]",
-  "2 * 3 * [complex128, int64]",
-  "var * var * [complex128, int64]",
-
   /* Overflow */
   "9223372036854775807 * uint8",
   "1 * 1 * 9223372036854775807 * uint8",

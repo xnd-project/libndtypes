@@ -562,9 +562,6 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         return unify_common((ndt_t *)w, t, u, ctx);
     }
 
-    case Union:
-        return unification_error("union unification not implemented", ctx);
-
     case AnyKind:
     case Module: case Function:
     case SymbolicDim: case EllipsisDim:

@@ -101,7 +101,7 @@ ndt_type_keyword(const ndt_t *t)
     case SymbolicDim: case EllipsisDim:
     case Tuple: case Record:
     case Nominal: case Constr:
-    case Union: case Typevar:
+    case Typevar:
         return "not a keyword";
     }
 
@@ -129,7 +129,6 @@ ndt_type_name(const ndt_t *t)
     case Ref: return "Ref";
     case Constr: return "Constr";
     case Nominal: return "Nominal";
-    case Union: return "Union";
 
     case ScalarKind: return "ScalarKind";
     case Categorical: return "Categorical";
@@ -651,16 +650,6 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             return ndt_snprintf(ctx, buf, "%s", t->Nominal.name);
         }
 
-        case Union: {
-            n = ndt_snprintf(ctx, buf, "[");
-            if (n < 0) return -1;
-
-            n = datashape_list(buf, t->Union.types, 0, t->Union.ntypes, d, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf(ctx, buf, "]");
-        }
-
         case Categorical: {
             n = ndt_snprintf(ctx, buf, "categorical(");
             if (n < 0) return -1;
@@ -973,30 +962,6 @@ ast_comma_ast_variadic_flag(buf_t *buf, enum ndt_variadic flag, int d, ndt_conte
 }
 
 static int
-ast_union_types(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
-{
-    int64_t i;
-    int n;
-
-    assert(t->tag == Union);
-
-    n = ndt_snprintf(ctx, buf, ",\n");
-    if (n < 0) return -1;
-
-    for (i = 0; i < t->Union.ntypes; i++) {
-        if (i >= 1) {
-            n = ndt_snprintf(ctx, buf, ",\n");
-            if (n < 0) return -1;
-        }
-
-        n = ast_datashape(buf, t->Union.types[i], d+5+2, 1, ctx);
-        if (n < 0) return -1;
-    }
-
-    return 0;
-}
-
-static int
 ast_value(buf_t *buf, const ndt_value_t *mem, ndt_context_t *ctx)
 {
     switch (mem->tag) {
@@ -1298,19 +1263,6 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf_d(ctx, buf, d, ")");
-        }
-
-        case Union: {
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Union(\n");
-            if (n < 0) return -1;
-
-            n = ndt_snprintf_d(ctx, buf, d+2, "types=[");
-            if (n < 0) return -1;
-
-            n = ast_union_types(buf, t, d+7+2, ctx);
-            if (n < 0) return -1;
-
-            return ndt_snprintf_d(ctx, buf, d, "]");
         }
 
         case Categorical: {
