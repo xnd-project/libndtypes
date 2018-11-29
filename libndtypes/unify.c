@@ -335,6 +335,10 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         return unify_common((ndt_t *)w, t, u, ctx);
     }
 
+    case VarDimElem: {
+        return unification_error("cannot unify VarDimElem", ctx);
+    }
+
     case Tuple: {
         if (u->tag != Tuple) {
             return unification_error("different types", ctx);

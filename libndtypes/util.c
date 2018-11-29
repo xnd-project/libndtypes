@@ -116,6 +116,20 @@ next_dim(const ndt_t *a)
     }
 }
 
+int
+ndt_ndim(const ndt_t *t)
+{
+    switch (t->tag) {
+    case VarDim:
+        return 1 + ndt_ndim(t->VarDim.type);
+    case VarDimElem:
+        return ndt_ndim(t->VarDimElem.type);
+    default:
+        return t->ndim;
+    }
+
+}
+
 const ndt_t *
 ndt_dtype(const ndt_t *t)
 {

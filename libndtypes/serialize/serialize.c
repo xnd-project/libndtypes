@@ -245,6 +245,14 @@ write_var_dim(char * const ptr, int64_t offset, const ndt_t * const t,
 }
 
 static int64_t
+write_var_dim_elem(char * const ptr, int64_t offset, const ndt_t * const t,
+                   bool *overflow)
+{
+    offset = write_int64(ptr, offset, t->VarDimElem.index, overflow);
+    return write_var_dim(ptr, offset, t, overflow);
+}
+
+static int64_t
 write_tuple(char * const ptr, int64_t offset, const ndt_t * const t,
             bool *overflow)
 {
@@ -378,6 +386,7 @@ write_type(char * const ptr, int64_t offset, const ndt_t * const t,
     case SymbolicDim: return write_symbolic_dim(ptr, offset, t, overflow);
     case EllipsisDim: return write_ellipsis_dim(ptr, offset, t, overflow);
     case VarDim: return write_var_dim(ptr, offset, t, overflow);
+    case VarDimElem: return write_var_dim_elem(ptr, offset, t, overflow);
     case Tuple: return write_tuple(ptr, offset, t, overflow);
     case Record: return write_record(ptr, offset, t, overflow);
     case Ref: return write_ref(ptr, offset, t, overflow);

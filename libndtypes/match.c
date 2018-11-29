@@ -400,6 +400,10 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
 {
     int n;
 
+    if (c->tag == VarDimElem) {
+        return match_datashape(p, c->VarDimElem.type, tbl, ctx);
+    }
+
     if (ndt_is_optional(c) != ndt_is_optional(p)) return 0;
 
     switch (p->tag) {
@@ -576,6 +580,10 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
     case Constr:
         return c->tag == Constr && strcmp(p->Constr.name, c->Constr.name) == 0 &&
                ndt_equal(p->Constr.type, c->Constr.type);
+    case VarDimElem:
+        ndt_err_format(ctx, NDT_ValueError,
+                       "VarDimElem cannot occur in pattern");
+        return -1;
     }
 
     /* NOT REACHED: tags should be exhaustive. */

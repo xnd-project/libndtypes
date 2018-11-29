@@ -622,6 +622,26 @@ read_var_dim(const common_t *fields, const char * const ptr, int64_t offset,
     return t;
 }
 
+static const ndt_t *
+read_var_dim_elem(const common_t *fields, const char * const ptr, int64_t offset,
+                  const int64_t len, ndt_context_t *ctx)
+{
+    ndt_t *t;
+    int64_t index;
+
+    offset = read_pos_int64(&index, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    t = (ndt_t *)read_var_dim(fields, ptr, offset, len, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    t->tag = VarDimElem;
+    t->VarDimElem.index = index;
+
+    return t;
+}
+
 static ndt_t *
 read_tuple(const common_t *fields, const char * const ptr, int64_t offset,
            const int64_t len, ndt_context_t *ctx)
@@ -965,6 +985,7 @@ read_type(const char * const ptr, int64_t offset, const int64_t len,
     case SymbolicDim: return read_symbolic_dim(&fields, ptr, offset, len, ctx);
     case EllipsisDim: return read_ellipsis_dim(&fields, ptr, offset, len, ctx);
     case VarDim: return read_var_dim(&fields, ptr, offset, len, ctx);
+    case VarDimElem: return read_var_dim_elem(&fields, ptr, offset, len, ctx);
     case Tuple: return read_tuple(&fields, ptr, offset, len, ctx);
     case Record: return read_record(&fields, ptr, offset, len, ctx);
     case Ref: return read_ref(&fields, ptr, offset, len, ctx);

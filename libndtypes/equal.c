@@ -184,6 +184,11 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
                ndt_equal(t->FixedDim.type, u->FixedDim.type);
     }
 
+    case VarDimElem:
+        if (t->VarDimElem.index != u->VarDimElem.index) {
+            return 0;
+        }
+        /* fall through */
     case VarDim: {
         if (t->Concrete.VarDim.itemsize != u->Concrete.VarDim.itemsize ||
             t->Concrete.VarDim.nslices != u->Concrete.VarDim.nslices) {

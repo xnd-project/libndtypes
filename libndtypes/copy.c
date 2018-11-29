@@ -77,6 +77,56 @@ ndt_copy_var_dim(const ndt_t *t, bool opt, ndt_context_t *ctx)
                        opt, ctx);
 }
 
+const ndt_t *
+ndt_convert_to_var_elem(const ndt_t *t, const ndt_t *type, int64_t index,
+                        ndt_context_t *ctx)
+{
+    ndt_t *u;
+    ndt_slice_t *slices;
+    int nslices;
+
+    if (t->tag != VarDim && t->tag != VarDimElem) {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "ndt_convert_to_var_elem: need var dim as input");
+        return NULL;
+    }
+
+    if (ndt_is_abstract(t))  {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "cannot convert abstract var dim into var elem");
+        return NULL;
+    }
+
+    if (ndt_is_optional(t))  {
+        ndt_err_format(ctx, NDT_ValueError,
+                       "cannot convert optional var dim into var elem");
+        return NULL;
+    }
+
+    slices = NULL;
+    nslices = t->Concrete.VarDim.nslices;
+
+    if (nslices > 0) {
+        slices = ndt_alloc(nslices, sizeof *slices);
+        if (slices == NULL) {
+            return ndt_memory_error(ctx);
+        }
+        memcpy(slices, t->Concrete.VarDim.slices,
+               nslices * (sizeof *slices));
+    }
+
+    u = (ndt_t *)ndt_var_dim(type, t->Concrete.VarDim.offsets,
+                             nslices, slices,
+                             false, ctx);
+    if (u == NULL) {
+        return NULL;
+    }
+
+    u->tag = VarDimElem;
+    u->VarDimElem.index = index;
+    return u;
+}
+
 static const ndt_t *
 ndt_copy_function(const ndt_t *t, ndt_context_t *ctx)
 {
@@ -227,6 +277,12 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 
     case VarDim: {
         u = (ndt_t *)ndt_copy_var_dim(t, opt, ctx);
+        goto copy_common_fields;
+    }
+
+    case VarDimElem: {
+        u = (ndt_t *)ndt_copy_var_dim(t, opt, ctx);
+        u->VarDimElem.index = t->VarDimElem.index;
         goto copy_common_fields;
     }
 

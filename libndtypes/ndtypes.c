@@ -113,7 +113,7 @@ ndt_itemsize(const ndt_t *t)
     switch (t->tag) {
     case FixedDim:
         return t->Concrete.FixedDim.itemsize;
-    case VarDim:
+    case VarDim: case VarDimElem:
         return t->Concrete.VarDim.itemsize;
     default:
         return t->datasize;
@@ -604,7 +604,7 @@ check_fixed_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == VarDim) {
+    if (type->tag == VarDim || type->tag == VarDimElem) {
         ndt_err_format(ctx, NDT_TypeError,
             "mixed fixed and var dim are not supported");
         return 0;
@@ -634,7 +634,8 @@ check_abstract_var_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == VarDim && ndt_is_concrete(type)) {
+    if ((type->tag == VarDim && ndt_is_concrete(type)) ||
+        type->tag == VarDimElem) {
         ndt_err_format(ctx, NDT_TypeError,
             "mixing abstract and concrete var dimensions is not allowed");
         return 0;
@@ -664,7 +665,7 @@ check_var_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == VarDim) {
+    if (type->tag == VarDim || type->tag == VarDimElem) {
         if (ndt_is_abstract(type)) {
             ndt_err_format(ctx, NDT_TypeError,
                 "mixing abstract and concrete var dimensions is not allowed");
@@ -989,7 +990,7 @@ ndt_del(ndt_t *t)
         goto free_type;
     }
 
-    case VarDim: {
+    case VarDim: case VarDimElem: {
         ndt_decref(t->VarDim.type);
         if (ndt_is_concrete(t)) {
             ndt_decref_offsets(t->Concrete.VarDim.offsets);
@@ -1268,6 +1269,7 @@ fixed_step(const ndt_t *type, int64_t step, bool *overflow)
 {
     assert(ndt_is_concrete(type));
     assert(type->tag != VarDim);
+    assert(type->tag != VarDimElem);
 
     if (step != INT64_MAX) {
         return step;
@@ -1472,12 +1474,11 @@ ndt_var_indices(int64_t *res_start, int64_t *res_step, const ndt_t *t,
     int32_t i;
 
     assert(ndt_is_concrete(t));
-    assert(t->tag == VarDim);
+    assert(t->tag == VarDim || t->tag == VarDimElem);
 
     if (index < 0 || index+1 >= t->Concrete.VarDim.offsets->n) {
-        ndt_err_format(ctx, NDT_ValueError,
-            "var dim index out of range: index=%" PRIi64 ", noffsets=%" PRIi32,
-            index, t->Concrete.VarDim.offsets->n);
+        ndt_err_format(ctx, NDT_IndexError,
+            "index with value %" PRIi64 " out of bounds", index);
         return -1;
     }
 
@@ -1504,6 +1505,52 @@ ndt_var_indices(int64_t *res_start, int64_t *res_step, const ndt_t *t,
     return res_shape;
 }
 
+/* Same as ndt_var_indices(), but skips empty slices in the stack. */
+int64_t
+ndt_var_indices_non_empty(int64_t *res_start, int64_t *res_step, const ndt_t *t,
+                          int64_t index, ndt_context_t *ctx)
+{
+    int64_t list_start, list_stop, list_shape;
+    int64_t start, stop, step;
+    int64_t shape, res_shape;
+    const ndt_slice_t *slices;
+    int32_t i;
+
+    assert(ndt_is_concrete(t));
+    assert(t->tag == VarDim || t->tag == VarDimElem);
+
+    if (index < 0 || index+1 >= t->Concrete.VarDim.offsets->n) {
+        ndt_err_format(ctx, NDT_IndexError,
+            "index with value %" PRIi64 " out of bounds", index);
+        return -1;
+    }
+
+    list_start = t->Concrete.VarDim.offsets->v[index];
+    list_stop = t->Concrete.VarDim.offsets->v[index+1];
+    list_shape = list_stop - list_start;
+
+    *res_start = 0;
+    *res_step = 1;
+    res_shape = list_shape;
+    slices = t->Concrete.VarDim.slices;
+
+    for (i = 0; i < t->Concrete.VarDim.nslices; i++) {
+        start = slices[i].start;
+        stop = slices[i].stop;
+        step = slices[i].step;
+        shape = ndt_slice_adjust_indices(res_shape, &start, &stop, step);
+        if (shape > 0) {
+            res_shape = shape;
+            *res_start += (start * *res_step);
+            *res_step *= step;
+        }
+    }
+
+    *res_start += list_start;
+
+    return res_shape;
+}
+
 ndt_slice_t *
 ndt_var_add_slice(int32_t *nslices, const ndt_t *t, 
                   int64_t start, int64_t stop, int64_t step,
@@ -1512,8 +1559,12 @@ ndt_var_add_slice(int32_t *nslices, const ndt_t *t,
     int n = t->Concrete.VarDim.nslices;
     ndt_slice_t *slices;
 
-    assert(ndt_is_concrete(t));
-    assert(t->tag == VarDim);
+    if (t->tag != VarDim || ndt_is_abstract(t)) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "ndt_var_add_slice: internal_error: argument must be a "
+            "concrete var dim");
+        return NULL;
+    }
 
     if (n == INT_MAX) {
         ndt_err_format(ctx, NDT_RuntimeError, "slice stack overflow");
@@ -1564,7 +1615,7 @@ ndt_var_dim(const ndt_t *type,
     }
 
     switch (type->tag) {
-    case VarDim:
+    case VarDim: case VarDimElem:
         if (offsets->v[offsets->n-1] != type->Concrete.VarDim.offsets->n-1) {
             ndt_err_format(ctx, NDT_ValueError,
                 "var_dim: missing or invalid number of offset arguments");

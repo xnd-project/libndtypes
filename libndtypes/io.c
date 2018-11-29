@@ -98,7 +98,7 @@ ndt_type_keyword(const ndt_t *t)
     case Complex128: return "complex128";
 
     case Module: case Function:
-    case SymbolicDim: case EllipsisDim:
+    case VarDimElem: case SymbolicDim: case EllipsisDim:
     case Tuple: case Record:
     case Nominal: case Constr:
     case Typevar:
@@ -121,6 +121,7 @@ ndt_type_name(const ndt_t *t)
 
     case FixedDim: return "FixedDim";
     case VarDim: return "VarDim";
+    case VarDimElem: return "VarDimElem";
     case SymbolicDim: return "SymbolicDim";
     case EllipsisDim: return "EllipsisDim";
 
@@ -538,6 +539,10 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return datashape(buf, t->VarDim.type, d, ctx);
+        }
+
+        case VarDimElem: {
+            return datashape(buf, t->VarDimElem.type, d, ctx);
         }
 
         case SymbolicDim: {
@@ -1066,10 +1071,11 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             return ndt_snprintf_d(ctx, buf, d, ")");
         }
 
-        case VarDim: {
+        case VarDim: case VarDimElem: {
             int i;
 
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "VarDim(\n");
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "%s(\n",
+                               ndt_type_name(t));
             if (n < 0) return -1;
 
             n = ast_datashape(buf, t->VarDim.type, d+2, 0, ctx);
@@ -1079,6 +1085,12 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             if (ndt_is_concrete(t)) {
+                if (t->tag == VarDimElem) {
+                    n = ndt_snprintf_d(ctx, buf, d+2, "index=%" PRIi64 ",\n",
+                                       t->VarDimElem.index);
+                    if (n < 0) return -1;
+                }
+
                 n = ndt_snprintf_d(ctx, buf, d+2, "offsets=[");
                 if (n < 0) return -1;
 
