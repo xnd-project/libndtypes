@@ -97,37 +97,25 @@ ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
 
 /* Return the next type in a dimension chain.  Undefined for non-dimensions. */
 static const ndt_t *
-next_dim(const ndt_t *a)
+next_dim(const ndt_t *t)
 {
-    assert(a->ndim > 0);
+    assert(t->ndim > 0);
 
-    switch (a->tag) {
+    switch (t->tag) {
     case FixedDim:
-        return a->FixedDim.type;
+        return t->FixedDim.type;
     case VarDim:
-        return a->VarDim.type;
+        return t->VarDim.type;
+    case VarDimElem:
+        return t->VarDimElem.type;
     case SymbolicDim:
-        return a->SymbolicDim.type;
+        return t->SymbolicDim.type;
     case EllipsisDim:
-        return a->EllipsisDim.type;
+        return t->EllipsisDim.type;
     default:
         /* NOT REACHED: tags should be exhaustive. */
         ndt_internal_error("invalid value");
     }
-}
-
-int
-ndt_ndim(const ndt_t *t)
-{
-    switch (t->tag) {
-    case VarDim:
-        return 1 + ndt_ndim(t->VarDim.type);
-    case VarDimElem:
-        return ndt_ndim(t->VarDimElem.type);
-    default:
-        return t->ndim;
-    }
-
 }
 
 const ndt_t *
@@ -140,16 +128,19 @@ ndt_dtype(const ndt_t *t)
     return t;
 }
 
-const ndt_t *
-ndt_dim_at(const ndt_t *t, int n)
+int
+ndt_logical_ndim(const ndt_t *t)
 {
-    assert(n <= t->ndim);
+    int ndim = t->ndim;
 
-    for (int i = 0; i < n; i++) {
-        t = next_dim(t);
+    while (t->tag == VarDim || t->tag == VarDimElem) {
+        if (t->tag == VarDimElem) {
+            --ndim;
+        }
+        t = t->VarDim.type;
     }
 
-    return t;
+    return ndim;
 }
 
 const ndt_t *
@@ -182,6 +173,39 @@ ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t 
     *dtype = t;
 
     return n;
+}
+
+/*
+ * Return the next logical type in a dimension chain.  Undefined for
+ * non-dimensions.
+ */
+static const ndt_t *
+next_logical_dim(const ndt_t *t)
+{
+    switch (t->tag) {
+    case FixedDim:
+        return t->FixedDim.type;
+    case VarDim:
+        return t->VarDim.type;
+    case VarDimElem:
+        return next_logical_dim(t->VarDimElem.type);
+    case SymbolicDim:
+        return t->SymbolicDim.type;
+    case EllipsisDim:
+        return t->EllipsisDim.type;
+    default:
+        return t;
+    }
+}
+
+static const ndt_t *
+ndt_dim_at(const ndt_t *t, int n)
+{
+    for (int i = 0; i < n; i++) {
+        t = next_logical_dim(t);
+    }
+
+    return t;
 }
 
 int
@@ -403,10 +427,12 @@ static bool
 all_inner_1D_contiguous(const ndt_t *types[], int n)
 {
     for (int i = 0; i < n; i++) {
-        if (types[i]->ndim == 0) {
+        int ldim = ndt_logical_ndim(types[i]);
+
+        if (ldim == 0) {
             return false;
         }
-        if (!ndt_is_c_contiguous(ndt_dim_at(types[i], types[i]->ndim-1))) {
+        if (!ndt_is_c_contiguous(ndt_dim_at(types[i], ldim-1))) {
             return false;
         }
     }

@@ -82,7 +82,8 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
         }
         else {
             const ndt_t *w = v.VarSeq.dims[0];
-            const ndt_t *x = ndt_copy_contiguous_dtype(w, u, ctx);
+            /* XXX: linear_index */
+            const ndt_t *x = ndt_copy_contiguous_dtype(w, u, 0, ctx);
             ndt_decref(u);
             return x;
         }

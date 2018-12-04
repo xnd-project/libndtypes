@@ -378,7 +378,7 @@ outer_inner(symtable_entry_t *v, int i, const ndt_t *t, int ndim)
         }
         return outer_inner(v, i+1, t->FixedDim.type, ndim);
     }
-    case VarDim: {
+    case VarDim: case VarDimElem: {
         switch (v->tag) {
         case VarSeq:
             v->VarSeq.size = i+1;
@@ -840,9 +840,15 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
             case FixedSeq:
                 spec->outer_dims = v.FixedSeq.size;
                 break;
-            case VarSeq:
-                spec->outer_dims = v.VarSeq.size;
+            case VarSeq: {
+                if (v.VarSeq.size > 0) {
+                    spec->outer_dims = ndt_logical_ndim(v.VarSeq.dims[0]);
+                }
+                else {
+                    spec->outer_dims = 0;
+                }
                 break;
+            }
             default:
                 ndt_err_format(ctx, NDT_RuntimeError,
                     "unexpected missing dimension list entry");

@@ -729,6 +729,7 @@ static PyObject *
 ndtype_ndim(PyObject *self, PyObject *args UNUSED)
 {
     const ndt_t *t = NDT(self);
+    int ldim;
 
     if (ndt_is_abstract(t)) {
         PyErr_SetString(PyExc_TypeError,
@@ -736,7 +737,8 @@ ndtype_ndim(PyObject *self, PyObject *args UNUSED)
         return NULL;
     }
 
-    return PyLong_FromLong(t->ndim);
+    ldim = ndt_logical_ndim(t);
+    return PyLong_FromLong(ldim);
 }
 
 static PyObject *

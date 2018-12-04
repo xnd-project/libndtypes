@@ -33,6 +33,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include <assert.h>
 #include "ndtypes.h"
 
@@ -443,8 +445,8 @@ fixed_copy_contiguous(const ndt_t *t, const ndt_t *type, ndt_context_t *ctx)
 
 typedef struct {
     int maxdim;
+    bool active[NDT_MAX_DIM+1];
     int32_t index[NDT_MAX_DIM+1];
-    int32_t noffsets[NDT_MAX_DIM+1];
     int32_t *offsets[NDT_MAX_DIM+1];
 } offsets_t;
 
@@ -457,81 +459,84 @@ clear_offsets(offsets_t *m)
 }
 
 static int
-var_init_offsets(offsets_t *m, const ndt_t *t, int32_t noffsets, ndt_context_t *ctx)
+var_init_offsets(offsets_t *m, ndt_context_t *ctx)
 {
     int32_t *offsets;
-    int64_t shape, start, step;
-    int64_t sum;
-    int32_t i;
 
-    assert(t->ndim >= 1);
-
-    offsets = ndt_alloc(noffsets, sizeof *offsets);
-    if (offsets == NULL) {
-        clear_offsets(m);
-        (void)ndt_memory_error(ctx);
-        return -1;
-    }
-    m->noffsets[t->ndim] = noffsets;
-    m->offsets[t->ndim] = offsets;
-
-    if (t->ndim == 1) {
-        return 0;
-    }
-
-    for (i=0, sum=0; i < noffsets-1; i++) {
-        shape = ndt_var_indices(&start, &step, t, i, ctx);
-        if (shape == -1) {
+    for (int i = 1; i <= m->maxdim; i++) {
+        offsets = ndt_calloc(m->index[i]+1, sizeof *offsets);
+        if (offsets == NULL) {
             clear_offsets(m);
+            (void)ndt_memory_error(ctx);
             return -1;
         }
-        sum += shape;
+        m->offsets[i] = offsets;
     }
 
-    return var_init_offsets(m, t->VarDim.type, (int32_t)sum+1, ctx);
+    return 0;
+}
+
+static int32_t
+get_index(int32_t shape, int64_t index, ndt_context_t *ctx)
+{
+    if (index < 0) {
+        index += shape;
+    }
+
+    if (index < 0 || index >= shape) {
+        ndt_err_format(ctx, NDT_IndexError,
+            "index with value %" PRIi64 " out of bounds",
+            index);
+        return -1;
+    }
+
+    return index;
 }
 
 static int
-var_copy_shapes(offsets_t *m, int64_t src_index, const ndt_t *t, ndt_context_t *ctx)
+var_copy_shapes(bool write, offsets_t *m, int64_t linear_index, const ndt_t *t,
+                ndt_context_t *ctx)
 {
     int64_t shape, start, step;
+    int64_t k;
 
     if (t->ndim == 0) {
         return 0;
     }
 
-    shape = ndt_var_indices(&start, &step, t, src_index, ctx);
+    shape = ndt_var_indices(&start, &step, t, linear_index, ctx);
     if (shape < 0) {
         clear_offsets(m);
         return -1;
     }
-    int32_t dst_index = m->index[t->ndim]++;
-    m->offsets[t->ndim][dst_index] = (int32_t)shape;
 
-    for (int64_t i = 0; i < shape; i++) {
-        int64_t src_next = start + i * step;
-        if (var_copy_shapes(m, src_next, t->VarDim.type, ctx) < 0) {
+    k = 0;
+    m->active[t->ndim] = true;
+
+    if (t->tag == VarDimElem) {
+        k = get_index(shape, t->VarDimElem.index, ctx);
+        if (k < 0) {
+            return -1;
+        }
+        shape = 1;
+        m->active[t->ndim] = false;
+    }
+
+    int32_t write_index = m->index[t->ndim]++;
+    if (write) {
+        int32_t sum = m->offsets[t->ndim][write_index];
+        m->offsets[t->ndim][write_index+1] = sum + (int32_t)shape;
+    }
+
+    for (int64_t i = k; i < k+shape; i++) {
+        int64_t next = start + i * step;
+        if (var_copy_shapes(write, m, next, t->VarDim.type, ctx) < 0) {
             clear_offsets(m);
             return -1;
         }
     }
 
     return 0;
-}
-
-static void
-var_sum_shapes(offsets_t *m)
-{
-    int i, k;
-
-    for (i = 1; i <= m->maxdim; i++) {
-        int32_t sum = 0;
-        for (k = 0; k < m->noffsets[i]; k++) {
-            int32_t s = m->offsets[i][k];
-            m->offsets[i][k] = sum;
-            sum += s;
-        }
-   }
 }
 
 const ndt_t *
@@ -543,7 +548,13 @@ var_from_offsets_and_dtype(offsets_t *m, const ndt_t *t, ndt_context_t *ctx)
     ndt_incref(t);
 
     for (i = 1; i <= m->maxdim; i++) {
-        ndt_offsets_t *offsets = ndt_offsets_from_ptr(m->offsets[i], m->noffsets[i], ctx);
+        if (!m->active[i]) {
+            ndt_free(m->offsets[i]);
+            m->offsets[i] = NULL;
+            continue;
+        }
+
+        ndt_offsets_t *offsets = ndt_offsets_from_ptr(m->offsets[i], m->index[i]+1, ctx);
 
         m->offsets[i] = NULL;
         if (offsets == NULL) {
@@ -566,30 +577,37 @@ var_from_offsets_and_dtype(offsets_t *m, const ndt_t *t, ndt_context_t *ctx)
 }
  
 static const ndt_t *
-var_copy_contiguous(const ndt_t *t, const ndt_t *dtype, ndt_context_t *ctx)
+var_copy_contiguous(const ndt_t *t, const ndt_t *dtype, int64_t linear_index,
+                    ndt_context_t *ctx)
 {
-    offsets_t m = {.maxdim=0, .index={0}, .noffsets={0}, .offsets={NULL}};
+    offsets_t m = {.maxdim=0, .index={0}, .offsets={NULL}};
 
-    assert(t->tag == VarDim);
     assert(ndt_is_concrete(t));
-    assert(t->Concrete.VarDim.offsets->n == 2);
 
-    if (var_init_offsets(&m, t, 2, ctx) < 0) {
-        return NULL;
-    }
     m.maxdim = t->ndim;
 
-    if (var_copy_shapes(&m, 0, t, ctx) < 0) {
+    if (var_copy_shapes(false, &m, linear_index, t, ctx) < 0) {
         return NULL;
     }
 
-    var_sum_shapes(&m);
+    if (var_init_offsets(&m, ctx) < 0) {
+        return NULL;
+    }
+
+    for (int i = 0; i <= m.maxdim; i++) {
+        m.index[i] = 0; 
+    }
+
+    if (var_copy_shapes(true, &m, linear_index, t, ctx) < 0) {
+        return NULL;
+    }
 
     return var_from_offsets_and_dtype(&m, dtype, ctx);
 }
 
 const ndt_t *
-ndt_copy_contiguous_dtype(const ndt_t *t, const ndt_t *dtype, ndt_context_t *ctx)
+ndt_copy_contiguous_dtype(const ndt_t *t, const ndt_t *dtype, int64_t linear_index,
+                          ndt_context_t *ctx)
 {
     if (ndt_is_abstract(t) || ndt_is_abstract(dtype)) {
         ndt_err_format(ctx, NDT_ValueError,
@@ -601,8 +619,8 @@ ndt_copy_contiguous_dtype(const ndt_t *t, const ndt_t *dtype, ndt_context_t *ctx
     case FixedDim: {
         return fixed_copy_contiguous(t, dtype, ctx);
     }
-    case VarDim: {
-        return var_copy_contiguous(t, dtype, ctx);
+    case VarDim: case VarDimElem: {
+        return var_copy_contiguous(t, dtype, linear_index, ctx);
     }
     default:
         ndt_incref(dtype);
@@ -611,11 +629,11 @@ ndt_copy_contiguous_dtype(const ndt_t *t, const ndt_t *dtype, ndt_context_t *ctx
 }
 
 const ndt_t *
-ndt_copy_contiguous(const ndt_t *t, ndt_context_t *ctx)
+ndt_copy_contiguous(const ndt_t *t, int64_t linear_index, ndt_context_t *ctx)
 {
     const ndt_t *dtype = ndt_dtype(t);
 
-    return ndt_copy_contiguous_dtype(t, dtype, ctx);
+    return ndt_copy_contiguous_dtype(t, dtype, linear_index, ctx);
 }
 
 const ndt_t *
