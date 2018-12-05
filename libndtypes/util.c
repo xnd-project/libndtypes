@@ -198,8 +198,8 @@ next_logical_dim(const ndt_t *t)
     }
 }
 
-static const ndt_t *
-ndt_dim_at(const ndt_t *t, int n)
+const ndt_t *
+ndt_logical_dim_at(const ndt_t *t, int n)
 {
     for (int i = 0; i < n; i++) {
         t = next_logical_dim(t);
@@ -432,7 +432,7 @@ all_inner_1D_contiguous(const ndt_t *types[], int n)
         if (ldim == 0) {
             return false;
         }
-        if (!ndt_is_c_contiguous(ndt_dim_at(types[i], ldim-1))) {
+        if (!ndt_is_c_contiguous(ndt_logical_dim_at(types[i], ldim-1))) {
             return false;
         }
     }
@@ -444,7 +444,7 @@ static bool
 all_inner_c_contiguous(const ndt_t *types[], int n, int outer)
 {
     for (int i = 0; i < n; i++) {
-        if (!ndt_is_c_contiguous(ndt_dim_at(types[i], outer))) {
+        if (!ndt_is_c_contiguous(ndt_logical_dim_at(types[i], outer))) {
             return false;
         }
     }
@@ -456,7 +456,7 @@ static bool
 all_inner_f_contiguous(const ndt_t *types[], int n, int outer)
 {
     for (int i = 0; i < n; i++) {
-        if (!ndt_is_f_contiguous(ndt_dim_at(types[i], outer))) {
+        if (!ndt_is_f_contiguous(ndt_logical_dim_at(types[i], outer))) {
             return false;
         }
     }

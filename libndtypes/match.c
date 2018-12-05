@@ -281,8 +281,8 @@ resolve_var(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
         return 1;
     }
 
-    return match_concrete_var_dim(w.VarSeq.dims[0], 0,
-                                  v.VarSeq.dims[0], 0,
+    return match_concrete_var_dim(w.VarSeq.dims[0], w.VarSeq.linear_index,
+                                  v.VarSeq.dims[0], v.VarSeq.linear_index,
                                   v.VarSeq.size, ctx);
 }
 
@@ -449,52 +449,6 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
         return match_datashape(p->SymbolicDim.type, c->FixedDim.type, tbl, ctx);
     }
 
-    case EllipsisDim: {
-        symtable_entry_t outer;
-        const ndt_t *inner;
-
-        if (p->EllipsisDim.tag == RequireC && !ndt_is_c_contiguous(c)) {
-            return 0;
-        }
-        if (p->EllipsisDim.tag == RequireF && !ndt_is_f_contiguous(c)) {
-            return 0;
-        }
-
-        if (p->EllipsisDim.name == NULL) {
-            outer.tag = BroadcastSeq;
-            outer.BroadcastSeq.size = 0;
-        }
-        else if (strcmp(p->EllipsisDim.name, "var") == 0) {
-            outer.tag = VarSeq;
-            outer.VarSeq.size = 0;
-        }
-        else {
-            outer.tag = FixedSeq;
-            outer.FixedSeq.size = 0;
-        }
-
-        inner = outer_inner(&outer, 0, c, p->EllipsisDim.type->ndim);
-        if (inner == NULL) {
-            return 0;
-        }
-
-        n = match_datashape(p->EllipsisDim.type, inner, tbl, ctx);
-        if (n <= 0) {
-            return n;
-        }
-
-        switch (outer.tag) {
-        case BroadcastSeq:
-            return resolve_broadcast(outer, tbl, ctx);
-        case FixedSeq:
-            return resolve_fixed(p->EllipsisDim.name, outer, tbl, ctx);
-        case VarSeq:
-            return resolve_var(outer, tbl, ctx);
-        default: /* NOT REACHED */
-            ndt_internal_error("invalid tag");
-        }
-    }
-
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -582,12 +536,73 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
                ndt_equal(p->Constr.type, c->Constr.type);
     case VarDimElem:
         ndt_err_format(ctx, NDT_ValueError,
-                       "VarDimElem cannot occur in pattern");
+            "VarDimElem cannot occur in pattern");
+        return -1;
+    case EllipsisDim:
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "match_datashape: internal_error: unexpected EllipsisDim");
         return -1;
     }
 
     /* NOT REACHED: tags should be exhaustive. */
     ndt_internal_error("invalid type");
+}
+
+static int
+match_datashape_top(const ndt_t *p, const ndt_t *c, int64_t linear_index,
+                    symtable_t *tbl, ndt_context_t *ctx)
+{
+    switch (p->tag) {
+    case EllipsisDim: {
+        symtable_entry_t outer;
+        const ndt_t *inner;
+        int n;
+
+        if (p->EllipsisDim.tag == RequireC && !ndt_is_c_contiguous(c)) {
+            return 0;
+        }
+        if (p->EllipsisDim.tag == RequireF && !ndt_is_f_contiguous(c)) {
+            return 0;
+        }
+
+        if (p->EllipsisDim.name == NULL) {
+            outer.tag = BroadcastSeq;
+            outer.BroadcastSeq.size = 0;
+        }
+        else if (strcmp(p->EllipsisDim.name, "var") == 0) {
+            outer.tag = VarSeq;
+            outer.VarSeq.size = 0;
+            outer.VarSeq.linear_index = linear_index;
+        }
+        else {
+            outer.tag = FixedSeq;
+            outer.FixedSeq.size = 0;
+        }
+
+        inner = outer_inner(&outer, 0, c, p->EllipsisDim.type->ndim);
+        if (inner == NULL) {
+            return 0;
+        }
+
+        n = match_datashape(p->EllipsisDim.type, inner, tbl, ctx);
+        if (n <= 0) {
+            return n;
+        }
+
+        switch (outer.tag) {
+        case BroadcastSeq:
+            return resolve_broadcast(outer, tbl, ctx);
+        case FixedSeq:
+            return resolve_fixed(p->EllipsisDim.name, outer, tbl, ctx);
+        case VarSeq:
+            return resolve_var(outer, tbl, ctx);
+        default: /* NOT REACHED */
+            ndt_internal_error("invalid tag");
+        }
+    }
+    default:
+        return match_datashape(p, c, tbl, ctx);
+    }
 }
 
 int
@@ -605,7 +620,7 @@ ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx)
         return -1;
     }
 
-    ret = match_datashape(p, c, tbl, ctx);
+    ret = match_datashape_top(p, c, 0, tbl, ctx);
     symtable_del(tbl);
     return ret;
 }
@@ -753,7 +768,7 @@ resolve_constraint(const ndt_constraint_t *c, const void *args, symtable_t *tbl,
  */
 int
 ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
-              const ndt_t *in[], const int nin,
+              const ndt_t *in[], const int64_t li[], const int nin,
               const ndt_constraint_t *c, const void *args,
               ndt_context_t *ctx)
 {
@@ -794,7 +809,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     }
 
     for (i = 0; i < nin; i++) {
-        ret = match_datashape(sig->Function.types[i], in[i], tbl, ctx);
+        ret = match_datashape_top(sig->Function.types[i], in[i], li[i], tbl, ctx);
         if (ret <= 0) {
             symtable_del(tbl);
 

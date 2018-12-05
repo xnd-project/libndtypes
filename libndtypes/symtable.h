@@ -52,7 +52,13 @@ enum symtable_entry {
 typedef struct {
     int size;
     const ndt_t *dims[NDT_MAX_DIM];
-} dim_list_t;
+} fixed_list_t;
+
+typedef struct {
+    int size;
+    int64_t linear_index;
+    const ndt_t *dims[NDT_MAX_DIM];
+} var_list_t;
 
 typedef struct {
     int size;
@@ -66,8 +72,8 @@ typedef struct {
     const char *Symbol;
     const ndt_t *Type;
     broadcast_list_t BroadcastSeq;
-    dim_list_t FixedSeq;
-    dim_list_t VarSeq;
+    fixed_list_t FixedSeq;
+    var_list_t VarSeq;
   };
 } symtable_entry_t;
 

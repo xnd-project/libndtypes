@@ -616,6 +616,7 @@ ndtype_apply(PyObject *self, PyObject *args)
     NDT_STATIC_CONTEXT(ctx);
     const ndt_t *sig = NDT(self);
     const ndt_t *in[NDT_MAX_ARGS];
+    const int64_t li[NDT_MAX_ARGS] = {0};
     ndt_apply_spec_t spec;
     PyObject *flags = NULL, *out = NULL, *broadcast = NULL, *outer_dims = NULL;
     PyObject *res = NULL;
@@ -644,7 +645,7 @@ ndtype_apply(PyObject *self, PyObject *args)
     }
 
     spec = ndt_apply_spec_empty;
-    if (ndt_typecheck(&spec, sig, in, (int)nin, NULL, NULL, &ctx) < 0) {
+    if (ndt_typecheck(&spec, sig, in, li, (int)nin, NULL, NULL, &ctx) < 0) {
         return seterr(&ctx);
     }
 

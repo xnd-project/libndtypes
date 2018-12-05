@@ -923,6 +923,7 @@ test_typecheck(void)
     const typecheck_testcase_t *test;
     const ndt_t *sig = NULL;
     type_array_t in;
+    const int64_t li[NDT_MAX_DIM] = {0};
     int count = 0;
     int ret = -1;
 
@@ -943,7 +944,7 @@ test_typecheck(void)
             ndt_err_clear(&ctx);
 
             ndt_set_alloc_fail();
-            ret = ndt_typecheck(&spec, sig, (const ndt_t **)in.types, in.size, NULL, NULL, &ctx);
+            ret = ndt_typecheck(&spec, sig, (const ndt_t **)in.types, li, in.size, NULL, NULL, &ctx);
             ndt_set_alloc();
 
             if (ctx.err != NDT_MemoryError) {
