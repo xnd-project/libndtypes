@@ -658,6 +658,8 @@ NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);
 NDTYPES_API int ndt_is_f_contiguous(const ndt_t *t);
 NDTYPES_API int ndt_really_fortran(const ndt_t *t);
 
+NDTYPES_API int ndt_is_var_contiguous(const ndt_t *t);
+
 NDTYPES_API int ndt_is_scalar(const ndt_t *t);
 NDTYPES_API int ndt_is_signed(const ndt_t *t);
 NDTYPES_API int ndt_is_unsigned(const ndt_t *t);

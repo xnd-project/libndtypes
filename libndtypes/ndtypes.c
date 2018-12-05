@@ -226,6 +226,44 @@ ndt_is_f_contiguous(const ndt_t *t)
     return 1;
 }
 
+static int
+_is_var_contiguous(const ndt_t *t, int32_t nitems)
+{
+    if (t->ndim == 0) {
+        return 1;
+    }
+
+    switch (t->tag) {
+    case VarDim: {
+        const int32_t noffsets = t->Concrete.VarDim.offsets->n;
+        const int32_t *offsets = t->Concrete.VarDim.offsets->v;
+
+        if (noffsets != nitems+1) {
+            return 0;
+        }
+
+        if (t->Concrete.VarDim.nslices != 0 ||
+            t->Concrete.VarDim.slices != NULL) {
+            return 0;
+        }
+
+        return _is_var_contiguous(t->VarDim.type, offsets[noffsets-1]);
+    }
+    default:
+        return 0;
+    }
+}
+
+int
+ndt_is_var_contiguous(const ndt_t *t)
+{
+    if (ndt_is_abstract(t)) {
+        return 0;
+    }
+
+    return _is_var_contiguous(t, 1);
+}
+
 int
 ndt_really_fortran(const ndt_t *t)
 {

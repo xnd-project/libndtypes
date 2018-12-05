@@ -531,6 +531,7 @@ Ndtype_BoolFunc(ndt_is_complex)
 
 Ndtype_BoolFunc(ndt_is_c_contiguous)
 Ndtype_BoolFunc(ndt_is_f_contiguous)
+Ndtype_BoolFunc(ndt_is_var_contiguous)
 
 
 static PyObject *
@@ -913,6 +914,7 @@ static PyMethodDef ndtype_methods [] =
   /* Boolean functions on array types */
   { "is_c_contiguous", (PyCFunction)ndtype_ndt_is_c_contiguous, METH_NOARGS, doc_is_c_contiguous },
   { "is_f_contiguous", (PyCFunction)ndtype_ndt_is_f_contiguous, METH_NOARGS, doc_is_f_contiguous },
+  { "is_var_contiguous", (PyCFunction)ndtype_ndt_is_var_contiguous, METH_NOARGS, NULL },
 
   /* Binary functions */
   { "match", (PyCFunction)ndtype_match, METH_O, doc_match },

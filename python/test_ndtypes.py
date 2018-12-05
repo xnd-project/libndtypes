@@ -81,6 +81,7 @@ class TestModule(unittest.TestCase):
 
         self.assertFalse(t.is_f_contiguous())
         self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_module_common_fields(self):
         t = ndt("SomeNamespace:: 2 * 3 * float64")
@@ -113,6 +114,7 @@ class TestFunction(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_function_common_fields(self):
         t = ndt("(10 * float64, string) -> float64")
@@ -145,6 +147,7 @@ class TestVoid(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_void_exceptions(self):
         # Void can only be used as a function return type.
@@ -167,6 +170,7 @@ class TestAny(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_any_common_fields(self):
         t = ndt("Any")
@@ -198,14 +202,17 @@ class TestFixedDim(unittest.TestCase):
 
         self.assertTrue(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
         t = ndt("20 * complex128")
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
         t = ndt("1 * 10 * complex128")
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_fixed_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
@@ -308,14 +315,17 @@ class TestFortran(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
         t = ndt("!20 * complex128")
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
         t = ndt("!1 * 10 * uint8")
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_fortran_common_fields(self):
         dt = "{a: complex64, b: string}"
@@ -416,6 +426,7 @@ class TestVarDim(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertTrue(t.is_var_contiguous())
 
     def test_var_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
@@ -490,6 +501,7 @@ class TestSymbolicDim(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_symbolic_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
@@ -522,6 +534,7 @@ class TestEllipsisDim(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_ellipsis_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
@@ -555,6 +568,7 @@ class TestTuple(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
         for s in ["(Any)", "(int64, N * M * uint8)", "(string, Float)"]:
             t = ndt(s)
@@ -571,6 +585,7 @@ class TestTuple(unittest.TestCase):
 
             self.assertFalse(t.is_c_contiguous())
             self.assertFalse(t.is_f_contiguous())
+            self.assertFalse(t.is_var_contiguous())
 
     def test_tuple_common_fields(self):
         f = "{a: complex64, b: string}"
@@ -605,6 +620,7 @@ class TestRecord(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
         for s in ["{a: Any, b: Complex}", "{x: N * M * T}"]:
             t = ndt(s)
@@ -621,6 +637,7 @@ class TestRecord(unittest.TestCase):
 
             self.assertFalse(t.is_c_contiguous())
             self.assertFalse(t.is_f_contiguous())
+            self.assertFalse(t.is_var_contiguous())
 
     def test_record_common_fields(self):
         f = "{a: complex64, b: string}"
@@ -655,6 +672,7 @@ class TestRef(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
         for s in ["&Any", "&(int64, N * M * uint8)"]:
             t = ndt(s)
@@ -671,6 +689,7 @@ class TestRef(unittest.TestCase):
 
             self.assertFalse(t.is_c_contiguous())
             self.assertFalse(t.is_f_contiguous())
+            self.assertFalse(t.is_var_contiguous())
 
     def test_ref_common_fields(self):
         a = "{a: complex64, b: string}"
@@ -704,6 +723,7 @@ class TestConstr(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
     def test_constr_common_fields(self):
         a = "{a: complex64, b: string}"
@@ -748,6 +768,7 @@ class TestNominal(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
     def test_nominal_common_fields(self):
         t = ndt("some_t")
@@ -788,6 +809,7 @@ class TestScalarKind(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_scalar_kind_common_fields(self):
         t = ndt("Scalar")
@@ -823,6 +845,7 @@ class TestCategorical(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
     def test_categorical_common_fields(self):
         t = ndt("categorical(NA, 'something', 'must', 'be', 'done')")
@@ -854,6 +877,7 @@ class TestFixedStringKind(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_fixed_string_kind_common_fields(self):
         t = ndt("FixedString")
@@ -883,6 +907,7 @@ class TestFixedString(unittest.TestCase):
 
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertTrue(t.is_var_contiguous())
 
     def test_fixed_string_common_fields(self):
         for encoding, codepoint_size in [
@@ -920,6 +945,7 @@ class TestFixedBytesKind(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_fixed_string_kind_common_fields(self):
         t = ndt("FixedBytes")
@@ -949,6 +975,7 @@ class TestFixedBytes(unittest.TestCase):
 
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertTrue(t.is_var_contiguous())
 
     def test_fixed_bytes_common_fields(self):
         for align in [1,2,4,8,16,32,64]:
@@ -986,6 +1013,7 @@ class TestString(unittest.TestCase):
 
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertTrue(t.is_var_contiguous())
 
     def test_string_common_fields(self):
         t = ndt("string")
@@ -1015,6 +1043,7 @@ class TestBytes(unittest.TestCase):
 
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertTrue(t.is_var_contiguous())
 
     def test_bytes_common_fields(self):
         t = ndt("bytes")
@@ -1045,6 +1074,7 @@ class TestChar(unittest.TestCase):
 
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertTrue(t.is_var_contiguous())
 
     def test_char_common_fields(self):
         t = ndt("char('utf32')")
@@ -1075,6 +1105,7 @@ class TestBool(unittest.TestCase):
 
         self.assertTrue(t.is_c_contiguous())
         self.assertTrue(t.is_f_contiguous())
+        self.assertTrue(t.is_var_contiguous())
 
     def test_bool_common_fields(self):
         t = ndt("bool")
@@ -1104,6 +1135,7 @@ class TestSignedKind(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_signed_kind_common_fields(self):
         t = ndt("Signed")
@@ -1136,6 +1168,7 @@ class TestSigned(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
     def test_signed_common_fields(self):
         for s, itemsize in [
@@ -1172,6 +1205,7 @@ class TestUnsignedKind(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_unsigned_kind_common_fields(self):
         t = ndt("Unsigned")
@@ -1204,6 +1238,7 @@ class TestUnsigned(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
     def test_unsigned_common_fields(self):
         for s, itemsize in [
@@ -1240,6 +1275,7 @@ class TestFloatKind(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_float_kind_common_fields(self):
         t = ndt("Float")
@@ -1275,6 +1311,7 @@ class TestFloat(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
     def test_float_common_fields(self):
         _float = [('float32', 4), ('float64', 8)]
@@ -1310,6 +1347,7 @@ class TestComplexKind(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_complex_kind_common_fields(self):
         t = ndt("Complex")
@@ -1344,6 +1382,7 @@ class TestComplex(unittest.TestCase):
 
             self.assertTrue(t.is_c_contiguous())
             self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
 
     def test_complex_common_fields(self):
         _complex = [('complex64', 8), ('complex128', 16)]
@@ -1379,6 +1418,7 @@ class TestTypevar(unittest.TestCase):
 
         self.assertFalse(t.is_c_contiguous())
         self.assertFalse(t.is_f_contiguous())
+        self.assertFalse(t.is_var_contiguous())
 
     def test_typevar_common_fields(self):
         t = ndt("T")
