@@ -217,41 +217,124 @@ resolve_typevar(const char *key, symtable_entry_t w, symtable_t *tbl, ndt_contex
     }
 }
 
+typedef struct {
+    int64_t index;
+    const ndt_t *type;
+} indexed_type_t;
+
+static indexed_type_t indexed_type_error = { 0, NULL };
+
+static inline int64_t
+adjust_index(const int64_t i, const int64_t shape, ndt_context_t *ctx)
+{
+    const int64_t k = i < 0 ? i + shape : i;
+
+    if (k < 0 || k >= shape) {
+        ndt_err_format(ctx, NDT_IndexError,
+            "index with value %" PRIi64 " out of bounds", i);
+        return -1;
+    }
+
+    return k;
+}
+
+static inline indexed_type_t
+var_dim_next(const indexed_type_t *x, const int64_t start, const int64_t step,
+             const int64_t i)
+{
+    indexed_type_t next;
+    const ndt_t *t = x->type;
+
+    next.index = start + i * step;
+    next.type = t->VarDim.type;
+
+    return next;
+}
+
+/* skip stored indices */
+static indexed_type_t
+apply_stored_index(const indexed_type_t *x, ndt_context_t *ctx)
+{
+    const ndt_t * const t = x->type;
+    int64_t start, step, shape;
+
+    if (t->tag != VarDimElem) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+                       "apply_stored_index: need VarDimElem");
+        return indexed_type_error;
+    }
+
+    shape = ndt_var_indices(&start, &step, t, x->index, ctx);
+    if (shape < 0) {
+        return indexed_type_error;
+    }
+
+    const int64_t i = adjust_index(t->VarDimElem.index, shape, ctx);
+    if (i < 0) {
+        return indexed_type_error;
+    }
+
+    return var_dim_next(x, start, step, i);
+}
+
+static indexed_type_t
+apply_stored_indices(const indexed_type_t *x, ndt_context_t *ctx)
+{
+    indexed_type_t tl = *x;
+
+    while (tl.type->tag == VarDimElem) {
+        tl = apply_stored_index(&tl, ctx);
+    }
+
+    return tl;
+}
+
 static int
-match_concrete_var_dim(const ndt_t *t, int64_t tindex,
-                       const ndt_t *u, int64_t uindex,
+match_concrete_var_dim(const indexed_type_t *a, const indexed_type_t *b,
                        const int outer_dims, ndt_context_t *ctx)
 {
-    int64_t tshape, tstart, tstep;
-    int64_t ushape, ustart, ustep;
+    int64_t xshape, xstart, xstep;
+    int64_t yshape, ystart, ystep;
 
     if (outer_dims == 0) {
         return 1;
     }
+
+    const indexed_type_t x = apply_stored_indices(a, ctx);
+    if (x.type == NULL) {
+        return -1;
+    }
+
+    const indexed_type_t y = apply_stored_indices(b, ctx);
+    if (x.type == NULL) {
+        return -1;
+    }
+
+    const ndt_t * const t = x.type;
+    const ndt_t * const u = y.type;
+
     if (t->Concrete.VarDim.itemsize != u->Concrete.VarDim.itemsize) {
         return 0;
     }
 
-    tshape = ndt_var_indices(&tstart, &tstep, t, tindex, ctx);
-    if (tshape < 0) {
+    xshape = ndt_var_indices(&xstart, &xstep, t, x.index, ctx);
+    if (xshape < 0) {
         return -1;
     }
 
-    ushape = ndt_var_indices(&ustart, &ustep, u, uindex, ctx);
-    if (ushape < 0) {
+    yshape = ndt_var_indices(&ystart, &ystep, u, y.index, ctx);
+    if (yshape < 0) {
         return -1;
     }
 
-    if (ushape != tshape) {
+    if (xshape != yshape) {
         return 0;
     }
 
-    for (int64_t i = 0; i < tshape; i++) {
-        int64_t tnext = tstart + i * tstep;
-        int64_t unext = ustart + i * ustep;
-        int ret = match_concrete_var_dim(t->VarDim.type, tnext,
-                                         u->VarDim.type, unext,
-                                         outer_dims-1, ctx);
+    for (int64_t i = 0; i < xshape; i++) {
+        const indexed_type_t xnext = var_dim_next(&x, xstart, xstep, i);
+        const indexed_type_t ynext = var_dim_next(&y, ystart, ystep, i);
+        int ret = match_concrete_var_dim(&xnext, &ynext, outer_dims-1, ctx);
         if (ret <= 0) {
             return ret;
         }
@@ -265,6 +348,7 @@ resolve_var(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 {
     const char *key = "var";
     symtable_entry_t v;
+    int vdims, wdims;
 
     v = symtable_find(tbl, key);
     if (v.tag == Unbound) {
@@ -274,16 +358,19 @@ resolve_var(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
         return 1;
     }
 
-    if (w.VarSeq.size != v.VarSeq.size) {
+    vdims = ndt_logical_ndim(v.VarSeq.dims[0]);
+    wdims = ndt_logical_ndim(w.VarSeq.dims[0]);
+
+    if (wdims != vdims) {
         return 0;
     }
-    if (v.VarSeq.size == 0) {
+    if (vdims == 0) {
         return 1;
     }
 
-    return match_concrete_var_dim(w.VarSeq.dims[0], w.VarSeq.linear_index,
-                                  v.VarSeq.dims[0], v.VarSeq.linear_index,
-                                  v.VarSeq.size, ctx);
+    const indexed_type_t x = { w.VarSeq.linear_index, w.VarSeq.dims[0] };
+    const indexed_type_t y = { v.VarSeq.linear_index, v.VarSeq.dims[0] };
+    return match_concrete_var_dim(&x, &y, vdims, ctx);
 }
 
 static int

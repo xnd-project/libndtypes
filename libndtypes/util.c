@@ -175,6 +175,16 @@ ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t 
     return n;
 }
 
+static const ndt_t *
+compress(const ndt_t *t)
+{
+    while (t->tag == VarDimElem) {
+        t = t->VarDimElem.type;
+    }
+
+    return t;
+}
+
 /*
  * Return the next logical type in a dimension chain.  Undefined for
  * non-dimensions.
@@ -186,9 +196,9 @@ next_logical_dim(const ndt_t *t)
     case FixedDim:
         return t->FixedDim.type;
     case VarDim:
-        return t->VarDim.type;
+        return compress(t->VarDim.type);
     case VarDimElem:
-        return next_logical_dim(t->VarDimElem.type);
+        return next_logical_dim(compress(t));
     case SymbolicDim:
         return t->SymbolicDim.type;
     case EllipsisDim:
