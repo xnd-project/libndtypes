@@ -193,7 +193,7 @@ ndt_aligned_calloc(uint16_t alignment, int64_t size)
     uintptr = (uintptr_t)ptr;
     aligned = uintptr + extra;
     if (aligned < uintptr) {
-        free(ptr);
+        ndt_free(ptr);
         return NULL;
     }
 
