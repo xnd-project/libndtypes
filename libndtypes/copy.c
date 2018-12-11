@@ -477,8 +477,8 @@ var_init_offsets(offsets_t *m, ndt_context_t *ctx)
     return 0;
 }
 
-static int32_t
-get_index(int32_t shape, int64_t index, ndt_context_t *ctx)
+static int64_t
+get_index(int64_t shape, int64_t index, ndt_context_t *ctx)
 {
     bool overflow = false;
 
@@ -493,7 +493,7 @@ get_index(int32_t shape, int64_t index, ndt_context_t *ctx)
         return -1;
     }
 
-    return (int32_t)index;
+    return index;
 }
 
 static int
