@@ -37,6 +37,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include "ndtypes.h"
+#include "overflow.h"
 
 
 static inline void
@@ -479,18 +480,20 @@ var_init_offsets(offsets_t *m, ndt_context_t *ctx)
 static int32_t
 get_index(int32_t shape, int64_t index, ndt_context_t *ctx)
 {
+    bool overflow = false;
+
     if (index < 0) {
-        index += shape;
+        index = ADDi64(index, shape, &overflow);
     }
 
-    if (index < 0 || index >= shape) {
+    if (overflow || index < 0 || index >= shape) {
         ndt_err_format(ctx, NDT_IndexError,
             "index with value %" PRIi64 " out of bounds",
             index);
         return -1;
     }
 
-    return index;
+    return (int32_t)index;
 }
 
 static int
