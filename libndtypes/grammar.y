@@ -165,8 +165,8 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    BOOL
    SIGNED_KIND INT8 INT16 INT32 INT64
    UNSIGNED_KIND UINT8 UINT16 UINT32 UINT64
-   FLOAT_KIND FLOAT16 FLOAT32 FLOAT64
-   COMPLEX_KIND COMPLEX32 COMPLEX64 COMPLEX128
+   FLOAT_KIND BFLOAT16 FLOAT16 FLOAT32 FLOAT64
+   COMPLEX_KIND BCOMPLEX32 COMPLEX32 COMPLEX64 COMPLEX128
    CATEGORICAL NA
    INTPTR UINTPTR SIZE
    CHAR
@@ -259,8 +259,10 @@ scalar:
 | flags_opt UNSIGNED_KIND      { $$ = ndt_unsigned_kind($1, ctx); if ($$ == NULL) YYABORT; }
 | flags_opt unsigned           { $$ = ndt_primitive($2, $1, ctx); if ($$ == NULL) YYABORT; }
 | flags_opt FLOAT_KIND         { $$ = ndt_float_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt BFLOAT16           { $$ = ndt_primitive(BFloat16, $1, ctx); if ($$ == NULL) YYABORT; }
 | flags_opt ieee_float         { $$ = ndt_primitive($2, $1, ctx); if ($$ == NULL) YYABORT; }
 | flags_opt COMPLEX_KIND       { $$ = ndt_complex_kind($1, ctx); if ($$ == NULL) YYABORT; }
+| flags_opt BCOMPLEX32         { $$ = ndt_primitive(BComplex32, $1, ctx); if ($$ == NULL) YYABORT; }
 | flags_opt ieee_complex       { $$ = ndt_primitive($2, $1, ctx); if ($$ == NULL) YYABORT; }
 | flags_opt alias              { $$ = ndt_from_alias($2, $1, ctx); if ($$ == NULL) YYABORT; }
 | character                    { $$ = $1; }

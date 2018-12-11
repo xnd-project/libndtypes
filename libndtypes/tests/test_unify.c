@@ -56,6 +56,7 @@ const unify_testcase_t unify_tests[] = {
   { "?int8", "int16", "?int16" },
   { "int8", "?int16", "?int16" },
 
+  { "bfloat16", "?bfloat16", "?bfloat16" },
   { "float16", "?float16", "?float16" },
 
   { "complex32", "?complex64", "?complex64" },

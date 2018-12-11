@@ -307,6 +307,12 @@ const char *parse_tests[] = {
   "10 * foo_t",
   "foo_t",
 
+  /* bfloat16 */
+  "10 * bfloat16",
+
+  /* bcomplex32 */
+  "10 * bcomplex32",
+
   /* Half-float */
   "10 * float16",
   "10 * complex32",
@@ -335,6 +341,9 @@ const char *parse_tests[] = {
   "!2 * 10 * float16",
   "!2 * 10 * {a: !2 * 10 * float16}",
   "!2 * 10 * {a: !2 * 10 * float16}",
+  "!2 * 10 * bfloat16",
+  "!2 * 10 * {a: !2 * 10 * bfloat16}",
+  "!2 * 10 * {a: !2 * 10 * bfloat16}",
   "!2 * 10 * {a: !2 * 10 * (int64, string)}",
 
   /* Nested variable dimensions */

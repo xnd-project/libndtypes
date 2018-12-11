@@ -276,7 +276,8 @@ format(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
         case Typevar:
         case AnyKind: case ScalarKind:
         case SignedKind: case UnsignedKind:
-        case FloatKind: case ComplexKind:
+        case FloatKind: case BFloat16:
+        case ComplexKind: case BComplex32:
         case FixedStringKind: case FixedBytesKind:
             ndt_err_format(ctx, NDT_ValueError,
                 "type is not supported by the buffer protocol");

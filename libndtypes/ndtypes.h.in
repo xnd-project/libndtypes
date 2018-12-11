@@ -235,11 +235,13 @@ enum ndt {
           Uint64,
 
         FloatKind,
+          BFloat16,
           Float16,
           Float32,
           Float64,
 
         ComplexKind,
+          BComplex32,
           Complex32,
           Complex64,
           Complex128,

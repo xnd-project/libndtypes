@@ -157,11 +157,13 @@ yycolumn = 1;
 "uint64"       { return UINT64; }
 
 "Float"        { return FLOAT_KIND; }
+"bfloat16"     { return BFLOAT16; }
 "float16"      { return FLOAT16; }
 "float32"      { return FLOAT32; }
 "float64"      { return FLOAT64; }
 
 "Complex"      { return COMPLEX_KIND; }
+"bcomplex32"   { return BCOMPLEX32; }
 "complex32"    { return COMPLEX32; }
 "complex64"    { return COMPLEX64; }
 "complex128"   { return COMPLEX128; }

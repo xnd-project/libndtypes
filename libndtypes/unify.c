@@ -537,7 +537,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         return unify_primitive(t, u, ctx);
     }
 
-    case Float16: case Float32: case Float64: {
+    case BFloat16: case Float16: case Float32: case Float64: {
         if (!ndt_is_float(u)) {
             return unification_error("different types", ctx);
         }
@@ -545,7 +545,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         return unify_primitive(t, u, ctx);
     }
 
-    case Complex32: case Complex64: case Complex128: {
+    case BComplex32: case Complex32: case Complex64: case Complex128: {
         if (!ndt_is_complex(u)) {
             return unification_error("different types", ctx);
         }

@@ -278,8 +278,8 @@ ndt_is_scalar(const ndt_t *t)
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
-    case Float16: case Float32: case Float64:
-    case Complex32: case Complex64: case Complex128:
+    case BFloat16: case Float16: case Float32: case Float64:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
     case FixedString: case FixedBytes:
     case String: case Bytes:
     case Char:
@@ -316,7 +316,7 @@ int
 ndt_is_float(const ndt_t *t)
 {
     switch (t->tag) {
-    case Float16: case Float32: case Float64:
+    case BFloat16: case Float16: case Float32: case Float64:
         return 1;
     default:
         return 0;
@@ -327,7 +327,7 @@ int
 ndt_is_complex(const ndt_t *t)
 {
     switch (t->tag) {
-    case Complex32: case Complex64: case Complex128:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
         return 1;
     default:
         return 0;
@@ -346,8 +346,8 @@ ndt_is_little_endian(const ndt_t *t)
     switch (t->tag) {
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
-    case Float16: case Float32: case Float64:
-    case Complex32: case Complex64: case Complex128:
+    case BFloat16: case Float16: case Float32: case Float64:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
         if (t->flags & NDT_LITTLE_ENDIAN) {
             return 1;
         }
@@ -366,8 +366,8 @@ ndt_is_big_endian(const ndt_t *t)
     switch (t->tag) {
     case Int16: case Int32: case Int64:
     case Uint16: case Uint32: case Uint64:
-    case Float16: case Float32: case Float64:
-    case Complex32: case Complex64: case Complex128:
+    case BFloat16: case Float16: case Float32: case Float64:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
         if (t->flags & NDT_BIG_ENDIAN) {
             return 1;
         }
@@ -1103,9 +1103,9 @@ ndt_del(ndt_t *t)
     case UnsignedKind:
     case Uint8: case Uint16: case Uint32: case Uint64:
     case FloatKind:
-    case Float16: case Float32: case Float64:
+    case BFloat16: case Float16: case Float32: case Float64:
     case ComplexKind:
-    case Complex32: case Complex64: case Complex128:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
         goto free_type;
     }
 
@@ -2428,7 +2428,7 @@ ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
         t->datasize = sizeof(uint64_t);
         t->align = alignof(uint64_t);
         break;
-    case Float16:
+    case BFloat16: case Float16:
         t->datasize = 2;
         t->align = 2;
         break;
@@ -2440,7 +2440,7 @@ ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
         t->datasize = sizeof(double);
         t->align = alignof(double);
         break;
-    case Complex32:
+    case BComplex32: case Complex32:
         t->datasize = 4;
         t->align = 2;
         break;

@@ -402,8 +402,8 @@ write_type(char * const ptr, int64_t offset, const ndt_t * const t,
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
-    case Float16: case Float32: case Float64:
-    case Complex32: case Complex64: case Complex128:
+    case BFloat16: case Float16: case Float32: case Float64:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
     case String:
 
     case AnyKind:

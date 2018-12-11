@@ -1292,9 +1292,7 @@ class TestFloatKind(unittest.TestCase):
 class TestFloat(unittest.TestCase):
 
     def test_float_predicates(self):
-        _float = ['float32', 'float64']
-        if HAVE_PYTHON_36:
-            _float.insert(0, 'float16')
+        _float = ['bfloat16', 'float16', 'float32', 'float64']
 
         for s in _float:
             t = ndt(s)
@@ -1314,9 +1312,7 @@ class TestFloat(unittest.TestCase):
             self.assertTrue(t.is_var_contiguous())
 
     def test_float_common_fields(self):
-        _float = [('float32', 4), ('float64', 8)]
-        if HAVE_PYTHON_36:
-            _float.insert(0, ('float16', 2))
+        _float = [('bfloat16', 2), ('float16', 2), ('float32', 4), ('float64', 8)]
 
         for s, itemsize in _float:
             t = ndt(s)
@@ -1363,9 +1359,7 @@ class TestComplexKind(unittest.TestCase):
 class TestComplex(unittest.TestCase):
 
     def test_complex_predicates(self):
-        _complex = ['complex64', 'complex128']
-        if HAVE_PYTHON_36:
-            _complex.insert(0, 'complex32')
+        _complex = ['bcomplex32', 'complex32', 'complex64', 'complex128']
 
         for s in _complex:
             t = ndt(s)
@@ -1385,9 +1379,7 @@ class TestComplex(unittest.TestCase):
             self.assertTrue(t.is_var_contiguous())
 
     def test_complex_common_fields(self):
-        _complex = [('complex64', 8), ('complex128', 16)]
-        if HAVE_PYTHON_36:
-            _complex.insert(0, ('complex32', 4))
+        _complex = [('bcomplex32', 4), ('complex32', 4), ('complex64', 8), ('complex128', 16)]
 
         for s, itemsize in _complex:
             t = ndt(s)
@@ -1555,12 +1547,9 @@ class TestBufferProtocol(unittest.TestCase):
           'c', 'b', 'B',
           'h', 'i', 'l', 'q',
           'H', 'I', 'L', 'Q',
-          'f', 'd']
+          'e', 'f', 'd']
 
         native = ['n', 'N']
-
-        if HAVE_PYTHON_36:
-            standard += ['e']
 
         for fmt in standard:
             for modifier in ['', '@', '=', '<', '>', '!']:
@@ -1584,14 +1573,13 @@ class TestBufferProtocol(unittest.TestCase):
                 self.assertRaises(ValueError, ndt.from_format, f)
                 self.assertRaises(struct.error, struct.Struct, f)
 
-        if HAVE_PYTHON_36:
-            # complex32
-            fmt = 'E'
-            for modifier in ['', '@', '=', '<', '>', '!']:
-                f = modifier + fmt
-                t = ndt.from_format(f)
-                if not HAVE_32_BIT_LINUX:
-                    self.assertEqual(t.itemsize, 4)
+        # complex32
+        fmt = 'E'
+        for modifier in ['', '@', '=', '<', '>', '!']:
+            f = modifier + fmt
+            t = ndt.from_format(f)
+            if not HAVE_32_BIT_LINUX:
+                self.assertEqual(t.itemsize, 4)
 
         # complex64
         fmt = 'F'

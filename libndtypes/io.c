@@ -88,11 +88,13 @@ ndt_type_keyword(const ndt_t *t)
     case Uint64: return "uint64";
 
     case FloatKind: return "FloatKind";
+    case BFloat16: return "bfloat16";
     case Float16: return "float16";
     case Float32: return "float32";
     case Float64: return "float64";
 
     case ComplexKind: return "ComplexKind";
+    case BComplex32: return "bcomplex32";
     case Complex32: return "complex32";
     case Complex64: return "complex64";
     case Complex128: return "complex128";
@@ -159,11 +161,13 @@ ndt_type_name(const ndt_t *t)
     case Uint64: return "Uint64";
 
     case FloatKind: return "FloatKind";
+    case BFloat16: return "BFloat16";
     case Float16: return "Float16";
     case Float32: return "Float32";
     case Float64: return "Float64";
 
     case ComplexKind: return "ComplexKind";
+    case BComplex32: return "BComplex32";
     case Complex32: return "Complex32";
     case Complex64: return "Complex64";
     case Complex128: return "Complex128";
@@ -714,9 +718,9 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         case UnsignedKind:
         case Uint8: case Uint16: case Uint32: case Uint64:
         case FloatKind:
-        case Float16: case Float32: case Float64:
+        case BFloat16: case Float16: case Float32: case Float64:
         case ComplexKind:
-        case Complex32: case Complex64: case Complex128:
+        case BComplex32: case Complex32: case Complex64: case Complex128:
         case FixedStringKind:
         case FixedBytesKind:
         case String:
@@ -1374,9 +1378,9 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
         case UnsignedKind:
         case Uint8: case Uint16: case Uint32: case Uint64:
         case FloatKind:
-        case Float16: case Float32: case Float64:
+        case BFloat16: case Float16: case Float32: case Float64:
         case ComplexKind:
-        case Complex32: case Complex64: case Complex128:
+        case BComplex32: case Complex32: case Complex64: case Complex128:
         case FixedStringKind: case FixedBytesKind:
         case String:
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "%s(", ndt_type_name(t));
