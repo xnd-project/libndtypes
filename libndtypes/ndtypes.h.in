@@ -50,7 +50,10 @@ extern "C" {
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <complex.h>
+
+#ifndef __cplusplus
+  #include <complex.h>
+#endif
 
 
 #if SIZE_MAX > ULLONG_MAX
@@ -89,9 +92,11 @@ extern "C" {
     #error "ndtypes requires IEEE floating point arithmetic"
   #endif
   #include <stdalign.h>
-  #include <stdatomic.h>
-  typedef double complex ndt_complex128_t;
-  typedef float complex ndt_complex64_t;
+  #ifndef __cplusplus
+    #include <stdatomic.h>
+    typedef double complex ndt_complex128_t;
+    typedef float complex ndt_complex64_t;
+  #endif
   #define MAX_ALIGN (alignof(max_align_t))
   #define NDT_SYS_BIG_ENDIAN @NDT_SYS_BIG_ENDIAN@
 #endif
@@ -156,7 +161,12 @@ enum ndt_variadic {
 };
 
 /* Offsets for a variable dimension.  Shared between copies or slices. */
-typedef struct {
+typedef struct _ndt_offsets ndt_offsets_t;
+
+#ifdef __cplusplus
+struct _ndt_offsets;
+#else
+struct _ndt_offsets {
 #ifdef _MSC_VER
     __int64 volatile refcnt;
 #else
@@ -164,7 +174,8 @@ typedef struct {
 #endif
     int32_t n;         /* number of offsets */
     const int32_t *v;  /* offset array */
-} ndt_offsets_t;
+};
+#endif
 
 NDTYPES_API ndt_offsets_t *ndt_offsets_new(int32_t size, ndt_context_t  *ctx);
 NDTYPES_API ndt_offsets_t *ndt_offsets_from_ptr(int32_t *ptr, int32_t size, ndt_context_t *ctx);
@@ -357,6 +368,9 @@ typedef struct {
 
 
 /* Datashape type */
+#ifdef __cplusplus
+struct _ndt;
+#else
 struct _ndt {
     /* Always defined */
     enum ndt tag;
@@ -502,6 +516,7 @@ struct _ndt {
 
     alignas(MAX_ALIGN) char extra[];
 };
+#endif
 
 
 /*****************************************************************************/
