@@ -171,7 +171,7 @@ offsets_from_list(ndt_meta_t *m, PyObject *list)
             offsets[k] = (int32_t)x;
         }
 
-        m->offsets[m->ndims] = ndt_offsets_from_ptr(offsets, noffsets, &ctx);
+        m->offsets[m->ndims] = ndt_offsets_from_ptr(offsets, (int32_t)noffsets, &ctx);
         if (m->offsets[m->ndims] == NULL) {
             (void)seterr(&ctx);
             return -1;
