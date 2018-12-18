@@ -79,12 +79,18 @@ extern "C" {
     #define NDTYPES_API
   #endif
 
-  typedef _Dcomplex ndt_complex128_t;
-  typedef _Fcomplex ndt_complex64_t;
   #define alignof __alignof
   #define alignas(n) __declspec(align(n))
   #define MAX_ALIGN 8
   #define NDT_SYS_BIG_ENDIAN 0
+
+  #ifdef __cplusplus
+    #define ATOMIC_INT64 int64_t
+  #else
+    #define ATOMIC_INT64 __int64 volatile
+    typedef _Dcomplex ndt_complex128_t;
+    typedef _Fcomplex ndt_complex64_t;
+  #endif
 #else
   #define NDTYPES_API
 
@@ -92,13 +98,18 @@ extern "C" {
     #error "ndtypes requires IEEE floating point arithmetic"
   #endif
   #include <stdalign.h>
-  #ifndef __cplusplus
+
+  #define MAX_ALIGN (alignof(max_align_t))
+  #define NDT_SYS_BIG_ENDIAN @NDT_SYS_BIG_ENDIAN@
+
+  #ifdef __cplusplus
+    #define ATOMIC_INT64 int64_t
+  #else
     #include <stdatomic.h>
+    #define ATOMIC_INT64 _Atomic int64_t
     typedef double complex ndt_complex128_t;
     typedef float complex ndt_complex64_t;
   #endif
-  #define MAX_ALIGN (alignof(max_align_t))
-  #define NDT_SYS_BIG_ENDIAN @NDT_SYS_BIG_ENDIAN@
 #endif
 
 #if (defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__)) && \
@@ -163,19 +174,11 @@ enum ndt_variadic {
 /* Offsets for a variable dimension.  Shared between copies or slices. */
 typedef struct _ndt_offsets ndt_offsets_t;
 
-#ifdef __cplusplus
-struct _ndt_offsets;
-#else
 struct _ndt_offsets {
-#ifdef _MSC_VER
-    __int64 volatile refcnt;
-#else
-    _Atomic int64_t refcnt;
-#endif
+    ATOMIC_INT64 refcnt;
     int32_t n;         /* number of offsets */
     const int32_t *v;  /* offset array */
 };
-#endif
 
 NDTYPES_API ndt_offsets_t *ndt_offsets_new(int32_t size, ndt_context_t  *ctx);
 NDTYPES_API ndt_offsets_t *ndt_offsets_from_ptr(int32_t *ptr, int32_t size, ndt_context_t *ctx);
@@ -368,9 +371,6 @@ typedef struct {
 
 
 /* Datashape type */
-#ifdef __cplusplus
-struct _ndt;
-#else
 struct _ndt {
     /* Always defined */
     enum ndt tag;
@@ -380,12 +380,6 @@ struct _ndt {
     /* Undefined if the type is abstract */
     int64_t datasize;
     uint16_t align;
-    /* Reference counting */
-#ifdef _MSC_VER
-    __int64 volatile refcnt;
-#else
-    _Atomic int64_t refcnt;
-#endif
 
     /* Abstract */
     union {
@@ -514,9 +508,12 @@ struct _ndt {
         };
     } Concrete;
 
+    /* Reference counting */
+    ATOMIC_INT64 refcnt;
+
+    /* Extra space */
     alignas(MAX_ALIGN) char extra[];
 };
-#endif
 
 
 /*****************************************************************************/
