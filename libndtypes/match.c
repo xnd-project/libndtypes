@@ -1045,6 +1045,8 @@ fixed_dim_from_shape(const int64_t shape[], int len, const ndt_t *dtype,
     const ndt_t *t;
     int i;
 
+    ndt_incref(dtype);
+
     for (i=len-1, t=dtype; i >= 0; i--) {
         const ndt_t *u = ndt_fixed_dim(t, shape[i], INT64_MAX, ctx);
         ndt_decref(t);
