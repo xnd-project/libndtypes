@@ -38,6 +38,13 @@
 #include "ndtypes.h"
 
 
+
+#define XSTRINGIZE(v) #v
+#define STRINGIZE(v) XSTRINGIZE(v)
+
+#define loc() __FILE__ ":" STRINGIZE(__LINE__)
+
+
 typedef struct {
     const char *input;
     const char *indented;
@@ -56,12 +63,18 @@ typedef struct {
 } unify_testcase_t;
 
 typedef struct {
-    const char *signature;
-    const char *in[128];
-    const char *out[128];
-    const char *broadcast[128];
-    int outer_dims;
+    const char *loc;
     bool success;
+
+    const char *signature;
+    const char *args[NDT_MAX_ARGS];
+    const char *kwargs[NDT_MAX_ARGS];
+
+    int outer_dims;
+    int nin;
+    int nout;
+    int nargs;
+    const char *types[NDT_MAX_ARGS];
 } typecheck_testcase_t;
 
 typedef struct {

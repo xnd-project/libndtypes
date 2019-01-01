@@ -765,34 +765,44 @@ broadcast(const ndt_t *t, const int64_t *shape,
 }
 
 int
-ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
-                  const ndt_t *in[], const int nin,
-                  const int64_t *shape, int outer_dims,
-                  ndt_context_t *ctx)
+ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool have_out_arg,
+                  const int64_t *shape, const int outer_dims, ndt_context_t *ctx)
 {
-    const ndt_t *u;
+    const int nin = spec->nin;
+    const int nout = spec->nout;
     int inner_dims;
     int i;
 
     for (i = 0; i < nin; i++) {
         inner_dims = sig->Function.types[i]->ndim-1;
-        spec->broadcast[i] = broadcast(in[i], shape,
-                                       outer_dims, inner_dims, false, ctx);
-        if (spec->broadcast[i] == NULL) {
-            return -1;
-        }
-        spec->nbroadcast++;
-    }
-
-    for (i = 0; i < spec->nout; i++) {
-        inner_dims = sig->Function.types[nin+i]->ndim-1;
-        u = broadcast(spec->out[i], shape,
-                      outer_dims, inner_dims, true, ctx);
+        const ndt_t *t = spec->types[i];
+        const ndt_t *u = broadcast(t, shape, outer_dims, inner_dims, false, ctx);
         if (u == NULL) {
             return -1;
         }
-        ndt_decref(spec->out[i]);
-        spec->out[i] = u;
+        ndt_decref(t);
+        spec->types[i] = u;
+    }
+
+    for (i = 0; i < nout; i++) {
+        inner_dims = sig->Function.types[nin+i]->ndim-1;
+        const ndt_t *t = spec->types[nin+i];
+        const ndt_t *u = broadcast(t, shape, outer_dims, inner_dims, true, ctx);
+        if (u == NULL) {
+            return -1;
+        }
+
+        if (have_out_arg) {
+            if (!ndt_equal(t, u)) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "explicit 'out' type not compatible with input types");
+                ndt_decref(u);
+                return -1;
+            }
+        }
+
+        ndt_decref(t);
+        spec->types[nin+i] = u;
     }
 
     spec->outer_dims = outer_dims;
@@ -801,8 +811,7 @@ ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
 }
 
 static int
-broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
-              const ndt_t *in[], const int nin,
+broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool have_out_arg,
               const symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
@@ -814,7 +823,7 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    return ndt_broadcast_all(spec, sig, in, nin,
+    return ndt_broadcast_all(spec, sig, have_out_arg,
                              v.BroadcastSeq.dims, v.BroadcastSeq.size,
                              ctx);
 }
@@ -855,20 +864,23 @@ resolve_constraint(const ndt_constraint_t *c, const void *args, symtable_t *tbl,
  */
 int
 ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
-              const ndt_t *in[], const int64_t li[], const int nin,
+              const ndt_t *types[], const int64_t li[],
+              const int nin, const int nout,
               const ndt_constraint_t *c, const void *args,
               ndt_context_t *ctx)
 {
     symtable_t *tbl;
     const ndt_t *t;
     const char *name;
-    int ret;
+    const int nargs = nin + nout;
     int64_t i;
+    int ret;
 
     assert(spec->flags == 0);
-    assert(spec->nout == 0);
-    assert(spec->nbroadcast == 0);
     assert(spec->outer_dims == 0);
+    assert(spec->nin == 0);
+    assert(spec->nout == 0);
+    assert(spec->nargs == 0);
 
     if (sig->tag != Function) {
         ndt_err_format(ctx, NDT_ValueError,
@@ -882,8 +894,19 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    for (i = 0; i < nin; i++) {
-        if (ndt_is_abstract(in[i])) {
+    /*
+     * Two configurations are allowed:
+     *   1) nout==0 and all 'out' types are inferred.
+     *   2) nout==sig->Function.nout and all 'out' types are given.
+     */
+    if (nout && nout != sig->Function.nout) {
+        ndt_err_format(ctx, NDT_ValueError,
+            "expected %" PRIi64 " 'out' arguments, got %d", sig->Function.nout, nout);
+        return -1;
+    }
+
+    for (i = 0; i < nargs; i++) {
+        if (ndt_is_abstract(types[i])) {
             ndt_err_format(ctx, NDT_ValueError,
                 "type checking requires concrete argument types");
             return -1;
@@ -895,8 +918,8 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    for (i = 0; i < nin; i++) {
-        ret = match_datashape_top(sig->Function.types[i], in[i], li[i], tbl, ctx);
+    for (i = 0; i < nargs; i++) {
+        ret = match_datashape_top(sig->Function.types[i], types[i], li[i], tbl, ctx);
         if (ret <= 0) {
             symtable_del(tbl);
 
@@ -914,15 +937,34 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    for (i = 0; i < sig->Function.nout; i++) {
-        spec->out[i] = ndt_substitute(sig->Function.types[nin+i], tbl, false, ctx);
-        if (spec->out[i] == NULL) {
-            ndt_apply_spec_clear(spec);
-            symtable_del(tbl);
-            return -1;
-        }
-        spec->nout++;
+    spec->nin = 0;
+    for (i = 0; i < nin; i++) {
+        ndt_incref(types[i]);
+        spec->types[i] = types[i];
+        spec->nin++;
     }
+
+    spec->nout = 0;
+    if (nout == 0) {
+        /* Infer the return types. */
+        for (i = 0; i < sig->Function.nout; i++) {
+            spec->types[nin+i] = ndt_substitute(sig->Function.types[nin+i], tbl, false, ctx);
+            if (spec->types[nin+i] == NULL) {
+                ndt_apply_spec_clear(spec);
+                symtable_del(tbl);
+                return -1;
+            }
+            spec->nout++;
+        }
+    }
+    else {
+        for (i = 0; i < nout; i++) {
+            ndt_incref(types[nin+i]);
+            spec->types[nin+i] = types[nin+i];
+            spec->nout++;
+        }
+    }
+    spec->nargs = spec->nin + spec->nout;
 
     if (sig->flags & NDT_ELLIPSIS) {
         if (sig->Function.nargs == 0 || sig->Function.types[0]->tag != EllipsisDim) {
@@ -960,7 +1002,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
             }
         }
         else {
-            if (broadcast_all(spec, sig, in, nin, tbl, ctx) < 0) {
+            if (broadcast_all(spec, sig, nout != 0, tbl, ctx) < 0) {
                 ndt_apply_spec_clear(spec);
                 symtable_del(tbl);
                 return -1;
@@ -970,30 +1012,29 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
 
     symtable_del(tbl);
 
-    for (i = 0; i < sig->Function.nout; i++) {
-        const ndt_t *_p = sig->Function.types[nin+i];
-        const ndt_t *_c = spec->out[i];
-        const ndt_t *_t = to_fortran(_p, _c, ctx);
+    if (nout == 0) {
+        for (i = 0; i < sig->Function.nout; i++) {
+           const ndt_t *_p = sig->Function.types[nin+i];
+           const ndt_t *_c = spec->types[nin+i];
+           const ndt_t *_t = to_fortran(_p, _c, ctx);
 
-        if (_t == NULL) {
-            ndt_apply_spec_clear(spec);
-            return -1;
+           if (_t == NULL) {
+              ndt_apply_spec_clear(spec);
+              return -1;
+           }
+
+            ndt_decref(_c);
+            spec->types[nin+i] = _t;
         }
-
-        ndt_decref(_c);
-        spec->out[i] = _t;
     }
 
-    if (!check_contig(sig->Function.types, in, nin)) {
+    if (!check_contig(sig->Function.types, types, nargs)) {
         ndt_err_format(ctx, NDT_TypeError, "argument types do not match");
-        return -1;
-    }
-    if (!check_contig(sig->Function.types+nin, spec->out, spec->nout)) {
-        ndt_err_format(ctx, NDT_TypeError, "argument types do not match");
+        ndt_apply_spec_clear(spec);
         return -1;
     }
 
-    ndt_select_kernel_strategy(spec, sig, in, nin);
+    ndt_select_kernel_strategy(spec, sig);
 
     return 0;
 }
@@ -1059,75 +1100,67 @@ fixed_dim_from_shape(const int64_t shape[], int len, const ndt_t *dtype,
     return t;
 }
 
-static bool
-shape_equal(const ndt_ndarray_t *a, const ndt_ndarray_t *b)
+static int
+broadcast_error(const char *msg, ndt_context_t *ctx)
 {
-    if (b->ndim != a->ndim) {
-        return false;
-    }
-
-    for (int i = 0; i < a->ndim; i++) {
-        if (b->shape[i] != a->shape[i]) {
-            return false;
-        }
-    }
-
-    return true;
+    ndt_err_format(ctx, NDT_TypeError, "%s", msg);
+    return -1;
 }
 
 static int
 _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
-                      const ndt_ndarray_t *x, const ndt_ndarray_t *y,
-                      const ndt_t *in[], const int nin, const ndt_t *dtype,
-                      int inner, ndt_context_t *ctx)
+                      const ndt_ndarray_t *x, const ndt_t *dtype_x,
+                      const ndt_ndarray_t *y, const ndt_t *dtype_y,
+                      const ndt_ndarray_t *z, const ndt_t *dtype_z,
+                      const int inner, ndt_context_t *ctx)
 {
     int64_t shape[NDT_MAX_DIM];
     int size;
 
-    if (shape_equal(x, y)) {
-        spec->nout = 1;
-        spec->nbroadcast = 0;
-        spec->outer_dims = x->ndim-inner;
-        spec->out[0] = fixed_dim_from_shape(x->shape, x->ndim, dtype, ctx);
-        if (spec->out[0] == NULL) {
-            return -1;
-        }
+    for (int i = 0; i < x->ndim; i++) {
+        shape[i] = x->shape[i];
     }
-    else {
-        for (int i = 0; i < x->ndim; i++) {
-            shape[i] = x->shape[i];
+
+    size = _resolve_broadcast(shape, x->ndim, y->shape, y->ndim);
+    if (size < 0) {
+        return broadcast_error("could not broadcast input arguments", ctx);
+    }
+
+    if (z != NULL) {
+        if (z->ndim != size) {
+            return broadcast_error("could not broadcast output argument", ctx);
         }
-
-        size = _resolve_broadcast(shape, x->ndim, y->shape, y->ndim);
-        if (size < 0) {
-            ndt_err_format(ctx, NDT_TypeError, "broadcast error");
-            return -1;
-        }
-
-        spec->nout = 1;
-        spec->nbroadcast = 2;
-        spec->outer_dims = size-inner;
-
-        spec->out[0] = fixed_dim_from_shape(shape, size, dtype, ctx);
-        if (spec->out[0] == NULL) {
-            return -1;
-        }
-
-        spec->broadcast[0] = binary_broadcast_1D(x, ndt_dtype(in[0]), shape, size, ctx);
-        if (spec->broadcast[0] == NULL) {
-            ndt_decref(spec->out[0]);
-            return -1;
-        }
-
-        spec->broadcast[1] = binary_broadcast_1D(y, ndt_dtype(in[1]), shape, size, ctx);
-        if (spec->broadcast[1] == NULL) {
-            ndt_decref(spec->out[0]);
-            ndt_decref(spec->broadcast[0]);
-            return -1;
+        for (int i = 0; i < z->ndim; i++) {
+            if (z->shape[i] != shape[i]) {
+                return broadcast_error("could not broadcast output argument", ctx);
+            }
         }
     }
 
-    ndt_select_kernel_strategy(spec, sig, in, nin);
+    spec->types[0] = binary_broadcast_1D(x, dtype_x, shape, size, ctx);
+    if (spec->types[0] == NULL) {
+        return -1;
+    }
+
+    spec->types[1] = binary_broadcast_1D(y, dtype_y, shape, size, ctx);
+    if (spec->types[1] == NULL) {
+        ndt_decref(spec->types[0]);
+        return -1;
+    }
+
+    spec->types[2] = fixed_dim_from_shape(shape, size, dtype_z, ctx);
+    if (spec->types[2] == NULL) {
+        ndt_decref(spec->types[0]);
+        ndt_decref(spec->types[1]);
+        return -1;
+    }
+
+    spec->outer_dims = size-inner;
+    spec->nin = 2;
+    spec->nout = 1;
+    spec->nargs = 3;
+
+    ndt_select_kernel_strategy(spec, sig);
 
     return 0;
 }
@@ -1177,16 +1210,17 @@ all_ndim0(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
  */
 int
 ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
-                                const ndt_t *in[], const int nin, const ndt_t *dtype,
-                                ndt_context_t *ctx)
+                                const ndt_t *types[], const int nin, const int nout,
+                                const ndt_t *dtype, ndt_context_t *ctx)
 {
     const ndt_t *p0, *p1, *p2;
-    ndt_ndarray_t x, y;
+    ndt_ndarray_t x, y, z;
 
     assert(spec->flags == 0);
-    assert(spec->nout == 0);
-    assert(spec->nbroadcast == 0);
     assert(spec->outer_dims == 0);
+    assert(spec->nin == 0);
+    assert(spec->nout == 0);
+    assert(spec->nargs == 0);
 
     if (sig->tag != Function ||
         sig->Function.nin != 2 ||
@@ -1217,12 +1251,18 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    if (ndt_as_ndarray(&x, in[0], ctx) < 0) {
+    if (ndt_as_ndarray(&x, types[0], ctx) < 0) {
         return -1;
     }
 
-    if (ndt_as_ndarray(&y, in[1], ctx) < 0) {
+    if (ndt_as_ndarray(&y, types[1], ctx) < 0) {
         return -1;
+    }
+
+    if (nout != 0) {
+        if (ndt_as_ndarray(&z, types[2], ctx) < 0) {
+            return -1;
+        }
     }
 
     p0 = p0->EllipsisDim.type;
@@ -1238,10 +1278,18 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                 return -1;
             }
         }
-        return _ndt_binary_broadcast(spec, sig, &x, &y, in, nin, dtype, 1, ctx);
+        return _ndt_binary_broadcast(spec, sig,
+                                     &x, ndt_dtype(types[0]),
+                                     &y, ndt_dtype(types[1]),
+                                     nout ? &z : NULL, dtype,
+                                     1, ctx);
     }
     else if (all_ndim0(p0, p1, p2)) {
-        return _ndt_binary_broadcast(spec, sig, &x, &y, in, nin, dtype, 0, ctx);
+        return _ndt_binary_broadcast(spec, sig,
+                                     &x, ndt_dtype(types[0]),
+                                     &y, ndt_dtype(types[1]),
+                                     nout ? &z : NULL, dtype,
+                                     0, ctx);
     }
     else {
         ndt_err_format(ctx, NDT_RuntimeError,

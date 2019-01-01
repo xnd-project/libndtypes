@@ -58,7 +58,7 @@
 /****************************************************************************/
 
 static PyObject *Deserialize = NULL;
-static PyTypeObject *ApplySpec = NULL;
+static PyTypeObject *_ApplySpec = NULL;
 
 
 /****************************************************************************/
@@ -611,41 +611,154 @@ ndtype_unify(PyObject *self, PyObject *other)
 }
 
 static PyObject *
-ndtype_apply(PyObject *self, PyObject *args)
+get_item_with_error(PyObject *d, const char *key)
+{
+    PyObject *s, *v;
+
+    s = PyUnicode_FromString(key);
+    if (s == NULL) {
+        return NULL;
+    }
+
+    v = PyDict_GetItemWithError(d, s);
+    Py_DECREF(s);
+    return v;
+}
+
+static int
+parse_args(const ndt_t *types[NDT_MAX_ARGS], int *py_nin, int *py_nout, int *py_nargs,
+           PyObject *args, PyObject *kwargs)
+{
+    Py_ssize_t nin;
+    Py_ssize_t nout;
+
+    if (!PyTuple_Check(args)) {
+        PyErr_Format(PyExc_SystemError,
+            "apply: internal error: expected tuple, got '%.200s'",
+            Py_TYPE(args)->tp_name);
+        return -1;
+    }
+
+    nin = PyTuple_GET_SIZE(args);
+    if (nin > NDT_MAX_ARGS) {
+        PyErr_Format(PyExc_TypeError,
+            "maximum number of arguments is %d, got %n", NDT_MAX_ARGS, nin);
+        return -1;
+    }
+
+    for (Py_ssize_t i = 0; i < nin; i++) {
+        PyObject *v = PyTuple_GET_ITEM(args, i);
+        if (!Ndt_Check(v)) {
+            PyErr_Format(PyExc_TypeError,
+                "expected ndt argument, got '%.200s'", Py_TYPE(v)->tp_name);
+            return -1;
+        }
+
+        types[i] = NDT(v);
+    }
+
+    if (kwargs == NULL) {
+        nout = 0;
+    }
+    else {
+        if (!PyDict_Check(kwargs)) {
+            PyErr_Format(PyExc_SystemError,
+                "apply: internal error: expected dict, got '%.200s'",
+                Py_TYPE(args)->tp_name);
+            return -1;
+        }
+
+        if (PyDict_Size(kwargs) != 1) {
+            PyErr_SetString(PyExc_TypeError,
+                "the only supported keyword argument is 'out'");
+            return -1;
+        }
+
+        PyObject *out = get_item_with_error(kwargs, "out");
+        if (out == NULL) {
+            if (PyErr_Occurred()) {
+                return -1;
+            }
+            PyErr_SetString(PyExc_TypeError,
+                "the only supported keyword argument is 'out'");
+            return -1;
+        }
+
+        if (out == Py_None) {
+            nout = 0;
+        }
+        else if (Ndt_Check(out)) {
+            nout = 1;
+            if (nin+nout > NDT_MAX_ARGS) {
+                PyErr_Format(PyExc_TypeError,
+                    "maximum number of arguments is %d, got %n", NDT_MAX_ARGS, nin);
+                return -1;
+            }
+
+            types[nin] = NDT(out);
+        }
+        else if (PyTuple_Check(out)) {
+            nout = PyTuple_GET_SIZE(out);
+            if (nout > NDT_MAX_ARGS || nout+nin > NDT_MAX_ARGS) {
+                PyErr_Format(PyExc_TypeError,
+                    "maximum number of arguments is %d, got %n", NDT_MAX_ARGS, nin);
+                return -1;
+            }
+
+            for (Py_ssize_t i = 0; i < nout; i++) {
+                PyObject *v = PyTuple_GET_ITEM(args, i);
+                if (!Ndt_Check(v)) {
+                    PyErr_Format(PyExc_TypeError,
+                        "expected ndt argument, got '%.200s'", Py_TYPE(v)->tp_name);
+                    return -1;
+                }
+
+                types[nin+i] = NDT(v);
+            }
+        }
+        else {
+            PyErr_Format(PyExc_TypeError,
+                "'out' argument must be ndt or a tuple of ndt, got '%.200s'",
+                Py_TYPE(out)->tp_name);
+            return -1;
+        }
+    }
+
+    for (int i = 0; i < nin+nout; i++) {
+        ndt_incref(types[i]);
+    }
+
+    *py_nin = (int)nin;
+    *py_nout = (int)nout;
+    *py_nargs = (int)nin+(int)nout;
+
+    return 0;
+}
+
+static PyObject *
+ndtype_apply(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     NDT_STATIC_CONTEXT(ctx);
     const ndt_t *sig = NDT(self);
-    const ndt_t *in[NDT_MAX_ARGS];
+    const ndt_t *types[NDT_MAX_ARGS] = {NULL};
     const int64_t li[NDT_MAX_ARGS] = {0};
-    ndt_apply_spec_t spec;
-    PyObject *flags = NULL, *out = NULL, *broadcast = NULL, *outer_dims = NULL;
+    ndt_apply_spec_t spec = ndt_apply_spec_empty;
+    int py_nin, py_nout, py_nargs;
     PyObject *res = NULL;
-    Py_ssize_t nin;
+    PyObject *flags = NULL;
+    PyObject *outer_dims = NULL;
+    PyObject *nin = NULL;
+    PyObject *nout = NULL;
+    PyObject *nargs = NULL;
+    PyObject *lst = NULL;
     Py_ssize_t i;
 
-    if (!PyTuple_Check(args) && !PyList_Check(args)) {
-        PyErr_SetString(PyExc_TypeError, "arguments must be a tuple or a list");
+    if (parse_args(types, &py_nin, &py_nout, &py_nargs, args, kwargs) < 0) {
         return NULL;
     }
 
-    nin = PySequence_Fast_GET_SIZE(args);
-    if (nin > NDT_MAX_ARGS) {
-        PyErr_Format(PyExc_ValueError,
-            "maximum number of arguments is %d", NDT_MAX_ARGS);
-        return NULL;
-    }
-
-    for (i = 0; i < nin; i++) {
-        PyObject *tmp = PySequence_Fast_GET_ITEM(args, i);
-        if (!Ndt_Check(tmp)) {
-            PyErr_Format(PyExc_TypeError, "argument types must be ndt");
-            return NULL;
-        }
-        in[i] = NDT(tmp);
-    }
-
-    spec = ndt_apply_spec_empty;
-    if (ndt_typecheck(&spec, sig, in, li, (int)nin, NULL, NULL, &ctx) < 0) {
+    if (ndt_typecheck(&spec, sig, types, li, py_nin, py_nout, NULL, NULL,
+                      &ctx) < 0) {
         return seterr(&ctx);
     }
 
@@ -654,38 +767,20 @@ ndtype_apply(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    out = PyList_New(spec.nout);
-    if (out == NULL) {
+    lst = PyList_New(spec.nargs);
+    if (lst == NULL) {
         ndt_apply_spec_clear(&spec);
         goto finish;
     }
 
-    for (i=spec.nout-1; i >= 0; i--) {
+    for (i = 0; i < spec.nargs; i++) {
         PyObject *x = ndtype_alloc(&Ndt_Type);
         if (x == NULL) {
             ndt_apply_spec_clear(&spec);
             goto finish;
         }
-        NDT(x) = spec.out[i];
-        spec.out[i] = NULL; spec.nout--;
-        PyList_SET_ITEM(out, i, x);
-    }
-
-    broadcast = PyList_New(spec.nbroadcast);
-    if (broadcast == NULL) {
-        ndt_apply_spec_clear(&spec);
-        goto finish;
-    }
-
-    for (i=spec.nbroadcast-1; i >= 0; i--) {
-        PyObject *x = ndtype_alloc(&Ndt_Type);
-        if (x == NULL) {
-            ndt_apply_spec_clear(&spec);
-            goto finish;
-        }
-        NDT(x) = spec.broadcast[i];
-        spec.broadcast[i] = NULL; spec.nbroadcast--;
-        PyList_SET_ITEM(broadcast, i, x);
+        NDT(x) = spec.types[i];
+        PyList_SET_ITEM(lst, i, x);
     }
 
     outer_dims = PyLong_FromLong(spec.outer_dims);
@@ -693,14 +788,31 @@ ndtype_apply(PyObject *self, PyObject *args)
         goto finish;
     }
 
-    res = PyObject_CallFunctionObjArgs((PyObject *)ApplySpec, flags, self,
-                                       args, broadcast, out, outer_dims, NULL);
+    nin = PyLong_FromLong(spec.nin);
+    if (nin == NULL) {
+        goto finish;
+    }
+
+    nout = PyLong_FromLong(spec.nout);
+    if (nout == NULL) {
+        goto finish;
+    }
+
+    nargs = PyLong_FromLong(spec.nargs);
+    if (nargs == NULL) {
+        goto finish;
+    }
+
+    res = PyObject_CallFunctionObjArgs((PyObject *)_ApplySpec, flags,
+                                       outer_dims, nin, nout, nargs, lst, NULL);
 
 finish:
     Py_XDECREF(flags);
-    Py_XDECREF(out);
-    Py_XDECREF(broadcast);
     Py_XDECREF(outer_dims);
+    Py_XDECREF(nin);
+    Py_XDECREF(nout);
+    Py_XDECREF(nargs);
+    Py_XDECREF(lst);
     return res;
 }
 
@@ -920,7 +1032,7 @@ static PyMethodDef ndtype_methods [] =
   /* Binary functions */
   { "match", (PyCFunction)ndtype_match, METH_O, doc_match },
   { "unify", (PyCFunction)ndtype_unify, METH_O, NULL },
-  { "apply", (PyCFunction)ndtype_apply, METH_O, "method likely to change" },
+  { "apply", (PyCFunction)ndtype_apply, METH_VARARGS|METH_KEYWORDS, "method likely to change" },
 
   /* Other functions */
   { "to_format", (PyCFunction)ndtype_to_format, METH_NOARGS, NULL },
@@ -1162,16 +1274,16 @@ PyInit__ndtypes(void)
         goto error;
     }
 
-    /* ApplySpec */
+    /* _ApplySpec */
     collections = PyImport_ImportModule("collections");
     if (collections == NULL) {
         goto error;
     }
 
-    ApplySpec = (PyTypeObject *)PyObject_CallMethod(collections,
+    _ApplySpec = (PyTypeObject *)PyObject_CallMethod(collections,
                                     "namedtuple", "(ss)", "ApplySpec",
-                                    "flags sig in_types in_broadcast out_types outer_dims");
-    if (ApplySpec == NULL) {
+                                    "flags outer_dims nin nout nargs types");
+    if (_ApplySpec == NULL) {
         goto error;
     }
 
@@ -1180,7 +1292,7 @@ PyInit__ndtypes(void)
         goto error;
     }
 
-    if (PyDict_SetItemString(ApplySpec->tp_dict, "__module__", obj) < 0) {
+    if (PyDict_SetItemString(_ApplySpec->tp_dict, "__module__", obj) < 0) {
         goto error;
     }
     Py_CLEAR(obj);
@@ -1201,8 +1313,8 @@ PyInit__ndtypes(void)
         goto error;
     }
 
-    Py_INCREF(ApplySpec);
-    if (PyModule_AddObject(m, "ApplySpec", (PyObject *)ApplySpec) < 0) {
+    Py_INCREF(_ApplySpec);
+    if (PyModule_AddObject(m, "_ApplySpec", (PyObject *)_ApplySpec) < 0) {
         goto error;
     }
 

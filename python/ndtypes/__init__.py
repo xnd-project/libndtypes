@@ -54,17 +54,14 @@ The xnd module uses ndtypes to implement a general container for mapping most
 Python types relevant for scientific computing directly to memory.
 """
 
-def _pretty_repr(self):
-    return """\
-ApplySpec(
-  flags=%r,
-  sig=%r,
-  in_types=%r,
-  in_broadcast=%r,
-  out_types=%r,
-  outer_dims=%r
-)""" % (self.flags, self.sig, self.in_types, self.in_broadcast, self.out_types, self.outer_dims)
-
-from . import _ndtypes
-_ndtypes.ApplySpec.__repr__ = _pretty_repr
 from ._ndtypes import *
+from ._ndtypes import _ApplySpec
+from . import _ndtypes
+
+class ApplySpec(_ApplySpec):
+
+    def __repr__(self):
+        return "\
+ApplySpec(flags=%r,\n  outer_dims=%r\n  nin=%r,\n  nout=%r,\n  nargs=%r,\n  types=%r)\
+" % (self.flags, self.outer_dims, self.nin, self.nout, self.nargs, self.types)
+

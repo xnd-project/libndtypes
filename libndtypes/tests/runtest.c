@@ -834,14 +834,13 @@ types_from_string(const char * const *s, ndt_context_t *ctx)
 }
 
 static int
-validate_typecheck_test(const typecheck_testcase_t *test,
+validate_typecheck_test(ndt_apply_spec_t *spec,
                         const ndt_t *sig,
-                        ndt_apply_spec_t *spec,
+                        const typecheck_testcase_t *test,
                         int ret,
                         ndt_context_t *ctx)
 {
-    type_array_t out;
-    type_array_t broadcast;
+    type_array_t expected;
     int64_t i;
 
     if (!test->success) {
@@ -849,68 +848,62 @@ validate_typecheck_test(const typecheck_testcase_t *test,
             return 0;
         }
         ndt_err_format(ctx, NDT_RuntimeError,
-            "test_typecheck: unexpected success: %s  %s  %s",
-             test->signature, test->in[0], test->in[1]);
+            "test_typecheck: %s: expected success=false, got success=true",
+            test->loc);
         return -1;
     }
 
-    out = types_from_string(test->out, ctx);
-    if (out.size < 0) {
-        return -1;
-    }
-
-    broadcast = types_from_string(test->broadcast, ctx);
-    if (broadcast.size < 0) {
-        ndt_type_array_clear(broadcast.types, broadcast.size);
-        return -1;
-    }
-
-    if (spec->nout != sig->Function.nout ||
-        spec->nout != out.size) {
-        ndt_err_format(ctx, NDT_RuntimeError,
-            "test_typecheck: expected nout==test->nout==%d, got nout==%d and "
-            "test->nout==%d\n", sig->Function.nout, spec->nout, out.size);
-        return -1;
-    }
-
-    if (spec->nbroadcast != broadcast.size) {
-        ndt_err_format(ctx, NDT_RuntimeError,
-            "test_typecheck: expected nbroadcast==%d, got %d\n",
-            broadcast.size, spec->nbroadcast);
+    expected = types_from_string(test->types, ctx);
+    if (expected.size < 0) {
         return -1;
     }
 
     if (spec->outer_dims != test->outer_dims) {
         ndt_err_format(ctx, NDT_RuntimeError,
-            "test_typecheck: expected outer_dims==%d, got %d\n",
-            test->outer_dims, spec->outer_dims);
+            "test_typecheck: %s: expected outer_dims=%d, got outer_dims=%d",
+             test->loc, test->outer_dims, spec->outer_dims);
+        ndt_type_array_clear(expected.types, expected.size);
         return -1;
     }
 
-    for (i = 0; i < spec->nout; i++) {
-        if (!ndt_equal(spec->out[i], out.types[i])) {
+    if (spec->nin != sig->Function.nin || spec->nin != test->nin) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "test_typecheck: %s: expected nin=%d, got nin=%d",
+             test->loc, test->nin, spec->nin);
+        ndt_type_array_clear(expected.types, expected.size);
+        return -1;
+    }
+
+    if (spec->nout != sig->Function.nout || spec->nout != test->nout) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "test_typecheck: %s: expected nout=%d, got nout=%d",
+             test->loc, test->nout, spec->nout);
+        ndt_type_array_clear(expected.types, expected.size);
+        return -1;
+    }
+
+    if (spec->nargs != sig->Function.nargs || spec->nargs != test->nargs ||
+        spec->nargs != expected.size) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "test_typecheck: %s: expected nargs=%d, got nargs=%d",
+             test->loc, test->nargs, spec->nargs);
+        ndt_type_array_clear(expected.types, expected.size);
+        return -1;
+    }
+
+    for (i = 0; i < spec->nargs; i++) {
+        if (!ndt_equal(spec->types[i], expected.types[i])) {
             ndt_err_format(ctx, NDT_RuntimeError,
-                "test_typecheck: out value %d: expected %s, got %s",
-                i, test->out[i], ndt_ast_repr(spec->out[i], ctx));
-            ndt_type_array_clear(out.types, out.size);
-            ndt_type_array_clear(broadcast.types, broadcast.size);
+                "test_typecheck: %s: expected %s, got %s",
+                test->loc,
+                ndt_ast_repr(expected.types[i], ctx),
+                ndt_ast_repr(spec->types[i], ctx));
+            ndt_type_array_clear(expected.types, expected.size);
             return -1;
         }
     }
 
-    for (i = 0; i < spec->nbroadcast; i++) {
-        if (!ndt_equal(spec->broadcast[i], broadcast.types[i])) {
-            ndt_err_format(ctx, NDT_RuntimeError,
-                "test_typecheck: broadcast value %d: expected %s, got %s",
-                i, test->broadcast[i], ndt_ast_repr(spec->broadcast[i], ctx));
-            ndt_type_array_clear(out.types, out.size);
-            ndt_type_array_clear(broadcast.types, broadcast.size);
-            return -1;
-        }
-    }
-
-    ndt_type_array_clear(out.types, out.size);
-    ndt_type_array_clear(broadcast.types, broadcast.size);
+    ndt_type_array_clear(expected.types, expected.size);
 
     return 0;
 }
@@ -921,9 +914,11 @@ test_typecheck(void)
     NDT_STATIC_CONTEXT(ctx);
     ndt_apply_spec_t spec = ndt_apply_spec_empty;
     const typecheck_testcase_t *test;
-    const ndt_t *sig = NULL;
-    type_array_t in;
+    const ndt_t *types[NDT_MAX_DIM] = {NULL};
     const int64_t li[NDT_MAX_DIM] = {0};
+    type_array_t args;
+    type_array_t kwargs;
+    const ndt_t *sig = NULL;
     int count = 0;
     int ret = -1;
 
@@ -935,36 +930,59 @@ test_typecheck(void)
             goto error;
         }
 
-        in = types_from_string(test->in, &ctx);
-        if (in.size < 0) {
+        args = types_from_string(test->args, &ctx);
+        if (args.size < 0) {
             goto error;
+        }
+        const int nin = args.size;
+
+        kwargs = types_from_string(test->kwargs, &ctx);
+        if (kwargs.size < 0) {
+            goto error;
+        }
+        const int nout = kwargs.size;
+
+        for (int i = 0; i < nin; i++) {
+            types[i] = args.types[i];
+        }
+
+        for (int i = 0; i < nout; i++) {
+            types[nin+i] = kwargs.types[i];
         }
 
         for (alloc_fail = 1; alloc_fail < INT_MAX; alloc_fail++) {
             ndt_err_clear(&ctx);
 
             ndt_set_alloc_fail();
-            ret = ndt_typecheck(&spec, sig, (const ndt_t **)in.types, li, in.size, NULL, NULL, &ctx);
+            ret = ndt_typecheck(&spec, sig, types, li, nin, nout, NULL, NULL, &ctx);
             ndt_set_alloc();
 
             if (ctx.err != NDT_MemoryError) {
                 break;
             }
 
-            ndt_apply_spec_clear(&spec);
+            assert(spec.flags == 0);
+            assert(spec.outer_dims == 0);
+            assert(spec.nin == 0);
+            assert(spec.nout == 0);
+            assert(spec.nargs == 0);
+
             if (ret != -1) {
                 ndt_err_format(&ctx, NDT_RuntimeError,
-                    "test_typecheck: expect nout == -1 after MemoryError\n"
-                    "test_typecheck: \"%s\"\n", test->signature);
+                    "test_typecheck: %s: nout != -1 after MemoryError\n",
+                    test->loc);
                 goto error;
             }
         }
 
+        ndt_type_array_clear(args.types, args.size);
+        ndt_type_array_clear(kwargs.types, kwargs.size);
         ndt_err_clear(&ctx);
-        ret = validate_typecheck_test(test, sig, &spec, ret, &ctx);
-        ndt_type_array_clear(in.types, in.size);
+
+        ret = validate_typecheck_test(&spec, sig, test, ret, &ctx);
+
         ndt_apply_spec_clear(&spec);
-        ndt_decref((ndt_t *)sig);
+        ndt_decref(sig);
 
         if (ret < 0) {
             goto error;

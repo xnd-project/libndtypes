@@ -1765,13 +1765,14 @@ class TestApply(unittest.TestCase):
 
 
         # Argument types:
-        in_types = [ndt("20 * 2 * 3 * int64"), ndt("20 * 3 * 4 * int64")]
+        types = [ndt("20 * 2 * 3 * int64"), ndt("20 * 3 * 4 * int64")]
 
-        spec = sig.apply(in_types)
-        self.assertEqual(spec.sig, sig)
-        self.assertEqual(spec.in_types, in_types)
-        self.assertSequenceEqual(spec.out_types, [ndt("20 * 2 * 4 * float64")])
+        spec = sig.apply(*types)
         self.assertEqual(spec.outer_dims, 1)
+        self.assertEqual(spec.nin, 2)
+        self.assertEqual(spec.nout, 1)
+        self.assertEqual(spec.nargs, 3)
+        self.assertEqual(spec.types, types + [ndt("20 * 2 * 4 * float64")])
 
     def test_apply_error(self):
 
@@ -1782,8 +1783,8 @@ class TestApply(unittest.TestCase):
                ["20 * 2 * 100 * int64", "20 * 3 * 4 * int64"]]
 
         for l in lst:
-            in_types = [ndt(x) for x in l]
-            self.assertRaises(TypeError, sig.apply, in_types)
+            types = [ndt(x) for x in l]
+            self.assertRaises(TypeError, sig.apply, types)
 
 
 def from_shape_strides(shape, strides):
@@ -1796,12 +1797,17 @@ class TestBroadcast(unittest.TestCase):
 
     def test_broadcast(self):
 
-        for c in BROADCAST_TEST_CASES:
-            spec = c.sig.apply(c.in_types)
+        for d in BROADCAST_TEST_CASES:
+            sig, args, kwargs, expected = d.values()
+            spec = sig.apply(*args, out=kwargs)
 
-            self.assertEqual(len(spec), len(c))
-            for v, u in zip(spec, c):
-                self.assertEqual(v, u)
+            self.assertEqual(len(spec), len(expected))
+            self.assertEqual(spec.flags, expected.flags)
+            self.assertEqual(spec.outer_dims, expected.outer_dims)
+            self.assertEqual(spec.nin, expected.nin)
+            self.assertEqual(spec.nout, expected.nout)
+            self.assertEqual(spec.nargs, expected.nargs)
+            self.assertEqual(spec.types, expected.types)
 
     def test_against_numpy(self):
 

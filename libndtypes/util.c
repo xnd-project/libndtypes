@@ -290,11 +290,11 @@ ndt_hash(const ndt_t *t, ndt_context_t *ctx)
 
 const ndt_apply_spec_t ndt_apply_spec_empty = {
   .flags = 0U,
-  .nout = 0,
-  .nbroadcast = 0,
   .outer_dims = 0,
-  .out = {NULL},
-  .broadcast = {NULL}
+  .nin = 0,
+  .nout = 0,
+  .nargs = 0,
+  .types = {NULL}
 };
 
 ndt_apply_spec_t *
@@ -307,9 +307,10 @@ ndt_apply_spec_new(ndt_context_t *ctx)
         return ndt_memory_error(ctx);
     }
     spec->flags = 0U;
-    spec->nout = 0;
-    spec->nbroadcast = 0;
     spec->outer_dims = 0;
+    spec->nin = 0;
+    spec->nout = 0;
+    spec->nargs = 0;
 
     return spec;
 }
@@ -317,24 +318,20 @@ ndt_apply_spec_new(ndt_context_t *ctx)
 void
 ndt_apply_spec_clear(ndt_apply_spec_t *spec)
 {
-    int i;
-
     if (spec == NULL) {
         return;
     }
 
-    for (i = 0; i < spec->nbroadcast; i++) {
-        ndt_decref(spec->broadcast[i]);
-    }
-
-    for (i = 0; i < spec->nout; i++) {
-        ndt_decref(spec->out[i]);
+    for (int i = 0; i < spec->nin+spec->nout; i++) {
+        ndt_decref(spec->types[i]);
+        // XXX spec->types[i] = NULL;
     }
 
     spec->flags = 0U;
-    spec->nout = 0;
-    spec->nbroadcast = 0;
     spec->outer_dims = 0;
+    spec->nin = 0;
+    spec->nout = 0;
+    spec->nargs = 0;
 }
 
 void
@@ -490,29 +487,25 @@ all_ndarray(const ndt_t *types[], int n)
 }
 
 void
-ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
-                           const ndt_t *in[], int nin)
+ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig)
 {
-    const ndt_t **out = (const ndt_t **)spec->out;
+    const int outer_dims = spec->outer_dims;
+    const int nin = spec->nin;
+    const int nout  = spec->nout;
     bool in_inner_c, in_inner_f, out_inner_c;
 
     assert(sig->tag == Function);
     assert(spec->flags == 0);
 
-    if (spec->nbroadcast > 0) {
-        in = (const ndt_t **)spec->broadcast;
-        nin = spec->nbroadcast;
-    }
-
-    in_inner_c = all_inner_c_contiguous(in, nin, spec->outer_dims);
-    in_inner_f = all_inner_f_contiguous(in, nin, spec->outer_dims);
-    out_inner_c = all_inner_c_contiguous(out, spec->nout, spec->outer_dims);
+    in_inner_c = all_inner_c_contiguous(spec->types, nin, outer_dims);
+    in_inner_f = all_inner_f_contiguous(spec->types, nin, outer_dims);
+    out_inner_c = all_inner_c_contiguous(spec->types+nin, nout, outer_dims);
 
     spec->flags = NDT_XND;
 
     if (sig->Function.elemwise) {
-        if (all_inner_1D_contiguous(in, nin) &&
-            all_inner_1D_contiguous(out, spec->nout)) {
+        if (all_inner_1D_contiguous(spec->types, nin) &&
+            all_inner_1D_contiguous(spec->types+nin, nout)) {
             spec->flags |= NDT_ELEMWISE_1D;
         }
     }
@@ -523,7 +516,7 @@ ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig,
         spec->flags |= NDT_FORTRAN;
     }
 
-    if (all_ndarray(in, nin) && all_ndarray(out, spec->nout)) {
+    if (all_ndarray(spec->types, nin) && all_ndarray(spec->types+nin, nout)) {
         spec->flags |= NDT_STRIDED;
     }
 }
