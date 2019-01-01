@@ -715,7 +715,7 @@ NDTYPES_API int ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                               ndt_context_t *ctx);
 NDTYPES_API int ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                                                 const ndt_t *types[], const int nin, const int nout,
-                                                const ndt_t *dtype, ndt_context_t *ctx);
+                                                ndt_context_t *ctx);
 
 NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
 

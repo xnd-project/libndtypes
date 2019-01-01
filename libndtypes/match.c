@@ -1200,21 +1200,20 @@ all_ndim0(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
 
 /*
  * Optimized type checking for very specific signatures. The caller must
- * have identified the kernel location, signature and the dtype.  For
- * performance reasons, no substitution is performed on the dtype, so
- * the dtype must be concrete.
+ * have identified the kernel location and the signature.  For performance
+ * reasons, no substitution is performed on the dtype, so the dtype must be
+ * concrete.
  *
- * Supported signatures:
- *   1) ... * N * T0, ... * N * T1 -> N * T2
- *   2) ... * T0, ... * T1 -> ... * T2
+ * Supported signature: 1) ... * T0, ... * T1 -> ... * T2
  */
 int
 ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                                 const ndt_t *types[], const int nin, const int nout,
-                                const ndt_t *dtype, ndt_context_t *ctx)
+                                ndt_context_t *ctx)
 {
     const ndt_t *p0, *p1, *p2;
     ndt_ndarray_t x, y, z;
+    const ndt_t *dtype;
 
     assert(spec->flags == 0);
     assert(spec->outer_dims == 0);
@@ -1223,8 +1222,7 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     assert(spec->nargs == 0);
 
     if (sig->tag != Function ||
-        sig->Function.nin != 2 ||
-        sig->Function.nout != 1) {
+        sig->Function.nin != 2) {
         ndt_err_format(ctx, NDT_RuntimeError,
             "fast binary typecheck expects a signature with two inputs and "
             "one output");
@@ -1235,6 +1233,18 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         ndt_err_format(ctx, NDT_RuntimeError,
             "fast binary typecheck expects two input arguments");
         return -1;
+    }
+
+    if (nout) {
+        if (nout != 1) {
+            ndt_err_format(ctx, NDT_RuntimeError,
+                "fast binary typecheck expects at most one explicit out argument");
+            return -1;
+        }
+        dtype = ndt_dtype(types[2]);
+    }
+    else {
+        dtype = ndt_dtype(sig->Function.types[2]);
     }
 
     if (ndt_is_abstract(dtype)) {
