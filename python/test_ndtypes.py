@@ -1845,8 +1845,8 @@ class TestBroadcast(unittest.TestCase):
 
                 t = from_shape_strides(xshape, xstrides)
                 u = from_shape_strides(yshape, ystrides)
-                spec = sig.apply([t, u])
-                tt, uu = spec.in_broadcast
+                spec = sig.apply(t, u)
+                tt, uu = spec.types[:2]
 
                 self.assertEqual(tt.shape, xx.shape)
                 self.assertEqual(uu.shape, yy.shape)
