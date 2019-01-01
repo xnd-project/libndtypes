@@ -751,14 +751,15 @@ ndtype_apply(PyObject *self, PyObject *args, PyObject *kwargs)
     PyObject *nout = NULL;
     PyObject *nargs = NULL;
     PyObject *lst = NULL;
-    Py_ssize_t i;
+    int ret;
 
     if (parse_args(types, &py_nin, &py_nout, &py_nargs, args, kwargs) < 0) {
         return NULL;
     }
 
-    if (ndt_typecheck(&spec, sig, types, li, py_nin, py_nout, NULL, NULL,
-                      &ctx) < 0) {
+    ret = ndt_typecheck(&spec, sig, types, li, py_nin, py_nout, NULL, NULL, &ctx);
+    ndt_type_array_clear(types, py_nargs);
+    if (ret < 0) {
         return seterr(&ctx);
     }
 
@@ -773,7 +774,7 @@ ndtype_apply(PyObject *self, PyObject *args, PyObject *kwargs)
         goto finish;
     }
 
-    for (i = 0; i < spec.nargs; i++) {
+    for (int i = 0; i < spec.nargs; i++) {
         PyObject *x = ndtype_alloc(&Ndt_Type);
         if (x == NULL) {
             ndt_apply_spec_clear(&spec);
