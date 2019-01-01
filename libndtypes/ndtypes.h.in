@@ -37,21 +37,18 @@
 
 #ifdef __cplusplus
 extern "C" {
-  #ifndef __STDC_LIMIT_MACROS
-    #define __STDC_LIMIT_MACROS
-    #define NDT_CLEAR_STDC_LIMIT_MACROS
-  #endif
 #endif
-
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifndef __cplusplus
+#ifdef __cplusplus
+  #include <cstdint>
+#else
+  #include <stdint.h>
   #include <complex.h>
 #endif
 
@@ -942,10 +939,6 @@ typedef int64_t ndt_categorical_t;
 
 
 #ifdef __cplusplus
-  #ifdef NDT_CLEAR_STDC_LIMIT_MACROS
-    #undef NDT_CLEAR_STDC_LIMIT_MACROS
-    #undef __STDC_LIMIT_MACROS
-  #endif
 } /* END extern "C" */
 #endif
 
