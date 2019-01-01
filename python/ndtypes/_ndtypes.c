@@ -632,10 +632,18 @@ parse_args(const ndt_t *types[NDT_MAX_ARGS], int *py_nin, int *py_nout, int *py_
     Py_ssize_t nin;
     Py_ssize_t nout;
 
-    if (!PyTuple_Check(args)) {
+    if (!args || !PyTuple_Check(args)) {
+        const char *tuple = args ? Py_TYPE(args)->tp_name : "NULL";
         PyErr_Format(PyExc_SystemError,
-            "apply: internal error: expected tuple, got '%.200s'",
-            Py_TYPE(args)->tp_name);
+            "internal error: expected tuple, got '%.200s'",
+            tuple);
+        return -1;
+    }
+
+    if (kwargs && !PyDict_Check(kwargs)) {
+        PyErr_Format(PyExc_SystemError,
+            "internal error: expected dict, got '%.200s'",
+            Py_TYPE(kwargs)->tp_name);
         return -1;
     }
 
@@ -657,23 +665,10 @@ parse_args(const ndt_t *types[NDT_MAX_ARGS], int *py_nin, int *py_nout, int *py_
         types[i] = NDT(v);
     }
 
-    if (kwargs == NULL) {
+    if (kwargs == NULL || PyDict_Size(kwargs) == 0) {
         nout = 0;
     }
-    else {
-        if (!PyDict_Check(kwargs)) {
-            PyErr_Format(PyExc_SystemError,
-                "apply: internal error: expected dict, got '%.200s'",
-                Py_TYPE(args)->tp_name);
-            return -1;
-        }
-
-        if (PyDict_Size(kwargs) != 1) {
-            PyErr_SetString(PyExc_TypeError,
-                "the only supported keyword argument is 'out'");
-            return -1;
-        }
-
+    else if (PyDict_Size(kwargs) == 1) {
         PyObject *out = get_item_with_error(kwargs, "out");
         if (out == NULL) {
             if (PyErr_Occurred()) {
@@ -722,6 +717,11 @@ parse_args(const ndt_t *types[NDT_MAX_ARGS], int *py_nin, int *py_nout, int *py_
                 Py_TYPE(out)->tp_name);
             return -1;
         }
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "the only supported keyword argument is 'out'");
+        return -1;
     }
 
     for (int i = 0; i < nin+nout; i++) {
