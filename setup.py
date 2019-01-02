@@ -42,6 +42,7 @@ from distutils.sysconfig import get_python_lib
 from glob import glob
 import platform
 import subprocess
+import argparse
 import shutil
 
 try:
@@ -80,6 +81,13 @@ Links
 * http://ndtypes.readthedocs.io/en/latest/
 * http://xnd.readthedocs.io/en/latest/
 """
+
+# Pre-parse and remove the '-j' argument from sys.argv.
+parser = argparse.ArgumentParser()
+parser.add_argument('-j', default=None)
+values, rest = parser.parse_known_args()
+PARALLEL = values.j
+sys.argv = sys.argv[:1] + rest
 
 
 if sys.platform == "darwin":
@@ -230,10 +238,11 @@ def ndtypes_ext():
             runtime_library_dirs = ["$ORIGIN"]
 
         if BUILD_ALL:
+            make = "make -j%d" % int(PARALLEL) if PARALLEL else "make"
             if WITH_VALGRIND:
-                os.system("./configure --with-valgrind && make")
+                os.system("./configure --with-valgrind && %s" % make)
             else:
-                os.system("./configure && make")
+                os.system("./configure && %s" % make)
 
     return Extension (
       "ndtypes._ndtypes",
