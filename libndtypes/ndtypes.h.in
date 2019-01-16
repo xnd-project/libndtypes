@@ -625,6 +625,7 @@ NDTYPES_API const ndt_t *ndt_dtype(const ndt_t *t);
 NDTYPES_API const ndt_t *ndt_hidden_dtype(const ndt_t *t);
 NDTYPES_API int ndt_dims_dtype(const ndt_t *dims[NDT_MAX_DIM], const ndt_t **dtype, const ndt_t *t);
 NDTYPES_API int ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx);
+NDTYPES_API const ndt_t *ndt_transpose(const ndt_t *t, const int *p, int ndim, ndt_context_t *ctx);
 NDTYPES_API ndt_ssize_t ndt_hash(const ndt_t *t, ndt_context_t *ctx);
 
 

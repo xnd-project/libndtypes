@@ -1345,7 +1345,7 @@ fixed_datasize(const ndt_t *type, int64_t shape, int64_t step, int64_t itemsize,
     datasize = MULi64(index_range, itemsize, overflow);
     return ADDi64(datasize, type->datasize, overflow);
 }
- 
+
 static const ndt_t *
 _ndt_to_fortran(const ndt_t *t, int64_t step, ndt_context_t *ctx)
 {

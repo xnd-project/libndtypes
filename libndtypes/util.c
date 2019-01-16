@@ -253,6 +253,86 @@ ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
     return n;
 }
 
+static const ndt_t *
+_ndt_transpose(const ndt_ndarray_t *a, const int p[], const ndt_t *dtype,
+               ndt_context_t *ctx)
+{
+    const ndt_t *t;
+
+    t = dtype;
+    ndt_incref(t);
+
+    for (int i = a->ndim-1; i >= 0; i--) {
+        const ndt_t *u = ndt_fixed_dim(t, a->shape[p[i]], a->steps[p[i]], ctx);
+        ndt_decref(t);
+        if (u == NULL) {
+            return NULL;
+        }
+        t = u;
+    }
+
+    return t;
+}
+
+const ndt_t *
+ndt_transpose(const ndt_t *t, const int *p, int ndim, ndt_context_t *ctx)
+{
+    ndt_ndarray_t a;
+    int permute[NDT_MAX_DIM];
+
+    if (ndt_as_ndarray(&a, t, ctx) < 0) {
+        return NULL;
+    }
+
+    if (p == NULL) {
+        if (ndim != 0) {
+            ndt_err_format(ctx, NDT_RuntimeError,
+                "internal error: ndim != 0 but no permutations given");
+            return NULL;
+        }
+
+        ndim = a.ndim;
+        if (ndim <= 1) {
+            ndt_incref(t);
+            return t;
+        }
+
+        for (int i = 0; i < ndim; i++) {
+            permute[i] = ndim-i-1;
+        }
+        p = permute;
+    }
+    else {
+        if (ndim != a.ndim) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "number of permutations != ndim");
+            return NULL;
+        }
+
+        for (int i = 0; i < ndim; i++) {
+            permute[i] = ndim-i-1;
+        }
+
+        for (int i = 0; i < ndim; i++) {
+            if (p[i] < 0 || p[i] >= ndim) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "permutation with value %d out of bounds", p[i]);
+                return NULL;
+            }
+
+            if (permute[p[i]] != 0) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "duplicate permutation index=%d", p[i]);
+                return NULL;
+            }
+
+            permute[p[i]] = 1;
+        }
+    }
+
+    return _ndt_transpose(&a, p, ndt_dtype(t), ctx);
+}
+
 /* Unoptimized hash function for experimenting. */
 ndt_ssize_t
 ndt_hash(const ndt_t *t, ndt_context_t *ctx)
@@ -324,7 +404,7 @@ ndt_apply_spec_clear(ndt_apply_spec_t *spec)
 
     for (int i = 0; i < spec->nin+spec->nout; i++) {
         ndt_decref(spec->types[i]);
-        // XXX spec->types[i] = NULL;
+        spec->types[i] = NULL;
     }
 
     spec->flags = 0U;
