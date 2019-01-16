@@ -310,7 +310,7 @@ ndt_transpose(const ndt_t *t, const int *p, int ndim, ndt_context_t *ctx)
         }
 
         for (int i = 0; i < ndim; i++) {
-            permute[i] = ndim-i-1;
+            permute[i] = 0;
         }
 
         for (int i = 0; i < ndim; i++) {
