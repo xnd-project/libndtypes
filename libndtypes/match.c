@@ -765,7 +765,7 @@ broadcast(const ndt_t *t, const int64_t *shape,
 }
 
 int
-ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool have_out_arg,
+ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool check_broadcast,
                   const int64_t *shape, const int outer_dims, ndt_context_t *ctx)
 {
     const int nin = spec->nin;
@@ -792,7 +792,7 @@ ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool have_out_arg,
             return -1;
         }
 
-        if (have_out_arg) {
+        if (check_broadcast) {
             if (!ndt_equal(t, u)) {
                 ndt_err_format(ctx, NDT_ValueError,
                     "explicit 'out' type not compatible with input types");
@@ -811,7 +811,7 @@ ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool have_out_arg,
 }
 
 static int
-broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool have_out_arg,
+broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool check_broadcast,
               const symtable_t *tbl, ndt_context_t *ctx)
 {
     symtable_entry_t v;
@@ -823,7 +823,7 @@ broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool have_out_arg,
         return -1;
     }
 
-    return ndt_broadcast_all(spec, sig, have_out_arg,
+    return ndt_broadcast_all(spec, sig, check_broadcast,
                              v.BroadcastSeq.dims, v.BroadcastSeq.size,
                              ctx);
 }
@@ -865,7 +865,7 @@ resolve_constraint(const ndt_constraint_t *c, const void *args, symtable_t *tbl,
 int
 ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
               const ndt_t *types[], const int64_t li[],
-              const int nin, const int nout,
+              const int nin, const int nout, bool check_broadcast,
               const ndt_constraint_t *c, const void *args,
               ndt_context_t *ctx)
 {
@@ -902,6 +902,17 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     if (nout && nout != sig->Function.nout) {
         ndt_err_format(ctx, NDT_ValueError,
             "expected %" PRIi64 " 'out' arguments, got %d", sig->Function.nout, nout);
+        return -1;
+    }
+
+    /*
+     * Broadcast configurations:
+     *   nout==0 -> check_broadcast==false.
+     */
+    if (!nout && check_broadcast == true) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "internal error: without explicit 'out' arguments "
+            "'check_broadcast' must be false");
         return -1;
     }
 
@@ -1002,7 +1013,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
             }
         }
         else {
-            if (broadcast_all(spec, sig, nout != 0, tbl, ctx) < 0) {
+            if (broadcast_all(spec, sig, check_broadcast, tbl, ctx) < 0) {
                 ndt_apply_spec_clear(spec);
                 symtable_del(tbl);
                 return -1;
@@ -1111,29 +1122,32 @@ static int
 _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
                       const ndt_ndarray_t *x, const ndt_t *dtype_x,
                       const ndt_ndarray_t *y, const ndt_t *dtype_y,
-                      const ndt_ndarray_t *z, const ndt_t *dtype_z,
-                      const int inner, ndt_context_t *ctx)
+                      const ndt_t *out, const ndt_t *dtype_out,
+                      const bool check_broadcast, const int inner,
+                      ndt_context_t *ctx)
 {
     int64_t shape[NDT_MAX_DIM];
-    int size;
+    int size = x->ndim;
+    ndt_ndarray_t z;
+    const ndt_t *t;
 
-    for (int i = 0; i < x->ndim; i++) {
+    for (int i = 0; i < size; i++) {
         shape[i] = x->shape[i];
     }
 
-    size = _resolve_broadcast(shape, x->ndim, y->shape, y->ndim);
+    size = _resolve_broadcast(shape, size, y->shape, y->ndim);
     if (size < 0) {
         return broadcast_error("could not broadcast input arguments", ctx);
     }
 
-    if (z != NULL) {
-        if (z->ndim != size) {
-            return broadcast_error("could not broadcast output argument", ctx);
+    if (out != NULL) {
+        if (ndt_as_ndarray(&z, out, ctx) < 0) {
+            return -1;
         }
-        for (int i = 0; i < z->ndim; i++) {
-            if (z->shape[i] != shape[i]) {
-                return broadcast_error("could not broadcast output argument", ctx);
-            }
+
+        size = _resolve_broadcast(shape, size, z.shape, z.ndim);
+        if (size < 0) {
+            return broadcast_error("could not broadcast output argument", ctx);
         }
     }
 
@@ -1148,12 +1162,34 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    spec->types[2] = fixed_dim_from_shape(shape, size, dtype_z, ctx);
-    if (spec->types[2] == NULL) {
-        ndt_decref(spec->types[0]);
-        ndt_decref(spec->types[1]);
-        return -1;
+    if (out != NULL) {
+        t = binary_broadcast_1D(&z, dtype_out, shape, size, ctx);
+        if (t == NULL) {
+            ndt_decref(spec->types[0]);
+            ndt_decref(spec->types[1]);
+            return -1;
+        }
+
+        if (check_broadcast) {
+            if (!ndt_equal(t, out)) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "explicit 'out' type not compatible with input types");
+                ndt_decref(spec->types[0]);
+                ndt_decref(spec->types[1]);
+                ndt_decref(t);
+                return -1;
+            }
+        }
     }
+    else {
+        t = fixed_dim_from_shape(shape, size, dtype_out, ctx);
+        if (t == NULL) {
+            ndt_decref(spec->types[0]);
+            ndt_decref(spec->types[1]);
+            return -1;
+        }
+    }
+    spec->types[2] = t;
 
     spec->outer_dims = size-inner;
     spec->nin = 2;
@@ -1209,11 +1245,12 @@ all_ndim0(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
 int
 ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                                 const ndt_t *types[], const int nin, const int nout,
-                                ndt_context_t *ctx)
+                                const bool check_broadcast, ndt_context_t *ctx)
 {
     const ndt_t *p0, *p1, *p2;
-    ndt_ndarray_t x, y, z;
-    const ndt_t *dtype;
+    ndt_ndarray_t x, y;
+    const ndt_t *out = NULL;
+    const ndt_t *dtype = NULL;
 
     assert(spec->flags == 0);
     assert(spec->outer_dims == 0);
@@ -1241,6 +1278,7 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                 "fast binary typecheck expects at most one explicit out argument");
             return -1;
         }
+        out = types[2];
         dtype = ndt_dtype(types[2]);
     }
     else {
@@ -1269,12 +1307,6 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    if (nout != 0) {
-        if (ndt_as_ndarray(&z, types[2], ctx) < 0) {
-            return -1;
-        }
-    }
-
     p0 = p0->EllipsisDim.type;
     p1 = p1->EllipsisDim.type;
     p2 = p2->EllipsisDim.type;
@@ -1291,14 +1323,14 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return _ndt_binary_broadcast(spec, sig,
                                      &x, ndt_dtype(types[0]),
                                      &y, ndt_dtype(types[1]),
-                                     nout ? &z : NULL, dtype,
+                                     out, dtype, check_broadcast,
                                      1, ctx);
     }
     else if (all_ndim0(p0, p1, p2)) {
         return _ndt_binary_broadcast(spec, sig,
                                      &x, ndt_dtype(types[0]),
                                      &y, ndt_dtype(types[1]),
-                                     nout ? &z : NULL, dtype,
+                                     out, dtype, check_broadcast,
                                      0, ctx);
     }
     else {

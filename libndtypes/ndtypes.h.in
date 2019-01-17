@@ -604,7 +604,7 @@ NDTYPES_API ndt_apply_spec_t *ndt_apply_spec_new(ndt_context_t *ctx);
 NDTYPES_API void ndt_apply_spec_clear(ndt_apply_spec_t *spec);
 NDTYPES_API void ndt_apply_spec_del(ndt_apply_spec_t *spec);
 NDTYPES_API const char *ndt_apply_flags_as_string(const ndt_apply_spec_t *spec);
-NDTYPES_API int ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool have_out_arg,
+NDTYPES_API int ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool check_broadcast,
                                   const int64_t *shape, int outer_dims, ndt_context_t *ctx);
 
 NDTYPES_API void ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig);
@@ -709,12 +709,12 @@ NDTYPES_API int ndt_equal(const ndt_t *t, const ndt_t *u);
 NDTYPES_API int ndt_match(const ndt_t *p, const ndt_t *c, ndt_context_t *ctx);
 NDTYPES_API int ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                               const ndt_t *types[], const int64_t li[],
-                              const int nin, const int nout,
+                              const int nin, const int nout, bool check_broadcast,
                               const ndt_constraint_t *c, const void *args,
                               ndt_context_t *ctx);
 NDTYPES_API int ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                                                 const ndt_t *types[], const int nin, const int nout,
-                                                ndt_context_t *ctx);
+                                                const bool check_broadcast, ndt_context_t *ctx);
 
 NDTYPES_API int64_t ndt_itemsize(const ndt_t *t);
 

@@ -954,7 +954,8 @@ test_typecheck(void)
             ndt_err_clear(&ctx);
 
             ndt_set_alloc_fail();
-            ret = ndt_typecheck(&spec, sig, types, li, nin, nout, NULL, NULL, &ctx);
+            ret = ndt_typecheck(&spec, sig, types, li, nin, nout, false, NULL,
+                                NULL, &ctx);
             ndt_set_alloc();
 
             if (ctx.err != NDT_MemoryError) {

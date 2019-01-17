@@ -757,7 +757,8 @@ ndtype_apply(PyObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    ret = ndt_typecheck(&spec, sig, types, li, py_nin, py_nout, NULL, NULL, &ctx);
+    ret = ndt_typecheck(&spec, sig, types, li, py_nin, py_nout, false,
+                        NULL, NULL, &ctx);
     ndt_type_array_clear(types, py_nargs);
     if (ret < 0) {
         return seterr(&ctx);
