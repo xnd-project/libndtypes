@@ -1163,20 +1163,28 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
     }
 
     if (out != NULL) {
-        t = binary_broadcast_1D(&z, dtype_out, shape, size, ctx);
-        if (t == NULL) {
-            ndt_decref(spec->types[0]);
-            ndt_decref(spec->types[1]);
-            return -1;
-        }
-
         if (check_broadcast) {
+            t = fixed_dim_from_shape(shape, size, dtype_out, ctx);
+            if (t == NULL) {
+                ndt_decref(spec->types[0]);
+                ndt_decref(spec->types[1]);
+                return -1;
+            }
+
             if (!ndt_equal(t, out)) {
                 ndt_err_format(ctx, NDT_ValueError,
                     "explicit 'out' type not compatible with input types");
                 ndt_decref(spec->types[0]);
                 ndt_decref(spec->types[1]);
                 ndt_decref(t);
+                return -1;
+            }
+        }
+        else {
+            t = binary_broadcast_1D(&z, dtype_out, shape, size, ctx);
+            if (t == NULL) {
+                ndt_decref(spec->types[0]);
+                ndt_decref(spec->types[1]);
                 return -1;
             }
         }
