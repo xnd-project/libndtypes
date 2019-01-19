@@ -1260,6 +1260,9 @@ ndt_fast_unary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
+    p0 = sig->Function.types[0];
+    p1 = sig->Function.types[1];
+
     if (nout) {
         if (nout != 1) {
             ndt_err_format(ctx, NDT_RuntimeError,
@@ -1269,7 +1272,7 @@ ndt_fast_unary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         out = types[1];
         dtype = ndt_dtype(types[1]);
 
-        if (!ndt_equal(out, sig->Function.types[1])) {
+        if (!ndt_equal(dtype, ndt_dtype(p1))) {
             ndt_err_format(ctx, NDT_ValueError,
                 "dtype of the out argument does not match");
             return -1;
@@ -1284,9 +1287,6 @@ ndt_fast_unary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
             "fast unary typecheck expects a concrete dtype");
         return -1;
     }
-
-    p0 = sig->Function.types[0];
-    p1 = sig->Function.types[1];
 
     if (!unary_all_ellipses(p0, p1, ctx)) {
         return -1;
@@ -1480,6 +1480,10 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
+    p0 = sig->Function.types[0];
+    p1 = sig->Function.types[1];
+    p2 = sig->Function.types[2];
+
     if (nout) {
         if (nout != 1) {
             ndt_err_format(ctx, NDT_RuntimeError,
@@ -1489,7 +1493,7 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         out = types[2];
         dtype = ndt_dtype(types[2]);
 
-        if (!ndt_equal(out, sig->Function.types[2])) {
+        if (!ndt_equal(dtype, ndt_dtype(p2))) {
             ndt_err_format(ctx, NDT_ValueError,
                 "dtype of the out argument does not match");
             return -1;
@@ -1504,10 +1508,6 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
             "fast binary typecheck expects a concrete dtype");
         return -1;
     }
-
-    p0 = sig->Function.types[0];
-    p1 = sig->Function.types[1];
-    p2 = sig->Function.types[2];
 
     if (!binary_all_ellipses(p0, p1, p2, ctx)) {
         return -1;
