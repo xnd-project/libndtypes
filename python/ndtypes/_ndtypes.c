@@ -596,7 +596,7 @@ ndtype_at(PyObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"n", "dtype", NULL};
     NDT_STATIC_CONTEXT(ctx);
     PyObject *dtype = Py_None;
-    const int n = 0;
+    int n = 0;
     PyObject *res;
     const ndt_t *t;
     const ndt_t *dt;
