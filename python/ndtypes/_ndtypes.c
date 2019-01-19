@@ -210,6 +210,27 @@ ndtype_dealloc(NdtObject *self)
     Py_TYPE(self)->tp_free(self);
 }
 
+static const ndt_t *
+from_string(PyObject *v)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    const char *cp;
+    const ndt_t *t;
+
+    cp = PyUnicode_AsUTF8(v);
+    if (cp == NULL) {
+        return NULL;
+    }
+
+    t = ndt_from_string(cp, &ctx);
+    if (t == NULL) {
+        (void)seterr(&ctx);
+        return NULL;
+    }
+
+    return t;
+}
+
 static PyObject *
 ndtype_from_object(PyTypeObject *tp, PyObject *type)
 {
@@ -566,6 +587,53 @@ ndtype_hash(PyObject *self)
         (void)seterr(&ctx);
     }
 
+    return res;
+}
+
+static PyObject *
+ndtype_at(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"n", "dtype", NULL};
+    NDT_STATIC_CONTEXT(ctx);
+    PyObject *dtype = Py_None;
+    const int n = 0;
+    PyObject *res;
+    const ndt_t *t;
+    const ndt_t *dt;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "i|O", kwlist, &n, &dtype)) {
+        return NULL; 
+    }
+
+    if (dtype == Py_None) {
+        dt = NULL;
+    }
+    else if (Ndt_Check(dtype)) {
+        dt = NDT(dtype);
+        ndt_incref(dt);
+    }
+    else if (PyUnicode_Check(dtype)) {
+        dt = from_string(dtype);
+        if (dt == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "dtype argument must be 'ndt' or 'str'");
+        return NULL;
+    }
+
+    t = ndt_copy_contiguous_at(NDT(self), n, dt, &ctx);
+    if (dt != NULL) {
+        ndt_decref(dt);
+    }
+    if (t == NULL) {
+        return seterr(&ctx);
+    }
+
+    res = Ndt_FromType(t);
+    ndt_decref(t);
     return res;
 }
 
@@ -1032,6 +1100,7 @@ static PyMethodDef ndtype_methods [] =
   { "is_var_contiguous", (PyCFunction)ndtype_ndt_is_var_contiguous, METH_NOARGS, NULL },
 
   /* Binary functions */
+  { "at", (PyCFunction)ndtype_at, METH_VARARGS|METH_KEYWORDS, NULL },
   { "match", (PyCFunction)ndtype_match, METH_O, doc_match },
   { "unify", (PyCFunction)ndtype_unify, METH_O, NULL },
   { "apply", (PyCFunction)ndtype_apply, METH_VARARGS|METH_KEYWORDS, "method likely to change" },

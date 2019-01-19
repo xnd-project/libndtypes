@@ -298,6 +298,32 @@ class TestFixedDim(unittest.TestCase):
                         self.assertEqual(t.datasize, c_datasize(t))
                         self.assertTrue(verify_datasize(t))
 
+    def test_fixed_dim_at(self):
+
+        for dims in ("2 * 3 * ", "0 * 1 * "):
+            t = ndt(dims + "int8")
+
+            u = t.at(0)
+            self.assertEqual(u, ndt(dims + "int8"))
+
+            u = t.at(1)
+            self.assertEqual(u, ndt(dims[4:] + "int8"))
+
+            u = t.at(2)
+            self.assertEqual(u, ndt("int8"))
+
+            u = t.at(0, dtype="int64")
+            self.assertEqual(u, ndt(dims + "int64"))
+
+            u = t.at(1, dtype="int64")
+            self.assertEqual(u, ndt(dims[4:] + "int64"))
+
+            u = t.at(2, dtype="int64")
+            self.assertEqual(u, ndt("int64"))
+
+            self.assertRaises(ValueError, t.at, -1)
+            self.assertRaises(ValueError, t.at, -3)
+
 
 class TestFortran(unittest.TestCase):
 
@@ -407,6 +433,32 @@ class TestFortran(unittest.TestCase):
         # Conversion should be from C-contiguous array.
         s = "!fixed(shape=2, step=-20) * uint8"
         self.assertRaises(TypeError, ndt, s)
+
+    def test_fortran_at(self):
+
+        for dims in ("2 * 3 * ", "0 * 1 * "):
+            t = ndt("!" + dims + "int8")
+
+            u = t.at(0)
+            self.assertEqual(u, ndt(dims + "int8"))
+
+            u = t.at(1)
+            self.assertEqual(u, ndt(dims[4:] + "int8"))
+
+            u = t.at(2)
+            self.assertEqual(u, ndt("int8"))
+
+            u = t.at(0, dtype="int64")
+            self.assertEqual(u, ndt(dims + "int64"))
+
+            u = t.at(1, dtype="int64")
+            self.assertEqual(u, ndt(dims[4:] + "int64"))
+
+            u = t.at(2, dtype="int64")
+            self.assertEqual(u, ndt("int64"))
+
+            self.assertRaises(ValueError, t.at, -1)
+            self.assertRaises(ValueError, t.at, -3)
 
 
 class TestVarDim(unittest.TestCase):

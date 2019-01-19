@@ -218,6 +218,32 @@ ndt_logical_dim_at(const ndt_t *t, int n)
     return t;
 }
 
+const ndt_t *
+ndt_copy_contiguous_at(const ndt_t *t, int n, const ndt_t *dtype, ndt_context_t *ctx)
+{
+    const ndt_t *u;
+
+    if (!ndt_is_ndarray(t)) {
+        ndt_err_format(ctx, NDT_NotImplementedError,
+            "partial copies are currently restricted to fixed dimensions");
+        return NULL;
+    }
+
+    if (n < 0 || n > t->ndim) {
+        ndt_err_format(ctx, NDT_ValueError, "n out of bounds");
+        return NULL;
+    }
+
+    u = ndt_logical_dim_at(t, n);
+
+    if (dtype != NULL) {
+        return ndt_copy_contiguous_dtype(u, dtype, 0, ctx);
+    }
+    else {
+        return ndt_copy_contiguous(u, 0, ctx);
+    }
+}
+
 int
 ndt_as_ndarray(ndt_ndarray_t *a, const ndt_t *t, ndt_context_t *ctx)
 {
