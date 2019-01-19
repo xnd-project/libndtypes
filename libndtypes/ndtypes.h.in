@@ -713,6 +713,9 @@ NDTYPES_API int ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                               const int nin, const int nout, bool check_broadcast,
                               const ndt_constraint_t *c, const void *args,
                               ndt_context_t *ctx);
+NDTYPES_API int ndt_fast_unary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
+                                               const ndt_t *types[], const int nin, const int nout,
+                                               const bool check_broadcast, ndt_context_t *ctx);
 NDTYPES_API int ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                                                 const ndt_t *types[], const int nin, const int nout,
                                                 const bool check_broadcast, ndt_context_t *ctx);

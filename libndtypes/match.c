@@ -1056,7 +1056,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
 /*****************************************************************************/
 
 static const ndt_t *
-binary_broadcast_1D(const ndt_ndarray_t *t, const ndt_t *dtype,
+fast_broadcast(const ndt_ndarray_t *t, const ndt_t *dtype,
                     const int64_t *shape, int size, ndt_context_t *ctx)
 {
     const ndt_t *v;
@@ -1119,6 +1119,206 @@ broadcast_error(const char *msg, ndt_context_t *ctx)
 }
 
 static int
+_ndt_unary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
+                     const ndt_ndarray_t *x, const ndt_t *dtype_x,
+                     const ndt_t *out, const ndt_t *dtype_out,
+                     const bool check_broadcast, const int inner,
+                     ndt_context_t *ctx)
+{
+    int64_t shape[NDT_MAX_DIM];
+    int size = x->ndim;
+    ndt_ndarray_t y;
+    const ndt_t *t;
+
+    for (int i = 0; i < size; i++) {
+        shape[i] = x->shape[i];
+    }
+
+    if (out != NULL) {
+        if (ndt_as_ndarray(&y, out, ctx) < 0) {
+            return -1;
+        }
+
+        size = _resolve_broadcast(shape, size, y.shape, y.ndim);
+        if (size < 0) {
+            return broadcast_error("could not broadcast output argument", ctx);
+        }
+    }
+
+    spec->types[0] = fast_broadcast(x, dtype_x, shape, size, ctx);
+    if (spec->types[0] == NULL) {
+        return -1;
+    }
+
+    if (out != NULL) {
+        if (check_broadcast) {
+            t = fixed_dim_from_shape(shape, size, dtype_out, ctx);
+            if (t == NULL) {
+                ndt_decref(spec->types[0]);
+                return -1;
+            }
+
+            if (!ndt_equal(t, out)) {
+                ndt_err_format(ctx, NDT_ValueError,
+                    "explicit 'out' type not compatible with input types");
+                ndt_decref(spec->types[0]);
+                ndt_decref(t);
+                return -1;
+            }
+        }
+        else {
+            t = fast_broadcast(&y, dtype_out, shape, size, ctx);
+            if (t == NULL) {
+                ndt_decref(spec->types[0]);
+                return -1;
+            }
+        }
+    }
+    else {
+        t = fixed_dim_from_shape(shape, size, dtype_out, ctx);
+        if (t == NULL) {
+            ndt_decref(spec->types[0]);
+            return -1;
+        }
+    }
+    spec->types[1] = t;
+
+    spec->outer_dims = size-inner;
+    spec->nin = 1;
+    spec->nout = 1;
+    spec->nargs = 2;
+
+    ndt_select_kernel_strategy(spec, sig);
+
+    return 0;
+}
+
+static bool
+unary_all_ellipses(const ndt_t *t0, const ndt_t *t1, ndt_context_t *ctx)
+{
+    if ((t0->tag != EllipsisDim || t0->EllipsisDim.name != NULL) ||
+        (t1->tag != EllipsisDim || t1->EllipsisDim.name != NULL)) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "fast unary typecheck expects leading ellipsis dimensions");
+        return false;
+    }
+
+    return true;
+}
+
+static bool
+unary_all_same_symbol(const ndt_t *t0, const ndt_t *t1)
+{
+    if (t0->tag != SymbolicDim || t1->tag != SymbolicDim) {
+        return false;
+    }
+
+    return strcmp(t0->SymbolicDim.name, t1->SymbolicDim.name) == 0;
+}
+
+static bool
+unary_all_ndim0(const ndt_t *t0, const ndt_t *t1)
+{
+    return t0->ndim == 0 && t1->ndim == 0;
+}
+
+/*
+ * Optimized type checking for very specific signatures. The caller must
+ * have identified the kernel location and the signature.  For performance
+ * reasons, no substitution is performed on the dtype, so the dtype must be
+ * concrete.
+ *
+ * Supported signature: 1) ... * T0 -> ... * T1
+ */
+int
+ndt_fast_unary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
+                               const ndt_t *types[], const int nin, const int nout,
+                               const bool check_broadcast, ndt_context_t *ctx)
+{
+    const ndt_t *p0, *p1;
+    ndt_ndarray_t x;
+    const ndt_t *out = NULL;
+    const ndt_t *dtype = NULL;
+
+    assert(spec->flags == 0);
+    assert(spec->outer_dims == 0);
+    assert(spec->nin == 0);
+    assert(spec->nout == 0);
+    assert(spec->nargs == 0);
+
+    if (sig->tag != Function ||
+        sig->Function.nin != 1) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "fast unary typecheck expects a signature with one input and "
+            "one output");
+        return -1;
+    }
+
+    if (nin != 1) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "fast unary typecheck expects one input argument");
+        return -1;
+    }
+
+    if (nout) {
+        if (nout != 1) {
+            ndt_err_format(ctx, NDT_RuntimeError,
+                "fast unary typecheck expects at most one explicit out argument");
+            return -1;
+        }
+        out = types[1];
+        dtype = ndt_dtype(types[1]);
+
+        if (!ndt_equal(out, sig->Function.types[1])) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "dtype of the out argument does not match");
+            return -1;
+        }
+    }
+    else {
+        dtype = ndt_dtype(sig->Function.types[1]);
+    }
+
+    if (ndt_is_abstract(dtype)) {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "fast unary typecheck expects a concrete dtype");
+        return -1;
+    }
+
+    p0 = sig->Function.types[0];
+    p1 = sig->Function.types[1];
+
+    if (!unary_all_ellipses(p0, p1, ctx)) {
+        return -1;
+    }
+
+    if (ndt_as_ndarray(&x, types[0], ctx) < 0) {
+        return -1;
+    }
+
+    p0 = p0->EllipsisDim.type;
+    p1 = p1->EllipsisDim.type;
+
+    if (unary_all_same_symbol(p0, p1)) {
+        return _ndt_unary_broadcast(spec, sig,
+                                    &x, ndt_dtype(types[0]),
+                                    out, dtype, check_broadcast,
+                                    1, ctx);
+    }
+    else if (unary_all_ndim0(p0, p1)) {
+        return _ndt_unary_broadcast(spec, sig,
+                                    &x, ndt_dtype(types[0]),
+                                    out, dtype, check_broadcast,
+                                    0, ctx);
+    }
+    else {
+        ndt_err_format(ctx, NDT_RuntimeError,
+            "unsupported signature in fast unary typecheck");
+        return -1;
+    }
+}
+
+static int
 _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
                       const ndt_ndarray_t *x, const ndt_t *dtype_x,
                       const ndt_ndarray_t *y, const ndt_t *dtype_y,
@@ -1151,12 +1351,12 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
         }
     }
 
-    spec->types[0] = binary_broadcast_1D(x, dtype_x, shape, size, ctx);
+    spec->types[0] = fast_broadcast(x, dtype_x, shape, size, ctx);
     if (spec->types[0] == NULL) {
         return -1;
     }
 
-    spec->types[1] = binary_broadcast_1D(y, dtype_y, shape, size, ctx);
+    spec->types[1] = fast_broadcast(y, dtype_y, shape, size, ctx);
     if (spec->types[1] == NULL) {
         ndt_decref(spec->types[0]);
         return -1;
@@ -1181,7 +1381,7 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
             }
         }
         else {
-            t = binary_broadcast_1D(&z, dtype_out, shape, size, ctx);
+            t = fast_broadcast(&z, dtype_out, shape, size, ctx);
             if (t == NULL) {
                 ndt_decref(spec->types[0]);
                 ndt_decref(spec->types[1]);
@@ -1210,8 +1410,8 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
 }
 
 static bool
-all_ellipses(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2,
-             ndt_context_t *ctx)
+binary_all_ellipses(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2,
+                    ndt_context_t *ctx)
 {
     if ((t0->tag != EllipsisDim || t0->EllipsisDim.name != NULL) ||
         (t1->tag != EllipsisDim || t1->EllipsisDim.name != NULL) ||
@@ -1225,7 +1425,7 @@ all_ellipses(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2,
 }
 
 static bool
-all_same_symbol(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
+binary_all_same_symbol(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
 {
     if (t0->tag != SymbolicDim || t1->tag != SymbolicDim ||
         t2->tag != SymbolicDim) {
@@ -1237,7 +1437,7 @@ all_same_symbol(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
 }
 
 static bool
-all_ndim0(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
+binary_all_ndim0(const ndt_t *t0, const ndt_t *t1, const ndt_t *t2)
 {
     return t0->ndim == 0 && t1->ndim == 0 && t2->ndim == 0;
 }
@@ -1288,6 +1488,12 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         }
         out = types[2];
         dtype = ndt_dtype(types[2]);
+
+        if (!ndt_equal(out, sig->Function.types[2])) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "dtype of the out argument does not match");
+            return -1;
+        }
     }
     else {
         dtype = ndt_dtype(sig->Function.types[2]);
@@ -1303,7 +1509,7 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     p1 = sig->Function.types[1];
     p2 = sig->Function.types[2];
 
-    if (!all_ellipses(p0, p1, p2, ctx)) {
+    if (!binary_all_ellipses(p0, p1, p2, ctx)) {
         return -1;
     }
 
@@ -1319,7 +1525,7 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     p1 = p1->EllipsisDim.type;
     p2 = p2->EllipsisDim.type;
 
-    if (all_same_symbol(p0, p1, p2)) {
+    if (binary_all_same_symbol(p0, p1, p2)) {
         if (x.ndim > 0 && y.ndim > 0) {
             const int64_t xshape = x.shape[x.ndim-1];
             const int64_t yshape = y.shape[y.ndim-1];
@@ -1334,7 +1540,7 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                                      out, dtype, check_broadcast,
                                      1, ctx);
     }
-    else if (all_ndim0(p0, p1, p2)) {
+    else if (binary_all_ndim0(p0, p1, p2)) {
         return _ndt_binary_broadcast(spec, sig,
                                      &x, ndt_dtype(types[0]),
                                      &y, ndt_dtype(types[1]),

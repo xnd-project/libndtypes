@@ -399,6 +399,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
             return NULL;
         }
         *u = *t;
+        u->refcnt = 1;
         return u;
       }
     }
