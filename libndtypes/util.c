@@ -103,7 +103,7 @@ ndt_nelem(const ndt_t *t)
     ndt_ndarray_t x;
     int64_t n;
 
-    if (ndt_as_ndarray(&x, t, ctx) < 0) {
+    if (ndt_as_ndarray(&x, t, &ctx) < 0) {
         ndt_err_clear(&ctx);
         return -1;
     }
