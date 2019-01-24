@@ -619,6 +619,7 @@ NDTYPES_API char *ndt_strdup(const char *s, ndt_context_t *ctx);
 NDTYPES_API char *ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...);
 
 /* Type functions (unstable API) */
+NDTYPES_API int64_t ndt_nelem(const ndt_t *t);
 NDTYPES_API int ndt_logical_ndim(const ndt_t *t);
 NDTYPES_API const ndt_t *ndt_logical_dim_at(const ndt_t *t, int n);
 NDTYPES_API const ndt_t *ndt_dtype(const ndt_t *t);

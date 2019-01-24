@@ -95,6 +95,27 @@ ndt_asprintf(ndt_context_t *ctx, const char *fmt, ...)
 /*                       Type functions (unstable API)                       */
 /*****************************************************************************/
 
+/* Number of elements, currently only for ndarrays. Return -1 on error. */
+int64_t
+ndt_nelem(const ndt_t *t)
+{
+    NDT_STATIC_CONTEXT(ctx);
+    ndt_ndarray_t x;
+    int64_t n;
+
+    if (ndt_as_ndarray(&x, t, ctx) < 0) {
+        ndt_err_clear(&ctx);
+        return -1;
+    }
+
+    n = 1;
+    for (int i = 0; i < x.ndim; i++) {
+        n *= x.shape[i];
+    }
+
+    return n;
+}
+
 /* Return the next type in a dimension chain.  Undefined for non-dimensions. */
 static const ndt_t *
 next_dim(const ndt_t *t)
