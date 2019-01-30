@@ -1853,13 +1853,15 @@ class TestBroadcast(unittest.TestCase):
             sig, args, kwargs, expected = d.values()
             spec = sig.apply(*args, out=kwargs)
 
-            self.assertEqual(len(spec), len(expected))
-            self.assertEqual(spec.flags, expected.flags)
-            self.assertEqual(spec.outer_dims, expected.outer_dims)
-            self.assertEqual(spec.nin, expected.nin)
-            self.assertEqual(spec.nout, expected.nout)
-            self.assertEqual(spec.nargs, expected.nargs)
-            self.assertEqual(spec.types, expected.types)
+            msg = str(sig)
+
+            self.assertEqual(len(spec), len(expected), msg=msg)
+            self.assertEqual(spec.flags, expected.flags, msg=msg)
+            self.assertEqual(spec.outer_dims, expected.outer_dims, msg=msg)
+            self.assertEqual(spec.nin, expected.nin, msg=msg)
+            self.assertEqual(spec.nout, expected.nout, msg=msg)
+            self.assertEqual(spec.nargs, expected.nargs, msg=msg)
+            self.assertEqual(spec.types, expected.types, msg=msg)
 
     def test_against_numpy(self):
 

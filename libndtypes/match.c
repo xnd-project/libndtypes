@@ -1045,7 +1045,10 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
         return -1;
     }
 
-    ndt_select_kernel_strategy(spec, sig);
+    if (ndt_select_kernel_strategy(spec, ctx) < 0) {
+        ndt_apply_spec_clear(spec);
+        return -1;
+    }
 
     return 0;
 }
@@ -1119,7 +1122,7 @@ broadcast_error(const char *msg, ndt_context_t *ctx)
 }
 
 static int
-_ndt_unary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
+_ndt_unary_broadcast(ndt_apply_spec_t *spec,
                      const ndt_ndarray_t *x, const ndt_t *dtype_x,
                      const ndt_t *out, const ndt_t *dtype_out,
                      const bool check_broadcast, const int inner,
@@ -1188,7 +1191,10 @@ _ndt_unary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
     spec->nout = 1;
     spec->nargs = 2;
 
-    ndt_select_kernel_strategy(spec, sig);
+    if (ndt_select_kernel_strategy(spec, ctx) < 0) {
+        ndt_apply_spec_clear(spec);
+        return -1;
+    }
 
     return 0;
 }
@@ -1300,13 +1306,13 @@ ndt_fast_unary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
     p1 = p1->EllipsisDim.type;
 
     if (unary_all_same_symbol(p0, p1)) {
-        return _ndt_unary_broadcast(spec, sig,
+        return _ndt_unary_broadcast(spec,
                                     &x, ndt_dtype(types[0]),
                                     out, dtype, check_broadcast,
                                     1, ctx);
     }
     else if (unary_all_ndim0(p0, p1)) {
-        return _ndt_unary_broadcast(spec, sig,
+        return _ndt_unary_broadcast(spec,
                                     &x, ndt_dtype(types[0]),
                                     out, dtype, check_broadcast,
                                     0, ctx);
@@ -1319,7 +1325,7 @@ ndt_fast_unary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
 }
 
 static int
-_ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
+_ndt_binary_broadcast(ndt_apply_spec_t *spec,
                       const ndt_ndarray_t *x, const ndt_t *dtype_x,
                       const ndt_ndarray_t *y, const ndt_t *dtype_y,
                       const ndt_t *out, const ndt_t *dtype_out,
@@ -1404,7 +1410,10 @@ _ndt_binary_broadcast(ndt_apply_spec_t *spec, const ndt_t *sig,
     spec->nout = 1;
     spec->nargs = 3;
 
-    ndt_select_kernel_strategy(spec, sig);
+    if (ndt_select_kernel_strategy(spec, ctx) < 0) {
+        ndt_apply_spec_clear(spec);
+        return -1;
+    }
 
     return 0;
 }
@@ -1534,14 +1543,14 @@ ndt_fast_binary_fixed_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                 return -1;
             }
         }
-        return _ndt_binary_broadcast(spec, sig,
+        return _ndt_binary_broadcast(spec,
                                      &x, ndt_dtype(types[0]),
                                      &y, ndt_dtype(types[1]),
                                      out, dtype, check_broadcast,
                                      1, ctx);
     }
     else if (binary_all_ndim0(p0, p1, p2)) {
-        return _ndt_binary_broadcast(spec, sig,
+        return _ndt_binary_broadcast(spec,
                                      &x, ndt_dtype(types[0]),
                                      &y, ndt_dtype(types[1]),
                                      out, dtype, check_broadcast,

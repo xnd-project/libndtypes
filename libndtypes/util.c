@@ -472,6 +472,15 @@ ndt_apply_spec_del(ndt_apply_spec_t *spec)
     ndt_free(spec);
 }
 
+#define X (NDT_INNER_XND)
+#define S (NDT_INNER_STRIDED)
+#define C (NDT_INNER_C)
+#define F (NDT_INNER_F)
+
+#define ES (NDT_EXT_STRIDED)
+#define EC (NDT_EXT_C)
+#define EZ (NDT_EXT_ZERO)
+
 /* This function is used in places where it is _really_ convenient not to
    have to deal with deallocating an error message. */
 const char *
@@ -479,38 +488,33 @@ ndt_apply_flags_as_string(const ndt_apply_spec_t *spec)
 {
     switch (spec->flags) {
     case 0: return "None";
-    case NDT_C: return "C";
-    case NDT_FORTRAN: return "Fortran";
-    case NDT_FORTRAN|NDT_C: return "C|Fortran";
-    case NDT_STRIDED: return "Strided";
-    case NDT_STRIDED|NDT_C: return "C|Strided";
-    case NDT_STRIDED|NDT_FORTRAN: return "Fortran|Strided";
-    case NDT_STRIDED|NDT_FORTRAN|NDT_C: return "C|Fortran|Strided";
-    case NDT_XND: return "Xnd";
-    case NDT_XND|NDT_C: return "C|Xnd";
-    case NDT_XND|NDT_FORTRAN: return "Fortran|Xnd";
-    case NDT_XND|NDT_FORTRAN|NDT_C: return "C|Fortran|Xnd";
-    case NDT_XND|NDT_STRIDED: return "Strided|Xnd";
-    case NDT_XND|NDT_STRIDED|NDT_C: return "C|Strided|Xnd";
-    case NDT_XND|NDT_STRIDED|NDT_FORTRAN: return "Fortran|Strided|Xnd";
-    case NDT_XND|NDT_STRIDED|NDT_FORTRAN|NDT_C: return "C|Fortran|Strided|Xnd";
-    case NDT_ELEMWISE_1D: return "Elemwise1D";
-    case NDT_ELEMWISE_1D|NDT_C: return "Elemwise1D|C";
-    case NDT_ELEMWISE_1D|NDT_FORTRAN: return "Elemwise1D|Fortran";
-    case NDT_ELEMWISE_1D|NDT_FORTRAN|NDT_C: return "Elemwise1D|C|Fortran";
-    case NDT_ELEMWISE_1D|NDT_STRIDED: return "Elemwise1D|Strided";
-    case NDT_ELEMWISE_1D|NDT_STRIDED|NDT_C: return "Elemwise1D|C|Strided";
-    case NDT_ELEMWISE_1D|NDT_STRIDED|NDT_FORTRAN: return "Elemwise1D|Fortran|Strided";
-    case NDT_ELEMWISE_1D|NDT_STRIDED|NDT_FORTRAN|NDT_C: return "Elemwise1D|C|Fortran|Strided";
-    case NDT_ELEMWISE_1D|NDT_XND: return "Elemwise1D|Xnd";
-    case NDT_ELEMWISE_1D|NDT_XND|NDT_C: return "Elemwise1D|C|Xnd";
-    case NDT_ELEMWISE_1D|NDT_XND|NDT_FORTRAN: return "Elemwise1D|Fortran|Xnd";
-    case NDT_ELEMWISE_1D|NDT_XND|NDT_FORTRAN|NDT_C: return "Elemwise1D|C|Fortran|Xnd";
-    case NDT_ELEMWISE_1D|NDT_XND|NDT_STRIDED: return "Elemwise1D|Strided|Xnd";
-    case NDT_ELEMWISE_1D|NDT_XND|NDT_STRIDED|NDT_C: return "Elemwise1D|C|Strided|Xnd";
-    case NDT_ELEMWISE_1D|NDT_XND|NDT_STRIDED|NDT_FORTRAN: return "Elemwise1D|Fortran|Strided|Xnd";
-    case NDT_ELEMWISE_1D|NDT_XND|NDT_STRIDED|NDT_FORTRAN|NDT_C: return "Elemwise1D|C|Fortran|Strided|Xnd";
-    default: return "error: invalid combination of spec->flags";
+    case X: return "Xnd";
+
+    case S|X: return "Strided|Xnd";
+    case C|S|X: return "C|Strided|Xnd";
+    case F|S|X: return "Fortran|Strided|Xnd";
+    case C|F|S|X: return "C|Fortran|Strided|Xnd";
+
+    case ES|S|X: return "OptS|Strided|Xnd";
+    case ES|C|S|X: return "OptS|C|Strided|Xnd";
+    case ES|F|S|X: return "OptS|Fortran|Strided|Xnd";
+    case ES|C|F|S|X: return "OptS|C|Fortran|Strided|Xnd";
+    case EC|ES|C|S|X: return "OptC|OptS|C|Strided|Xnd";
+    case EC|ES|C|F|S|X: return "OptC|OptS|C|Fortran|Strided|Xnd";
+    case EZ|ES|C|S|X: return "OptZ|OptS|C|Strided|Xnd";
+    case EZ|ES|C|F|S|X: return "OptZ|OptS|C|Fortran|Strided|Xnd";
+
+    default:
+        if (spec->flags & NDT_EXT_ZERO) fprintf(stderr, "EZ ");
+        if (spec->flags & NDT_EXT_C) fprintf(stderr, "EC ");
+        if (spec->flags & NDT_EXT_STRIDED) fprintf(stderr, "ES ");
+        if (spec->flags & NDT_INNER_C) fprintf(stderr, "C ");
+        if (spec->flags & NDT_INNER_F) fprintf(stderr, "F ");
+        if (spec->flags & NDT_INNER_STRIDED) fprintf(stderr, "S ");
+        if (spec->flags & NDT_INNER_XND) fprintf(stderr, "X ");
+        fprintf(stderr, "\n");
+
+        return "unknown flags";
     }
 }
 
@@ -557,93 +561,116 @@ ndt_meta_del(ndt_meta_t *m)
 /*                     Optimized kernel strategy (unstable API)              */
 /*****************************************************************************/
 
-static bool
-all_inner_1D_contiguous(const ndt_t *types[], int n)
+static uint32_t
+check_c(uint32_t flags, ndt_ndarray_t *x, int outer)
 {
-    for (int i = 0; i < n; i++) {
-        int ldim = ndt_logical_ndim(types[i]);
+    int inner = x->ndim-outer;
+    int64_t *shape = x->shape+outer;
+    int64_t *steps = x->steps+outer;
+    int64_t step = 1;
 
-        if (ldim == 0) {
-            return false;
+    for (int i = inner-1; i >= 0; i--) {
+        if (shape[i] > 1 && steps[i] != step) {
+            return flags & ~(NDT_INNER_C|NDT_EXT_C|NDT_EXT_ZERO);
         }
-        if (!ndt_is_c_contiguous(ndt_logical_dim_at(types[i], ldim-1))) {
-            return false;
+        step *= shape[i];
+    }
+
+    if (x->ndim == inner) {
+        return flags & ~(NDT_EXT_C|NDT_EXT_ZERO);
+    }
+    else if (x->ndim > inner) {
+        if (shape[-1] > 1 && steps[-1] != step) {
+            flags &= ~NDT_EXT_C;
+        }
+        if (steps[-1] != 0) {
+            return flags &= ~NDT_EXT_ZERO;
         }
     }
 
-    return true;
+    return flags;
 }
 
-static bool
-all_inner_c_contiguous(const ndt_t *types[], int n, int outer)
+static uint32_t
+check_f(uint32_t flags, ndt_ndarray_t *x, int outer)
 {
-    for (int i = 0; i < n; i++) {
-        if (!ndt_is_c_contiguous(ndt_logical_dim_at(types[i], outer))) {
-            return false;
+    int inner = x->ndim-outer;
+    int64_t *shape = x->shape+outer;
+    int64_t *steps = x->steps+outer;
+    int64_t step = 1;
+
+    for (int i = 0; i < inner; i++) {
+        if (shape[i] > 1 && steps[i] != step) {
+            return flags & ~NDT_INNER_F;
         }
+        step *= shape[i];
     }
 
-    return true;
+    return flags;
 }
 
-static bool
-all_inner_f_contiguous(const ndt_t *types[], int n, int outer)
+static uint32_t
+check_strided(uint32_t flags, int outer)
 {
-    for (int i = 0; i < n; i++) {
-        if (!ndt_is_f_contiguous(ndt_logical_dim_at(types[i], outer))) {
-            return false;
-        }
+    if (outer == 0) {
+        return flags & ~NDT_EXT_STRIDED;
     }
 
-    return true;
+    return flags;
 }
 
-static bool
-all_ndarray(const ndt_t *types[], int n)
+static uint32_t
+check_var(uint32_t flags, const ndt_t *t, int outer)
 {
-    for (int i = 0; i < n; i++) {
-        if (!ndt_is_ndarray(types[i])) {
-            return false;
-        }
-        if (ndt_subtree_is_optional(types[i])) {
-            return false;
-        }
+#if 0
+    /*
+     * This currently does not handle a corner case with zeros in a shape.
+     * The loop in gumath is safe, however, since it stops at shape==0.
+     */
+    if (ndt_logical_ndim(t) == outer) {
+        return flags & NDT_INNER_XND;
     }
 
-    return true;
+    return 0U;
+#endif
+    (void)t;
+    (void)outer;
+    return flags & NDT_INNER_XND;
 }
 
-void
-ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig)
+static uint32_t
+select_flags(const ndt_t *types[], int n, int outer, ndt_context_t *ctx)
 {
-    const int outer_dims = spec->outer_dims;
-    const int nin = spec->nin;
-    const int nout  = spec->nout;
-    bool in_inner_c, in_inner_f, out_inner_c;
+    uint32_t flags = NDT_SPEC_FLAGS_ALL;
+    ndt_ndarray_t x;
 
-    assert(sig->tag == Function);
-    assert(spec->flags == 0);
+    for (int i = 0; i < n; i++) {
+        const ndt_t *t = types[i];
 
-    in_inner_c = all_inner_c_contiguous(spec->types, nin, outer_dims);
-    in_inner_f = all_inner_f_contiguous(spec->types, nin, outer_dims);
-    out_inner_c = all_inner_c_contiguous(spec->types+nin, nout, outer_dims);
+        if (ndt_as_ndarray(&x, t, ctx) < 0) { /* var dimension */
+            ndt_err_clear(ctx);
+            flags = check_var(flags, t, outer);
+        }
+        else {
+            if (outer > t->ndim) {
+                ndt_err_format(ctx, NDT_RuntimeError,
+                               "number of outer dimensions greater than ndim");
+                return UINT32_MAX;
+            }
 
-    spec->flags = NDT_XND;
-
-    if (sig->Function.elemwise) {
-        if (all_inner_1D_contiguous(spec->types, nin) &&
-            all_inner_1D_contiguous(spec->types+nin, nout)) {
-            spec->flags |= NDT_ELEMWISE_1D;
+            flags = check_strided(flags, outer);
+            flags = check_c(flags, &x, outer);
+            flags = check_f(flags, &x, outer);
         }
     }
-    if (in_inner_c && out_inner_c) {
-        spec->flags |= NDT_C;
-    }
-    if (in_inner_f && out_inner_c) {
-        spec->flags |= NDT_FORTRAN;
-    }
 
-    if (all_ndarray(spec->types, nin) && all_ndarray(spec->types+nin, nout)) {
-        spec->flags |= NDT_STRIDED;
-    }
+    return flags;
+}
+
+int
+ndt_select_kernel_strategy(ndt_apply_spec_t *spec, ndt_context_t *ctx)
+{
+    spec->flags = select_flags(spec->types, spec->nargs, spec->outer_dims, ctx);
+
+    return spec->flags == UINT32_MAX ? -1 : 0;
 }

@@ -581,13 +581,32 @@ typedef struct {
     int64_t steps[NDT_MAX_DIM];
 } ndt_ndarray_t;
 
-/* This may go into gumath at some point.  A flag is set if the inner dimensions
-   of all input and output arguments have the property. */
-#define NDT_ELEMWISE_1D  0x00000001U  /* 1D elementwise and contiguous */
-#define NDT_C            0x00000004U  /* ND C-contiguous */
-#define NDT_FORTRAN      0x00000008U  /* ND F-contiguous */
-#define NDT_STRIDED      0x00000010U  /* ND non-contiguous */
-#define NDT_XND          0x00000020U  /* Any XND container */
+/*
+ * Type properties that determine what kind of kernel can be used safely. A
+ * property flag is set if it applies to all input and output arguments.
+ */
+#define NDT_INNER_C       0x00000001U  /* inner dims C-contiguous */
+#define NDT_INNER_F       0x00000002U  /* inner dims F-contiguous */
+#define NDT_INNER_STRIDED 0x00000004U  /* inner dims strided */
+
+/*
+ * Modifiers to the above properties that determine whether an extended
+ * optimized kernel (inner+1) can be used safely.
+ *
+ * C inner dimensions can be extended to a pure inner+1 C array. Fortran
+ * inner dimensions cannot be extended to yield another Fortran array,
+ * hence the unfortunate asymmetry.
+ */
+#define NDT_EXT_C       0x00000010U  /* inner+1 dims are C */
+#define NDT_EXT_ZERO    0x00000020U  /* inner dims are C, loop has C or zero stride (GPU) */
+#define NDT_EXT_STRIDED 0x00000040U  /* inner dims are {C,F,strided}, loop is strided */
+
+#define NDT_INNER_XND   0x00000100U  /* inner dims are xnd */
+
+#define NDT_SPEC_FLAGS_ALL (NDT_INNER_C|NDT_INNER_F|NDT_INNER_STRIDED| \
+                            NDT_EXT_C|NDT_EXT_ZERO|NDT_EXT_STRIDED|    \
+                            NDT_INNER_XND)
+
 
 typedef struct {
     uint32_t flags;
@@ -607,7 +626,7 @@ NDTYPES_API const char *ndt_apply_flags_as_string(const ndt_apply_spec_t *spec);
 NDTYPES_API int ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool check_broadcast,
                                   const int64_t *shape, int outer_dims, ndt_context_t *ctx);
 
-NDTYPES_API void ndt_select_kernel_strategy(ndt_apply_spec_t *spec, const ndt_t *sig);
+NDTYPES_API int ndt_select_kernel_strategy(ndt_apply_spec_t *spec, ndt_context_t *ctx);
 
 
 /*****************************************************************************/
