@@ -582,9 +582,9 @@ check_c(uint32_t flags, ndt_ndarray_t *x, int outer)
     else if (x->ndim > inner) {
         if (shape[-1] > 1 && steps[-1] != step) {
             flags &= ~NDT_EXT_C;
-        }
-        if (steps[-1] != 0) {
-            return flags &= ~NDT_EXT_ZERO;
+            if (steps[-1] != 0) {
+                flags &= ~NDT_EXT_ZERO;
+            }
         }
     }
 
