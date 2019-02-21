@@ -624,7 +624,7 @@ NDTYPES_API void ndt_apply_spec_clear(ndt_apply_spec_t *spec);
 NDTYPES_API void ndt_apply_spec_del(ndt_apply_spec_t *spec);
 NDTYPES_API const char *ndt_apply_flags_as_string(const ndt_apply_spec_t *spec);
 NDTYPES_API int ndt_broadcast_all(ndt_apply_spec_t *spec, const ndt_t *sig, bool check_broadcast,
-                                  const int64_t *shape, int outer_dims, ndt_context_t *ctx);
+                                  const int64_t *shape, const int outer_dims, ndt_context_t *ctx);
 
 NDTYPES_API int ndt_select_kernel_strategy(ndt_apply_spec_t *spec, ndt_context_t *ctx);
 
