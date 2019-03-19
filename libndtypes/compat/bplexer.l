@@ -136,9 +136,10 @@ yycolumn = 1;
 "e"        { yylval->uchar = 'e'; return DTYPE; }
 "f"        { yylval->uchar = 'f'; return DTYPE; }
 "d"        { yylval->uchar = 'd'; return DTYPE; }
-"E"        { yylval->uchar = 'E'; return DTYPE; }
-"F"        { yylval->uchar = 'F'; return DTYPE; }
-"D"        { yylval->uchar = 'D'; return DTYPE; }
+
+"Ze"       { yylval->uchar = 'E'; return DTYPE; }
+"Zf"       { yylval->uchar = 'F'; return DTYPE; }
+"Zd"       { yylval->uchar = 'D'; return DTYPE; }
 
 "x"        { return PAD; }
 "T"        { return RECORD; }

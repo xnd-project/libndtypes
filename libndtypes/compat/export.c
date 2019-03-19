@@ -260,9 +260,9 @@ format(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
         case Float32: return primitive(buf, t, "f", ctx);
         case Float64: return primitive(buf, t, "d", ctx);
 
-        case Complex32: return primitive(buf, t, "E", ctx);
-        case Complex64: return primitive(buf, t, "F", ctx);
-        case Complex128: return primitive(buf, t, "D", ctx);
+        case Complex32: return primitive(buf, t, "Ze", ctx);
+        case Complex64: return primitive(buf, t, "Zf", ctx);
+        case Complex128: return primitive(buf, t, "Zd", ctx);
 
         case Char:
             if (t->Char.encoding == Ascii) return ndt_snprintf(ctx, buf, "c");

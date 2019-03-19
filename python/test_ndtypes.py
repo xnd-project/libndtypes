@@ -1525,7 +1525,7 @@ class TestBufferProtocol(unittest.TestCase):
             ("(2,19)T{<b:a:xxxQ:b:}", 12, 4),
             ("(31,221)T{<b:a:xxxxxxxQ:b:}", 16, 8),
             ("(2,3,10)T{<b:a:xxxxxxxxxxxxxxxQ:b:xxxxxxxx}", 32, 16),
-            ("(2,10)T{=L:a:(2,3)D:b:}", 100, 1)]
+            ("(2,10)T{=L:a:(2,3)Zd:b:}", 100, 1)]
 
         test_error_cases = [
             # empty shape (scalars are not arrays in datashape)
@@ -1626,7 +1626,7 @@ class TestBufferProtocol(unittest.TestCase):
                 self.assertRaises(struct.error, struct.Struct, f)
 
         # complex32
-        fmt = 'E'
+        fmt = 'Ze'
         for modifier in ['', '@', '=', '<', '>', '!']:
             f = modifier + fmt
             t = ndt.from_format(f)
@@ -1634,7 +1634,7 @@ class TestBufferProtocol(unittest.TestCase):
                 self.assertEqual(t.itemsize, 4)
 
         # complex64
-        fmt = 'F'
+        fmt = 'Zf'
         for modifier in ['', '@', '=', '<', '>', '!']:
             f = modifier + fmt
             t = ndt.from_format(f)
@@ -1642,7 +1642,7 @@ class TestBufferProtocol(unittest.TestCase):
                 self.assertEqual(t.itemsize, 8)
 
         # complex128
-        fmt = 'D'
+        fmt = 'Zd'
         for modifier in ['', '@', '=', '<', '>', '!']:
             f = modifier + fmt
             t = ndt.from_format(f)
