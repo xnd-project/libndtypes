@@ -51,6 +51,7 @@ extern "C" {
 
 typedef struct {
     PyObject_HEAD
+    Py_hash_t hash;
     const ndt_t *ndt;
 } NdtObject;
 

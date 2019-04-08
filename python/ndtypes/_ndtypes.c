@@ -198,6 +198,7 @@ ndtype_alloc(PyTypeObject *type)
     if (self == NULL) {
         return NULL;
     }
+    self->hash = -1;
     NDT(self) = NULL;
 
     return (PyObject *)self;
@@ -580,14 +581,16 @@ static Py_hash_t
 ndtype_hash(PyObject *self)
 {
     NDT_STATIC_CONTEXT(ctx);
-    Py_hash_t res;
+    NdtObject *s = (NdtObject *)self;
 
-    res = ndt_hash(NDT(self), &ctx);
-    if (res == -1) {
-        (void)seterr(&ctx);
+    if (s->hash == -1) {
+        s->hash = ndt_hash(NDT(self), &ctx);
+        if (s->hash == -1) {
+            (void)seterr(&ctx);
+        }
     }
 
-    return res;
+    return s->hash;
 }
 
 static PyObject *
