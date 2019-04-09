@@ -131,10 +131,10 @@ ndt_is_static(const ndt_t *t)
     switch (t->tag) {
     case String:
     case Bool:
-    case Int8: case Int16: case Int32: case Int64:
-    case Uint8: case Uint16: case Uint32: case Uint64:
-    case BFloat16: case Float16: case Float32: case Float64:
-    case BComplex32: case Complex32: case Complex64: case Complex128:
+    case SignedKind: case Int8: case Int16: case Int32: case Int64:
+    case UnsignedKind: case Uint8: case Uint16: case Uint32: case Uint64:
+    case FloatKind: case BFloat16: case Float16: case Float32: case Float64:
+    case ComplexKind: case BComplex32: case Complex32: case Complex64: case Complex128:
         return true;
     default:
         return false;
@@ -147,10 +147,10 @@ ndt_is_static_tag(enum ndt tag)
     switch (tag) {
     case String:
     case Bool:
-    case Int8: case Int16: case Int32: case Int64:
-    case Uint8: case Uint16: case Uint32: case Uint64:
-    case BFloat16: case Float16: case Float32: case Float64:
-    case BComplex32: case Complex32: case Complex64: case Complex128:
+    case SignedKind: case Int8: case Int16: case Int32: case Int64:
+    case UnsignedKind: case Uint8: case Uint16: case Uint32: case Uint64:
+    case FloatKind: case BFloat16: case Float16: case Float32: case Float64:
+    case ComplexKind: case BComplex32: case Complex32: case Complex64: case Complex128:
         return true;
     default:
         return false;
@@ -1129,18 +1129,14 @@ ndt_del(ndt_t *t)
     case FixedStringKind: case FixedString:
     case FixedBytesKind: case FixedBytes:
     case Bytes: case Char:
-    case SignedKind:
-    case UnsignedKind:
-    case FloatKind:
-    case ComplexKind:
         goto free_type;
 
     case String:
     case Bool:
-    case Int8: case Int16: case Int32: case Int64:
-    case Uint8: case Uint16: case Uint32: case Uint64:
-    case BFloat16: case Float16: case Float32: case Float64:
-    case BComplex32: case Complex32: case Complex64: case Complex128:
+    case SignedKind: case Int8: case Int16: case Int32: case Int64:
+    case UnsignedKind: case Uint8: case Uint16: case Uint32: case Uint64:
+    case FloatKind: case BFloat16: case Float16: case Float32: case Float64:
+    case ComplexKind: case BComplex32: case Complex32: case Complex64: case Complex128:
         return;
     }
 
@@ -2363,30 +2359,6 @@ ndt_char(enum ndt_encoding encoding, bool opt, ndt_context_t *ctx)
     t->align = ndt_alignof_encoding(encoding);
 
     return t;
-}
-
-const ndt_t *
-ndt_signed_kind(uint32_t flags, ndt_context_t *ctx)
-{
-    return ndt_new(SignedKind, flags, ctx);
-}
-
-const ndt_t *
-ndt_unsigned_kind(uint32_t flags, ndt_context_t *ctx)
-{
-    return ndt_new(UnsignedKind, flags, ctx);
-}
-
-const ndt_t *
-ndt_float_kind(uint32_t flags, ndt_context_t *ctx)
-{
-    return ndt_new(FloatKind, flags, ctx);
-}
-
-const ndt_t *
-ndt_complex_kind(uint32_t flags, ndt_context_t *ctx)
-{
-    return ndt_new(ComplexKind, flags, ctx);
 }
 
 const ndt_t *
