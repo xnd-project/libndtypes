@@ -387,7 +387,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
     case FloatKind: case ComplexKind:
     case FixedStringKind: case FixedBytesKind:
     case FixedString: case FixedBytes:
-    case String: case Bytes:
+    case Bytes:
     case Char: {
         u = ndt_new(t->tag, opt, ctx);
         if (u == NULL) {
@@ -398,6 +398,7 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
         return u;
     }
 
+    case String:
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:

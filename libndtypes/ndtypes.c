@@ -129,6 +129,7 @@ bool
 ndt_is_static(const ndt_t *t)
 {
     switch (t->tag) {
+    case String:
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -144,6 +145,7 @@ bool
 ndt_is_static_tag(enum ndt tag)
 {
     switch (tag) {
+    case String:
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -1126,13 +1128,14 @@ ndt_del(ndt_t *t)
     case AnyKind: case ScalarKind:
     case FixedStringKind: case FixedString:
     case FixedBytesKind: case FixedBytes:
-    case String: case Bytes: case Char:
+    case Bytes: case Char:
     case SignedKind:
     case UnsignedKind:
     case FloatKind:
     case ComplexKind:
         goto free_type;
 
+    case String:
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -2312,25 +2315,6 @@ ndt_fixed_bytes(int64_t size, uint16_opt_t align_attr, bool opt, ndt_context_t *
     t->access = Concrete;
     t->datasize = size;
     t->align = align;
-
-    return t;
-}
-
-const ndt_t *
-ndt_string(bool opt, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    /* abstract type */
-    t = ndt_new(String, opt, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-
-    /* concrete access */
-    t->access = Concrete;
-    t->datasize = sizeof(char *);
-    t->align = alignof(char *);
 
     return t;
 }

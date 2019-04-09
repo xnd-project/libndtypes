@@ -998,6 +998,7 @@ read_type(const char * const ptr, int64_t offset, const int64_t len,
     case Char: return read_char(&fields, ptr, offset, len, ctx);
     case Typevar: return read_typevar(&fields, ptr, offset, len, ctx);
 
+    case String:
     case Bool:
     case Int8: case Int16: case Int32: case Int64:
     case Uint8: case Uint16: case Uint32: case Uint64:
@@ -1005,7 +1006,6 @@ read_type(const char * const ptr, int64_t offset, const int64_t len,
     case BComplex32: case Complex32: case Complex64: case Complex128:
         return ndt_primitive(fields.tag, fields.flags, ctx);
 
-    case String:
     case AnyKind:
     case ScalarKind: case SignedKind: case UnsignedKind: case FloatKind:
     case ComplexKind: case FixedStringKind: case FixedBytesKind:

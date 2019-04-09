@@ -151,6 +151,9 @@ NDT_PRIMITIVE_ALL(complex64, Complex64, sizeof(ndt_complex64_t), alignof(ndt_com
 NDT_PRIMITIVE_ALL(complex128, Complex128, sizeof(ndt_complex128_t), alignof(ndt_complex128_t))
 
 
+NDT_PRIMITIVE(str, String, sizeof(char *), alignof(char *))
+NDT_PRIMITIVE_OPT(str, String, sizeof(char *), alignof(char *))
+
 const ndt_t *
 ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
 {
@@ -174,6 +177,7 @@ ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
         case Complex32: return &ndt_complex32;
         case Complex64: return &ndt_complex64;
         case Complex128: return &ndt_complex128;
+        case String: return &ndt_str;
         default: goto value_error_tag;
         }
     }
@@ -243,6 +247,7 @@ ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
         case Complex32: return &ndt_complex32_opt;
         case Complex64: return &ndt_complex64_opt;
         case Complex128: return &ndt_complex128_opt;
+        case String: return &ndt_str_opt;
         default: goto value_error_tag;
         }
     }
@@ -304,4 +309,17 @@ value_error_tag:
 value_error_flags:
     ndt_err_format(ctx, NDT_ValueError, "invalid type flags");
     return NULL;
+}
+
+
+/******************************************************************************/
+/*                                    String                                  */
+/******************************************************************************/
+
+const ndt_t *
+ndt_string(bool_t opt, ndt_context_t *ctx)
+{
+    (void)ctx;
+
+    return opt ? &ndt_str_opt : &ndt_str;
 }
