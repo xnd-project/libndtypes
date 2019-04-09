@@ -92,8 +92,12 @@ unify_common(ndt_t *w, const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
         ndt_decref(w);
         return unification_error("flags differ", ctx);
     }
-    w->flags = t->flags | u->flags;
 
+    if (ndt_is_static(w)) {
+        return ndt_primitive(w->tag, t->flags | u->flags, ctx);
+    }
+
+    w->flags = t->flags | u->flags;
     return w;
 }
 

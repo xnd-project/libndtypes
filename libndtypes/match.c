@@ -1060,7 +1060,7 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
 
 static const ndt_t *
 fast_broadcast(const ndt_ndarray_t *t, const ndt_t *dtype,
-                    const int64_t *shape, int size, ndt_context_t *ctx)
+               const int64_t *shape, int size, ndt_context_t *ctx)
 {
     const ndt_t *v;
     int64_t step;

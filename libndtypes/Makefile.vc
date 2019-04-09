@@ -33,14 +33,14 @@ default: $(LIBSTATIC) $(LIBSHARED)
 
 OBJS = alloc.obj attr.obj context.obj copy.obj equal.obj encodings.obj \
        grammar.obj io.obj lexer.obj match.obj ndtypes.obj parsefuncs.obj \
-       parser.obj seq.obj substitute.obj symtable.obj unify.obj util.obj \
-       values.obj
+       parser.obj primitive.obj seq.obj substitute.obj symtable.obj unify.obj \
+       util.obj values.obj
 
 SHARED_OBJS = .objs\alloc.obj .objs\attr.obj .objs\context.obj .objs\copy.obj \
               .objs\equal.obj .objs\encodings.obj .objs\grammar.obj .objs\io.obj \
               .objs\lexer.obj .objs\match.obj .objs\ndtypes.obj .objs\parsefuncs.obj \
-              .objs\parser.obj .objs\seq.obj .objs\substitute.obj .objs\symtable.obj \
-              .objs\unify.obj .objs\util.obj .objs\values.obj
+              .objs\parser.obj .objs\primitive.obj .objs\seq.obj .objs\substitute.obj \
+              .objs\symtable.obj .objs\unify.obj .objs\util.obj .objs\values.obj
 
 
 COMPAT_OBJS = compat\bpgrammar.obj compat\bplexer.obj compat\import.obj compat\export.obj
@@ -169,6 +169,16 @@ Makefile parser.c grammar.h lexer.h ndtypes.h seq.h
 Makefile parser.c grammar.h lexer.h ndtypes.h seq.h
 	$(CC) $(CFLAGS_FOR_PARSER_SHARED) -c parser.c
 
+primitive.obj:\
+Makefile primitive.c grammar.h lexer.h ndtypes.h seq.h
+	$(CC) $(CFLAGS) -c primitive.c
+
+.objs\primitive.obj:\
+Makefile primitive.c grammar.h lexer.h ndtypes.h seq.h
+	$(CC) $(CFLAGS_SHARED) -c primitive.c
+
+seq.obj:\
+Makefile seq.c ndtypes.h seq.h
 seq.obj:\
 Makefile seq.c ndtypes.h seq.h
 	$(CC) $(CFLAGS) -c seq.c

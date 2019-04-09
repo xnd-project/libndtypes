@@ -33,14 +33,14 @@ default: $(LIBSTATIC) $(LIBSHARED)
 
 
 OBJS = alloc.o attr.o context.o copy.o encodings.o equal.o grammar.o io.o \
-       lexer.o match.o ndtypes.o parsefuncs.o parser.o seq.o substitute.o \
-       symtable.o unify.o util.o values.o
+       lexer.o match.o ndtypes.o parsefuncs.o parser.o primitive.o seq.o \
+       substitute.o symtable.o unify.o util.o values.o
 
 SHARED_OBJS = .objs/alloc.o .objs/attr.o .objs/context.o .objs/copy.o \
               .objs/encodings.o .objs/equal.o .objs/grammar.o .objs/io.o \
               .objs/lexer.o .objs/match.o .objs/ndtypes.o .objs/parsefuncs.o \
-              .objs/parser.o .objs/seq.o .objs/substitute.o .objs/symtable.o \
-              .objs/unify.o .objs/util.o .objs/values.o
+              .objs/parser.o .objs/primitive.o .objs/seq.o .objs/substitute.o \
+              .objs/symtable.o .objs/unify.o .objs/util.o .objs/values.o
 
 
 COMPAT_OBJS = compat/bpgrammar.o compat/bplexer.o compat/import.o compat/export.o
@@ -167,6 +167,14 @@ Makefile parser.c grammar.h lexer.h ndtypes.h seq.h
 .objs/parser.o:\
 Makefile parser.c grammar.h lexer.h ndtypes.h seq.h
 	$(CC) $(NDT_CFLAGS_SHARED) -c parser.c -o .objs/parser.o
+
+primitive.o:\
+Makefile primitive.c grammar.h lexer.h ndtypes.h seq.h
+	$(CC) $(NDT_CFLAGS) -c primitive.c
+
+.objs/primitive.o:\
+Makefile primitive.c grammar.h lexer.h ndtypes.h seq.h
+	$(CC) $(NDT_CFLAGS_SHARED) -c primitive.c -o .objs/primitive.o
 
 seq.o:\
 Makefile seq.c ndtypes.h seq.h

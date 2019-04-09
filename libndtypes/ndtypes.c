@@ -125,6 +125,36 @@ ndt_itemsize(const ndt_t *t)
 /*                                Predicates                                 */
 /*****************************************************************************/
 
+bool
+ndt_is_static(const ndt_t *t)
+{
+    switch (t->tag) {
+    case Bool:
+    case Int8: case Int16: case Int32: case Int64:
+    case Uint8: case Uint16: case Uint32: case Uint64:
+    case BFloat16: case Float16: case Float32: case Float64:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool
+ndt_is_static_tag(enum ndt tag)
+{
+    switch (tag) {
+    case Bool:
+    case Int8: case Int16: case Int32: case Int64:
+    case Uint8: case Uint16: case Uint32: case Uint64:
+    case BFloat16: case Float16: case Float32: case Float64:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
+        return true;
+    default:
+        return false;
+    }
+}
+
 /* Type field access */
 int
 ndt_is_abstract(const ndt_t *t)
@@ -1097,16 +1127,18 @@ ndt_del(ndt_t *t)
     case FixedStringKind: case FixedString:
     case FixedBytesKind: case FixedBytes:
     case String: case Bytes: case Char:
-    case Bool:
     case SignedKind:
-    case Int8: case Int16: case Int32: case Int64:
     case UnsignedKind:
-    case Uint8: case Uint16: case Uint32: case Uint64:
     case FloatKind:
-    case BFloat16: case Float16: case Float32: case Float64:
     case ComplexKind:
-    case BComplex32: case Complex32: case Complex64: case Complex128:
         goto free_type;
+
+    case Bool:
+    case Int8: case Int16: case Int32: case Int64:
+    case Uint8: case Uint16: case Uint32: case Uint64:
+    case BFloat16: case Float16: case Float32: case Float64:
+    case BComplex32: case Complex32: case Complex64: case Complex128:
+        return;
     }
 
     /* NOT REACHED: tags should be exhaustive. */
@@ -1120,6 +1152,10 @@ free_type:
 void
 ndt_incref(const ndt_t *t)
 {
+    if (ndt_is_static(t)) {
+        return;
+    }
+
     ndt_t *u = (ndt_t *)t;
 #ifdef _MSC_VER
     (void)InterlockedIncrement64(&u->refcnt);
@@ -1131,12 +1167,11 @@ ndt_incref(const ndt_t *t)
 void
 ndt_decref(const ndt_t *t)
 {
-    ndt_t *u = (ndt_t *)t;
-
-    if (u == NULL) {
+    if (t == NULL || ndt_is_static(t)) {
         return;
     }
 
+    ndt_t *u = (ndt_t *)t;
 #ifdef _MSC_VER
     if (InterlockedDecrement64(&u->refcnt) == 0) {
         ndt_del(u);
@@ -2368,97 +2403,6 @@ const ndt_t *
 ndt_complex_kind(uint32_t flags, ndt_context_t *ctx)
 {
     return ndt_new(ComplexKind, flags, ctx);
-}
-
-const ndt_t *
-ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    if (((flags&NDT_LITTLE_ENDIAN) && (flags&NDT_BIG_ENDIAN)) ||
-        (flags&NDT_ELLIPSIS) || (flags&NDT_SUBTREE_OPTION)) {
-        ndt_err_format(ctx, NDT_ValueError,
-            "ndt_primitive: invalid flags");
-        return NULL;
-    }
-
-    /* abstract type */
-    t = ndt_new(tag, flags, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-
-    /* concrete access */
-    t->access = Concrete;
-
-    switch(tag) {
-    case Bool:
-        t->datasize = sizeof(bool);
-        t->align = alignof(bool);
-        break;
-    case Int8:
-        t->datasize = sizeof(int8_t);
-        t->align = alignof(int8_t);
-        break;
-    case Int16:
-        t->datasize = sizeof(int16_t);
-        t->align = alignof(int16_t);
-        break;
-    case Int32:
-        t->datasize = sizeof(int32_t);
-        t->align = alignof(int32_t);
-        break;
-    case Int64:
-        t->datasize = sizeof(int64_t);
-        t->align = alignof(int64_t);
-        break;
-    case Uint8:
-        t->datasize = sizeof(uint8_t);
-        t->align = alignof(uint8_t);
-        break;
-    case Uint16:
-        t->datasize = sizeof(uint16_t);
-        t->align = alignof(uint16_t);
-        break;
-    case Uint32:
-        t->datasize = sizeof(uint32_t);
-        t->align = alignof(uint32_t);
-        break;
-    case Uint64:
-        t->datasize = sizeof(uint64_t);
-        t->align = alignof(uint64_t);
-        break;
-    case BFloat16: case Float16:
-        t->datasize = 2;
-        t->align = 2;
-        break;
-    case Float32:
-        t->datasize = sizeof(float);
-        t->align = alignof(float);
-        break;
-    case Float64:
-        t->datasize = sizeof(double);
-        t->align = alignof(double);
-        break;
-    case BComplex32: case Complex32:
-        t->datasize = 4;
-        t->align = 2;
-        break;
-    case Complex64:
-        t->datasize = sizeof(ndt_complex64_t);
-        t->align = alignof(ndt_complex64_t);
-        break;
-    case Complex128:
-        t->datasize = sizeof(ndt_complex128_t);
-        t->align = alignof(ndt_complex128_t);
-        break;
-    default:
-        ndt_err_format(ctx, NDT_ValueError, "not a primitive type"),
-        ndt_free(t);
-        return NULL;
-    }
-
-    return t;
 }
 
 const ndt_t *

@@ -689,6 +689,9 @@ NDTYPES_API uint16_t ndt_alignof_encoding(enum ndt_encoding encoding);
 /*                              Predicates                                   */
 /*****************************************************************************/
 
+NDTYPES_API bool ndt_is_static(const ndt_t *t);
+NDTYPES_API bool ndt_is_static_tag(enum ndt tag);
+
 NDTYPES_API int ndt_is_abstract(const ndt_t *t);
 NDTYPES_API int ndt_is_concrete(const ndt_t *t);
 
