@@ -52,66 +52,66 @@
 typedef bool bool_t;
 #undef bool
 
-#define NDT_PRIMITIVE(name, _tag, _access, _size, _align) \
-static const ndt_t ndt_##name = {                         \
-  .tag = _tag,                                            \
-  .access = _access,                                      \
-  .flags = 0,                                             \
-  .ndim = 0,                                              \
-  .datasize = _size,                                      \
-  .align = _align,                                        \
-  .refcnt = 1                                             \
+#define NDT_PRIMITIVE(name, _tag, _access, _flags, _size, _align) \
+static const ndt_t ndt_##name = {                                 \
+  .tag = _tag,                                                    \
+  .access = _access,                                              \
+  .flags = _flags,                                                \
+  .ndim = 0,                                                      \
+  .datasize = _size,                                              \
+  .align = _align,                                                \
+  .refcnt = 1                                                     \
 };
 
-#define NDT_PRIMITIVE_LE(name, _tag, _access, _size, _align) \
-static const ndt_t ndt_##name##_le = {                       \
-  .tag = _tag,                                               \
-  .access = _access,                                         \
-  .flags = NDT_LITTLE_ENDIAN,                                \
-  .ndim = 0,                                                 \
-  .datasize = _size,                                         \
-  .align = _align,                                           \
-  .refcnt = 1                                                \
+#define NDT_PRIMITIVE_LE(name, _tag, _access, _flags, _size, _align) \
+static const ndt_t ndt_##name##_le = {                               \
+  .tag = _tag,                                                       \
+  .access = _access,                                                 \
+  .flags = _flags|NDT_LITTLE_ENDIAN,                                 \
+  .ndim = 0,                                                         \
+  .datasize = _size,                                                 \
+  .align = _align,                                                   \
+  .refcnt = 1                                                        \
 };
 
-#define NDT_PRIMITIVE_BE(name, _tag, _access, _size, _align) \
-static const ndt_t ndt_##name##_be = {                       \
-  .tag = _tag,                                               \
-  .access = _access,                                         \
-  .flags = NDT_BIG_ENDIAN,                                   \
-  .ndim = 0,                                                 \
-  .datasize = _size,                                         \
-  .align = _align,                                           \
-  .refcnt = 1                                                \
+#define NDT_PRIMITIVE_BE(name, _tag, _access, _flags, _size, _align) \
+static const ndt_t ndt_##name##_be = {                               \
+  .tag = _tag,                                                       \
+  .access = _access,                                                 \
+  .flags = _flags|NDT_BIG_ENDIAN,                                    \
+  .ndim = 0,                                                         \
+  .datasize = _size,                                                 \
+  .align = _align,                                                   \
+  .refcnt = 1                                                        \
 };
 
-#define NDT_PRIMITIVE_OPT(name, _tag, _access, _size, _align) \
-static const ndt_t ndt_##name##_opt = {                       \
-  .tag = _tag,                                                \
-  .access = _access,                                          \
-  .flags = NDT_OPTION,                                        \
-  .ndim = 0,                                                  \
-  .datasize = _size,                                          \
-  .align = _align,                                            \
-  .refcnt = 1                                                 \
+#define NDT_PRIMITIVE_OPT(name, _tag, _access, _flags, _size, _align) \
+static const ndt_t ndt_##name##_opt = {                               \
+  .tag = _tag,                                                        \
+  .access = _access,                                                  \
+  .flags = _flags|NDT_OPTION,                                         \
+  .ndim = 0,                                                          \
+  .datasize = _size,                                                  \
+  .align = _align,                                                    \
+  .refcnt = 1                                                         \
 };
 
-#define NDT_PRIMITIVE_OPT_LE(name, _tag, _access, _size, _align) \
-static const ndt_t ndt_##name##_opt_le = {                       \
-  .tag = _tag,                                                   \
-  .access = _access,                                             \
-  .flags = NDT_OPTION|NDT_LITTLE_ENDIAN,                         \
-  .ndim = 0,                                                     \
-  .datasize = _size,                                             \
-  .align = _align,                                               \
-  .refcnt = 1                                                    \
+#define NDT_PRIMITIVE_OPT_LE(name, _tag, _access, _flags, _size, _align) \
+static const ndt_t ndt_##name##_opt_le = {                               \
+  .tag = _tag,                                                           \
+  .access = _access,                                                     \
+  .flags = _flags|NDT_OPTION|NDT_LITTLE_ENDIAN,                          \
+  .ndim = 0,                                                             \
+  .datasize = _size,                                                     \
+  .align = _align,                                                       \
+  .refcnt = 1                                                            \
 };
 
-#define NDT_PRIMITIVE_OPT_BE(name, _tag, _access, _size, _align) \
+#define NDT_PRIMITIVE_OPT_BE(name, _tag, _access, _flags, _size, _align) \
 static const ndt_t ndt_##name##_opt_be = {                       \
   .tag = _tag,                                                   \
   .access = _access,                                             \
-  .flags = NDT_OPTION|NDT_BIG_ENDIAN,                            \
+  .flags = _flags|NDT_OPTION|NDT_BIG_ENDIAN,                     \
   .ndim = 0,                                                     \
   .datasize = _size,                                             \
   .align = _align,                                               \
@@ -119,20 +119,20 @@ static const ndt_t ndt_##name##_opt_be = {                       \
 };
 
 #define NDT_PRIMITIVE_ALL(name, _tag, _size, _align) \
-   NDT_PRIMITIVE(name, _tag, Concrete, _size, _align)        \
-   NDT_PRIMITIVE_LE(name, _tag, Concrete, _size, _align)     \
-   NDT_PRIMITIVE_BE(name, _tag, Concrete, _size, _align)     \
-   NDT_PRIMITIVE_OPT(name, _tag, Concrete, _size, _align)    \
-   NDT_PRIMITIVE_OPT_LE(name, _tag, Concrete, _size, _align) \
-   NDT_PRIMITIVE_OPT_BE(name, _tag, Concrete, _size, _align)
+   NDT_PRIMITIVE(name, _tag, Concrete, 0, _size, _align)        \
+   NDT_PRIMITIVE_LE(name, _tag, Concrete, 0, _size, _align)     \
+   NDT_PRIMITIVE_BE(name, _tag, Concrete, 0, _size, _align)     \
+   NDT_PRIMITIVE_OPT(name, _tag, Concrete, 0, _size, _align)    \
+   NDT_PRIMITIVE_OPT_LE(name, _tag, Concrete, 0, _size, _align) \
+   NDT_PRIMITIVE_OPT_BE(name, _tag, Concrete, 0, _size, _align)
 
 #define NDT_PRIMITIVE_KIND_ALL(name, _tag) \
-   NDT_PRIMITIVE(name, _tag, Abstract, 0, UINT16_MAX)        \
-   NDT_PRIMITIVE_LE(name, _tag, Abstract, 0, UINT16_MAX)     \
-   NDT_PRIMITIVE_BE(name, _tag, Abstract, 0, UINT16_MAX)     \
-   NDT_PRIMITIVE_OPT(name, _tag, Abstract, 0, UINT16_MAX)    \
-   NDT_PRIMITIVE_OPT_LE(name, _tag, Abstract, 0, UINT16_MAX) \
-   NDT_PRIMITIVE_OPT_BE(name, _tag, Abstract, 0, UINT16_MAX)
+   NDT_PRIMITIVE(name, _tag, Abstract, 0, 0, UINT16_MAX)        \
+   NDT_PRIMITIVE_LE(name, _tag, Abstract, 0, 0, UINT16_MAX)     \
+   NDT_PRIMITIVE_BE(name, _tag, Abstract, 0, 0, UINT16_MAX)     \
+   NDT_PRIMITIVE_OPT(name, _tag, Abstract, 0, 0, UINT16_MAX)    \
+   NDT_PRIMITIVE_OPT_LE(name, _tag, Abstract, 0, 0, UINT16_MAX) \
+   NDT_PRIMITIVE_OPT_BE(name, _tag, Abstract, 0, 0, UINT16_MAX)
 
 
 NDT_PRIMITIVE_ALL(bool, Bool, sizeof(bool_t), alignof(bool_t))
@@ -161,8 +161,8 @@ NDT_PRIMITIVE_ALL(complex32, Complex32, 4, 2)
 NDT_PRIMITIVE_ALL(complex64, Complex64, sizeof(ndt_complex64_t), alignof(ndt_complex64_t))
 NDT_PRIMITIVE_ALL(complex128, Complex128, sizeof(ndt_complex128_t), alignof(ndt_complex128_t))
 
-NDT_PRIMITIVE(str, String, Concrete, sizeof(char *), alignof(char *))
-NDT_PRIMITIVE_OPT(str, String, Concrete, sizeof(char *), alignof(char *))
+NDT_PRIMITIVE(str, String, Concrete, NDT_POINTER, sizeof(char *), alignof(char *))
+NDT_PRIMITIVE_OPT(str, String, Concrete, NDT_POINTER, sizeof(char *), alignof(char *))
 
 
 const ndt_t *
@@ -203,8 +203,6 @@ ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
     switch(flags) {
     case 0: {
         switch(tag) {
-        case String: return &ndt_str;
-
         case Bool: return &ndt_bool;
 
         case SignedKind: return &ndt_signed_set;
@@ -301,8 +299,6 @@ ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
 
     case NDT_OPTION: {
         switch(tag) {
-        case String: return &ndt_str_opt;
-
         case Bool: return &ndt_bool_opt;
 
         case SignedKind: return &ndt_signed_set_opt;
@@ -392,6 +388,20 @@ ndt_primitive(enum ndt tag, uint32_t flags, ndt_context_t *ctx)
         case Complex64: return &ndt_complex64_opt_be;
         case Complex128: return &ndt_complex128_opt_be;
 
+        default: goto value_error_tag;
+        }
+    }
+ 
+    case NDT_POINTER: {
+        switch(tag) {
+        case String: return &ndt_str;
+        default: goto value_error_tag;
+        }
+    }
+ 
+    case NDT_POINTER|NDT_OPTION: {
+        switch(tag) {
+        case String: return &ndt_str_opt;
         default: goto value_error_tag;
         }
     }

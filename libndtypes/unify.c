@@ -87,8 +87,8 @@ unification_error(const char *msg, ndt_context_t *ctx)
 static const ndt_t *
 unify_common(ndt_t *w, const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 {
-    if ((t->flags & ~(NDT_OPTION|NDT_SUBTREE_OPTION)) !=
-        (u->flags & ~(NDT_OPTION|NDT_SUBTREE_OPTION))) {
+    if ((t->flags & ~(NDT_OPTION|NDT_SUBTREE_OPTION|NDT_POINTER)) !=
+        (u->flags & ~(NDT_OPTION|NDT_SUBTREE_OPTION|NDT_POINTER))) {
         ndt_decref(w);
         return unification_error("flags differ", ctx);
     }

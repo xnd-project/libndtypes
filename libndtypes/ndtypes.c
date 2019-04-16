@@ -83,11 +83,21 @@ round_up(int64_t offset, uint16_t align, bool *overflow)
 static uint32_t
 ndt_subtree_flags(const ndt_t *type)
 {
-    if (type && type->flags & (NDT_OPTION|NDT_SUBTREE_OPTION)) {
-        return NDT_SUBTREE_OPTION;
+    uint32_t flags = 0U;
+
+    if (type == NULL) {
+        return flags;
     }
 
-    return 0;
+    if (type->flags & (NDT_OPTION|NDT_SUBTREE_OPTION)) {
+        flags |= NDT_SUBTREE_OPTION;
+    }
+
+    if (type->flags & NDT_POINTER) {
+        flags |= NDT_POINTER;
+    }
+
+    return flags;
 }
 
 /* Determine general subtree and ellipsis flags. */
@@ -181,6 +191,12 @@ int
 ndt_subtree_is_optional(const ndt_t *t)
 {
     return t->flags & NDT_SUBTREE_OPTION;
+}
+
+int
+ndt_is_pointer_free(const ndt_t *t)
+{
+    return !(t->flags & NDT_POINTER);
 }
 
 /* Array predicates */
@@ -2076,7 +2092,7 @@ ndt_ref(const ndt_t *type, bool opt, ndt_context_t *ctx)
     }
 
     /* abstract type */
-    t = ndt_new(Ref, opt, ctx);
+    t = ndt_new(Ref, opt|NDT_POINTER, ctx);
     if (t == NULL) {
         return NULL;
     }
@@ -2327,7 +2343,7 @@ ndt_bytes(uint16_opt_t target_align, bool opt, ndt_context_t *ctx)
     }
 
     /* abstract type */
-    t = ndt_new(Bytes, opt, ctx);
+    t = ndt_new(Bytes, opt|NDT_POINTER, ctx);
     if (t == NULL) {
         return NULL;
     }
