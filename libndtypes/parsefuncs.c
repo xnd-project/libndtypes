@@ -466,6 +466,17 @@ mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields,
 }
 
 const ndt_t *
+mk_union(ndt_field_seq_t *fields, bool opt, ndt_context_t *ctx)
+{
+    const ndt_t *t;
+
+    fields = ndt_field_seq_finalize(fields);
+    t = ndt_union(fields->ptr, fields->len, opt, ctx);
+    ndt_field_seq_del(fields);
+    return t;
+}
+
+const ndt_t *
 mk_categorical(ndt_value_seq_t *seq, bool opt, ndt_context_t *ctx)
 {
     const ndt_t *t;

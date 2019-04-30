@@ -210,6 +210,8 @@ const char *parse_tests[] = {
   "10 * (Any, ...)",
   "(Any, ...)",
   "10 * {...}",
+  "10 * [Float of float64]",
+  "10 * [Float of float64 | Int of int8]",
   "{...}",
   "10 * {a: Any}",
   "{a: Any}",
@@ -332,6 +334,13 @@ const char *parse_tests[] = {
 
   "var(offsets=[0,10]) * var(offsets=[0,1,3,6,10,15,21,28,36,45,55]) * float64",
   "var(offsets=[0,2]) * var(offsets=[0,3,7]) * var(offsets=[0,5,11,18,26,35,45,56]) * float64",
+
+  /* Tagged unions */
+  "2 * 3  * [ThisRecord of {first: (int64, complex128), second: string}]",
+  "2 * 3  * [ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)]",
+  "2 * 3  * [Int of int64 | ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)]",
+
+  "fixed(shape=10) * complex128",
 
   /* Short ref notation */
   "&float64",

@@ -302,6 +302,27 @@ write_record(char * const ptr, int64_t offset, const ndt_t * const t,
 }
 
 static int64_t
+write_union(char * const ptr, int64_t offset, const ndt_t * const t,
+            bool *overflow)
+{
+    const int64_t ntags = t->Union.ntags;
+    int64_t metaoffset;
+
+    offset = write_int64(ptr, offset, ntags, overflow);
+    offset = write_string_array(ptr, offset, t->Union.tags, ntags, overflow);
+
+    metaoffset = offset;
+    offset = alloc_int64_array(offset, ntags, overflow);
+
+    for (int64_t i = 0; i < ntags; i++) {
+        metaoffset = write_int64(ptr, metaoffset, offset, overflow); 
+        offset = write_type(ptr, offset, t->Union.types[i], overflow);
+    }
+
+    return offset;
+}
+
+static int64_t
 write_ref(char * const ptr, int64_t offset, const ndt_t * const t,
           bool *overflow)
 {
@@ -389,6 +410,7 @@ write_type(char * const ptr, int64_t offset, const ndt_t * const t,
     case VarDimElem: return write_var_dim_elem(ptr, offset, t, overflow);
     case Tuple: return write_tuple(ptr, offset, t, overflow);
     case Record: return write_record(ptr, offset, t, overflow);
+    case Union: return write_union(ptr, offset, t, overflow);
     case Ref: return write_ref(ptr, offset, t, overflow);
     case Constr: return write_constr(ptr, offset, t, overflow);
     case Nominal: return write_nominal(ptr, offset, t, overflow);

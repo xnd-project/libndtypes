@@ -742,6 +742,44 @@ error:
 }
 
 static const ndt_t *
+read_union(const common_t *fields, const char * const ptr, int64_t offset,
+           const int64_t len, ndt_context_t *ctx)
+{
+    int64_t metaoffset;
+    int64_t ntags;
+    ndt_t *t;
+
+    offset = read_pos_int64(&ntags, ptr, offset, len, ctx);
+    if (offset < 0) return NULL;
+
+    t = ndt_union_new(ntags, 0, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    copy_common(t, fields);
+
+    offset = read_string_array(t->Union.tags, ntags, ptr, offset, len, ctx);
+    if (offset < 0) goto error;
+
+    metaoffset = offset;
+    for (int64_t i = 0; i < ntags; i++) {
+        metaoffset = next_metaoffset(&offset, ptr, metaoffset, len, ctx);
+        if (metaoffset < 0) goto error;
+
+        t->Union.types[i] = read_type(ptr, offset, len, ctx);
+        if (t->Union.types[i] == NULL) {
+            goto error;
+        }
+    }
+
+    return t;
+
+error:
+    ndt_decref(t);
+    return NULL;
+}
+
+static const ndt_t *
 read_ref(const common_t *fields, const char * const ptr, int64_t offset,
          const int64_t len, ndt_context_t *ctx)
 {
@@ -988,6 +1026,7 @@ read_type(const char * const ptr, int64_t offset, const int64_t len,
     case VarDimElem: return read_var_dim_elem(&fields, ptr, offset, len, ctx);
     case Tuple: return read_tuple(&fields, ptr, offset, len, ctx);
     case Record: return read_record(&fields, ptr, offset, len, ctx);
+    case Union: return read_union(&fields, ptr, offset, len, ctx);
     case Ref: return read_ref(&fields, ptr, offset, len, ctx);
     case Constr: return read_constr(&fields, ptr, offset, len, ctx);
     case Nominal: return read_nominal(&fields, ptr, offset, len, ctx);

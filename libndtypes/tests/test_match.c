@@ -177,23 +177,23 @@ const match_testcase_t match_tests[] = {
     "?bool",
     1 },
 
-  { "10 * Signed",
-    "10 * Signed",
+  { "10 * signed",
+    "10 * signed",
     0 },
 
-  { "10 * Signed",
+  { "10 * signed",
     "10 * int32",
     1 },
 
-  { "Signed",
-    "Signed",
+  { "signed",
+    "signed",
     0 },
 
-  { "Signed",
+  { "signed",
     "int64",
     1 },
 
-  { "?Signed",
+  { "?signed",
     "?int16",
     1 },
 
@@ -206,7 +206,7 @@ const match_testcase_t match_tests[] = {
     1 },
 
   { "?int8",
-    "?Signed",
+    "?signed",
     0 },
 
   { "10 * int16",
@@ -245,20 +245,20 @@ const match_testcase_t match_tests[] = {
     "?int64",
     1 },
 
-  { "10 * Unsigned",
+  { "10 * unsigned",
     "10 * uint16",
     1 },
 
-  { "10 * Unsigned",
+  { "10 * unsigned",
     "10 * uint8",
     1 },
 
-  { "Unsigned",
-    "Unsigned",
+  { "unsigned",
+    "unsigned",
     0 },
 
-  { "?Unsigned",
-    "?Unsigned",
+  { "?unsigned",
+    "?unsigned",
     0 },
 
   { "10 * uint8",
@@ -309,11 +309,11 @@ const match_testcase_t match_tests[] = {
     "?uint64",
     1 },
 
-  { "10 * Float",
-    "10 * Float",
+  { "10 * float",
+    "10 * float",
     0 },
 
-  { "10 * Float",
+  { "10 * float",
     "10 * float64",
     1 },
 
@@ -325,19 +325,19 @@ const match_testcase_t match_tests[] = {
     "?float64",
     1 },
 
-  { "10 * Complex",
+  { "10 * complex",
     "10 * complex128",
     1 },
 
-  { "10 * Complex",
+  { "10 * complex",
     "10 * complex64",
     1 },
 
-  { "Complex",
-    "Complex",
+  { "complex",
+    "complex",
     0 },
 
-  { "Complex",
+  { "complex",
     "complex128",
     1 },
 

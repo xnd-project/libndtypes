@@ -236,6 +236,81 @@ unify_record(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ct
 }
 
 static const ndt_t *
+unify_union(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
+{
+    bool opt = ndt_is_optional(t) || ndt_is_optional(u);
+    ndt_field_seq_t *seq;
+    ndt_field_t *field;
+    const ndt_t *tmp, *w;
+    char *name;
+    int64_t ntags;
+    int64_t i;
+
+    ntags = t->Union.ntags;
+    assert(ntags > 0);
+
+    for (i = 0; i < ntags; i++) {
+        if (strcmp(t->Union.tags[i], u->Union.tags[i]) != 0) {
+            return unification_error("tag mismatch", ctx);
+        }
+    }
+
+    name = ndt_strdup(t->Union.tags[0], ctx);
+    if (name == NULL) {
+        return NULL;
+    }
+
+    tmp = unify(t->Union.types[0], u->Union.types[0], replace_any, ctx);
+    if (tmp == NULL) {
+        ndt_free(name);
+        return NULL;
+    }
+
+    field = mk_field(name, tmp, NULL, ctx); 
+    if (field == NULL) {
+        return NULL;
+    }
+
+    seq = ndt_field_seq_new(field, ctx);
+    if (seq == NULL) {
+        return NULL;
+    }
+
+    for (i = 1; i < ntags; i++) {
+        name = ndt_strdup(t->Union.tags[i], ctx);
+        if (name == NULL) {
+            ndt_field_seq_del(seq);
+            return NULL;
+        }
+
+        tmp = unify(t->Union.types[i], u->Union.types[i], replace_any, ctx);
+        if (tmp == NULL) {
+            ndt_free(name);
+            ndt_field_seq_del(seq);
+            return NULL;
+        }
+
+        field = mk_field(name, tmp, NULL, ctx); 
+        if (field == NULL) {
+            ndt_field_seq_del(seq);
+            return NULL;
+        }
+
+        seq = ndt_field_seq_append(seq, field, ctx);
+        if (seq == NULL) {
+            return NULL;
+        }
+    }
+
+    w = mk_union(seq, opt, ctx);
+    if (w == NULL) {
+        return NULL;
+    }
+
+    return unify_common((ndt_t *)w, t, u, ctx);
+}
+
+static const ndt_t *
 unify_primitive(const ndt_t *t, const ndt_t *u, ndt_context_t *ctx)
 {
     enum ndt tag = max_tag(t->tag, u->tag);
@@ -367,6 +442,18 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         }
 
         return unify_record(t, u, replace_any, ctx);
+    }
+
+    case Union: {
+        if (u->tag != Union) {
+            return unification_error("different types", ctx);
+        }
+
+        if (t->Union.ntags != u->Union.ntags) {
+            return 0;
+        }
+
+        return unify_union(t, u, replace_any, ctx);
     }
 
     case Ref: {

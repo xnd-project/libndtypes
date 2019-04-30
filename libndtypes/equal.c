@@ -122,6 +122,26 @@ record_fields_equal(const ndt_t *t, const ndt_t *u, int64_t shape)
 }
 
 static int
+union_fields_equal(const ndt_t *t, const ndt_t *u, int64_t ntags)
+{
+    int64_t i;
+
+    assert(t->tag == Union && u->tag == Union);
+
+    for (i = 0; i < ntags; i++) {
+        if (strcmp(t->Union.tags[i], u->Union.tags[i]) != 0) {
+            return 0;
+        }
+
+        if (!ndt_equal(t->Union.types[i], u->Union.types[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int
 categorical_equal(const ndt_value_t *t, const ndt_value_t *u, int64_t shape)
 {
     int64_t i;
@@ -246,6 +266,14 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
         }
 
         return record_fields_equal(t, u, t->Record.shape);
+    }
+
+    case Union: {
+        if (t->Union.ntags != u->Union.ntags) {
+            return 0;
+        }
+
+        return union_fields_equal(t, u, t->Union.ntags);
     }
 
     case Ref: {

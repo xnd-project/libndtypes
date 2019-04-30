@@ -706,6 +706,61 @@ class TestRecord(unittest.TestCase):
         self.assertRaises(TypeError, t, 'strides')
 
 
+class TestUnion(unittest.TestCase):
+
+    def test_union_predicates(self):
+        for s in ["[A of int64 | B of bytes]", "[X of string | Y of uint8]"]:
+            t = ndt(s)
+            check_serialize(self, t)
+
+            self.assertFalse(t.isabstract())
+            self.assertFalse(t.iscomplex())
+            self.assertTrue(t.isconcrete())
+            self.assertFalse(t.isfloat())
+            self.assertFalse(t.isoptional())
+            self.assertFalse(t.isscalar())
+            self.assertFalse(t.issigned())
+            self.assertFalse(t.isunsigned())
+
+            self.assertTrue(t.is_c_contiguous())
+            self.assertTrue(t.is_f_contiguous())
+            self.assertTrue(t.is_var_contiguous())
+
+        for s in ["[A of Any | B of Complex]", "[X of N * M * T]"]:
+            t = ndt(s)
+            check_serialize(self, t)
+
+            self.assertTrue(t.isabstract())
+            self.assertFalse(t.iscomplex())
+            self.assertFalse(t.isconcrete())
+            self.assertFalse(t.isfloat())
+            self.assertFalse(t.isoptional())
+            self.assertFalse(t.isscalar())
+            self.assertFalse(t.issigned())
+            self.assertFalse(t.isunsigned())
+
+            self.assertFalse(t.is_c_contiguous())
+            self.assertFalse(t.is_f_contiguous())
+            self.assertFalse(t.is_var_contiguous())
+
+    def test_union_common_fields(self):
+        f = "[A of uint64 | B of uint8]"
+        g = "[C of (uint64, uint64) | D of string]"
+        t = ndt("[X of %s | Y of %s]" % (f, g))
+        u = ndt("(uint64, uint64)")
+
+        check_serialize(self, t)
+
+        a = ndt(g)
+
+        self.assertEqual(t.ndim, 0)
+        self.assertEqual(t.itemsize, u.itemsize + 2)
+        self.assertEqual(t.align, 1)
+
+        self.assertRaises(TypeError, t, 'shape')
+        self.assertRaises(TypeError, t, 'strides')
+
+
 class TestRef(unittest.TestCase):
 
     def test_ref_predicates(self):
@@ -2029,6 +2084,7 @@ ALL_TESTS = [
   TestEllipsisDim,
   TestTuple,
   TestRecord,
+  TestUnion,
   TestRef,
   TestConstr,
   TestNominal,

@@ -318,7 +318,7 @@ broadcast_seq_append(ndt_type_seq_t *seq, const ndt_t *type, ndt_context_t *ctx)
 
 
 %pure-parser
-%error-verbose
+%define parse.error verbose
 
 
 %locations

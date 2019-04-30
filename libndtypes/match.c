@@ -419,6 +419,30 @@ match_record_fields(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
 }
 
 static int
+match_union_tags(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
+                 ndt_context_t *ctx)
+{
+    int64_t i;
+    int n;
+
+    assert(p->tag == Union && c->tag == Union);
+
+    if (p->Union.ntags != c->Union.ntags) {
+        return 0;
+    }
+
+    for (i = 0; i < p->Union.ntags; i++) {
+        n = strcmp(p->Union.tags[i], c->Union.tags[i]);
+        if (n != 0) return 0;
+
+        n = match_datashape(p->Union.types[i], c->Union.types[i], tbl, ctx);
+        if (n <= 0) return n;
+    }
+
+    return 1;
+}
+
+static int
 match_categorical(const ndt_value_t *p, int64_t plen,
                   const ndt_value_t *c, int64_t clen)
 {
@@ -584,6 +608,9 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
         if (p->Tuple.flag == Variadic) return 0;
         if (c->tag != Record) return 0;
         return match_record_fields(p, c, tbl, ctx);
+    case Union:
+        if (c->tag != Union) return 0;
+        return match_union_tags(p, c, tbl, ctx);
     case Function: {
         int64_t i;
         if (c->tag != Function ||

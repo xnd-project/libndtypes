@@ -58,6 +58,12 @@ max(uint16_t x, uint16_t y)
     return x >= y ? x : y;
 }
 
+static inline int64_t
+max_i64(int64_t x, int64_t y)
+{
+    return x >= y ? x : y;
+}
+
 static inline int
 ispower2(uint16_t n)
 {
@@ -1049,6 +1055,40 @@ ndt_record_new(enum ndt_variadic flag, int64_t shape, bool opt, ndt_context_t *c
     return t;
 }
 
+ndt_t *
+ndt_union_new(int64_t ntags, bool opt, ndt_context_t *ctx)
+{
+    ndt_t *t = NULL;
+    bool overflow = 0;
+    int64_t extra;
+    int64_t types_offset;
+    int64_t i;
+
+    types_offset = MULi64(ntags, sizeof(char *), &overflow);
+    extra = MULi64(2, types_offset, &overflow);
+
+    if (overflow) {
+        ndt_err_format(ctx, NDT_ValueError, "union size too large");
+        return NULL;
+    }
+
+    t = ndt_new_extra(Union, extra, opt, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+
+    t->Union.ntags = ntags;
+    t->Union.tags = (char **)t->extra;
+    t->Union.types = (const ndt_t **)(t->extra + types_offset);
+
+    for (i = 0; i < ntags; i++) {
+        t->Union.tags[i] = NULL;
+        t->Union.types[i] = NULL;
+    }
+
+    return t;
+}
+
 static void
 ndt_del(ndt_t *t)
 {
@@ -1110,6 +1150,15 @@ ndt_del(ndt_t *t)
         for (i = 0; i < t->Record.shape; i++) {
             ndt_free(t->Record.names[i]);
             ndt_decref(t->Record.types[i]);
+        }
+        goto free_type;
+    }
+
+    case Union: {
+        int64_t i;
+        for (i = 0; i < t->Union.ntags; i++) {
+            ndt_free(t->Union.tags[i]);
+            ndt_decref(t->Union.types[i]);
         }
         goto free_type;
     }
@@ -1934,6 +1983,31 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
     return 0;
 }
 
+/*
+ * Initialize the access information of a concrete union.
+ * Assumptions:
+ *   1) t->tag == Union
+ *   2) t->access == Concrete
+ *   3) 0 <= i < ntags ==> fields[i].access == Concrete
+ *   4) len(fields) == ntags
+ */
+static void
+init_concrete_tags(ndt_t *t, const ndt_field_t *fields, int64_t ntags)
+{
+    int64_t maxsize = 0;
+    int64_t i;
+
+    for (i = 0; i < ntags; i++) {
+        assert(fields[i].access == Concrete);
+        assert(fields[i].type->access == Concrete);
+        maxsize = max_i64(fields[i].type->datasize, maxsize);
+    }
+
+    assert(t->access == Concrete);
+    t->align = 1;
+    t->datasize = 1+maxsize;
+}
+
 const ndt_t *
 ndt_tuple(enum ndt_variadic flag, const ndt_field_t *fields, int64_t shape,
           uint16_opt_t align, uint16_opt_t pack, bool opt, ndt_context_t *ctx)
@@ -2075,6 +2149,88 @@ ndt_record(enum ndt_variadic flag, const ndt_field_t *fields, int64_t shape,
 
             ndt_incref(fields[i].type);
             t->Record.types[i] = fields[i].type;
+
+            t->flags |= ndt_subtree_flags(fields[i].type);
+        }
+        return t;
+    }
+}
+
+const ndt_t *
+ndt_union(const ndt_field_t *fields, int64_t ntags, bool opt,
+          ndt_context_t *ctx)
+{
+    ndt_t *t;
+    int64_t i;
+
+    if (ntags == 0 || fields == NULL) {
+        ndt_err_format(ctx, NDT_ValueError, "unions cannot be empty");
+        return NULL;
+    }
+
+    if (ntags > 255) {
+        ndt_err_format(ctx, NDT_ValueError, "union too large (max 255 members)");
+        return NULL;
+    }
+
+    for (i = 0; i < ntags; i++) {
+        if (!check_type_invariants(fields[i].type, ctx)) {
+            return NULL;
+        }
+    }
+
+    /* abstract type */
+    t = ndt_union_new(ntags, opt, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+
+    /* check concrete access */
+    t->access = Concrete;
+    for (i = 0; i < ntags; i++) {
+        if (fields[i].access == Abstract) {
+            t->access = Abstract;
+        }
+    }
+
+    if (t->access == Abstract) {
+        /* check if any field has explicit 'align' or 'pack' attributes */
+        for (i = 0; i < ntags; i++) {
+            if (fields[i].access == Concrete &&
+                fields[i].Concrete.explicit_align) {
+                ndt_err_format(ctx, NDT_InvalidArgumentError,
+                               "explicit field alignment in abstract tuple");
+                ndt_free(t);
+                return NULL;
+            }
+        }
+        for (i = 0; i < ntags; i++) {
+            char *s = ndt_strdup(fields[i].name, ctx);
+            if (s == NULL) {
+                ndt_decref(t);
+                return NULL;
+            }
+            t->Union.tags[i] = s;
+
+            ndt_incref(fields[i].type);
+            t->Union.types[i] = fields[i].type;
+
+            t->flags |= ndt_subtree_flags(fields[i].type);
+        }
+        return t;
+    }
+    else {
+        init_concrete_tags(t, fields, ntags);
+        for (i = 0; i < ntags; i++) {
+            char *s = ndt_strdup(fields[i].name, ctx);
+            if (s == NULL) {
+                ndt_decref(t);
+                return NULL;
+            }
+            t->Union.tags[i] = s;
+
+            ndt_incref(fields[i].type);
+            t->Union.types[i] = fields[i].type;
 
             t->flags |= ndt_subtree_flags(fields[i].type);
         }

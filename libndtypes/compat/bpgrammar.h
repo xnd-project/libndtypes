@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.3.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,6 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
 #ifndef YY_NDT_BP_BPGRAMMAR_H_INCLUDED
 # define YY_NDT_BP_BPGRAMMAR_H_INCLUDED
 /* Debug traces.  */
@@ -40,7 +44,7 @@
 extern int ndt_bpdebug;
 #endif
 /* "%code requires" blocks.  */
-#line 302 "bpgrammar.y" /* yacc.c:1909  */
+#line 302 "bpgrammar.y" /* yacc.c:1921  */
 
   #include <ctype.h>
   #include <assert.h>
@@ -51,7 +55,7 @@ extern int ndt_bpdebug;
   #define YY_TYPEDEF_YY_SCANNER_T
   typedef void * yyscan_t;
 
-#line 55 "bpgrammar.h" /* yacc.c:1909  */
+#line 59 "bpgrammar.h" /* yacc.c:1921  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -86,7 +90,7 @@ extern int ndt_bpdebug;
 
 union YYSTYPE
 {
-#line 335 "bpgrammar.y" /* yacc.c:1909  */
+#line 335 "bpgrammar.y" /* yacc.c:1921  */
 
     const ndt_t *ndt;
     ndt_field_t *field;
@@ -97,7 +101,7 @@ union YYSTYPE
     unsigned char uchar;
     uint16_t uint16;
 
-#line 101 "bpgrammar.h" /* yacc.c:1909  */
+#line 105 "bpgrammar.h" /* yacc.c:1921  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -123,12 +127,12 @@ struct YYLTYPE
 
 int ndt_bpparse (yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
-#line 313 "bpgrammar.y" /* yacc.c:1909  */
+#line 313 "bpgrammar.y" /* yacc.c:1921  */
 
   #define YY_DECL extern int ndt_bplexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int ndt_bplexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, const  ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 133 "bpgrammar.h" /* yacc.c:1909  */
+#line 137 "bpgrammar.h" /* yacc.c:1921  */
 
 #endif /* !YY_NDT_BP_BPGRAMMAR_H_INCLUDED  */

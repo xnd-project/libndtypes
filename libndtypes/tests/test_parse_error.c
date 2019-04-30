@@ -15925,6 +15925,17 @@ const char *parse_error_tests[] = {
   "?=10 * {x: int64$ a: Any}]",
   "?[10 * {x: int64$ a: Any}$",
   "?[10 * {x: int64$ a: Any}$",
+  "?10 * [$Tag of int64]",
+  "?10 * [Tag $of int64]",
+  "?10 * [Tag of $int64]",
+  "?10 * [Tag of int64$]",
+  "?10 * [Tag of int64]$",
+  "?10 * [A of int64 $| B of float64]",
+  "?10 * [A of int64 | $B of float64]",
+  "?10 * [A of int64 | B $of float64]",
+  "?10 * [A of int64 | B of $float64]",
+  "?10 * [A of int64 | B of float64$]",
+  "?10 * [A of int64 | B of float64]$",
   "{x: int64$ a: Any}",
   "?{x: int64$ a: Any}",
   "?({x: int64$ a: Any})",
@@ -27841,6 +27852,11 @@ const char *parse_error_tests[] = {
   "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3,5]) * float32, intXX)",
   "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=[0,2]) * var(offsets=[0,3,5)) * float32, int64)",
   "var(offsets=[0,2]) * var(offsets=[0,4,10]) * (var(offsets=(0,2]) * var(offsets=[0,3,5]) * float32, int64)",
+
+  /* Unions */
+  "2 * 3 * []",
+  "[Array of 2 * 3 * int64 | $Record of { s: int64 }]",
+  "[Array of 2 * 3 * int64 | Record of { s: int64XX }]",
 
   /* END MANUALLY GENERATED */
 

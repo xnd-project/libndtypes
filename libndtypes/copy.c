@@ -215,6 +215,35 @@ ndt_copy_record(const ndt_t *t, bool opt, ndt_context_t *ctx)
     return u;
 }
 
+static const ndt_t *
+ndt_copy_union(const ndt_t *t, bool opt, ndt_context_t *ctx)
+{
+    ndt_t *u;
+    int64_t i;
+
+    assert(t->tag == Union);
+
+    u = ndt_new(t->Union.ntags, opt, ctx);
+    if (u == NULL) {
+        return NULL;
+    }
+
+    copy_common(u, t);
+
+    for (i = 0; i < t->Union.ntags; i++) {
+        u->Union.tags[i] = ndt_strdup(t->Union.tags[i], ctx);
+        if (u->Union.tags[i] == NULL) {
+            ndt_decref(u);
+            return NULL;
+        }
+
+        ndt_incref(t->Union.types[i]);
+        u->Union.types[i] = t->Union.types[i];
+    }
+
+    return u;
+}
+
 static int
 ndt_copy_value(ndt_value_t *v, const ndt_value_t *u, ndt_context_t *ctx)
 {
@@ -321,6 +350,10 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
 
     case Record: {
         return ndt_copy_record(t, opt, ctx);
+    }
+
+    case Union: {
+        return ndt_copy_union(t, opt, ctx);
     }
 
     case Ref: {

@@ -223,6 +223,7 @@ enum ndt {
       /* Dtype */
       Tuple,
       Record,
+      Union,
       Ref,
       Constr,
       Nominal,
@@ -434,6 +435,12 @@ struct _ndt {
             char **names;
             const ndt_t **types;
         } Record;
+
+        struct {
+            int64_t ntags;
+            char **tags;
+            const ndt_t **types;
+        } Union;
 
         struct {
             const ndt_t *type;
@@ -800,6 +807,7 @@ NDTYPES_API ndt_t *ndt_new(enum ndt tag, uint32_t flags, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_function_new(int64_t nargs, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_tuple_new(enum ndt_variadic flag, int64_t shape, bool opt, ndt_context_t *ctx);
 NDTYPES_API ndt_t *ndt_record_new(enum ndt_variadic flag, int64_t shape, bool opt, ndt_context_t *ctx);
+NDTYPES_API ndt_t *ndt_union_new(int64_t ntags, bool opt, ndt_context_t *ctx);
 NDTYPES_API void ndt_incref(const ndt_t *t);
 NDTYPES_API void ndt_decref(const ndt_t *t);
 NDTYPES_API void ndt_move(const ndt_t **dst, const ndt_t *src);
@@ -843,6 +851,7 @@ NDTYPES_API const ndt_t *ndt_tuple(enum ndt_variadic flag, const ndt_field_t *fi
                              uint16_opt_t align, uint16_opt_t pack, bool opt, ndt_context_t *ctx);
 NDTYPES_API const ndt_t *ndt_record(enum ndt_variadic flag, const ndt_field_t *fields, int64_t shape,
                                     uint16_opt_t align, uint16_opt_t pack, bool opt, ndt_context_t *ctx);
+NDTYPES_API const ndt_t *ndt_union(const ndt_field_t *fields, int64_t ntags, bool opt, ndt_context_t *ctx);
 
 NDTYPES_API const ndt_t *ndt_ref(const ndt_t *type, bool opt, ndt_context_t *ctx);
 NDTYPES_API const ndt_t *ndt_constr(char *name, const ndt_t *type, bool opt, ndt_context_t *ctx);

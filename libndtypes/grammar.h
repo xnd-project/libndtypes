@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.3.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,6 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
 #ifndef YY_NDT_YY_GRAMMAR_H_INCLUDED
 # define YY_NDT_YY_GRAMMAR_H_INCLUDED
 /* Debug traces.  */
@@ -40,7 +44,7 @@
 extern int ndt_yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 56 "grammar.y" /* yacc.c:1909  */
+#line 56 "grammar.y" /* yacc.c:1921  */
 
   #include "ndtypes.h"
   #include "seq.h"
@@ -49,7 +53,7 @@ extern int ndt_yydebug;
   #define YY_TYPEDEF_YY_SCANNER_T
   typedef void * yyscan_t;
 
-#line 53 "grammar.h" /* yacc.c:1909  */
+#line 57 "grammar.h" /* yacc.c:1921  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -96,31 +100,32 @@ extern int ndt_yydebug;
     REF = 294,
     FIXED = 295,
     VAR = 296,
-    COMMA = 297,
-    COLON = 298,
-    LPAREN = 299,
-    RPAREN = 300,
-    LBRACE = 301,
-    RBRACE = 302,
-    LBRACK = 303,
-    RBRACK = 304,
-    STAR = 305,
-    ELLIPSIS = 306,
-    RARROW = 307,
-    EQUAL = 308,
-    LESS = 309,
-    GREATER = 310,
-    QUESTIONMARK = 311,
-    BANG = 312,
-    AMPERSAND = 313,
-    BAR = 314,
-    ERRTOKEN = 315,
-    INTEGER = 316,
-    FLOATNUMBER = 317,
-    STRINGLIT = 318,
-    NAME_LOWER = 319,
-    NAME_UPPER = 320,
-    NAME_OTHER = 321
+    OF = 297,
+    COMMA = 298,
+    COLON = 299,
+    LPAREN = 300,
+    RPAREN = 301,
+    LBRACE = 302,
+    RBRACE = 303,
+    LBRACK = 304,
+    RBRACK = 305,
+    STAR = 306,
+    ELLIPSIS = 307,
+    RARROW = 308,
+    EQUAL = 309,
+    LESS = 310,
+    GREATER = 311,
+    QUESTIONMARK = 312,
+    BANG = 313,
+    AMPERSAND = 314,
+    BAR = 315,
+    ERRTOKEN = 316,
+    INTEGER = 317,
+    FLOATNUMBER = 318,
+    STRINGLIT = 319,
+    NAME_LOWER = 320,
+    NAME_UPPER = 321,
+    NAME_OTHER = 322
   };
 #endif
 
@@ -129,7 +134,7 @@ extern int ndt_yydebug;
 
 union YYSTYPE
 {
-#line 85 "grammar.y" /* yacc.c:1909  */
+#line 85 "grammar.y" /* yacc.c:1921  */
 
     const ndt_t *ndt;
     enum ndt tag;
@@ -147,7 +152,7 @@ union YYSTYPE
     ndt_string_seq_t *string_seq;
     ndt_type_seq_t *type_seq;
 
-#line 151 "grammar.h" /* yacc.c:1909  */
+#line 156 "grammar.h" /* yacc.c:1921  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -173,12 +178,12 @@ struct YYLTYPE
 
 int ndt_yyparse (yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
-#line 65 "grammar.y" /* yacc.c:1909  */
+#line 65 "grammar.y" /* yacc.c:1921  */
 
   #define YY_DECL extern int ndt_yylexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 183 "grammar.h" /* yacc.c:1909  */
+#line 188 "grammar.h" /* yacc.c:1921  */
 
 #endif /* !YY_NDT_YY_GRAMMAR_H_INCLUDED  */

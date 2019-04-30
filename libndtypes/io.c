@@ -101,7 +101,7 @@ ndt_type_keyword(const ndt_t *t)
 
     case Module: case Function:
     case VarDimElem: case SymbolicDim: case EllipsisDim:
-    case Tuple: case Record:
+    case Tuple: case Record: case Union:
     case Nominal: case Constr:
     case Typevar:
         return "not a keyword";
@@ -129,6 +129,7 @@ ndt_type_name(const ndt_t *t)
 
     case Tuple: return "Tuple";
     case Record: return "Record";
+    case Union: return "Union";
     case Ref: return "Ref";
     case Constr: return "Constr";
     case Nominal: return "Nominal";
@@ -391,6 +392,39 @@ record_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 }
 
 static int
+union_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
+{
+    int64_t i;
+    int n;
+
+    assert(t->tag == Union);
+
+    for (i = 0; i < t->Union.ntags; i++) {
+        if (i >= 1) {
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, "|\n");
+                if (n < 0) return -1;
+
+                n = indent(ctx, buf, d);
+                if (n < 0) return -1;
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, " | ");
+                if (n < 0) return -1;
+            }
+        }
+
+        n = ndt_snprintf(ctx, buf, "%s of ", t->Union.tags[i]);
+        if (n < 0) return -1;
+
+        n = datashape(buf, t->Union.types[i], d, ctx);
+        if (n < 0) return -1;
+    }
+
+    return 0;
+}
+
+static int
 variadic_flag(buf_t *buf, enum ndt_variadic flag, ndt_context_t *ctx)
 {
     if (flag == Variadic) {
@@ -633,6 +667,32 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             }
 
             return ndt_snprintf(ctx, buf, "}");
+        }
+
+        case Union: {
+            assert(t->Union.ntags > 0);
+
+            n = ndt_snprintf(ctx, buf, "[");
+            if (n < 0) return -1;
+
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, "\n");
+                if (n < 0) return -1;
+                n = indent(ctx, buf, d+2);
+                if (n < 0) return -1;
+            }
+
+            n = union_fields(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            if (d >= 0) {
+                n = ndt_snprintf(ctx, buf, "\n");
+                if (n < 0) return -1;
+                n = indent(ctx, buf, d);
+                if (n < 0) return -1;
+            }
+
+            return ndt_snprintf(ctx, buf, "]");
         }
 
         case Ref: {
@@ -948,6 +1008,42 @@ ast_record_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 }
 
 static int
+ast_union_fields(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
+{
+    int64_t i;
+    int n;
+
+    assert(t->tag == Union);
+
+    for (i = 0; i < t->Union.ntags; i++) {
+        if (i >= 1) {
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
+        }
+
+        n = ndt_snprintf_d(ctx, buf, d, "UnionMember(\n");
+        if (n < 0) return -1;
+
+        n = ndt_snprintf_d(ctx, buf, d+2, "tag='%s',\n", t->Union.tags[i]);
+        if (n < 0) return -1;
+
+        n = ndt_snprintf_d(ctx, buf, d+2, "type=");
+        if (n < 0) return -1;
+
+        n = ast_datashape(buf, t->Union.types[i], d+5+2, 1, ctx);
+        if (n < 0) return -1;
+
+        n = ndt_snprintf(ctx, buf, "%s\n", ndt_is_concrete(t) ? "," : "");
+        if (n < 0) return -1;
+
+        n = ndt_snprintf_d(ctx, buf, d, ")");
+        if (n < 0) return -1;
+    }
+
+    return 0;
+}
+
+static int
 ast_variadic_flag(buf_t *buf, enum ndt_variadic flag, int d, ndt_context_t *ctx)
 {
     if (flag == Variadic) {
@@ -1214,6 +1310,24 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
                 n = ast_variadic_flag(buf, t->Record.flag, d+2, ctx);
                 if (n < 0) return -1;
             }
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case Union: {
+            assert(t->Union.ntags > 0);
+
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Union(\n");
+            if (n < 0) return -1;
+
+            n = ast_union_fields(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ",\n");
+            if (n < 0) return -1;
 
             n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
             if (n < 0) return -1;
