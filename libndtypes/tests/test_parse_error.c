@@ -27857,6 +27857,7 @@ const char *parse_error_tests[] = {
   "2 * 3 * []",
   "[Array of 2 * 3 * int64 | $Record of { s: int64 }]",
   "[Array of 2 * 3 * int64 | Record of { s: int64XX }]",
+  "[This of int64 | Array of 2 * 3 * (float64, ref(int64))]",
 
   /* END MANUALLY GENERATED */
 

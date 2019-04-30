@@ -135,6 +135,7 @@ extern "C" {
 #define NDT_BIG_ENDIAN     0x00000008U
 #define NDT_ELLIPSIS       0x00000010U
 #define NDT_POINTER        0x00000020U
+#define NDT_REF            0x00000040U
 
 
 /* Types: ndt_t */
@@ -706,6 +707,7 @@ NDTYPES_API int ndt_is_concrete(const ndt_t *t);
 NDTYPES_API int ndt_is_optional(const ndt_t *t);
 NDTYPES_API int ndt_subtree_is_optional(const ndt_t *t);
 NDTYPES_API int ndt_is_pointer_free(const ndt_t *t);
+NDTYPES_API int ndt_is_ref_free(const ndt_t *t);
 
 NDTYPES_API int ndt_is_ndarray(const ndt_t *t);
 NDTYPES_API int ndt_is_c_contiguous(const ndt_t *t);

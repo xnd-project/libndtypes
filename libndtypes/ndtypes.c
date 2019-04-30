@@ -103,6 +103,10 @@ ndt_subtree_flags(const ndt_t *type)
         flags |= NDT_POINTER;
     }
 
+    if (type->flags & NDT_REF) {
+        flags |= NDT_REF;
+    }
+
     return flags;
 }
 
@@ -203,6 +207,12 @@ int
 ndt_is_pointer_free(const ndt_t *t)
 {
     return !(t->flags & NDT_POINTER);
+}
+
+int
+ndt_is_ref_free(const ndt_t *t)
+{
+    return !(t->flags & NDT_REF);
 }
 
 /* Array predicates */
@@ -1991,8 +2001,9 @@ init_concrete_fields(ndt_t *t, int64_t *offsets, uint16_t *align, uint16_t *pad,
  *   3) 0 <= i < ntags ==> fields[i].access == Concrete
  *   4) len(fields) == ntags
  */
-static void
-init_concrete_tags(ndt_t *t, const ndt_field_t *fields, int64_t ntags)
+static int
+init_concrete_tags(ndt_t *t, const ndt_field_t *fields, int64_t ntags,
+                   ndt_context_t *ctx)
 {
     int64_t maxsize = 0;
     int64_t i;
@@ -2000,12 +2011,21 @@ init_concrete_tags(ndt_t *t, const ndt_field_t *fields, int64_t ntags)
     for (i = 0; i < ntags; i++) {
         assert(fields[i].access == Concrete);
         assert(fields[i].type->access == Concrete);
+
+        if (fields[i].type->flags & NDT_REF) {
+            ndt_err_format(ctx, NDT_ValueError,
+                "union types cannot contain references");
+            return -1;
+        }
+
         maxsize = max_i64(fields[i].type->datasize, maxsize);
     }
 
     assert(t->access == Concrete);
     t->align = 1;
     t->datasize = 1+maxsize;
+
+    return 0;
 }
 
 const ndt_t *
@@ -2220,7 +2240,11 @@ ndt_union(const ndt_field_t *fields, int64_t ntags, bool opt,
         return t;
     }
     else {
-        init_concrete_tags(t, fields, ntags);
+        if (init_concrete_tags(t, fields, ntags, ctx) < 0) {
+            ndt_free(t);
+            return NULL;
+        }
+
         for (i = 0; i < ntags; i++) {
             char *s = ndt_strdup(fields[i].name, ctx);
             if (s == NULL) {
@@ -2248,7 +2272,7 @@ ndt_ref(const ndt_t *type, bool opt, ndt_context_t *ctx)
     }
 
     /* abstract type */
-    t = ndt_new(Ref, opt|NDT_POINTER, ctx);
+    t = ndt_new(Ref, opt|NDT_POINTER|NDT_REF, ctx);
     if (t == NULL) {
         return NULL;
     }
