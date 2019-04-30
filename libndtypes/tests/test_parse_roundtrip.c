@@ -345,7 +345,7 @@ const char *parse_roundtrip_tests[] = {
   "[Int of int64 | Float of float32]",
   "[Int of int64 | Union of [Complex of complex128 | Float of float32]]",
   "2 * 10 * [Int of int64 | Union of [Complex of complex128 | Float of float32]]",
-  "2 * 10 * ([Int of int64 | Union of [Complex of complex128 | Float of float32]], [Some of ?bool])",
+  "2 * 10 * ([Int of int64 | Union of [Complex of complex128 | Float of float32]], [Some of bool])",
 
   /* Overflow */
   "9223372036854775807 * uint8",
