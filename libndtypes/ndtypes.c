@@ -2018,12 +2018,6 @@ init_concrete_tags(ndt_t *t, const ndt_field_t *fields, int64_t ntags,
             return -1;
         }
 
-        if (fields[i].type->flags & (NDT_OPTION|NDT_SUBTREE_OPTION)) {
-            ndt_err_format(ctx, NDT_NotImplementedError,
-                "union member types cannot be optional");
-            return -1;
-        }
-
         maxsize = max_i64(fields[i].type->datasize, maxsize);
     }
 
