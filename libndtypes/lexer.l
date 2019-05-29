@@ -188,6 +188,7 @@ yycolumn = 1;
 
 "fixed"        { return FIXED; }
 "var"          { return VAR; }
+"array"        { return ARRAY; }
 
 "of"           { return OF; }
 

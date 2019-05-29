@@ -597,6 +597,9 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
         return c->tag == Categorical &&
                match_categorical(p->Categorical.types, p->Categorical.ntypes,
                                  c->Categorical.types, c->Categorical.ntypes);
+    case Array:
+        if (c->tag != Array) return 0;
+        return match_datashape(p->Array.type, c->Array.type, tbl, ctx);
     case Ref:
         if (c->tag != Ref) return 0;
         return match_datashape(p->Ref.type, c->Ref.type, tbl, ctx);
@@ -605,7 +608,7 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
         if (c->tag != Tuple) return 0;
         return match_tuple_fields(p, c, tbl, ctx);
     case Record:
-        if (p->Tuple.flag == Variadic) return 0;
+        if (p->Record.flag == Variadic) return 0;
         if (c->tag != Record) return 0;
         return match_record_fields(p, c, tbl, ctx);
     case Union:

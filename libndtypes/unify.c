@@ -418,6 +418,25 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
         return unification_error("cannot unify VarDimElem", ctx);
     }
 
+    case Array: {
+        if (u->tag != Array) {
+            return unification_error("different types", ctx);
+        }
+
+        type = unify(t->Array.type, u->Array.type, replace_any, ctx);
+        if (type == NULL) {
+            return NULL;
+        }
+
+        w = ndt_array(type, opt, ctx);
+        ndt_decref(type);
+        if (w == NULL) {
+            return NULL;
+        }
+
+        return unify_common((ndt_t *)w, t, u, ctx);
+    }
+
     case Tuple: {
         if (u->tag != Tuple) {
             return unification_error("different types", ctx);

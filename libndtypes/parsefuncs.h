@@ -78,6 +78,8 @@ const ndt_t *mk_var_ellipsis(const ndt_t *type, ndt_context_t *ctx);
 const ndt_t *mk_ellipsis_dim(char *name, const ndt_t *type, ndt_context_t *ctx);
 const ndt_t *mk_symbolic_dim(char *name, const ndt_t *type, ndt_context_t *ctx);
 
+const ndt_t *mk_array(const ndt_t *type, bool opt, ndt_context_t *ctx);
+
 ndt_field_t *mk_field(char *name, const ndt_t *type, ndt_attr_seq_t *seq, ndt_context_t *ctx);
 const ndt_t *mk_tuple(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx);
 const ndt_t *mk_record(enum ndt_variadic flag, ndt_field_seq_t *fields, ndt_attr_seq_t *attrs, bool opt, ndt_context_t *ctx);

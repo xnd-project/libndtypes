@@ -196,6 +196,14 @@ mk_symbolic_dim(char *name, const ndt_t *type, ndt_context_t *ctx)
 }
 
 const ndt_t *
+mk_array(const ndt_t *type, bool opt, ndt_context_t *ctx)
+{
+    const ndt_t *t = ndt_array(type, opt, ctx);
+    ndt_decref(type);
+    return t;
+}
+
+const ndt_t *
 mk_constr(char *name, const ndt_t *type, bool opt, ndt_context_t *ctx)
 {
     const ndt_t *t = ndt_constr(name, type, opt, ctx);

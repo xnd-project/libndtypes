@@ -344,6 +344,11 @@ ndt_copy(const ndt_t *t, ndt_context_t *ctx)
         goto copy_common_fields;
     }
 
+    case Array: {
+        u = (ndt_t *)ndt_array(t->Array.type, opt, ctx);
+        goto copy_common_fields;
+    }
+
     case Tuple: {
         return ndt_copy_tuple(t, opt, ctx);
     }

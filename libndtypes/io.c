@@ -58,6 +58,7 @@ ndt_type_keyword(const ndt_t *t)
     case FixedDim: return "fixed";
     case VarDim: return "var";
 
+    case Array: return "array";
     case Ref: return "ref";
 
     case ScalarKind: return "ScalarKind";
@@ -127,6 +128,7 @@ ndt_type_name(const ndt_t *t)
     case SymbolicDim: return "SymbolicDim";
     case EllipsisDim: return "EllipsisDim";
 
+    case Array: return "Array";
     case Tuple: return "Tuple";
     case Record: return "Record";
     case Union: return "Union";
@@ -614,6 +616,13 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             return ndt_snprintf(ctx, buf, "%s", t->EllipsisDim.tag==RequireNA ? "" : "]");
+        }
+
+        case Array: {
+            n = ndt_snprintf(ctx, buf, "array * ");
+            if (n < 0) return -1;
+
+            return datashape(buf, t->Array.type, d, ctx);
         }
 
         case Tuple: {
@@ -1259,6 +1268,22 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             if (n < 0) return -1;
 
             n = ndt_snprintf(ctx, buf, "\n");
+            if (n < 0) return -1;
+
+            n = ast_common_attributes_with_newline(buf, t, d+2, ctx);
+            if (n < 0) return -1;
+
+            return ndt_snprintf_d(ctx, buf, d, ")");
+        }
+
+        case Array: {
+            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Array(\n");
+            if (n < 0) return -1;
+
+            n = ast_datashape(buf, t->Array.type, d+2, 0, ctx);
+            if (n < 0) return -1;
+
+            n = ndt_snprintf(ctx, buf, ",\n");
             if (n < 0) return -1;
 
             n = ast_common_attributes_with_newline(buf, t, d+2, ctx);

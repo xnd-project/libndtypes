@@ -706,9 +706,9 @@ check_fixed_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == VarDim || type->tag == VarDimElem) {
+    if (type->tag == VarDim || type->tag == VarDimElem || type->tag == Array) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var dim are not supported");
+            "mixed fixed and var/array dimensions are not supported");
         return 0;
     }
 
@@ -730,9 +730,10 @@ check_abstract_var_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == FixedDim || type->tag == SymbolicDim) {
+    if (type->tag == FixedDim || type->tag == SymbolicDim ||
+        type->tag == Array) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var dim are not supported");
+            "mixed fixed and var/array dimensions are not supported");
         return 0;
     }
 
@@ -761,9 +762,10 @@ check_var_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == FixedDim || type->tag == SymbolicDim) {
+    if (type->tag == FixedDim || type->tag == SymbolicDim ||
+        type->tag == Array) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var dim are not supported");
+            "mixed fixed and var/array dimensions are not supported");
         return 0;
     }
 
@@ -773,6 +775,31 @@ check_var_invariants(const ndt_t *type, ndt_context_t *ctx)
                 "mixing abstract and concrete var dimensions is not allowed");
             return 0;
         }
+    }
+
+    if (type->ndim >= NDT_MAX_DIM) {
+        ndt_err_format(ctx, NDT_TypeError, "ndim > %d", NDT_MAX_DIM);
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Invariants for array dimensions. */
+static int
+check_array_invariants(const ndt_t *type, ndt_context_t *ctx)
+{
+    if (type->tag == Module) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "nested module types are not supported");
+        return 0;
+    }
+
+    if (type->tag == FixedDim || type->tag == SymbolicDim ||
+        type->tag == VarDim || type->tag == VarDimElem) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "mixed array and fixed/var dimensions are not supported");
+        return 0;
     }
 
     if (type->ndim >= NDT_MAX_DIM) {
@@ -1144,6 +1171,11 @@ ndt_del(ndt_t *t)
     case EllipsisDim: {
         ndt_free(t->EllipsisDim.name);
         ndt_decref(t->EllipsisDim.type);
+        goto free_type;
+    }
+
+    case Array: {
+        ndt_decref(t->Array.type);
         goto free_type;
     }
 
@@ -1904,6 +1936,33 @@ ndt_ellipsis_dim_tag(char *name, const ndt_t *type, enum ndt_contig tag, ndt_con
 /******************************************************************************/
 /*                             Container types                                */
 /******************************************************************************/
+
+const ndt_t *
+ndt_array(const ndt_t *type, bool opt, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    if (!check_array_invariants(type, ctx)) {
+        return NULL;
+    }
+
+    /* abstract type */
+    t = ndt_new(Array, opt|NDT_POINTER, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    ndt_incref(type);
+    t->Array.type = type;
+
+    t->flags |= ndt_subtree_flags(type);
+
+    /* concrete access */
+    t->access = type->access;
+    t->datasize = sizeof(void *);
+    t->align = alignof(void *);
+
+    return t;
+}
 
 /*
  * Initialize the access information of a concrete tuple or record.

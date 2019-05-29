@@ -269,7 +269,7 @@ format(buf_t *buf, const ndt_t *t, ndt_context_t *ctx)
             /* fall through */
 
         case Module: case Function:
-        case VarDim: case VarDimElem: case SymbolicDim: case EllipsisDim:
+        case VarDim: case VarDimElem: case SymbolicDim: case EllipsisDim: case Array:
         case Union: case Ref: case Constr: case Nominal:
         case Categorical:
         case FixedString: case String: case Bytes:

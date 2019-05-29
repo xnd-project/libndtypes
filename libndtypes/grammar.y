@@ -179,7 +179,7 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
    BYTES FIXED_BYTES_KIND FIXED_BYTES
    REF
 
-FIXED VAR OF
+FIXED VAR ARRAY OF
 
 COMMA COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK STAR ELLIPSIS
 RARROW EQUAL LESS GREATER QUESTIONMARK BANG AMPERSAND BAR
@@ -239,6 +239,8 @@ dimensions_nooption:
 | NAME_UPPER STAR dimensions_tail                        { $$ = mk_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | VAR arguments_opt STAR dimensions_tail                 { $$ = mk_var_dim($2, $4, false, ctx); if ($$ == NULL) YYABORT; }
 | QUESTIONMARK VAR arguments_opt STAR dimensions_tail    { $$ = mk_var_dim($3, $5, true, ctx); if ($$ == NULL) YYABORT; }
+| ARRAY STAR dimensions_tail                             { $$ = mk_array($3, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK ARRAY STAR dimensions_tail                { $$ = mk_array($4, true, ctx); if ($$ == NULL) YYABORT; }
 
 
 dimensions_tail:
