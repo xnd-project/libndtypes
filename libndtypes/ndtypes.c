@@ -135,6 +135,8 @@ ndt_itemsize(const ndt_t *t)
         return t->Concrete.FixedDim.itemsize;
     case VarDim: case VarDimElem:
         return t->Concrete.VarDim.itemsize;
+    case Array:
+        return ndt_itemsize(t->Array.type);
     default:
         return t->datasize;
     }
@@ -1955,6 +1957,7 @@ ndt_array(const ndt_t *type, bool opt, ndt_context_t *ctx)
     t->Array.type = type;
 
     t->flags |= ndt_subtree_flags(type);
+    t->ndim = type->ndim + 1;
 
     /* concrete access */
     t->access = type->access;

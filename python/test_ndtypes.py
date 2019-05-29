@@ -601,6 +601,57 @@ class TestEllipsisDim(unittest.TestCase):
         self.assertRaises(TypeError, t, 'shape')
         self.assertRaises(TypeError, t, 'strides')
 
+class TestArray(unittest.TestCase):
+
+    def test_array_predicates(self):
+        t = ndt("array * array * complex128")
+        check_serialize(self, t)
+
+        self.assertFalse(t.isabstract())
+        self.assertFalse(t.iscomplex())
+        self.assertTrue(t.isconcrete())
+        self.assertFalse(t.isfloat())
+        self.assertFalse(t.isoptional())
+        self.assertFalse(t.isscalar())
+        self.assertFalse(t.issigned())
+        self.assertFalse(t.isunsigned())
+
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_f_contiguous())
+
+    def test_array_dim_common_fields(self):
+        dt = "{a: complex64, b: string}"
+        t = ndt("array * array * %s" % dt)
+        check_serialize(self, t)
+        dtype = ndt(dt)
+
+        self.assertEqual(t.ndim, 2)
+        if not HAVE_32_BIT_LINUX:
+            self.assertEqual(t.itemsize, dtype.itemsize)
+            self.assertEqual(t.align, dtype.align)
+
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
+
+    def test_array_invariants(self):
+        # Mixing array with fixed/var dimensions is disallowed.
+        self.assertRaises(TypeError, ndt, "10 * array * int64")
+        self.assertRaises(TypeError, ndt, "array * 10 * int64")
+        self.assertRaises(TypeError, ndt, "10 * array * 10 * int64")
+        self.assertRaises(TypeError, ndt, "array * 10 * array * int64")
+        self.assertRaises(TypeError, ndt, "N * array * int64")
+        self.assertRaises(TypeError, ndt, "array * N * int64")
+        self.assertRaises(TypeError, ndt, "N * array * N * int64")
+        self.assertRaises(TypeError, ndt, "array * N * array * int64")
+
+        self.assertRaises(TypeError, ndt, "var * array * int64")
+        self.assertRaises(TypeError, ndt, "array * var * int64")
+        self.assertRaises(TypeError, ndt, "var * array * var * int64")
+        self.assertRaises(TypeError, ndt, "array * var * array * int64")
+
+        # Too many dimensions.
+        self.assertRaises(TypeError, ndt, "array * " * (MAX_DIM + 1) + "float64")
+
 
 class TestTuple(unittest.TestCase):
 
@@ -2082,6 +2133,7 @@ ALL_TESTS = [
   TestVarDim,
   TestSymbolicDim,
   TestEllipsisDim,
+  TestArray,
   TestTuple,
   TestRecord,
   TestUnion,

@@ -962,7 +962,7 @@ ndtype_itemsize(PyObject *self, PyObject *args UNUSED)
         size = t->Concrete.VarDim.itemsize;
         break;
     default:
-        size = t->datasize;
+        size = ndt_itemsize(t);
         break;
     }
 
