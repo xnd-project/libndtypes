@@ -27835,6 +27835,9 @@ const char *parse_error_tests[] = {
   "-9223372036854775808 * uint8",
   "-2 * 4611686018427387904 * uint8",
 
+  /* Array restricted to 1D */
+  "array * array * int64",
+
   /* Overflow */
   "9223372036854775808 * uint8",
   "4611686018427387904 * 2 uint8",

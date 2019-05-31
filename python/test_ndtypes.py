@@ -604,7 +604,7 @@ class TestEllipsisDim(unittest.TestCase):
 class TestArray(unittest.TestCase):
 
     def test_array_predicates(self):
-        t = ndt("array * array * complex128")
+        t = ndt("array * complex128")
         check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
@@ -621,11 +621,11 @@ class TestArray(unittest.TestCase):
 
     def test_array_dim_common_fields(self):
         dt = "{a: complex64, b: string}"
-        t = ndt("array * array * %s" % dt)
+        t = ndt("array * %s" % dt)
         check_serialize(self, t)
         dtype = ndt(dt)
 
-        self.assertEqual(t.ndim, 2)
+        self.assertEqual(t.ndim, 1)
         if not HAVE_32_BIT_LINUX:
             self.assertEqual(t.itemsize, dtype.itemsize)
             self.assertEqual(t.align, dtype.align)

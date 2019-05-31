@@ -804,8 +804,9 @@ check_array_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->ndim >= NDT_MAX_DIM) {
-        ndt_err_format(ctx, NDT_TypeError, "ndim > %d", NDT_MAX_DIM);
+    if (type->ndim != 0) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "flexible arrays are currently restricted to 1D", NDT_MAX_DIM);
         return 0;
     }
 
