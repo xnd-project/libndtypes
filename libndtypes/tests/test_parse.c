@@ -347,7 +347,7 @@ const char *parse_tests[] = {
   "2 * 3  * [ThisRecord of {first: (int64, complex128), second: string}]",
   "2 * 3  * [ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)]",
   "2 * 3  * [Int of int64 | ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)]",
-  "array * [Int of int64 | ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)]",
+  "array * [Int of int64 | ThisRecord of {first: (int64, complex128), second: uint8} | ThatTuple of (float64, float64)]",
 
   "fixed(shape=10) * complex128",
 

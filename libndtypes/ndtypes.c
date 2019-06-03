@@ -806,7 +806,13 @@ check_array_invariants(const ndt_t *type, ndt_context_t *ctx)
 
     if (type->ndim != 0) {
         ndt_err_format(ctx, NDT_TypeError,
-            "flexible arrays are currently restricted to 1D", NDT_MAX_DIM);
+            "flexible arrays are currently restricted to 1D");
+        return 0;
+    }
+
+    if (!ndt_is_pointer_free(type)) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "the element type of flexible arrays must be pointer free");
         return 0;
     }
 

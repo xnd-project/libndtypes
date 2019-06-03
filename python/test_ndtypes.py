@@ -620,7 +620,7 @@ class TestArray(unittest.TestCase):
         self.assertFalse(t.is_f_contiguous())
 
     def test_array_dim_common_fields(self):
-        dt = "{a: complex64, b: string}"
+        dt = "{a: complex64, b: float64}"
         t = ndt("array * %s" % dt)
         check_serialize(self, t)
         dtype = ndt(dt)

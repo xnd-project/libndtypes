@@ -308,7 +308,7 @@ const char *parse_roundtrip_tests[] = {
   "fixed_bytes(size=1233209904, align=8)",
   "WhRsMHHXYp(categorical(145))",
   "var * var * bytes(align=2)",
-  "array * bytes(align=2)",
+  "array * fixed_bytes(size=2882797900, align=2)",
   "categorical(-85, -49, -26791, 8094, 1780, 1.2e-32, 'pX')",
   "D6nfBg_(categorical(16278, 26651, 147170982, 1.2e-32, 'ylR7'))",
   "categorical(482331467, 3229733591, -1.2e-32, 1.2e-32)",
