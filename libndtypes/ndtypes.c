@@ -1969,8 +1969,8 @@ ndt_array(const ndt_t *type, bool opt, ndt_context_t *ctx)
 
     /* concrete access */
     t->access = type->access;
-    t->datasize = sizeof(void *);
-    t->align = alignof(void *);
+    t->datasize = sizeof(ndt_array_t);
+    t->align = alignof(ndt_array_t);
 
     return t;
 }
