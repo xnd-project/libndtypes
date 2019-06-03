@@ -986,7 +986,7 @@ typedef struct {
 } ndt_bytes_t;
 
 typedef struct {
-    int64_t nitems;
+    int64_t shape;
     uint8_t *data;
 } ndt_array_t;
 
