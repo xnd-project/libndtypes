@@ -599,6 +599,7 @@ match_datashape(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
                                  c->Categorical.types, c->Categorical.ntypes);
     case Array:
         if (c->tag != Array) return 0;
+        if (c->Array.itemsize != p->Array.itemsize) return 0;
         return match_datashape(p->Array.type, c->Array.type, tbl, ctx);
     case Ref:
         if (c->tag != Ref) return 0;

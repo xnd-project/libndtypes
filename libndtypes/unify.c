@@ -419,7 +419,7 @@ unify(const ndt_t *t, const ndt_t *u, bool replace_any, ndt_context_t *ctx)
     }
 
     case Array: {
-        if (u->tag != Array) {
+        if (u->tag != Array || u->Array.itemsize != t->Array.itemsize) {
             return unification_error("different types", ctx);
         }
 

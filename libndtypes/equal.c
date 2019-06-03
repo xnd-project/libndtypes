@@ -251,6 +251,10 @@ ndt_equal(const ndt_t *t, const ndt_t *u)
     }
 
     case Array: {
+        if (t->Array.itemsize != u->Array.itemsize) {
+            return 0;
+        }
+
         return ndt_equal(t->Array.type, u->Array.type);
     }
 

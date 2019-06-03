@@ -479,6 +479,7 @@ struct _ndt {
         } Bytes;
 
         struct {
+            int64_t itemsize;
             const ndt_t *type;
         } Array;
 

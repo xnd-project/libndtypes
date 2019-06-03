@@ -136,7 +136,7 @@ ndt_itemsize(const ndt_t *t)
     case VarDim: case VarDimElem:
         return t->Concrete.VarDim.itemsize;
     case Array:
-        return ndt_itemsize(t->Array.type);
+        return t->Array.itemsize;
     default:
         return t->datasize;
     }
@@ -1955,6 +1955,7 @@ ndt_array(const ndt_t *type, bool opt, ndt_context_t *ctx)
         return NULL;
     }
     ndt_incref(type);
+    t->Array.itemsize = type->datasize;
     t->Array.type = type;
 
     t->flags |= ndt_subtree_flags(type);

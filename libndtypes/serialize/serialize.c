@@ -256,6 +256,7 @@ static int64_t
 write_array(char * const ptr, int64_t offset, const ndt_t * const t,
             bool *overflow)
 {
+    offset = write_int64(ptr, offset, t->Array.itemsize, overflow);
     return write_type(ptr, offset, t->Array.type, overflow);
 }
 
