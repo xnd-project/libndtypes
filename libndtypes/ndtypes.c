@@ -135,8 +135,6 @@ ndt_itemsize(const ndt_t *t)
         return t->Concrete.FixedDim.itemsize;
     case VarDim: case VarDimElem:
         return t->Concrete.VarDim.itemsize;
-    case Array:
-        return t->Array.itemsize;
     default:
         return t->datasize;
     }
@@ -708,9 +706,9 @@ check_fixed_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == VarDim || type->tag == VarDimElem || type->tag == Array) {
+    if (type->tag == VarDim || type->tag == VarDimElem) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var/array dimensions are not supported");
+            "mixed fixed and var dimensions are not supported");
         return 0;
     }
 
@@ -732,10 +730,9 @@ check_abstract_var_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == FixedDim || type->tag == SymbolicDim ||
-        type->tag == Array) {
+    if (type->tag == FixedDim || type->tag == SymbolicDim) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var/array dimensions are not supported");
+            "mixed fixed and var dimensions are not supported");
         return 0;
     }
 
@@ -764,10 +761,9 @@ check_var_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == FixedDim || type->tag == SymbolicDim ||
-        type->tag == Array) {
+    if (type->tag == FixedDim || type->tag == SymbolicDim) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var/array dimensions are not supported");
+            "mixed fixed and var dimensions are not supported");
         return 0;
     }
 
@@ -797,16 +793,17 @@ check_array_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == FixedDim || type->tag == SymbolicDim ||
-        type->tag == VarDim || type->tag == VarDimElem) {
-        ndt_err_format(ctx, NDT_TypeError,
-            "mixed array and fixed/var dimensions are not supported");
-        return 0;
-    }
-
     if (type->ndim != 0) {
         ndt_err_format(ctx, NDT_TypeError,
             "flexible arrays are currently restricted to 1D");
+        return 0;
+    }
+
+    if (type->tag == FixedDim || type->tag == SymbolicDim ||
+        type->tag == VarDim || type->tag == VarDimElem ||
+        type->tag == Array) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "flexible array elements cannot be arrays");
         return 0;
     }
 
@@ -1946,35 +1943,6 @@ ndt_ellipsis_dim_tag(char *name, const ndt_t *type, enum ndt_contig tag, ndt_con
 /*                             Container types                                */
 /******************************************************************************/
 
-const ndt_t *
-ndt_array(const ndt_t *type, bool opt, ndt_context_t *ctx)
-{
-    ndt_t *t;
-
-    if (!check_array_invariants(type, ctx)) {
-        return NULL;
-    }
-
-    /* abstract type */
-    t = ndt_new(Array, opt|NDT_POINTER, ctx);
-    if (t == NULL) {
-        return NULL;
-    }
-    ndt_incref(type);
-    t->Array.itemsize = type->datasize;
-    t->Array.type = type;
-
-    t->flags |= ndt_subtree_flags(type);
-    t->ndim = type->ndim + 1;
-
-    /* concrete access */
-    t->access = type->access;
-    t->datasize = sizeof(ndt_array_t);
-    t->align = alignof(ndt_array_t);
-
-    return t;
-}
-
 /*
  * Initialize the access information of a concrete tuple or record.
  * Assumptions:
@@ -2330,6 +2298,35 @@ ndt_union(const ndt_field_t *fields, int64_t ntags, bool opt,
         }
         return t;
     }
+}
+
+const ndt_t *
+ndt_array(const ndt_t *type, bool opt, ndt_context_t *ctx)
+{
+    ndt_t *t;
+
+    if (!check_array_invariants(type, ctx)) {
+        return NULL;
+    }
+
+    /* abstract type */
+    t = ndt_new(Array, opt|NDT_POINTER, ctx);
+    if (t == NULL) {
+        return NULL;
+    }
+    ndt_incref(type);
+    t->Array.itemsize = type->datasize;
+    t->Array.type = type;
+
+    t->flags |= ndt_subtree_flags(type);
+    t->ndim = 0;
+
+    /* concrete access */
+    t->access = type->access;
+    t->datasize = sizeof(ndt_array_t);
+    t->align = alignof(ndt_array_t);
+
+    return t;
 }
 
 const ndt_t *

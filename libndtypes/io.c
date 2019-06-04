@@ -619,7 +619,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         }
 
         case Array: {
-            n = ndt_snprintf(ctx, buf, "array * ");
+            n = ndt_snprintf(ctx, buf, "array of ");
             if (n < 0) return -1;
 
             return datashape(buf, t->Array.type, d, ctx);
