@@ -706,9 +706,11 @@ check_fixed_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == VarDim || type->tag == VarDimElem) {
+    if (type->tag == VarDim || type->tag == VarDimElem ||
+        type->tag == Array) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var dimensions are not supported");
+            "fixed dimensions cannot contain var dimensions "
+            "or flexible arrays");
         return 0;
     }
 
@@ -730,9 +732,11 @@ check_abstract_var_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == FixedDim || type->tag == SymbolicDim) {
+    if (type->tag == FixedDim || type->tag == SymbolicDim ||
+        type->tag == Array) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var dimensions are not supported");
+            "var dimensions cannot contain fixed dimensions or "
+            "flexible arrays");
         return 0;
     }
 
@@ -761,9 +765,11 @@ check_var_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->tag == FixedDim || type->tag == SymbolicDim) {
+    if (type->tag == FixedDim || type->tag == SymbolicDim ||
+        type->tag == Array) {
         ndt_err_format(ctx, NDT_TypeError,
-            "mixed fixed and var dimensions are not supported");
+            "var dimensions cannot contain fixed dimensions or "
+            "flexible arrays");
         return 0;
     }
 
@@ -793,23 +799,10 @@ check_array_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
-    if (type->ndim != 0) {
-        ndt_err_format(ctx, NDT_TypeError,
-            "flexible arrays are currently restricted to 1D");
-        return 0;
-    }
-
     if (type->tag == FixedDim || type->tag == SymbolicDim ||
-        type->tag == VarDim || type->tag == VarDimElem ||
-        type->tag == Array) {
+        type->tag == VarDim || type->tag == VarDimElem) {
         ndt_err_format(ctx, NDT_TypeError,
             "flexible array elements cannot be arrays");
-        return 0;
-    }
-
-    if (!ndt_is_pointer_free(type)) {
-        ndt_err_format(ctx, NDT_TypeError,
-            "the element type of flexible arrays must be pointer free");
         return 0;
     }
 
@@ -2319,7 +2312,7 @@ ndt_array(const ndt_t *type, bool opt, ndt_context_t *ctx)
     t->Array.type = type;
 
     t->flags |= ndt_subtree_flags(type);
-    t->ndim = 0;
+    t->ndim = type->ndim + 1;
 
     /* concrete access */
     t->access = type->access;

@@ -1280,7 +1280,7 @@ ast_datashape(buf_t *buf, const ndt_t *t, int d, int cont, ndt_context_t *ctx)
             n = ndt_snprintf_d(ctx, buf, cont ? 0 : d, "Array(\n");
             if (n < 0) return -1;
 
-            n = ndt_snprintf_d(ctx, buf, cont ? 0 : d+2, "itemsize=%" PRIi64 ",\n",
+            n = ndt_snprintf_d(ctx, buf, d+2, "itemsize=%" PRIi64 ",\n",
                                t->Array.itemsize);
 
             n = ndt_snprintf_d(ctx, buf, d+2, "type=");

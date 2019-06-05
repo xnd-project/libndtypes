@@ -133,6 +133,8 @@ next_dim(const ndt_t *t)
         return t->SymbolicDim.type;
     case EllipsisDim:
         return t->EllipsisDim.type;
+    case Array:
+        return t->Array.type;
     default:
         /* NOT REACHED: tags should be exhaustive. */
         ndt_internal_error("invalid value");

@@ -561,12 +561,12 @@ class TestSymbolicDim(unittest.TestCase):
         check_serialize(self, t)
         dtype = ndt(dt)
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestEllipsisDim(unittest.TestCase):
@@ -594,12 +594,12 @@ class TestEllipsisDim(unittest.TestCase):
         check_serialize(self, t)
         dtype = ndt(dt)
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 class TestArray(unittest.TestCase):
 
@@ -616,9 +616,8 @@ class TestArray(unittest.TestCase):
         self.assertFalse(t.issigned())
         self.assertFalse(t.isunsigned())
 
-        # The flexible array counts as a dtype.
-        self.assertTrue(t.is_c_contiguous())
-        self.assertTrue(t.is_f_contiguous())
+        self.assertFalse(t.is_c_contiguous())
+        self.assertFalse(t.is_f_contiguous())
 
     def test_array_dim_common_fields(self):
         dt = "{a: complex64, b: float64}"
@@ -627,9 +626,10 @@ class TestArray(unittest.TestCase):
         dtype = ndt(dt)
 
         # The flexible array counts as a dtype.
-        self.assertEqual(t.ndim, 0)
-        self.assertEqual(t.shape, ())
-        self.assertEqual(t.strides, ())
+        self.assertEqual(t.ndim, 1)
+
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
         if not HAVE_32_BIT_LINUX:
             self.assertEqual(t.itemsize, dtype.itemsize)
@@ -689,8 +689,8 @@ class TestTuple(unittest.TestCase):
             self.assertEqual(t.itemsize, 2 * field.itemsize)
             self.assertEqual(t.align, field.align)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestRecord(unittest.TestCase):
@@ -741,8 +741,8 @@ class TestRecord(unittest.TestCase):
             self.assertEqual(t.itemsize, 3 * field.itemsize)
             self.assertEqual(t.align, field.align)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestUnion(unittest.TestCase):
@@ -796,8 +796,8 @@ class TestUnion(unittest.TestCase):
         self.assertEqual(t.itemsize, u.itemsize + 2)
         self.assertEqual(t.align, 1)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestRef(unittest.TestCase):
@@ -847,8 +847,8 @@ class TestRef(unittest.TestCase):
         self.assertEqual(t.itemsize, SIZEOF_PTR)
         self.assertEqual(t.align, SIZEOF_PTR)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestConstr(unittest.TestCase):
@@ -882,8 +882,8 @@ class TestConstr(unittest.TestCase):
             self.assertEqual(t.itemsize, arg.itemsize)
             self.assertEqual(t.align, arg.align)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestNominal(unittest.TestCase):
@@ -927,8 +927,8 @@ class TestNominal(unittest.TestCase):
             self.assertEqual(t.itemsize, 2 * 10 * dtype.itemsize)
             self.assertEqual(t.align, dtype.align)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
     def test_nominal_exceptions(self):
         # not in the typedef table
@@ -961,12 +961,12 @@ class TestScalarKind(unittest.TestCase):
         t = ndt("Scalar")
         check_serialize(self, t)
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestCategorical(unittest.TestCase):
@@ -1002,8 +1002,8 @@ class TestCategorical(unittest.TestCase):
             self.assertEqual(t.itemsize, 8)
             self.assertEqual(t.align, 8)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestFixedStringKind(unittest.TestCase):
@@ -1028,12 +1028,12 @@ class TestFixedStringKind(unittest.TestCase):
     def test_fixed_string_kind_common_fields(self):
         t = ndt("FixedString")
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestFixedString(unittest.TestCase):
@@ -1070,8 +1070,8 @@ class TestFixedString(unittest.TestCase):
                 self.assertEqual(t.itemsize, 20 * codepoint_size)
                 self.assertEqual(t.align, codepoint_size)
 
-            self.assertRaises(TypeError, t, 'shape')
-            self.assertRaises(TypeError, t, 'strides')
+            self.assertEqual(t.shape, ())
+            self.assertEqual(t.strides, ())
 
 
 class TestFixedBytesKind(unittest.TestCase):
@@ -1096,12 +1096,12 @@ class TestFixedBytesKind(unittest.TestCase):
     def test_fixed_string_kind_common_fields(self):
         t = ndt("FixedBytes")
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestFixedBytes(unittest.TestCase):
@@ -1134,8 +1134,8 @@ class TestFixedBytes(unittest.TestCase):
                 self.assertEqual(t.itemsize, 1024)
                 self.assertEqual(t.align, align)
 
-            self.assertRaises(TypeError, t, 'shape')
-            self.assertRaises(TypeError, t, 'strides')
+            self.assertEqual(t.shape, ())
+            self.assertEqual(t.strides, ())
 
     def test_fixed_bytes_exceptions(self):
         # Data size must be a multiple of align.
@@ -1168,8 +1168,8 @@ class TestString(unittest.TestCase):
         self.assertEqual(t.itemsize, SIZEOF_PTR)
         self.assertEqual(t.align, SIZEOF_PTR)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestBytes(unittest.TestCase):
@@ -1199,8 +1199,8 @@ class TestBytes(unittest.TestCase):
             self.assertEqual(t.itemsize, 16)
             self.assertEqual(t.align, 8)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestChar(unittest.TestCase):
@@ -1230,8 +1230,8 @@ class TestChar(unittest.TestCase):
         self.assertEqual(t.itemsize, 4)
         self.assertEqual(t.align, 4)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestBool(unittest.TestCase):
@@ -1260,8 +1260,8 @@ class TestBool(unittest.TestCase):
         self.assertEqual(t.itemsize, 1)
         self.assertEqual(t.align, 1)
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertEqual(t.shape, ())
+        self.assertEqual(t.strides, ())
 
 
 class TestSignedKind(unittest.TestCase):
@@ -1286,12 +1286,12 @@ class TestSignedKind(unittest.TestCase):
     def test_signed_kind_common_fields(self):
         t = ndt("Signed")
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestSigned(unittest.TestCase):
@@ -1330,8 +1330,8 @@ class TestSigned(unittest.TestCase):
                 self.assertEqual(t.itemsize, itemsize)
                 self.assertEqual(t.align, itemsize)
 
-            self.assertRaises(TypeError, t, 'shape')
-            self.assertRaises(TypeError, t, 'shape')
+            self.assertEqual(t.shape, ())
+            self.assertEqual(t.strides, ())
 
 
 class TestUnsignedKind(unittest.TestCase):
@@ -1356,12 +1356,12 @@ class TestUnsignedKind(unittest.TestCase):
     def test_unsigned_kind_common_fields(self):
         t = ndt("Unsigned")
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestUnsigned(unittest.TestCase):
@@ -1400,8 +1400,8 @@ class TestUnsigned(unittest.TestCase):
                 self.assertEqual(t.itemsize, itemsize)
                 self.assertEqual(t.align, itemsize)
 
-            self.assertRaises(TypeError, t, 'shape')
-            self.assertRaises(TypeError, t, 'shape')
+            self.assertEqual(t.shape, ())
+            self.assertEqual(t.strides, ())
 
 
 class TestFloatKind(unittest.TestCase):
@@ -1427,12 +1427,12 @@ class TestFloatKind(unittest.TestCase):
         t = ndt("Float")
         check_serialize(self, t)
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestFloat(unittest.TestCase):
@@ -1468,8 +1468,8 @@ class TestFloat(unittest.TestCase):
                 self.assertEqual(t.itemsize, itemsize)
                 self.assertEqual(t.align, itemsize)
 
-            self.assertRaises(TypeError, t, 'shape')
-            self.assertRaises(TypeError, t, 'shape')
+            self.assertEqual(t.shape, ())
+            self.assertEqual(t.strides, ())
 
 
 class TestComplexKind(unittest.TestCase):
@@ -1494,12 +1494,12 @@ class TestComplexKind(unittest.TestCase):
     def test_complex_kind_common_fields(self):
         t = ndt("Complex")
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestComplex(unittest.TestCase):
@@ -1535,8 +1535,8 @@ class TestComplex(unittest.TestCase):
                 self.assertEqual(t.itemsize, itemsize)
                 self.assertEqual(t.align, itemsize // 2)
 
-            self.assertRaises(TypeError, t, 'shape')
-            self.assertRaises(TypeError, t, 'shape')
+            self.assertEqual(t.shape, ())
+            self.assertEqual(t.strides, ())
 
 
 class TestTypevar(unittest.TestCase):
@@ -1561,12 +1561,12 @@ class TestTypevar(unittest.TestCase):
     def test_typevar_common_fields(self):
         t = ndt("T")
 
-        self.assertRaises(TypeError, t, 'ndim')
-        self.assertRaises(TypeError, t, 'itemsize')
-        self.assertRaises(TypeError, t, 'align')
+        self.assertRaises(TypeError, getattr, t, 'ndim')
+        self.assertRaises(TypeError, getattr, t, 'itemsize')
+        self.assertRaises(TypeError, getattr, t, 'align')
 
-        self.assertRaises(TypeError, t, 'shape')
-        self.assertRaises(TypeError, t, 'strides')
+        self.assertRaises(TypeError, getattr, t, 'shape')
+        self.assertRaises(TypeError, getattr, t, 'strides')
 
 
 class TestCopy(unittest.TestCase):
