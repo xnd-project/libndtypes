@@ -806,6 +806,12 @@ check_array_invariants(const ndt_t *type, ndt_context_t *ctx)
         return 0;
     }
 
+    if (!ndt_is_ref_free(type)) {
+        ndt_err_format(ctx, NDT_TypeError,
+            "flexible array elements cannot be contain references");
+        return 0;
+    }
+
     return 1;
 }
 
