@@ -136,6 +136,7 @@ extern "C" {
 #define NDT_ELLIPSIS       0x00000010U
 #define NDT_POINTER        0x00000020U
 #define NDT_REF            0x00000040U
+#define NDT_CHAR           0x00000080U
 
 
 /* Types: ndt_t */

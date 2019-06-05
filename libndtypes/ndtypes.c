@@ -107,6 +107,10 @@ ndt_subtree_flags(const ndt_t *type)
         flags |= NDT_REF;
     }
 
+    if (type->flags & NDT_CHAR) {
+        flags |= NDT_CHAR;
+    }
+
     return flags;
 }
 
@@ -1454,6 +1458,7 @@ fixed_step(const ndt_t *type, int64_t step, bool *overflow)
     assert(ndt_is_concrete(type));
     assert(type->tag != VarDim);
     assert(type->tag != VarDimElem);
+    assert(type->tag != Array);
 
     if (step != INT64_MAX) {
         return step;
@@ -2609,7 +2614,7 @@ ndt_char(enum ndt_encoding encoding, bool opt, ndt_context_t *ctx)
     ndt_t *t;
 
     /* abstract type */
-    t = ndt_new(Char, opt, ctx);
+    t = ndt_new(Char, opt|NDT_CHAR, ctx);
     if (t == NULL) {
         return NULL;
     }
