@@ -1,9 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.3.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
-   Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,9 +30,6 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
-
 #ifndef YY_NDT_YY_GRAMMAR_H_INCLUDED
 # define YY_NDT_YY_GRAMMAR_H_INCLUDED
 /* Debug traces.  */
@@ -44,7 +40,7 @@
 extern int ndt_yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 56 "grammar.y" /* yacc.c:1921  */
+#line 56 "grammar.y" /* yacc.c:1909  */
 
   #include "ndtypes.h"
   #include "seq.h"
@@ -53,7 +49,7 @@ extern int ndt_yydebug;
   #define YY_TYPEDEF_YY_SCANNER_T
   typedef void * yyscan_t;
 
-#line 57 "grammar.h" /* yacc.c:1921  */
+#line 53 "grammar.h" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -135,7 +131,7 @@ extern int ndt_yydebug;
 
 union YYSTYPE
 {
-#line 85 "grammar.y" /* yacc.c:1921  */
+#line 85 "grammar.y" /* yacc.c:1909  */
 
     const ndt_t *ndt;
     enum ndt tag;
@@ -153,7 +149,7 @@ union YYSTYPE
     ndt_string_seq_t *string_seq;
     ndt_type_seq_t *type_seq;
 
-#line 157 "grammar.h" /* yacc.c:1921  */
+#line 153 "grammar.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -179,12 +175,12 @@ struct YYLTYPE
 
 int ndt_yyparse (yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx);
 /* "%code provides" blocks.  */
-#line 65 "grammar.y" /* yacc.c:1921  */
+#line 65 "grammar.y" /* yacc.c:1909  */
 
   #define YY_DECL extern int ndt_yylexfunc(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, yyscan_t yyscanner, ndt_context_t *ctx)
   extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 189 "grammar.h" /* yacc.c:1921  */
+#line 185 "grammar.h" /* yacc.c:1909  */
 
 #endif /* !YY_NDT_YY_GRAMMAR_H_INCLUDED  */
