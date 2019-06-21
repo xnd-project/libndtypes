@@ -104,13 +104,13 @@ const unify_testcase_t unify_tests[] = {
     "2 * 3 * (int8, {foo: complex128, bar: ?Any})",
     "2 * 3 * (int8, {foo: ?complex128, bar: ?string})" },
 
-  { "2 * 3 * [Int of int8 | Something of {foo: Any, bar: string}]",
-    "2 * 3 * [Int of int8 | Something of {foo: complex128, bar: Any}]",
-    "2 * 3 * [Int of int8 | Something of {foo: complex128, bar: string}]" },
+  { "2 * 3 * Int of int8 | Something of {foo: Any, bar: string}",
+    "2 * 3 * Int of int8 | Something of {foo: complex128, bar: Any}",
+    "2 * 3 * Int of int8 | Something of {foo: complex128, bar: string}" },
 
-  { "2 * 3 * [Int of int8 | Something of {foo: ?Any, bar: string}]",
-    "2 * 3 * [Int of int8 | Something of {foo: complex128, bar: ?Any}]",
-    "2 * 3 * [Int of int8 | Something of {foo: ?complex128, bar: ?string}]" },
+  { "2 * 3 * Int of int8 | Something of {foo: ?Any, bar: string}",
+    "2 * 3 * Int of int8 | Something of {foo: complex128, bar: ?Any}",
+    "2 * 3 * Int of int8 | Something of {foo: ?complex128, bar: ?string}" },
 
   { "var(offsets=[0,2]) * (int8, {foo: complex64, bar: string})",
     "var(offsets=[0,3]) * (int8, {foo: complex128, bar: string})",

@@ -203,6 +203,10 @@ ERRTOKEN
 %destructor { ndt_string_seq_del($$); } <string_seq>
 %destructor { ndt_type_seq_del($$); } <type_seq>
 
+%token BELOW_BAR
+%precedence BELOW_BAR
+%precedence BAR
+
 %%
 
 input:
@@ -412,8 +416,10 @@ field_name_or_tag:
 | NAME_OTHER { $$ = $1; if ($$ == NULL) YYABORT; }
 
 union_type:
-  LBRACK union_member_seq RBRACK              { $$ = mk_union($2, false, ctx); if ($$ == NULL) YYABORT; }
-| QUESTIONMARK LBRACK union_member_seq RBRACK { $$ = mk_union($3, true, ctx); if ($$ == NULL) YYABORT; }
+  union_member_seq %prec BELOW_BAR              { $$ = mk_union($1, false, ctx); if ($$ == NULL) YYABORT; }
+| LBRACK union_member_seq RBRACK                { $$ = mk_union($2, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK union_member_seq %prec BELOW_BAR { $$ = mk_union($2, true, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK LBRACK union_member_seq RBRACK   { $$ = mk_union($3, true, ctx); if ($$ == NULL) YYABORT; }
 
 union_member_seq:
   union_member                      { $$ = ndt_field_seq_new($1, ctx); if ($$ == NULL) YYABORT; }

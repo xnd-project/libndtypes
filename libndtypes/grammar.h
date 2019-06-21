@@ -126,7 +126,8 @@ extern int ndt_yydebug;
     STRINGLIT = 320,
     NAME_LOWER = 321,
     NAME_UPPER = 322,
-    NAME_OTHER = 323
+    NAME_OTHER = 323,
+    BELOW_BAR = 324
   };
 #endif
 
@@ -153,7 +154,7 @@ union YYSTYPE
     ndt_string_seq_t *string_seq;
     ndt_type_seq_t *type_seq;
 
-#line 157 "grammar.h" /* yacc.c:1921  */
+#line 158 "grammar.h" /* yacc.c:1921  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -185,6 +186,6 @@ int ndt_yyparse (yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx);
   extern int ndt_yylexfunc(YYSTYPE *, YYLTYPE *, yyscan_t, ndt_context_t *);
   void yyerror(YYLTYPE *loc, yyscan_t scanner, const ndt_t **ast, ndt_context_t *ctx, const char *msg);
 
-#line 189 "grammar.h" /* yacc.c:1921  */
+#line 190 "grammar.h" /* yacc.c:1921  */
 
 #endif /* !YY_NDT_YY_GRAMMAR_H_INCLUDED  */

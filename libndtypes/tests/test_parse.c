@@ -212,8 +212,8 @@ const char *parse_tests[] = {
   "10 * (Any, ...)",
   "(Any, ...)",
   "10 * {...}",
-  "10 * [Float of float64]",
-  "10 * [Float of float64 | Int of int8]",
+  "10 * Float of float64",
+  "10 * Float of float64 | Int of int8",
   "{...}",
   "10 * {a: Any}",
   "{a: Any}",
@@ -346,10 +346,10 @@ const char *parse_tests[] = {
   "var(offsets=[0,2]) * var(offsets=[0,3,7]) * var(offsets=[0,5,11,18,26,35,45,56]) * float64",
 
   /* Tagged unions */
-  "2 * 3  * [ThisRecord of {first: (int64, complex128), second: string}]",
-  "2 * 3  * [ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)]",
-  "2 * 3  * [Int of int64 | ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)]",
-  "array of [Int of int64 | ThisRecord of {first: (int64, complex128), second: uint8} | ThatTuple of (float64, float64)]",
+  "2 * 3  * ThisRecord of {first: (int64, complex128), second: string}",
+  "2 * 3  * ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)",
+  "2 * 3  * Int of int64 | ThisRecord of {first: (int64, complex128), second: string} | ThatTuple of (bytes, string)",
+  "array of Int of int64 | ThisRecord of {first: (int64, complex128), second: uint8} | ThatTuple of (float64, float64)",
 
   "fixed(shape=10) * complex128",
 
