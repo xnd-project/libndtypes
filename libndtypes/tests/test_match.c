@@ -2383,6 +2383,16 @@ const match_testcase_t match_tests[] = {
   { "... * F[N * 2 * float64]",
     "!10 * 3 * 2 * float64", 0 },
 
+  /* array... */
+  { "array... of float64",
+    "2 * 3 * float64", 0 },
+
+  { "array... of float64",
+    "array of float64", 1 },
+
+  { "array... of float64",
+    "array of array of float64", 1 },
+
   /* END MANUALLY GENERATED */
 
   { NULL, NULL, 0 }

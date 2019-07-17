@@ -87,6 +87,21 @@ substitute_named_ellipsis(const ndt_t *t, const symtable_t *tbl, ndt_context_t *
             return x;
         }
     }
+    case ArraySeq: {
+        for (i = v.ArraySeq.size-1; i >= 0; i--) {
+            const ndt_t *w = v.ArraySeq.dims[i];
+            assert(ndt_is_concrete(w));
+            assert(w->tag == Array);
+
+            const ndt_t *x = ndt_array(u, false, ctx);
+            ndt_move(&u, x);
+            if (u == NULL) {
+                return NULL;
+            }
+        }
+
+        return u;
+    }
     default:
         ndt_err_format(ctx, NDT_ValueError,
             "variable not found or has incorrect type");

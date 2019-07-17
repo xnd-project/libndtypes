@@ -375,6 +375,10 @@ const char *parse_tests[] = {
   "9223372036854775807 * uint8",
   "1 * 1 * 9223372036854775807 * uint8",
 
+  /* var..., array... */
+  "var... * (int8, int64)",
+  "array... of (int8, int64)",
+
   /* END MANUALLY GENERATED */
 
    NULL

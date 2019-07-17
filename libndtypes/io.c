@@ -608,8 +608,17 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
             n = ndt_snprintf(ctx, buf, "%s", t->EllipsisDim.tag==RequireF ? "F[" : "");
             if (n < 0) return -1;
 
-            n = ndt_snprintf(ctx, buf, "%s... * ",
-                    t->EllipsisDim.name ? t->EllipsisDim.name : "");
+            if (t->EllipsisDim.name) {
+                if (strcmp(t->EllipsisDim.name, "array") == 0) {
+                    n = ndt_snprintf(ctx, buf, "array... of ");
+                }
+                else {
+                    n = ndt_snprintf(ctx, buf, "%s... * ", t->EllipsisDim.name);
+                }
+            }
+            else {
+                n = ndt_snprintf(ctx, buf, "... * ");
+            }
             if (n < 0) return -1;
 
             n = datashape(buf, t->EllipsisDim.type, d, ctx);

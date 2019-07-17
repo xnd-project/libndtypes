@@ -380,6 +380,24 @@ mk_var_ellipsis(const ndt_t *type, ndt_context_t *ctx)
 
     s = ndt_strdup("var", ctx);
     if (s == NULL) {
+        ndt_decref(type);
+        return NULL;
+    }
+
+    t = ndt_ellipsis_dim(s, type, ctx);
+    ndt_decref(type);
+    return t;
+}
+
+const ndt_t *
+mk_array_ellipsis(const ndt_t *type, ndt_context_t *ctx)
+{
+    const ndt_t *t;
+    char *s;
+
+    s = ndt_strdup("array", ctx);
+    if (s == NULL) {
+        ndt_decref(type);
         return NULL;
     }
 

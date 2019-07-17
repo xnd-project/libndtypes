@@ -356,6 +356,10 @@ const char *parse_roundtrip_tests[] = {
   "9223372036854775807 * uint8",
   "1 * 1 * 9223372036854775807 * uint8",
 
+  /* var... and array... */
+  "var... * float64",
+  "array... of float64",
+
   /* END MANUALLY GENERATED */
 
   NULL

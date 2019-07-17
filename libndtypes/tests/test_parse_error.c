@@ -27864,6 +27864,11 @@ const char *parse_error_tests[] = {
   "Array of 2 * 3 * int64 | Record of { s: int64XX }",
   "This of int64 | Array of 2 * 3 * (float64, ref(int64))",
 
+  /* var... and array... */
+  "var... of float64",
+  "var... * (int64, str)",
+  "array... * float64",
+  "array... * (int64, str)",
   /* END MANUALLY GENERATED */
 
   NULL

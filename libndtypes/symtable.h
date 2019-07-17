@@ -46,7 +46,8 @@ enum symtable_entry {
   Type,
   BroadcastSeq,
   FixedSeq,
-  VarSeq
+  VarSeq,
+  ArraySeq
 };
 
 typedef struct {
@@ -74,6 +75,7 @@ typedef struct {
     broadcast_list_t BroadcastSeq;
     fixed_list_t FixedSeq;
     var_list_t VarSeq;
+    fixed_list_t ArraySeq;
   };
 } symtable_entry_t;
 

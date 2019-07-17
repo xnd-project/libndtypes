@@ -374,6 +374,23 @@ resolve_var(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
 }
 
 static int
+resolve_array(symtable_entry_t w, symtable_t *tbl, ndt_context_t *ctx)
+{
+    const char *key = "array";
+    symtable_entry_t v;
+
+    v = symtable_find(tbl, key);
+    if (v.tag == Unbound) {
+        if (symtable_add(tbl, key, w, ctx) < 0) {
+            return -1;
+        }
+        return 1;
+    }
+
+    return v.ArraySeq.size == w.ArraySeq.size;
+}
+
+static int
 match_tuple_fields(const ndt_t *p, const ndt_t *c, symtable_t *tbl,
                    ndt_context_t *ctx)
 {
@@ -500,6 +517,18 @@ outer_inner(symtable_entry_t *v, int i, const ndt_t *t, int ndim)
         }
         return outer_inner(v, i+1, t->VarDim.type, ndim);
     }
+    case Array: {
+        switch (v->tag) {
+        case ArraySeq:
+            v->ArraySeq.size = i+1;
+            v->ArraySeq.dims[i] = t;
+            break;
+        default:
+            return NULL;
+        }
+        return outer_inner(v, i+1, t->Array.type, ndim);
+    }
+
     default:
         return NULL;
     }
@@ -692,6 +721,10 @@ match_datashape_top(const ndt_t *p, const ndt_t *c, int64_t linear_index,
             outer.VarSeq.size = 0;
             outer.VarSeq.linear_index = linear_index;
         }
+        else if (strcmp(p->EllipsisDim.name, "array") == 0) {
+            outer.tag = ArraySeq;
+            outer.ArraySeq.size = 0;
+        }
         else {
             outer.tag = FixedSeq;
             outer.FixedSeq.size = 0;
@@ -714,6 +747,8 @@ match_datashape_top(const ndt_t *p, const ndt_t *c, int64_t linear_index,
             return resolve_fixed(p->EllipsisDim.name, outer, tbl, ctx);
         case VarSeq:
             return resolve_var(outer, tbl, ctx);
+        case ArraySeq:
+            return resolve_array(outer, tbl, ctx);
         default: /* NOT REACHED */
             ndt_internal_error("invalid tag");
         }
@@ -1035,6 +1070,9 @@ ndt_typecheck(ndt_apply_spec_t *spec, const ndt_t *sig,
                 }
                 break;
             }
+            case ArraySeq:
+                spec->outer_dims = v.ArraySeq.size;
+                break;
             default:
                 ndt_err_format(ctx, NDT_RuntimeError,
                     "unexpected missing dimension list entry");

@@ -806,7 +806,7 @@ check_array_invariants(const ndt_t *type, ndt_context_t *ctx)
     if (type->tag == FixedDim || type->tag == SymbolicDim ||
         type->tag == VarDim || type->tag == VarDimElem) {
         ndt_err_format(ctx, NDT_TypeError,
-            "flexible array elements cannot be arrays");
+            "cannot mix fixed or var dimensions with flexible arrays");
         return 0;
     }
 

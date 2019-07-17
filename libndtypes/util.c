@@ -653,7 +653,9 @@ select_flags(const ndt_t *types[], int n, int outer, ndt_context_t *ctx)
 
         if (ndt_as_ndarray(&x, t, ctx) < 0) { /* var dimension */
             ndt_err_clear(ctx);
-            flags = check_var(flags, t, outer);
+            if (t->tag == VarDim || t->tag == VarDimElem) {
+                flags = check_var(flags, t, outer);
+            }
         }
         else {
             if (outer > t->ndim) {
