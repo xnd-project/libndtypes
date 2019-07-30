@@ -604,7 +604,7 @@ class TestEllipsisDim(unittest.TestCase):
 class TestArray(unittest.TestCase):
 
     def test_array_predicates(self):
-        t = ndt("array of complex128")
+        t = ndt("array * complex128")
         check_serialize(self, t)
 
         self.assertFalse(t.isabstract())
@@ -621,7 +621,7 @@ class TestArray(unittest.TestCase):
 
     def test_array_dim_common_fields(self):
         dt = "{a: complex64, b: float64}"
-        t = ndt("array of %s" % dt)
+        t = ndt("array * %s" % dt)
         check_serialize(self, t)
         dtype = ndt(dt)
 
@@ -637,8 +637,8 @@ class TestArray(unittest.TestCase):
 
     def test_array_invariants(self):
         # Mixing array with fixed/var dimensions is disallowed.
-        self.assertRaises(TypeError, ndt, "array of 2 * int64")
-        self.assertRaises(TypeError, ndt, "array of var * int64")
+        self.assertRaises(TypeError, ndt, "array * 2 * int64")
+        self.assertRaises(TypeError, ndt, "array * var * int64")
 
 
 class TestTuple(unittest.TestCase):

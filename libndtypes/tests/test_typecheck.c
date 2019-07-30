@@ -801,28 +801,28 @@ const typecheck_testcase_t typecheck_tests[] = {
   { .loc = loc(),
     .success=true,
 
-    .signature="array... of float64 -> array... of int64",
-    .args={"array of float64"},
+    .signature="array... * float64 -> array... * int64",
+    .args={"array * float64"},
     .kwargs={NULL},
 
     .outer_dims=1,
     .nin=1,
     .nout=1,
     .nargs=2,
-    .types={ "array of float64", "array of int64" } },
+    .types={ "array * float64", "array * int64" } },
 
   { .loc = loc(),
     .success=true,
 
-    .signature="array... of array of float64, array... of uint8 -> array... of array of int64",
-    .args={"array of array of float64", "array of uint8"},
+    .signature="array... * array * float64, array... * uint8 -> array... * array * int64",
+    .args={"array * array * float64", "array * uint8"},
     .kwargs={NULL},
 
     .outer_dims=1,
     .nin=2,
     .nout=1,
     .nargs=3,
-    .types={ "array of array of float64", "array of uint8", "array of array of int64" } },
+    .types={ "array * array * float64", "array * uint8", "array * array * int64" } },
 
   { .loc=NULL, .success=false, .signature= NULL, .args={NULL}, .kwargs={NULL} }
 };

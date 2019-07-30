@@ -396,7 +396,7 @@ const char *parse_error_tests[] = {
   "?[10 * 10 $ X * Any$",
   "?[10 * 10 $ X * Any$",
   "$var * Any",
-  "$array of Any",
+  "$array * Any",
   "=var * Any",
   "$[var * Any]",
   "xxx[var * Any]",
@@ -27748,13 +27748,13 @@ const char *parse_error_tests[] = {
   "fixed_bytes(1342281638, align=xxx)",
   "Y5vtk * var * 905934102 * 1310846899 * fixed[3359714476] * LKgwlEDf * 2822334059 * ; PKI_8Ob8(fixed_string(795133707))",
   "?(E00Lr_HMM * ... * UAzC * var * M4nJaK * , var * var * 1002912577 * PZPD)",
-  "?(E00Lr_HMM * ... * UAzC * array of M4nJaK * , array of array of 1002912577 * PZPD)",
+  "?(E00Lr_HMM * ... * UAzC * array * M4nJaK * , array * array * 1002912577 * PZPD)",
   "?ref(fixed_string(3865363101, 'ucs-10'))",
   "fixed[3622391868] * SUc9IusL * CaPaWth4m * CEwSPY_6Z * HPW * SbvgP * 29709a97707 * 1300296096 * Fixed * VA8O",
   "fixed[1603107638)] * 2764230114 * IRXLe * Odlw6RSx * ... * Fixed * var * 2484716214 * ScalarKind",
-  "fixed[1603107638)] * 2764230114 * IRXLe * Odlw6RSx * ... * Fixed * array of 2484716214 * ScalarKind",
+  "fixed[1603107638)] * 2764230114 * IRXLe * Odlw6RSx * ... * Fixed * array * 2484716214 * ScalarKind",
   "ZmQxcy * var * 1098824011 * var * var * (,,,)",
-  "ZmQxcy * array of 1098824011 of array of array * (,,,)",
+  "ZmQxcy * array * 1098824011 * array * array * (,,,)",
   "ref(?x1869144321 * Y3_Dm0 * int32)",
   "categorical[\"a\", 1619552300, 490620000000000000000000000000000000000000, 18772, -84, 'l']",
   "?fixed[2889099917] * ... * var * JgdIXy5M * var * Wr2[categorical['gLsA7BM43V', 16460]]",
@@ -27762,7 +27762,7 @@ const char *parse_error_tests[] = {
   "?var * Fixed * FdN_HERKv * 4204012258 * var * fixed[233758212000000000000000000000000000] * Fixed * FixedBytesKind",
   "?categorical[30987, -16536, -270032755.642, -189, -823800099]",
   "?Fixed * 1998811088 * var * var * var * var * bytes(align=-58)",
-  "?Fixed * 1998811088 * array of array of array of array of bytes(align=-58)",
+  "?Fixed * 1998811088 * array * array * array * array * bytes(align=-58)",
   "257051452 * QRgi * Fixed * 4147849906 * var * P4h8i8 * var * 3924618173 * fixed[207255421] * int100",
   "categorical[408786241.474, 2840608325, 44038, 1763886348, \"jOt', 24]",
   "?[OQ78AW32d[categorical[49]%]",
@@ -27866,9 +27866,9 @@ const char *parse_error_tests[] = {
 
   /* var... and array... */
   "var... of float64",
-  "var... * (int64, str)",
-  "array... * float64",
-  "array... * (int64, str)",
+  "var... of (int64, str)",
+  "array... of float64",
+  "array... of (int64, str)",
   /* END MANUALLY GENERATED */
 
   NULL

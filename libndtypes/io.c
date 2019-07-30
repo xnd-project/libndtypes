@@ -610,7 +610,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
 
             if (t->EllipsisDim.name) {
                 if (strcmp(t->EllipsisDim.name, "array") == 0) {
-                    n = ndt_snprintf(ctx, buf, "array... of ");
+                    n = ndt_snprintf(ctx, buf, "array... * ");
                 }
                 else {
                     n = ndt_snprintf(ctx, buf, "%s... * ", t->EllipsisDim.name);
@@ -628,7 +628,7 @@ datashape(buf_t *buf, const ndt_t *t, int d, ndt_context_t *ctx)
         }
 
         case Array: {
-            n = ndt_snprintf(ctx, buf, "array of ");
+            n = ndt_snprintf(ctx, buf, "array * ");
             if (n < 0) return -1;
 
             return datashape(buf, t->Array.type, d, ctx);

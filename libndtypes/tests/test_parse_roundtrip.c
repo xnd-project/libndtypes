@@ -276,7 +276,7 @@ const char *parse_roundtrip_tests[] = {
   /* BEGIN RANDOM */
   "fixed_bytes(size=1342281600, align=16)",
   "var * var * var * (...)",
-  "array of (...)",
+  "array * (...)",
   "categorical(-84, 18772, 49062, 1619552300, 'a', 'l')",
   "categorical(24, 44038, 1763886348, 2840608325, 1.2e-32, 'jOt')",
   "categorical(-2049848438, 94, 3577056037, 3599739756, 1.2e-32)",
@@ -284,15 +284,15 @@ const char *parse_roundtrip_tests[] = {
   "1286044356 * LbR6JPFI * 2096958782 * uint8",
   "categorical(-25910, 4265882500, 1.2e-32, 'xM3Mys0XqH')",
   "var * var * FixedBytesKind",
-  "array of FixedBytesKind",
+  "array * FixedBytesKind",
   "var * var * var * fixed_bytes(size=2816010912, align=16)",
   "36 * 16 * fixed_bytes(size=912328236, align=2)",
   "var * var * var * ZcTmBXnKPi",
   "categorical(946986991, 43, 'omhwkoWVWw')",
   "var * float32",
-  "array of float32",
+  "array * float32",
   "var * var * var * uint16",
-  "array of uint16",
+  "array * uint16",
   "var * var * var * ScalarKind",
   "fixed_bytes(size=280180300, align=2)",
   "fixed_string(1901614748, 'utf32')",
@@ -308,7 +308,7 @@ const char *parse_roundtrip_tests[] = {
   "fixed_bytes(size=1233209904, align=8)",
   "WhRsMHHXYp(categorical(145))",
   "var * var * bytes(align=2)",
-  "array of fixed_bytes(size=2882797900, align=2)",
+  "array * fixed_bytes(size=2882797900, align=2)",
   "categorical(-85, -49, -26791, 8094, 1780, 1.2e-32, 'pX')",
   "D6nfBg_(categorical(16278, 26651, 147170982, 1.2e-32, 'ylR7'))",
   "categorical(482331467, 3229733591, -1.2e-32, 1.2e-32)",
@@ -358,7 +358,7 @@ const char *parse_roundtrip_tests[] = {
 
   /* var... and array... */
   "var... * float64",
-  "array... of float64",
+  "array... * float64",
 
   /* END MANUALLY GENERATED */
 

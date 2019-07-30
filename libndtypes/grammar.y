@@ -123,8 +123,6 @@ yylex(YYSTYPE *val, YYLTYPE *loc, yyscan_t scanner, ndt_context_t *ctx)
 %type <ndt> fixed_string
 %type <ndt> bytes
 %type <ndt> fixed_bytes
-%type <ndt> array_dimensions
-%type <ndt> array
 %type <ndt> ref
 
 %type <ndt> tuple_type
@@ -225,7 +223,7 @@ datashape_with_ellipsis:
 | fixed_ellipsis                           { $$ = $1; }
 | NAME_UPPER LBRACK fixed_ellipsis RBRACK  { $$ = mk_contig($1, (ndt_t *)$3, ctx); if ($$ == NULL) YYABORT; }
 | VAR ELLIPSIS STAR dtype                  { $$ = mk_var_ellipsis($4, ctx); if ($$ == NULL) YYABORT; }
-| array_dimensions                         { $$ = $1; }
+| ARRAY ELLIPSIS STAR datashape            { $$ = mk_array_ellipsis($4, ctx); if ($$ == NULL) YYABORT; }
 
 fixed_ellipsis:
   ELLIPSIS STAR dimensions_tail            { $$ = mk_ellipsis_dim(NULL, $3, ctx); if ($$ == NULL) YYABORT; }
@@ -246,7 +244,8 @@ dimensions_nooption:
 | NAME_UPPER STAR dimensions_tail                        { $$ = mk_symbolic_dim($1, $3, ctx); if ($$ == NULL) YYABORT; }
 | VAR arguments_opt STAR dimensions_tail                 { $$ = mk_var_dim($2, $4, false, ctx); if ($$ == NULL) YYABORT; }
 | QUESTIONMARK VAR arguments_opt STAR dimensions_tail    { $$ = mk_var_dim($3, $5, true, ctx); if ($$ == NULL) YYABORT; }
-
+| ARRAY STAR datashape                                   { $$ = mk_array($3, false, ctx); if ($$ == NULL) YYABORT; }
+| QUESTIONMARK ARRAY STAR datashape                      { $$ = mk_array($4, true, ctx); if ($$ == NULL) YYABORT; }
 
 dimensions_tail:
   dtype              { $$ = $1; }
@@ -346,15 +345,6 @@ encoding:
 
 bytes:
   option_opt BYTES arguments_opt { $$ = mk_bytes($3, $1, ctx); if ($$ == NULL) YYABORT; }
-
-array_dimensions:
-  array                                  { $$ = $1; }
-| option_opt ARRAY ELLIPSIS OF datashape { $$ = mk_array_ellipsis($5, ctx); if ($$ == NULL) YYABORT; }
-| option_opt ARRAY ELLIPSIS OF array     { $$ = mk_array_ellipsis($5, ctx); if ($$ == NULL) YYABORT; }
-
-array:
-  option_opt ARRAY OF datashape { $$ = mk_array($4, $1, ctx); if ($$ == NULL) YYABORT; }
-| option_opt ARRAY OF array     { $$ = mk_array($4, $1, ctx); if ($$ == NULL) YYABORT; }
 
 fixed_bytes:
   option_opt FIXED_BYTES LPAREN attribute_seq RPAREN { $$ = mk_fixed_bytes($4, $1, ctx); if ($$ == NULL) YYABORT; }
