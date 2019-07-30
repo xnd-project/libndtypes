@@ -601,6 +601,7 @@ class TestEllipsisDim(unittest.TestCase):
         self.assertRaises(TypeError, getattr, t, 'shape')
         self.assertRaises(TypeError, getattr, t, 'strides')
 
+
 class TestArray(unittest.TestCase):
 
     def test_array_predicates(self):
@@ -639,6 +640,23 @@ class TestArray(unittest.TestCase):
         # Mixing array with fixed/var dimensions is disallowed.
         self.assertRaises(TypeError, ndt, "array * 2 * int64")
         self.assertRaises(TypeError, ndt, "array * var * int64")
+
+    def test_array_geojson(self):
+        typedef("id", """
+          String of string
+        | Int of int64
+        """)
+
+        typedef("position", "array * float64")
+
+        typedef("geometry", """
+          Point of position
+        | MultiPoint of array * position
+        | LineString of array * position
+        | MultiLineString of array * array * position
+        | Polygon of array * position
+        | MultiPolygon of array * array * position
+        """)
 
 
 class TestTuple(unittest.TestCase):
