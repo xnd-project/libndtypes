@@ -1244,6 +1244,7 @@ ndtype_typedef(PyObject *mod UNUSED, PyObject *args, PyObject *kwds)
 
     t = ndt_from_string(ctype, &ctx);
     if (t == NULL) {
+
         return seterr(&ctx);
     }
 

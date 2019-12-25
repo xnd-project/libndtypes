@@ -19,3 +19,15 @@ doc/build/
 python/ndtypes/ndtypes.h
 *.egg-info
 __pycache__
+
+# Ignore various ruby generated build and test files
+ruby/tmp/
+ruby/pkg/
+*.gem
+ruby/Gemfile.lock
+ruby/ext/ndtypes/
+ruby/ext/ruby_ndtypes/share/
+ruby/ext/ruby_ndtypes/include/
+GPATH
+GRTAGS
+GTAGS
